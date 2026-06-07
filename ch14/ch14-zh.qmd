@@ -138,7 +138,7 @@ levelplot(z ~ x * y, data = grid)
 面板函式決定每個方格內畫什麼。包住預設函式再往上加：
 
 ```{r,echo=TRUE,out.width="65%"}
-xyplot(DBWT ~ WTGAIN | DSEX,
+xyplot(DBWT ~ WTGAIN | SEX,
        data = births2006.smpl[sample(nrow(births2006.smpl), 2000), ],
        alpha = 0.2,
        panel = function(x, y, ...) {

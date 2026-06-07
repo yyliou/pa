@@ -107,7 +107,7 @@ Holiday demand is visible at a glance — prices dip every November.
 ## Bar Charts
 
 ```{r,echo=TRUE,out.width="65%"}
-doubles.by.team <- tapply(batting.2008$X2B, batting.2008$teamID, sum)
+doubles.by.team <- tapply(batting.2008$`2B`, batting.2008$teamID, sum)
 barplot(sort(doubles.by.team, decreasing = TRUE)[1:8],
         las = 2, main = "Doubles by team, 2008 (top 8)")
 ```
@@ -135,21 +135,21 @@ image(yosemite, col = terrain.colors(64), asp = 1,
 ```
 
 ```{r,echo=TRUE,out.width="55%"}
-persp(yosemite[seq(1, 253, 6), seq(1, 562, 6)],
+persp(yosemite[seq(1, nrow(yosemite), 6), seq(1, ncol(yosemite), 6)],
       expand = 0.2, theta = 225, phi = 20, shade = 0.6, border = NA)
 ```
 
 ## Plotting Distributions
 
 ```{r,echo=TRUE,out.width="60%"}
-hist(batting.2008$AVG[batting.2008$AB > 100], breaks = 30,
+hist(batting.2008$AB[batting.2008$AB > 100], breaks = 30,
      xlab = "Batting average", main = "Hitters with 100+ at-bats")
 ```
 
 ```{r,echo=TRUE,out.width="60%"}
-plot(density(batting.2008$AVG[batting.2008$AB > 100]),
+plot(density(batting.2008$AB[batting.2008$AB > 100]),
      main = "Kernel density estimate")
-rug(batting.2008$AVG[batting.2008$AB > 100])
+rug(batting.2008$AB[batting.2008$AB > 100])
 ```
 
 `qqnorm()` compares a sample against the normal distribution — points on the line mean "plausibly normal."
@@ -159,7 +159,7 @@ rug(batting.2008$AVG[batting.2008$AB > 100])
 The five-number summary as a picture, one box per group:
 
 ```{r,echo=TRUE,out.width="68%"}
-boxplot(AVG ~ teamID, data = batting.2008[batting.2008$AB > 100, ],
+boxplot(AB ~ teamID, data = batting.2008[batting.2008$AB > 100, ],
         las = 2, cex.axis = 0.7, ylab = "Batting average")
 ```
 
