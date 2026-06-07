@@ -38,98 +38,92 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **R at Scale**
+# **Big Data with R**
 
-## When Data Outgrows One Machine
+## Why Hadoop
 
-Everything so far assumed your data fits in one computer's memory. When it does not — terabytes of logs, billions of records — computation must be **distributed** across a cluster. **Hadoop** is the classic open-source platform for this, built on two pieces:
+Some problems are too big for one machine. The fix: **break the work into pieces, solve them in parallel, recombine** — the laundry analogy: ten washers finish ten loads in the time one washer does one. Many statistical methods are naturally parallel — bagging, boosting, and random forests (Chapters 20–21) fit each tree independently.
 
-- **HDFS** — a distributed file system that stores data in blocks replicated across many machines;
-- **MapReduce** — a programming model for processing that data in parallel, close to where it lives.
+In the book's era, **Hadoop** was the de facto standard for big data: store enormous data sets, run computations across a cluster, tolerate machine failures. This chapter shows how to drive Hadoop from R.
 
-This chapter explains the model and how R connects to it; the code illustrates concepts rather than running locally.
-
-## The MapReduce Model
-
-Many computations factor into two stages:
-
-::: {.callout-note}
-**Map** applies a function to each record independently, emitting **key–value** pairs. **Reduce** gathers all values sharing a key and combines them. The framework handles the hard parts in between — distributing data, sorting by key, and recovering from failures.
+::: {.callout-warning}
+**A snapshot of 2012.** Hadoop's dominance has faded — today's big-data work leans on **Spark** (R interface `sparklyr`), cloud data warehouses, and `arrow`/`duckdb` for larger-than-memory data on one machine. The *concepts* below — Map/Reduce, distributed storage — remain foundational, and several still power modern systems.
 :::
 
-The canonical example — word count — captures the whole idea: map each line to `(word, 1)` pairs; reduce by summing the 1s for each word.
+# How Hadoop Works
 
-## Word Count in Pseudo-R
+## Map/Reduce
 
-```{r,eval=FALSE,echo=TRUE}
-# MAP: emit (word, 1) for every word in a line
-map_fn <- function(key, line) {
-  words <- strsplit(tolower(line), "\\W+")[[1]]
-  lapply(words, function(w) keyval(w, 1))
-}
+Hadoop's programming model splits every job into two steps:
 
-# REDUCE: sum the counts for each distinct word
-reduce_fn <- function(word, counts) {
-  keyval(word, sum(unlist(counts)))
-}
-```
+- **Map** — process each record independently, emitting key–value pairs. (Parse each web-log line; emit `(location, 1)`.)
+- **Reduce** — gather all values for each key and combine them. (Sum the counts per location.)
 
-Because each map runs on one record and each reduce on one key, the framework can run thousands of them in parallel across the cluster — the programmer never writes scheduling or networking code.
+Because every map runs independently, the work spreads across as many machines as you have. Classic examples from the book: a **web-traffic report**, **traffic by location**, and **predicting user behavior** — all expressible as map then reduce.
+
+## The Two Pillars
+
+Beyond Map/Reduce, Hadoop provides:
+
+- **Distributed data storage — HDFS** (Hadoop Distributed File System): splits files into blocks, replicates them across machines for fault tolerance, and presents one logical file system.
+- **Cluster management** — schedules jobs across servers, restarts failed tasks, moves computation to where the data lives.
+
+The framework itself is written in Java, but you need not write Java — R can drive it.
+
+# Driving Hadoop from R
+
+## Three Routes
+
+The book describes three ways to use Hadoop from R:
+
+- **RHadoop** — the most mature, best-integrated set of R packages;
+- **Segue** — runs R `lapply`-style jobs on Amazon Elastic MapReduce;
+- **Hadoop streaming** — feed any R script to Hadoop as a mapper/reducer via standard input and output.
 
 ## RHadoop
 
-**RHadoop** is a family of packages letting you write MapReduce jobs in R instead of Java:
+RHadoop is three packages:
 
-| Package | Role |
-|:---|:---|
-| `rhdfs` | read/write HDFS from R |
-| `rmr2` | write MapReduce jobs in R (`mapreduce()`) |
-| `rhbase` | access the HBase database |
-| `plyrmr` | dplyr-style data manipulation over Hadoop |
+- **`rmr`** — the core: write Map/Reduce jobs *in R*, move data in and out;
+- **`rhdfs`** — manage files on HDFS from R (most ordinary file operations);
+- **`rhbase`** — interface to HBase, Hadoop's database.
+
+Setup, then a job (`rmr` syntax, shown unevaluated — it needs a Hadoop cluster):
 
 ```{r,eval=FALSE,echo=TRUE}
 library(rmr2)
-wordcount <- mapreduce(
-  input    = "hdfs://input/books",
-  map      = map_fn,
-  reduce   = reduce_fn)
-from.dfs(wordcount)        # pull the (small) result back into R
+# count deaths by sex: a map step and a reduce step, both R functions
+result <- mapreduce(
+  input = "deaths.csv",
+  map    = function(k, v) keyval(v$sex, 1),
+  reduce = function(sex, counts) keyval(sex, sum(counts)))
+from.dfs(result)                 # pull results back into R
 ```
 
-## The Pattern: Reduce, Then Pull
+The book's four-node example tallies US deaths by sex for 2009 — a job that runs in parallel across the cluster. `to.dfs`/`from.dfs` move data between R and HDFS.
 
-The recurring strategy across big-data tools:
+## Hadoop in the Cloud
 
-1. **Push computation to the data** — run map/reduce where the blocks live, avoiding network transfer of terabytes.
-2. **Shrink on the cluster** — aggregation, filtering, and summarization collapse big data into small results.
-3. **Pull the summary into R** — once the data is small, all of Chapters 13–23 apply normally.
+You needn't own a cluster — rent one. The book walks through **Amazon Elastic MapReduce (EMR)**: bootstrap a cluster, configure it from a template, run the job, tear it down — paying only for the minutes used. **Segue** wraps this so an R user can run a parallel `lapply` on EMR with almost no Hadoop knowledge.
 
-`from.dfs()` and `to.dfs()` move data between R's memory and HDFS; you bring back only what fits.
+```{r,eval=FALSE,echo=TRUE}
+# Segue-style: a parallel lapply on a rented cluster (conceptual)
+library(segue)
+cluster <- createCluster(numInstances=4)
+results <- emrlapply(cluster, my.list, my.function)
+stopCluster(cluster)
+```
 
-## The Modern Landscape
+## Putting It in Perspective
 
-Hadoop MapReduce was the pioneer; today's ecosystem has moved on, but the *principles* are unchanged:
+::: {.callout-tip}
+**The enduring lessons.** Hadoop the product is fading, but its ideas are everywhere: (1) **partition** data and computation; (2) express work as **map** (independent, parallel) then **reduce** (combine); (3) **move compute to the data**, not the reverse; (4) **rent** elastic capacity in the cloud. Modern R reaches big data through `sparklyr`, `arrow`, `duckdb`, and `future`/`furrr` for parallelism — but you'll recognize Map/Reduce inside all of them.
+:::
 
-- **Apache Spark** with the `sparklyr` package — in-memory distributed computing, far faster than disk-based MapReduce, with a `dplyr` front end and built-in machine learning.
-- **`arrow` / `duckdb`** — query larger-than-memory data efficiently on a single machine, often removing the need for a cluster at all.
-- **Cloud data warehouses** (BigQuery, Snowflake) queried from R via DBI — push SQL to the warehouse, retrieve summaries.
-
-The decision rule is the same as in Chapter 11: do the heavy lifting where the data lives, bring back only the answer.
-
-## Course Wrap-Up
-
-Over twenty-six chapters this course traveled from `1 + 1` to distributed computing:
-
-- **Parts I–II** — installing R and the structure of the language;
-- **Part III** — getting real data in and cleaning it;
-- **Part IV** — three graphics systems;
-- **Part V** — the statistical toolkit, from t-tests to random forests to ARIMA;
-- **Part VI** — performance and scale.
-
-The same language spans all of it. From here, depth comes from practice and from the focused follow-on courses — and every data set in these slides is one `download.file()` + `load()` away whenever you want to experiment.
+This chapter closes *R in a Nutshell* — from installing R (Chapter 1) to running it across a cluster. The throughline: the same language, the same objects, the same functions, scaling from one console to thousands of machines.
 
 ## Copyright Notice
 

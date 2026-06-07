@@ -38,149 +38,145 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
 # **Predicting Categories**
 
-## The Spam Problem
+## Regression's Categorical Cousin
 
-Classification predicts a **category** rather than a number. Our running example: 4,601 emails, 57 numeric features, one label — spam or not:
+A **classification model** predicts a *categorical* response — spam or not, disease or healthy, which of several classes. The toolkit parallels Chapter 20, but the response is a factor. The chapter's running example is **Spambase**: 4,601 emails with 57 numeric features, each labeled spam or not.
 
-```{r,echo=TRUE,cache=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/spambase.rda", temp, mode = "wb")
-load(temp)
-dim(spambase)
-table(spambase$is_spam)
-```
+We move from linear methods (logistic regression, discriminant analysis) to trees and ensembles (bagging, boosting, random forests) to neural networks and SVMs.
 
-Split into training and test sets — the only honest way to measure a classifier:
-
-```{r,echo=TRUE}
-set.seed(11)
-idx   <- sample(nrow(spambase), 3000)
-train <- spambase[idx, ]
-test  <- spambase[-idx, ]
-```
+# Linear Classification Models
 
 ## Logistic Regression
 
-Model the *probability* of spam through the logit link:
+The workhorse for a **binary** response: a `glm` with `family=binomial`, modeling the log-odds of the outcome:
 
-$$\log \frac{p}{1-p} = c_0 + c_1 x_1 + \cdots + c_n x_n$$
-
-```{r,echo=TRUE,warning=FALSE}
-spam.glm <- glm(is_spam ~ word_freq_free + word_freq_money +
-                  capital_run_length_total + char_freq_exclamation,
-                family = binomial, data = train)
-coef(summary(spam.glm))
+```{r,eval=FALSE,echo=TRUE}
+spam.model <- glm(is_spam ~ ., data=spambase, family=binomial(link="logit"))
+summary(spam.model)
+predict(spam.model, newdata, type="response")   # predicted probabilities
 ```
 
-Positive coefficients raise the spam odds; `exp(coef)` gives odds ratios.
+- `summary` reports coefficients, z-values, p-values, plus **null and residual deviance** and **AIC** (not R²).
+- `type="response"` returns probabilities; threshold them (e.g., at 0.5) to get class labels.
+- "Number of Fisher Scoring iterations" reports how quickly the IRLS fit converged.
+- Multi-class extension: `nnet::multinom` (multinomial log-linear model), or ordered outcomes via `MASS::polr`.
 
-## From Probabilities to Decisions
+## Linear and Flexible Discriminant Analysis
 
-```{r,echo=TRUE}
-p.hat <- predict(spam.glm, newdata = test, type = "response")
-pred  <- ifelse(p.hat > 0.5, 1, 0)
-tab   <- table(actual = test$is_spam, predicted = pred)
-tab
-sum(diag(tab)) / sum(tab)        # accuracy
-```
+Discriminant analysis finds the (linear) combinations of predictors that best *separate* the classes — `MASS::lda` (and `qda` for quadratic boundaries):
 
-The **confusion matrix** separates false positives (good mail flagged) from false negatives (spam passed) — in most applications the two errors cost differently, so choose the cutoff accordingly.
-
-## Linear Discriminant Analysis
-
-LDA models each class as a Gaussian and draws the optimal linear boundary:
-
-```{r,echo=TRUE,message=FALSE}
+```{r,eval=FALSE,echo=TRUE}
 library(MASS)
-spam.lda <- lda(is_spam ~ word_freq_free + word_freq_money +
-                  capital_run_length_total + char_freq_exclamation,
-                data = train)
-mean(predict(spam.lda, test)$class == test$is_spam)
+iris.lda <- lda(Species ~ ., data=iris)
+predict(iris.lda, iris)$class          # predicted classes
 ```
 
-- Stable when classes are well-separated and roughly Gaussian; `qda()` allows curved boundaries.
-- Log-linear models (`loglin()`/`glm` with `poisson`) play the analogous role for pure contingency-table data.
+Richer variants in package `mda`:
 
-## k Nearest Neighbors
+- **`fda`** — *flexible* discriminant analysis (nonlinear boundaries via regression);
+- **`mda`** — *mixture* discriminant analysis (each class a mixture of Gaussians).
 
-No model at all: classify each point by a vote of its $k$ closest training points:
+LDA assumes equal class covariances and roughly normal predictors; QDA relaxes the equal-covariance assumption.
 
-```{r,echo=TRUE,message=FALSE}
-library(class)
-vars <- c("word_freq_free", "word_freq_money",
-          "capital_run_length_total", "char_freq_exclamation")
-pred.knn <- knn(scale(train[, vars]), scale(test[, vars]),
-                cl = train$is_spam, k = 5)
-mean(pred.knn == test$is_spam)
+## Log-Linear Models
+
+For counts in a contingency table, **log-linear models** test associations among categorical variables — `stats::loglin(table, margin, ...)` (and the friendlier formula interface `MASS::loglm`):
+
+```{r,eval=FALSE,echo=TRUE}
+library(MASS)
+loglm(~ Sex + Class + Survived, data=Titanic)   # mutual independence
+loglm(~ Sex*Class + Survived, data=Titanic)     # Sex,Class associated
 ```
 
-::: {.callout-tip}
-**Scale your features for kNN.** Distance-based methods are dominated by whichever variable has the biggest units; standardize first.
-:::
+Arguments to `loglin`: the table, a list of margin vectors to fit, an optional starting estimate, and `maxit` (iteration cap for the IPF algorithm).
 
-## Classification Trees
+# Trees and Ensembles
 
-Trees split the feature space by a sequence of yes/no questions — fully interpretable:
+## Classification Trees: rpart
 
-```{r,echo=TRUE,out.width="62%"}
+`rpart` builds a tree by **recursive partitioning** — repeatedly splitting on the feature that best separates classes:
+
+```{r,eval=FALSE,echo=TRUE}
 library(rpart)
-spam.tree <- rpart(factor(is_spam) ~ ., data = train)
-plot(spam.tree, uniform = TRUE, margin = 0.05)
-text(spam.tree, cex = 0.7)
-mean(predict(spam.tree, test, type = "class") == test$is_spam)
+spam.tree <- rpart(is_spam ~ ., data=spambase)
+spam.tree                                  # text description of the splits
+printcp(spam.tree)                         # CP table: complexity vs. error
+plot(spam.tree); text(spam.tree)           # draw it
+spam.tree.pruned <- prune(spam.tree, cp=0.01)   # prune to avoid overfitting
 ```
 
-`printcp()` and `prune()` control overfitting by cost-complexity pruning.
+The `printcp`/`plotcp` output (CP, nsplit, rel error, xerror) guides **pruning**: pick the complexity parameter that minimizes cross-validated error.
 
-## Neural Networks and SVMs
+## Bagging and Boosting
 
-```{r,echo=TRUE,message=FALSE,results='hide'}
-library(nnet)
-set.seed(11)
-spam.nn <- nnet(factor(is_spam) ~ ., data = train,
-                size = 4, decay = 0.1, maxit = 200, MaxNWts = 2000)
+Single trees are unstable; **ensembles** of trees are far more accurate:
+
+- **Bagging** (bootstrap aggregating) — `ipred::bagging` or `adabag::bagging`: fit many trees to bootstrap samples, average/vote. Reduces variance.
+- **Boosting** — `ada::ada` or `adabag::boosting` (AdaBoost), `gbm::gbm` (gradient boosting): fit trees *sequentially*, each focusing on the previous one's errors. Reduces bias and variance.
+
+```{r,eval=FALSE,echo=TRUE}
+library(adabag)
+spam.bag  <- bagging(is_spam ~ ., data=spambase)
+spam.boost <- boosting(is_spam ~ ., data=spambase)
+predict(spam.boost, newdata)$class
 ```
 
-```{r,echo=TRUE}
-mean(predict(spam.nn, test, type = "class") == test$is_spam)
-```
-
-- `nnet()` fits a single-hidden-layer network — the classical workhorse.
-- Support vector machines (`svm()` in the `e1071` package) find maximum-margin boundaries and handle nonlinearity through kernels.
+These are embarrassingly parallel — each tree fits independently (Chapter 26).
 
 ## Random Forests
 
-Hundreds of trees on bootstrap samples, votes averaged:
+`randomForest` bags trees *and* randomizes the features considered at each split, decorrelating them — usually the strongest off-the-shelf classifier:
 
-```{r,echo=TRUE,message=FALSE}
+```{r,eval=FALSE,echo=TRUE}
 library(randomForest)
-set.seed(11)
-spam.rf <- randomForest(factor(is_spam) ~ ., data = train, ntree = 200)
-mean(predict(spam.rf, test) == test$is_spam)
+spam.rf <- randomForest(is_spam ~ ., data=spambase, ntree=500)
+spam.rf                                # OOB error estimate + confusion matrix
+importance(spam.rf)                    # variable importance
+predict(spam.rf, newdata)
 ```
 
-```{r,echo=TRUE,out.width="60%"}
-varImpPlot(spam.rf, n.var = 10, main = "Top 10 features")
+Key knobs: `ntree` (number of trees), `mtry` (features tried per split). The **out-of-bag (OOB)** error is a free, honest accuracy estimate — no separate test set needed.
+
+# Neural Networks and SVMs
+
+## Neural Networks
+
+`nnet::nnet` fits a single-hidden-layer feed-forward network:
+
+```{r,eval=FALSE,echo=TRUE}
+library(nnet)
+spam.nn <- nnet(is_spam ~ ., data=spambase, size=10, decay=0.01, maxit=200)
+predict(spam.nn, newdata, type="class")
 ```
 
-Usually the best out-of-the-box accuracy, plus a free feature-importance ranking — at the price of interpretability.
+`size` sets the hidden units, `decay` is weight regularization (curbing overfitting), `maxit` caps iterations. (Modern deep learning lives in `keras`/`torch`, but the idea is the same, scaled up.)
 
-## Choosing a Classifier
+## Support Vector Machines
 
-| Need | Reach for |
-|:---|:---|
-| interpretable coefficients / odds | logistic regression |
-| interpretable rules | classification tree |
-| best plug-and-play accuracy | random forest |
-| small data, smooth boundary | LDA / kNN |
-| high-dimensional, margins matter | SVM |
+`e1071::svm` finds the maximum-margin boundary, kernelized for nonlinearity:
 
-Whatever the model: train/test split (or cross-validation), confusion matrix, and error costs come first [@hastie2009elements]. Chapter 22 widens the view to the rest of machine learning.
+```{r,eval=FALSE,echo=TRUE}
+library(e1071)
+spam.svm <- svm(is_spam ~ ., data=spambase,
+                type="C-classification", kernel="radial")
+predict(spam.svm, newdata)
+naiveBayes(is_spam ~ ., data=spambase)   # also in e1071: naive Bayes
+```
+
+`type="C-classification"` is the standard classifier; `kernel` may be `"linear"`, `"polynomial"`, `"radial"` (RBF), or `"sigmoid"`. Tune cost and kernel parameters with `tune`. The same package's `naiveBayes` gives a fast probabilistic baseline.
+
+## k-Nearest Neighbors, and Choosing a Model
+
+The simplest classifier of all — `class::knn(train, test, cl, k)` — labels each point by majority vote of its `k` nearest neighbors; no model is "fit" at all.
+
+::: {.callout-tip}
+**No universal best.** Logistic regression is interpretable; LDA needs few assumptions checked; trees are readable; **random forests and boosting usually win on raw accuracy**; SVMs shine in high dimensions; kNN is a quick baseline. Compare honestly with a held-out test set or cross-validation, and judge with a **confusion matrix**, not just overall accuracy.
+:::
 
 ## Copyright Notice
 

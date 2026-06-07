@@ -38,129 +38,108 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **Making R Fast**
+# **Making R Faster**
 
-## Measure Before You Optimize
+## Measure First, Then Optimize
 
-The cardinal rule: never guess where time goes — measure it.
+The golden rule: **never optimize blindly**. Find where time and memory actually go, then fix *that*. R gives you tools for both.
+
+# Measuring Performance
+
+## Timing: system.time
+
+The simplest measurement — wrap any expression:
 
 ```{r,echo=TRUE}
-system.time({
-  x <- numeric(0)
-  for (i in 1:20000) x <- c(x, i)   # the growing-vector sin
-})
-system.time({
-  y <- numeric(20000)
-  for (i in 1:20000) y[i] <- i      # pre-allocated
-})
+system.time(for (i in 1:1e6) sqrt(i))
 ```
 
-Same loop, wildly different cost — because `c()` re-copies the whole vector every iteration.
+Three numbers: **user time** (work R itself did), **system time** (work the OS did on R's behalf), **elapsed time** (wall clock). `gcFirst=TRUE` (the default) runs garbage collection first for a cleaner reading. (For careful microbenchmarks the modern `microbenchmark` and `bench` packages repeat and compare.)
 
-## Profiling
+## Profiling: Rprof and summaryRprof
 
-For whole programs, the profiler attributes time to functions:
+To see *where* the time goes across a whole program, **profile** it:
+
+```{r,eval=FALSE,echo=TRUE}
+Rprof("Rprof.out", interval = 0.02, memory.profiling = FALSE)
+do.stuff()                       # ... your code ...
+Rprof(NULL)                      # stop profiling
+summaryRprof("Rprof.out")        # which functions ate the time
+```
+
+`Rprof` samples the call stack every `interval` seconds and writes to a file; `Rprof(NULL)` stops it. `summaryRprof` ranks functions by self- and total time (and, with `memory=`, by allocation). This is how you find the *one* line consuming most of the runtime — often a surprise.
+
+## Monitoring Memory
 
 ```{r,echo=TRUE}
-slow_demo <- function(n) {
-  m <- matrix(rnorm(n * 50), ncol = 50)
-  out <- numeric(ncol(m))
-  for (j in seq_len(ncol(m))) out[j] <- mean(sort(m[, j]))
-  out
-}
-Rprof(tmp <- tempfile())
-invisible(slow_demo(20000))
-Rprof(NULL)
-head(summaryRprof(tmp)$by.self, 5)
+gc()                             # garbage-collect AND report usage
+object.size("Hello world!")      # approximate size of one object
 ```
 
-- `Rprof()` samples the call stack; `summaryRprof()` tabulates it.
-- `Rprof(memory.profiling = TRUE)` and `tracemem()` expose hidden copying.
+- **`gc()`** forces garbage collection *and* reports memory in use.
+- **`object.size(x)`** estimates an object's footprint — invaluable when a "small" data frame is secretly huge.
+- **`memory.profile()`** breaks usage down by object type; on Windows, `memory.size()`/`memory.limit()` report and cap total usage.
+- **`Rprofmem(filename, threshold=)`** logs large allocations (R must be built with memory profiling).
 
-## Vectorize
+# Optimizing Your Code
 
-The single biggest R speedup: replace element-by-element loops with whole-vector operations, which run in compiled C:
+## Use Vector Operations
+
+R's single biggest speed lever: replace **iterative element-by-element code with whole-vector operations**. The Chapter 8 example, dramatized — growing a vector in a loop versus working on it at once:
 
 ```{r,echo=TRUE}
-v <- rnorm(1e6)
-system.time({ s <- 0; for (xi in v) s <- s + xi^2 })
-system.time(sum(v^2))
+slow <- function(n) { v <- NA; for (i in 1:n) v[i] <- i^2; v }
+fast <- function(n) { (1:n)^2 }
+system.time(slow(50000))["elapsed"]
+system.time(fast(50000))["elapsed"]
 ```
 
-- `rowSums()`, `colMeans()`, `cumsum()`, `pmax()`, `ifelse()`-free logical math (`(x > 0) * x`) all vectorize common patterns.
-- The apply family is *clearer* than loops but not inherently faster — true vector ops are.
+The vectorized version is dramatically faster *and* clearer. Two reasons: the loop's body re-dispatches R functions tens of thousands of times, and **growing a vector reallocates it on every step**. Pre-allocating (`v <- numeric(n)`) helps; vectorizing helps far more.
 
-## Lookup Performance
+## Transform Problems to Use Built-in Functions
 
-How you find things matters as data grows:
+Many loops can be rephrased as calls to functions implemented in C:
+
+- the **apply family** — `sapply`, `lapply`, `vapply`, `mapply`, `tapply` (Chapters 9, 12);
+- **matrix algebra** — `%*%`, `crossprod`, `rowSums`, `colMeans` instead of nested loops;
+- **`outer`**, `cumsum`, `diff`, `tabulate`, `findInterval` for common patterns.
 
 ```{r,echo=TRUE}
-n <- 1e5
-named.vec <- setNames(rnorm(n), paste0("k", 1:n))
-e <- new.env(hash = TRUE)
-for (k in c("k50000")) assign(k, named.vec[[k]], envir = e)
-system.time(for (i in 1:200) named.vec["k50000"])   # name lookup: linear
-system.time(for (i in 1:200) get("k50000", envir = e))  # hash: constant
+m <- matrix(1:1e6, ncol=1000)
+system.time(apply(m, 2, sum))["elapsed"]      # readable
+system.time(colSums(m))["elapsed"]            # built-in, far faster
 ```
 
-- Name-based vector indexing scans; hashed environments (and the `fastmatch`/`data.table` packages) jump straight there.
-- `match()` beats repeated `%in%` in loops; sorted keys enable `findInterval()`.
+The lesson: a built-in that does the loop *inside C* beats any R-level loop.
 
-## Memory Matters
+## Lookup Performance: Environments as Hash Tables
 
-R keeps everything in RAM, and copying is the silent killer:
+Repeatedly looking values up by name? A **named vector or list** does a linear scan; an **environment** is a hash table with near-constant-time lookup. For thousands of keyed lookups, store the data in an environment:
 
 ```{r,echo=TRUE}
-gc()[, c("used", "max used")] |> head(2)
-object.size(rnorm(1e6))
+e <- new.env()
+assign("BG", 42, envir=e)        # or e[["BG"]] <- 42
+get("BG", envir=e)               # O(1) lookup
 ```
 
-- `rm()` big objects you are done with; `gc()` reports (and triggers) garbage collection.
-- Modify columns rather than whole data frames inside loops; each "small" change of a big object may copy all of it.
-- For data bigger than RAM: `data.table` (in-memory but frugal), `ff`/`bigmemory` (disk-backed), databases (Chapter 11), or Hadoop (Chapter 26).
+The book benchmarks this against named-vector lookup and finds environments dramatically faster as the table grows — the trick behind many high-performance R packages.
 
-## The Byte-Code Compiler
+## The Byte-Code Compiler, and Beyond
 
-R compiles functions to byte code; ensure hot functions benefit:
+R ships a **byte-code compiler** (`compiler` package) that speeds up pure-R functions — and since R 2.14, base and recommended packages are pre-compiled; since R 3.4, functions are JIT-compiled on use:
 
 ```{r,echo=TRUE}
 library(compiler)
-f <- function(n) { s <- 0; for (i in 1:n) s <- s + i; s }
-fc <- cmpfun(f)
-system.time(f(2e6)); system.time(fc(2e6))
+slow.c <- cmpfun(slow)           # compile to byte code
+system.time(slow.c(50000))["elapsed"]
 ```
 
-Since R 3.4 the JIT compiles most functions automatically — but the gap shows what the interpreter costs, and why C++ via the `Rcpp` package remains the heavy artillery for unavoidable loops.
-
-## Parallel Computation
-
-Many tasks are embarrassingly parallel — independent pieces, no communication:
-
-```{r,echo=TRUE}
-library(parallel)
-detectCores()
-system.time(res1 <- lapply(1:8, function(i) mean(rnorm(4e5))))
-cl <- makeCluster(2)
-system.time(res2 <- parLapply(cl, 1:8, function(i) mean(rnorm(4e5))))
-stopCluster(cl)
-```
-
-- `mclapply()` (Unix/macOS forking) is the one-line version; `parLapply()` works everywhere.
-- Simulations, bootstraps, cross-validation folds, and grid searches parallelize perfectly; overhead means small tasks may not.
-
-## An Optimization Checklist
-
-1. **Measure** (`system.time`, `Rprof`) — find the real bottleneck.
-2. **Vectorize** the hot loop; pre-allocate results.
-3. **Avoid copies** — beware growing objects and repeated subsetting of big frames.
-4. **Better algorithms/structures** — hashing, sorting, `data.table`.
-5. **Parallelize** independent work.
-6. **Drop to C++** (`Rcpp`) only when all of the above still isn't enough.
-
-Readable-but-fast beats clever-but-fragile: optimize the 5% that matters and leave the rest clear.
+::: {.callout-tip}
+**The optimization ladder.** (1) Vectorize. (2) Use built-in/C functions and matrix algebra. (3) Pre-allocate; use environments for lookups. (4) Compile hot functions. (5) Only then go parallel (Chapter 26) or rewrite the bottleneck in C++ (`Rcpp`). Always re-profile after each step — and stop when it's fast *enough*.
+:::
 
 ## Copyright Notice
 

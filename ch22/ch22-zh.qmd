@@ -38,104 +38,102 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **沒有標籤的學習**
+# **尋找結構**
 
-## 監督式與非監督式
+## 監督式學習之外
 
-第二十、二十一章是*監督式*學習：已知的結果引導配適。本章是**非監督式**的那一面——沒有標籤，只有等待發現的結構：
+第二十、二十一章是**監督式**——預測已知的反應。本章談兩種**非監督式**任務：沒有反應要預測，只有結構待發掘：
 
-- **購物籃分析**：哪些品項在交易中一起出現？
-- **分群**：哪些觀測值屬於同一掛？
+- **購物籃分析**——哪些品項一起出現（關聯規則）；
+- **集群分析**——哪些觀測夠相似、可歸為一群。
 
-兩者都是探索工具：它們產生假設，而非檢定假設 [@hastie2009elements]。
+# 購物籃分析
 
-## 購物籃分析
+## 關聯規則與 apriori
 
-`arules` 套件從交易資料中挖掘形如 $\{A, B\} \Rightarrow \{C\}$ 的**關聯規則**：
+給定一組**交易**（一個購物籃、一段聆聽紀錄），關聯規則探勘找出**經常一起出現的品項**——「買了 X 的客人也買了 Y」。經典演算法是 **a priori**，在套件 `arules`：
 
-```{r,echo=TRUE,message=FALSE}
+```{r,eval=FALSE,echo=TRUE}
 library(arules)
-data(Groceries)             # arules 內建
-summary(Groceries)@lengths[1:5]
+apriori(data, parameter = NULL, appearance = NULL, control = NULL)
 ```
 
-```{r,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
-rules <- apriori(Groceries,
-                 parameter = list(supp = 0.005, conf = 0.5))
+- `data`——一個 `transactions` 物件（或可轉換的矩陣／資料框）；
+- `parameter`——門檻，主要是**支持度（support）**（品項一起出現的頻率）與**信賴度（confidence）**（規則的可靠程度）；
+- `appearance` 限制各邊可出現哪些品項；`control` 調整演算法。
+
+`arules` 建立在 S4 類別上（資料用 `transactions` 類別），底層是 Christian Borgelt 精心打造的 apriori C 實作。
+
+## 範例：Audioscrobbler
+
+書中探勘 Audioscrobbler 的聆聽資料（現屬 Last.fm）。用 `read.transactions` 載入、探勘、檢視：
+
+```{r,eval=FALSE,echo=TRUE}
+library(arules)
+playlists <- read.transactions("audioscrobbler.csv", format="basket", sep=",")
+rules <- apriori(playlists,
+                 parameter=list(support=0.01, confidence=0.5))
+inspect(head(sort(rules, by="lift"), 10))   # 依 lift 排出最強的規則
 ```
+
+產生的規則讀起來像「聽 Green Day 和 Nirvana 的人也聽 Red Hot Chili Peppers」，各帶支持度、信賴度與 **lift**（比隨機高出多少倍）。一個相關、更快的頻繁項目集演算法是 `eclat`。
+
+# 集群分析
+
+## 距離度量
+
+集群把觀測分組，使同群成員彼此比群外更相似——而相似從**距離**開始。`stats::dist` 建距離矩陣：
+
+```{r,eval=FALSE,echo=TRUE}
+dist(x, method = "euclidean", diag = FALSE, upper = FALSE, p = 2)
+```
+
+`method` 可為 `"euclidean"`、`"manhattan"`、`"maximum"`、`"canberra"`、`"binary"` 或 `"minkowski"`（搭配參數 `p`）。度量的選擇至關重要：尺度與單位形塑後續的每一群，所以變數範圍不同時要先標準化。
 
 ```{r,echo=TRUE}
-inspect(head(sort(rules, by = "lift"), 3))
+d <- dist(scale(iris[, 1:4]))     # 先標準化、再算歐氏距離
+as.matrix(d)[1:4, 1:4]
 ```
 
-## 讀懂一條規則
+## 切割式：kmeans、pam、clara
 
-每條規則由三個數字鑑定：
+**切割式**演算法把資料分成指定數量 `k` 的群：
 
-::: {.callout-note}
-**支持度（support）**——包含規則所有品項的交易比例。**信賴度（confidence）**——$P(\text{rhs} \mid \text{lhs})$：左邊出現時右邊跟著出現的頻率。**提升度（lift）**——信賴度除以右邊的基準率；lift $> 1$ 才是真關聯，而非單純的高人氣。
+- **`kmeans(x, centers, ...)`**——快，最小化群內平方和；對離群值與起始中心敏感。
+- **`cluster::pam(x, k)`**——圍繞中心點（medoid）切割；以真實資料點為中心，比 k-means 穩健。
+- **`cluster::clara(x, k)`**——透過抽樣讓 pam 擴展到大資料。
+
+```{r,echo=TRUE}
+set.seed(1)
+km <- kmeans(scale(iris[, 1:4]), centers=3)
+table(km$cluster, iris$Species)   # 群 vs. 真實品種
+km$centers[, 1:2]
+```
+
+## 集群品質與階層式集群
+
+- **`cluster::silhouette`** 度量每點與所屬群的契合度（−1 到 1）；平均輪廓寬度有助於**選 `k`**。
+- **階層式集群**不必預先決定 `k`——`hclust(距離物件, method=)` 建一棵樹（樹狀圖），逐步合併最近的群；`cluster::agnes`（聚合式）與 `diana`（分裂式）是更豐富的替代。
+
+```{r,echo=TRUE,fig.height=3.6}
+hc <- hclust(dist(scale(iris[, 1:4])), method="ward.D2")
+plot(hc, labels=FALSE, main="Hierarchical clustering of iris")
+rect.hclust(hc, k=3)              # 切成 3 群
+```
+
+`method` 涵蓋 `"complete"`、`"average"`、`"single"`、`"ward.D2"`……——各自對「群與群之間的距離」定義不同，產生形狀不同的群。
+
+::: {.callout-tip}
+**非監督式工作沒有標準答案。** 沒有準確度可優化——只有結構可判斷。變換距離度量、演算法與 `k`；用輪廓寬度、領域知識，以及這些群是否*有用*（而非只是存在）來驗證。
 :::
-
-- 高信賴、低提升的規則（「⇒ 全脂牛奶」）只是重述牛奶很熱門——lift 正是過濾這種假象的濾網。
-- `apriori()` 的門檻在規則數量與品質之間取捨。
-
-## k-means 分群
-
-把 $n$ 筆觀測切成 $k$ 個緊湊的群：
-
-```{r,echo=TRUE}
-set.seed(5)
-km <- kmeans(scale(USArrests), centers = 4, nstart = 25)
-table(km$cluster)
-km$centers
-```
-
-```{r,echo=TRUE,out.width="60%"}
-plot(prcomp(scale(USArrests))$x[, 1:2], col = km$cluster, pch = 19)
-```
-
-- 變數先標準化；`nstart = 25` 多次重啟以避開差勁的局部最佳解。
-- $k$ 的選法：對候選值畫 `km$tot.withinss` 找手肘點，或用輪廓係數（`cluster` 套件）。
-
-## 階層式分群
-
-不必預先給 $k$——先長出合併樹，之後再剪：
-
-```{r,echo=TRUE,out.width="68%"}
-d  <- dist(scale(USArrests))
-hc <- hclust(d, method = "ward.D2")
-plot(hc, cex = 0.55, main = "US states by crime profile")
-rect.hclust(hc, k = 4, border = "red")
-```
-
-- `dist()` 提供 euclidean、manhattan 等距離；連結方式（`single`、`complete`、`average`、`ward.D2`）改變樹的性格。
-- `cutree(hc, k = 4)` 萃取群標籤供後續使用。
-
-## 其他非監督工具
-
-- **模型式分群**：`mclust` 套件配適高斯混合，並以 BIC 自動選 $k$。
-- **密度式**：`dbscan` 找出任意形狀的群，並標記雜訊點。
-- **降維當前處理**：分群前先 PCA（第十六章）常能同時改善速度與品質。
-- **自組織映射圖**（`kohonen`）把高維資料投影到二維網格上。
-
-## 誠實的評估
-
-非監督式的結果最需要懷疑精神：
-
-1. 穩定性——換個種子或重抽樣後，群還在嗎？
-2. 輪廓係數／群內變異——群真的緊湊嗎？
-3. 詮釋——領域專家能替每個群命名嗎？
-4. 規則類：先在保留期間驗證頂尖規則，再依它行動。
-
-無法命名的分群、下一季就消失的規則，都是穿著戲服的雜訊。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

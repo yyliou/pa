@@ -38,104 +38,100 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **帶著時鐘的資料**
+# **隨時間變動的資料**
 
-## 時間序列物件
+## 時間序列為何特別
 
-依時間排序的觀測值違反了其他章節到處假設的獨立性——需要專屬工具 [@shumway2011time]。課程資料集裡有兩條月度價格序列：
-
-```{r,echo=TRUE,cache=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
-load(temp)
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/ham.price.ts.rda", temp, mode = "wb")
-load(temp)
-turkey.price.ts
-```
-
-```{r,echo=TRUE,out.width="62%"}
-plot(turkey.price.ts, ylab = "US cents/lb")
-```
-
-## 自相關函數
-
-序列與*自己的過去*相關有多強？
-
-```{r,echo=TRUE,out.width="62%"}
-acf(turkey.price.ts)
-```
-
-- 落後 12（與 24）期的尖峰：年度季節性——十一月的折扣年年迴響。
-- `pacf()` 顯示*偏*自相關——移除較短落後期後，落後 $k$ 期的直接效果——是挑選 AR 階數的標準工具。
-
-```{r,echo=TRUE,out.width="62%"}
-pacf(turkey.price.ts)
-```
-
-## 交叉相關
-
-兩條序列是否同步波動，甚至帶有延遲？
-
-```{r,echo=TRUE,out.width="62%"}
-ccf(turkey.price.ts, ham.price.ts, main = "Turkey vs. ham prices")
-```
-
-`ccf()` 把一條序列與另一條的各種落後版本求相關——尖峰偏離 0 落後期，暗示其中一條領先另一條。
-
-## 分解與平滑
-
-把序列拆成趨勢＋季節＋餘項：
-
-```{r,echo=TRUE,out.width="65%"}
-plot(stl(turkey.price.ts, s.window = "periodic"))
-```
-
-- `stl()` 用 loess 平滑；`decompose()` 是移動平均的經典版。
-- `filter()` 直接計算移動平均；`diff()` 以差分移除趨勢——ARIMA 裡的那個「I」。
-
-## ARIMA 模型
-
-ARMA 家族把（差分後的）序列建模為自迴歸加移動平均雜訊：
-
-$$x_t = \phi_1 x_{t-1} + \cdots + \phi_p x_{t-p} + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}$$
+時間序列帶有**長期趨勢**與**週期型態**，是一般摘要統計量看不見的。分析它需要尊重*順序*與*落後（lag）*的工具。我們重訪第七章的火雞價格序列：
 
 ```{r,echo=TRUE}
-fit <- arima(turkey.price.ts, order = c(1, 0, 0),
-             seasonal = list(order = c(1, 0, 0), period = 12))
-fit
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
+              temp, mode = "wb")
+load(temp)
 ```
 
-- `order = c(p, d, q)`：AR 階數、差分次數、MA 階數；`seasonal=` 加上季節對應項。
-- 階數可從 ACF/PACF 的形狀推測，或對候選模型比 AIC；`tsdiag(fit)` 檢查殘差。
+# 自我相關
 
-## 預測
+## acf 與 pacf
 
-```{r,echo=TRUE,out.width="65%"}
-pr <- predict(fit, n.ahead = 24)
-ts.plot(turkey.price.ts, pr$pred,
-        pr$pred + 2 * pr$se, pr$pred - 2 * pr$se,
-        lty = c(1, 2, 3, 3), col = c("black", "red", "grey", "grey"))
+**自我相關函數**度量序列與自身過去（按落後）的相關——是季節性與循環的指紋：
+
+```{r,eval=FALSE,echo=TRUE}
+acf(x, lag.max = NULL, type = c("correlation", "covariance", "partial"),
+    plot = TRUE, na.action, demean = TRUE, ...)
+pacf(x, lag.max, plot, na.action, ...)   # 別名：type = "partial"
 ```
 
-- `predict()` 回傳點預測與標準誤；錐形隨期數張開——對「不確定性會長大」誠實以告。
-- `forecast` 套件能自動選階（`auto.arima()`）並補上指數平滑（`ets()`）。
+```{r,echo=TRUE,fig.height=3.6}
+acf(turkey.price.ts, plot=FALSE)
+```
 
-## 時間序列檢查清單
+- `acf` 預設畫圖；`plot=FALSE` 回傳數值。
+- **`pacf`**（偏自我相關）——*扣除*較短落後影響後、某個落後的相關；有助於辨識 AR 模型的階數。
 
-1. 先畫序列；記下趨勢、季節性、斷點。
-2. 穩定化：變異數隨水準成長就取對數；差分到平稳為止。
-3. 檢視 `acf()`/`pacf()`；提出 ARIMA 階數。
-4. 用 `arima()` 配適；以 AIC 比較候選模型。
-5. 驗證殘差（`tsdiag`、Ljung–Box）——它們該長得像白雜訊。
-6. 預測一定附區間，絕不只給點預測線。
+火雞序列在 12 個月落後呈強正自我相關、6 個月呈負——清楚的年度季節性。
+
+# 時間序列模型
+
+## 自我迴歸模型：ar
+
+時間序列模型用過去值預測未來值。**自我迴歸（AR）**模型把每個值對其前值做迴歸——`ar` 甚至依 AIC 自動選階：
+
+```{r,eval=FALSE,echo=TRUE}
+ar(x, aic = TRUE, order.max = NULL, method = c("yule-walker","burg",
+   "ols","mle","yw"), ...)
+```
+
+```{r,echo=TRUE}
+turkey.price.ts.ar <- ar(turkey.price.ts)
+turkey.price.ts.ar$order      # 依 AIC 選出的階數
+```
+
+- `aic=TRUE` 選階；`order.max` 設上限；`method` 選估計演算法。
+- 配適好的物件會報告選定的階數與 AR 係數。
+
+## 用 predict 預測
+
+對 `ar` 物件呼叫 `predict` 投射未來值，附標準誤：
+
+```{r,echo=TRUE}
+turkey.forecast <- predict(turkey.price.ts.ar, n.ahead=12)
+turkey.forecast$pred
+```
+
+```{r,echo=TRUE,fig.height=3.4}
+ts.plot(turkey.price.ts, turkey.forecast$pred, col=c("black","blue"), lty=c(1,2))
+```
+
+## ARIMA 及其延伸
+
+要更豐富的動態，**`arima`** 配適自我迴歸整合移動平均模型——階數 `(p, d, q)` 分別捕捉 AR 項、差分、MA 項；加上季節項即延伸為 **SARIMA**：
+
+```{r,echo=TRUE}
+turkey.arima <- arima(turkey.price.ts, order=c(1,0,0),
+                      seasonal=list(order=c(1,0,0), period=12))
+turkey.arima
+predict(turkey.arima, n.ahead=6)$pred
+```
+
+輔助工具：`diff`（差分去趨勢）、`Box.test`（檢驗殘差自我相關）、`HoltWinters`（指數平滑）、`StructTS`（結構模型）、`decompose`／`stl`（把序列拆成趨勢、季節、餘項）。
+
+::: {.callout-tip}
+**Box-Jenkins 的節奏。** 畫出序列；看 `acf`／`pacf`；差分到定態；配 `arima`；確認*殘差*像白噪音（`acf`、`Box.test`）；再預測。現代的 `forecast` 與 `fable` 套件把這套大半自動化（`auto.arima`）。
+:::
+
+## 其他主題
+
+書末指向前路：時間序列匯入更廣的分析——含落後預測變數的迴歸、波動度模型（GARCH，套件 `tseries`）、多變量序列（VAR）。`ts` 類別（第七章）是共同基礎；`zoo`、`xts` 等專門類別處理不規則間距與更豐富的日期索引。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

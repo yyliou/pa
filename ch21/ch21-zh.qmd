@@ -38,154 +38,150 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
 # **預測類別**
 
-## 垃圾郵件問題
+## 迴歸的類別表親
 
-分類預測的是**類別**而非數字。貫穿本章的例子：4,601 封郵件、57 個數值特徵、一個標籤——是不是垃圾郵件：
+**分類模型**預測*類別*反應——垃圾信或正常信、患病或健康、屬於哪一類。工具與第二十章相互呼應，但反應變數是因子。本章的貫穿範例是 **Spambase**：4,601 封電子郵件、57 個數值特徵，各標記為垃圾信或否。
 
-```{r,echo=TRUE,cache=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/spambase.rda", temp, mode = "wb")
-load(temp)
-dim(spambase)
-table(spambase$is_spam)
-```
+我們從線性方法（邏輯斯迴歸、判別分析）走到樹與集成（bagging、boosting、隨機森林），再到神經網路與 SVM。
 
-切成訓練集與測試集——衡量分類器唯一誠實的方式：
-
-```{r,echo=TRUE}
-set.seed(11)
-idx   <- sample(nrow(spambase), 3000)
-train <- spambase[idx, ]
-test  <- spambase[-idx, ]
-```
+# 線性分類模型
 
 ## 邏輯斯迴歸
 
-透過 logit 連結建模垃圾郵件的*機率*：
+**二元**反應的主力：`family=binomial` 的 `glm`，建模結果的對數勝算（log-odds）：
 
-$$\log \frac{p}{1-p} = c_0 + c_1 x_1 + \cdots + c_n x_n$$
-
-```{r,echo=TRUE,warning=FALSE}
-spam.glm <- glm(is_spam ~ word_freq_free + word_freq_money +
-                  capital_run_length_total + char_freq_exclamation,
-                family = binomial, data = train)
-coef(summary(spam.glm))
+```{r,eval=FALSE,echo=TRUE}
+spam.model <- glm(is_spam ~ ., data=spambase, family=binomial(link="logit"))
+summary(spam.model)
+predict(spam.model, newdata, type="response")   # 預測機率
 ```
 
-正係數提高垃圾郵件的勝算；`exp(coef)` 給出勝算比。
+- `summary` 報告係數、z 值、p 值，外加**虛無與殘差離差（deviance）**及 **AIC**（不是 R²）。
+- `type="response"` 回傳機率；設門檻（如 0.5）轉成類別標籤。
+- 「Number of Fisher Scoring iterations」報告 IRLS 配適多快收斂。
+- 多類別延伸：`nnet::multinom`（多項對數線性模型），或有序結果用 `MASS::polr`。
 
-## 從機率到決策
+## 線性與彈性判別分析
 
-```{r,echo=TRUE}
-p.hat <- predict(spam.glm, newdata = test, type = "response")
-pred  <- ifelse(p.hat > 0.5, 1, 0)
-tab   <- table(actual = test$is_spam, predicted = pred)
-tab
-sum(diag(tab)) / sum(tab)        # 準確率
-```
+判別分析找出最能*分隔*類別的（線性）預測變數組合——`MASS::lda`（二次邊界用 `qda`）：
 
-**混淆矩陣**把偽陽性（好信被攔）與偽陰性（垃圾信放行）分開——多數應用中兩種錯誤代價不同，門檻值應據此調整。
-
-## 線性判別分析
-
-LDA 把每個類別建模為高斯分布，畫出最佳線性邊界：
-
-```{r,echo=TRUE,message=FALSE}
+```{r,eval=FALSE,echo=TRUE}
 library(MASS)
-spam.lda <- lda(is_spam ~ word_freq_free + word_freq_money +
-                  capital_run_length_total + char_freq_exclamation,
-                data = train)
-mean(predict(spam.lda, test)$class == test$is_spam)
+iris.lda <- lda(Species ~ ., data=iris)
+predict(iris.lda, iris)$class          # 預測類別
 ```
 
-- 類別分得開且接近高斯時很穩定；`qda()` 允許彎曲邊界。
-- 純列聯表資料則由對數線性模型（`loglin()`／`poisson` 家族的 `glm`）扮演對應角色。
+更豐富的變體在套件 `mda`：
 
-## k 最近鄰
+- **`fda`**——*彈性*判別分析（透過迴歸做非線性邊界）；
+- **`mda`**——*混合*判別分析（每類別為高斯混合）。
 
-完全不建模型：每個點由 $k$ 個最近的訓練點投票決定：
+LDA 假設各類別共變異數相等、預測變數大致常態；QDA 鬆綁共變異數相等的假設。
 
-```{r,echo=TRUE,message=FALSE}
-library(class)
-vars <- c("word_freq_free", "word_freq_money",
-          "capital_run_length_total", "char_freq_exclamation")
-pred.knn <- knn(scale(train[, vars]), scale(test[, vars]),
-                cl = train$is_spam, k = 5)
-mean(pred.knn == test$is_spam)
+## 對數線性模型
+
+對列聯表中的計數，**對數線性模型**檢驗類別變數間的關聯——`stats::loglin(table, margin, ...)`（更友善的公式介面是 `MASS::loglm`）：
+
+```{r,eval=FALSE,echo=TRUE}
+library(MASS)
+loglm(~ Sex + Class + Survived, data=Titanic)   # 互相獨立
+loglm(~ Sex*Class + Survived, data=Titanic)     # Sex、Class 有關聯
 ```
 
-::: {.callout-tip}
-**kNN 要先標準化特徵。** 距離法會被單位最大的變數宰制；先 scale 再上。
-:::
+`loglin` 的引數：表格、要配適的邊際向量清單、可選的起始估計、`maxit`（IPF 演算法的迭代上限）。
 
-## 分類樹
+# 樹與集成
 
-樹用一連串是非題切割特徵空間——完全可解釋：
+## 分類樹：rpart
 
-```{r,echo=TRUE,out.width="62%"}
+`rpart` 以**遞迴分割**建樹——反覆挑出最能分隔類別的特徵來切：
+
+```{r,eval=FALSE,echo=TRUE}
 library(rpart)
-spam.tree <- rpart(factor(is_spam) ~ ., data = train)
-plot(spam.tree, uniform = TRUE, margin = 0.05)
-text(spam.tree, cex = 0.7)
-mean(predict(spam.tree, test, type = "class") == test$is_spam)
+spam.tree <- rpart(is_spam ~ ., data=spambase)
+spam.tree                                  # 各分裂的文字描述
+printcp(spam.tree)                         # CP 表：複雜度 vs. 誤差
+plot(spam.tree); text(spam.tree)           # 畫出來
+spam.tree.pruned <- prune(spam.tree, cp=0.01)   # 修剪避免過度配適
 ```
 
-`printcp()` 與 `prune()` 以成本複雜度修剪控制過度配適。
+`printcp`／`plotcp` 的輸出（CP、nsplit、rel error、xerror）指引**修剪**：選使交叉驗證誤差最小的複雜度參數。
 
-## 類神經網路與 SVM
+## Bagging 與 Boosting
 
-```{r,echo=TRUE,message=FALSE,results='hide'}
-library(nnet)
-set.seed(11)
-spam.nn <- nnet(factor(is_spam) ~ ., data = train,
-                size = 4, decay = 0.1, maxit = 200, MaxNWts = 2000)
+單棵樹不穩定；樹的**集成**準得多：
+
+- **Bagging**（拔靴聚合）——`ipred::bagging` 或 `adabag::bagging`：對拔靴樣本配多棵樹、平均／投票。降低變異。
+- **Boosting**——`ada::ada` 或 `adabag::boosting`（AdaBoost）、`gbm::gbm`（梯度提升）：*依序*配樹，每棵聚焦前一棵的錯誤。同時降低偏誤與變異。
+
+```{r,eval=FALSE,echo=TRUE}
+library(adabag)
+spam.bag  <- bagging(is_spam ~ ., data=spambase)
+spam.boost <- boosting(is_spam ~ ., data=spambase)
+predict(spam.boost, newdata)$class
 ```
 
-```{r,echo=TRUE}
-mean(predict(spam.nn, test, type = "class") == test$is_spam)
-```
-
-- `nnet()` 配適單隱藏層網路——經典主力。
-- 支援向量機（`e1071` 套件的 `svm()`）尋找最大邊界，並以核函數處理非線性。
+這些是極易平行的——每棵樹獨立配適（第二十六章）。
 
 ## 隨機森林
 
-數百棵樹建立在拔靴樣本上，投票平均：
+`randomForest` 既對樹做 bagging、*又*在每個分裂隨機限制可考慮的特徵，使樹彼此去相關——通常是最強的現成分類器：
 
-```{r,echo=TRUE,message=FALSE}
+```{r,eval=FALSE,echo=TRUE}
 library(randomForest)
-set.seed(11)
-spam.rf <- randomForest(factor(is_spam) ~ ., data = train, ntree = 200)
-mean(predict(spam.rf, test) == test$is_spam)
+spam.rf <- randomForest(is_spam ~ ., data=spambase, ntree=500)
+spam.rf                                # OOB 誤差估計＋混淆矩陣
+importance(spam.rf)                    # 變數重要性
+predict(spam.rf, newdata)
 ```
 
-```{r,echo=TRUE,out.width="60%"}
-varImpPlot(spam.rf, n.var = 10, main = "Top 10 features")
+關鍵旋鈕：`ntree`（樹數）、`mtry`（每次分裂試的特徵數）。**袋外（OOB）**誤差是免費又誠實的準確度估計——不必另留測試集。
+
+# 神經網路與 SVM
+
+## 神經網路
+
+`nnet::nnet` 配適單一隱藏層的前饋網路：
+
+```{r,eval=FALSE,echo=TRUE}
+library(nnet)
+spam.nn <- nnet(is_spam ~ ., data=spambase, size=10, decay=0.01, maxit=200)
+predict(spam.nn, newdata, type="class")
 ```
 
-通常是開箱即用準確率最高的選擇，還免費附贈特徵重要性排名——代價是可解釋性。
+`size` 設隱藏單元數、`decay` 是權重正則化（抑制過度配適）、`maxit` 限制迭代。（現代深度學習住在 `keras`／`torch`，想法相同、規模放大。）
 
-## 如何挑選分類器
+## 支援向量機
 
-| 需求 | 選擇 |
-|:---|:---|
-| 可解釋的係數／勝算 | 邏輯斯迴歸 |
-| 可解釋的規則 | 分類樹 |
-| 即插即用的最佳準確率 | 隨機森林 |
-| 小資料、平滑邊界 | LDA / kNN |
-| 高維度、重視邊界 | SVM |
+`e1071::svm` 找最大邊際的邊界，以核函數處理非線性：
 
-不論用哪個模型：訓練／測試切分（或交叉驗證）、混淆矩陣與錯誤成本永遠優先 [@hastie2009elements]。第二十二章將視野擴大到機器學習的其他面向。
+```{r,eval=FALSE,echo=TRUE}
+library(e1071)
+spam.svm <- svm(is_spam ~ ., data=spambase,
+                type="C-classification", kernel="radial")
+predict(spam.svm, newdata)
+naiveBayes(is_spam ~ ., data=spambase)   # 同套件還有單純貝氏
+```
+
+`type="C-classification"` 是標準分類器；`kernel` 可為 `"linear"`、`"polynomial"`、`"radial"`（RBF）、`"sigmoid"`。用 `tune` 調 cost 與核參數。同套件的 `naiveBayes` 提供快速的機率式基準。
+
+## k 最近鄰，以及如何選模型
+
+最簡單的分類器——`class::knn(train, test, cl, k)`——以最近 `k` 個鄰居的多數決替每點標記；根本沒有「配適」模型。
+
+::: {.callout-tip}
+**沒有萬用最佳解。** 邏輯斯迴歸好解釋；LDA 要檢查的假設少；樹好讀；**隨機森林與 boosting 通常在純準確度上勝出**；SVM 在高維出色；kNN 是快速基準。用獨立測試集或交叉驗證誠實比較，並以**混淆矩陣**判斷、別只看整體準確度。
+:::
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

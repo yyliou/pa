@@ -38,99 +38,97 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **Learning Without Labels**
+# **Finding Structure**
 
-## Supervised vs. Unsupervised
+## Beyond Supervised Learning
 
-Chapters 20–21 *supervised* learning: a known outcome guided the fit. This chapter is the **unsupervised** side — no labels, only structure to discover:
+Chapters 20–21 were **supervised** — predict a known response. This chapter covers two **unsupervised** tasks, where there is no response to predict, only structure to discover:
 
-- **Market basket analysis**: which items co-occur in transactions?
-- **Clustering**: which observations belong together?
+- **market basket analysis** — which items occur together (association rules);
+- **clustering** — which observations are similar enough to group.
 
-Both are exploration tools: they generate hypotheses rather than test them [@hastie2009elements].
+# Market Basket Analysis
 
-## Market Basket Analysis
+## Association Rules and apriori
 
-The `arules` package mines **association rules** of the form $\{A, B\} \Rightarrow \{C\}$ from transaction data:
+Given a set of **transactions** (a shopping basket, a listening history), association-rule mining finds **items frequently associated** with each other — "customers who bought X also bought Y." The classic algorithm is **a priori**, in package `arules`:
 
-```{r,echo=TRUE,message=FALSE}
+```{r,eval=FALSE,echo=TRUE}
 library(arules)
-data(Groceries)             # built into arules
-summary(Groceries)@lengths[1:5]
+apriori(data, parameter = NULL, appearance = NULL, control = NULL)
 ```
 
-```{r,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
-rules <- apriori(Groceries,
-                 parameter = list(supp = 0.005, conf = 0.5))
+- `data` — a `transactions` object (or a matrix/data frame coercible to one);
+- `parameter` — thresholds, chiefly **support** (how often items appear together) and **confidence** (how reliable the rule is);
+- `appearance` constrains which items may appear on each side; `control` tunes the algorithm.
+
+`arules` is built on S4 classes (a `transactions` class for the data) and the well-engineered apriori C implementation by Christian Borgelt.
+
+## Example: Audioscrobbler
+
+The book mines Audioscrobbler listening data (now part of Last.fm). Load with `read.transactions`, mine, inspect:
+
+```{r,eval=FALSE,echo=TRUE}
+library(arules)
+playlists <- read.transactions("audioscrobbler.csv", format="basket", sep=",")
+rules <- apriori(playlists,
+                 parameter=list(support=0.01, confidence=0.5))
+inspect(head(sort(rules, by="lift"), 10))   # strongest rules by lift
 ```
+
+Resulting rules read like "listeners of Green Day and Nirvana also listen to Red Hot Chili Peppers," each with support, confidence, and **lift** (how much more often than chance). A related, faster algorithm for frequent itemsets is `eclat`.
+
+# Clustering
+
+## Distance Measures
+
+Clustering groups observations so that members of a cluster are more similar to each other than to outsiders — and similarity starts with **distance**. `stats::dist` builds a distance matrix:
+
+```{r,eval=FALSE,echo=TRUE}
+dist(x, method = "euclidean", diag = FALSE, upper = FALSE, p = 2)
+```
+
+`method` may be `"euclidean"`, `"manhattan"`, `"maximum"`, `"canberra"`, `"binary"`, or `"minkowski"` (with parameter `p`). The right metric matters: scale and units shape every cluster that follows, so standardize variables first when they differ in range.
 
 ```{r,echo=TRUE}
-inspect(head(sort(rules, by = "lift"), 3))
+d <- dist(scale(iris[, 1:4]))     # standardize, then Euclidean distance
+as.matrix(d)[1:4, 1:4]
 ```
 
-## Reading a Rule
+## Partitioning: kmeans, pam, clara
 
-Three numbers qualify every rule:
+**Partitioning** algorithms split data into a chosen number `k` of clusters:
 
-::: {.callout-note}
-**Support** — share of transactions containing all the rule's items. **Confidence** — $P(\text{rhs} \mid \text{lhs})$: how often the right side appears when the left side does. **Lift** — confidence divided by the right side's base rate; lift $> 1$ means genuine association, not popularity.
+- **`kmeans(x, centers, ...)`** — fast, minimizes within-cluster sum of squares; sensitive to outliers and starting centers.
+- **`cluster::pam(x, k)`** — partitioning around medoids; uses actual data points as centers, more robust than k-means.
+- **`cluster::clara(x, k)`** — pam scaled to large data via sampling.
+
+```{r,echo=TRUE}
+set.seed(1)
+km <- kmeans(scale(iris[, 1:4]), centers=3)
+table(km$cluster, iris$Species)   # clusters vs. true species
+km$centers[, 1:2]
+```
+
+## Cluster Quality and Hierarchical Clustering
+
+- **`cluster::silhouette`** measures how well each point fits its cluster (−1 to 1); the average silhouette width helps **choose `k`**.
+- **Hierarchical clustering** needs no `k` up front — `hclust(dist_object, method=)` builds a tree (dendrogram), merging closest clusters step by step; `cluster::agnes` (agglomerative) and `diana` (divisive) are richer alternatives.
+
+```{r,echo=TRUE,fig.height=3.6}
+hc <- hclust(dist(scale(iris[, 1:4])), method="ward.D2")
+plot(hc, labels=FALSE, main="Hierarchical clustering of iris")
+rect.hclust(hc, k=3)              # cut into 3 clusters
+```
+
+`method` ranges over `"complete"`, `"average"`, `"single"`, `"ward.D2"`, ... — each defining "distance between clusters" differently, and each producing differently shaped clusters.
+
+::: {.callout-tip}
+**Unsupervised work has no answer key.** There is no accuracy to optimize — only structure to judge. Vary the distance metric, the algorithm, and `k`; validate with silhouette widths, domain knowledge, and whether the clusters are *useful*, not merely whether they exist.
 :::
-
-- High-confidence, low-lift rules ("⇒ whole milk") merely restate that milk is popular — lift is the filter that catches this.
-- Thresholds in `apriori()` trade rule quantity against quality.
-
-## k-Means Clustering
-
-Partition $n$ observations into $k$ compact groups:
-
-```{r,echo=TRUE}
-set.seed(5)
-km <- kmeans(scale(USArrests), centers = 4, nstart = 25)
-table(km$cluster)
-km$centers
-```
-
-```{r,echo=TRUE,out.width="60%"}
-plot(prcomp(scale(USArrests))$x[, 1:2], col = km$cluster, pch = 19)
-```
-
-- Scale the variables first; `nstart = 25` restarts guard against bad local optima.
-- Choose $k$ by the elbow of `km$tot.withinss` across candidate values, or by silhouette width (`cluster` package).
-
-## Hierarchical Clustering
-
-No $k$ needed in advance — build a tree of merges and cut it later:
-
-```{r,echo=TRUE,out.width="68%"}
-d  <- dist(scale(USArrests))
-hc <- hclust(d, method = "ward.D2")
-plot(hc, cex = 0.55, main = "US states by crime profile")
-rect.hclust(hc, k = 4, border = "red")
-```
-
-- `dist()` offers euclidean, manhattan, and more; linkage (`single`, `complete`, `average`, `ward.D2`) changes the tree's character.
-- `cutree(hc, k = 4)` extracts cluster labels for downstream use.
-
-## Other Unsupervised Tools
-
-- **Model-based clustering**: the `mclust` package fits Gaussian mixtures and selects $k$ by BIC.
-- **Density-based**: `dbscan` finds arbitrarily shaped clusters and flags noise points.
-- **Dimension reduction as preprocessing**: PCA (Chapter 16) before clustering often improves both speed and quality.
-- **Self-organizing maps** (`kohonen`) project high-dimensional data onto a 2-D grid.
-
-## Honest Evaluation
-
-Unsupervised results need skepticism most:
-
-1. Stability — do clusters survive resampling or a different seed?
-2. Silhouette / within-cluster variance — are groups actually compact?
-3. Interpretation — can a domain expert name each cluster?
-4. For rules: validate top rules on a held-out period before acting on them.
-
-A clustering that cannot be named, or a rule that disappears next quarter, is noise wearing a costume.
 
 ## Copyright Notice
 

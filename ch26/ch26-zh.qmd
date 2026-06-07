@@ -38,103 +38,97 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **規模化的 R**
+# **用 R 處理大數據**
 
-## 當資料大過一台機器
+## 為什麼用 Hadoop
 
-至此一切都假設資料塞得進一台電腦的記憶體。塞不下時——數 TB 的日誌、數十億筆記錄——運算必須**分散**到一個叢集上。**Hadoop** 是處理這件事的經典開源平台，由兩個部分構成：
+有些問題大到單機處理不來。解法：**把工作拆成片段、平行求解、再合併**——洗衣比喻：十台洗衣機洗十堆，跟一台洗一堆一樣快。許多統計方法天生可平行——bagging、boosting、隨機森林（第二十、二十一章）各自獨立配每棵樹。
 
-- **HDFS**——分散式檔案系統，把資料切成區塊複製到許多機器上；
-- **MapReduce**——一種程式模型，在資料所在之處就近平行處理它。
+書中年代，**Hadoop** 是大數據的事實標準：儲存龐大資料集、跨叢集運算、容忍機器故障。本章示範如何從 R 駕馭 Hadoop。
 
-本章解釋這個模型以及 R 如何接上它；程式碼用以說明概念，而非在本機執行。
-
-## MapReduce 模型
-
-許多運算可以拆成兩階段：
-
-::: {.callout-note}
-**Map** 對每筆記錄獨立套用函式，發出**鍵–值**對。**Reduce** 收集共享同一鍵的所有值並加以合併。中間最難的部分——分配資料、依鍵排序、從故障中復原——交給框架處理。
+::: {.callout-warning}
+**這是 2012 年的快照。** Hadoop 的主導地位已淡去——今日的大數據工作偏向 **Spark**（R 介面 `sparklyr`）、雲端資料倉儲，以及在單機處理超出記憶體資料的 `arrow`／`duckdb`。但下面的*概念*——Map/Reduce、分散式儲存——仍是基石，其中數項至今仍支撐著現代系統。
 :::
 
-經典範例——字數統計——就濃縮了整個想法：把每行 map 成 `(word, 1)` 對；reduce 時把每個字的 1 加總。
+# Hadoop 怎麼運作
 
-## 偽 R 的字數統計
+## Map/Reduce
 
-```{r,eval=FALSE,echo=TRUE}
-# MAP：為一行中每個字發出 (word, 1)
-map_fn <- function(key, line) {
-  words <- strsplit(tolower(line), "\\W+")[[1]]
-  lapply(words, function(w) keyval(w, 1))
-}
+Hadoop 的程式模型把每個工作拆成兩步：
 
-# REDUCE：為每個相異字加總計數
-reduce_fn <- function(word, counts) {
-  keyval(word, sum(unlist(counts)))
-}
-```
+- **Map**——獨立處理每筆紀錄，產出鍵–值對。（剖析每行網頁日誌；產出 `(地點, 1)`。）
+- **Reduce**——蒐集每個鍵的所有值並合併。（按地點加總計數。）
 
-由於每個 map 跑一筆記錄、每個 reduce 跑一個鍵，框架能在叢集上平行執行成千上萬個——程式設計師從不撰寫排程或網路程式碼。
+因為每個 map 獨立執行，工作能散到你擁有的所有機器上。書中的經典範例：**網頁流量報表**、**按地點的流量**、**預測使用者行為**——全都能表達成先 map 後 reduce。
+
+## 兩大支柱
+
+Map/Reduce 之外，Hadoop 還提供：
+
+- **分散式資料儲存——HDFS**（Hadoop Distributed File System）：把檔案切成區塊、跨機器複製以容錯，並呈現為單一邏輯檔案系統。
+- **叢集管理**——跨伺服器排程工作、重啟失敗的任務、把運算搬到資料所在處。
+
+框架本身以 Java 寫成，但你不必寫 Java——R 能驅動它。
+
+# 從 R 駕馭 Hadoop
+
+## 三條路
+
+書中介紹三種從 R 使用 Hadoop 的方式：
+
+- **RHadoop**——最成熟、整合最好的 R 套件組；
+- **Segue**——在 Amazon Elastic MapReduce 上跑 R 的 `lapply` 式工作；
+- **Hadoop streaming**——透過標準輸入輸出，把任意 R 腳本當 mapper／reducer 餵給 Hadoop。
 
 ## RHadoop
 
-**RHadoop** 是一組套件，讓你用 R 而非 Java 撰寫 MapReduce 工作：
+RHadoop 是三個套件：
 
-| 套件 | 角色 |
-|:---|:---|
-| `rhdfs` | 從 R 讀寫 HDFS |
-| `rmr2` | 以 R 撰寫 MapReduce 工作（`mapreduce()`） |
-| `rhbase` | 存取 HBase 資料庫 |
-| `plyrmr` | 在 Hadoop 上做 dplyr 風格的資料操作 |
+- **`rmr`**——核心：*用 R* 寫 Map/Reduce 工作、進出資料；
+- **`rhdfs`**——從 R 管理 HDFS 上的檔案（多數一般檔案操作）；
+- **`rhbase`**——介接 Hadoop 的資料庫 HBase。
+
+先設定、再下工作（`rmr` 語法，以未執行形式呈現——它需要 Hadoop 叢集）：
 
 ```{r,eval=FALSE,echo=TRUE}
 library(rmr2)
-wordcount <- mapreduce(
-  input    = "hdfs://input/books",
-  map      = map_fn,
-  reduce   = reduce_fn)
-from.dfs(wordcount)        # 把（很小的）結果拉回 R
+# 按性別計數死亡：一個 map 步、一個 reduce 步，皆為 R 函式
+result <- mapreduce(
+  input = "deaths.csv",
+  map    = function(k, v) keyval(v$sex, 1),
+  reduce = function(sex, counts) keyval(sex, sum(counts)))
+from.dfs(result)                 # 把結果拉回 R
 ```
 
-## 模式：先化簡，再拉回
+書中的四節點範例統計 2009 年美國各性別死亡數——一個跨叢集平行執行的工作。`to.dfs`／`from.dfs` 在 R 與 HDFS 間搬資料。
 
-跨大資料工具反覆出現的策略：
+## 雲端上的 Hadoop
 
-1. **把運算推向資料**——在區塊所在之處跑 map/reduce，避免透過網路搬動數 TB 資料。
-2. **在叢集上縮小**——彙總、過濾、摘要把大資料壓成小結果。
-3. **把摘要拉進 R**——資料一小，第十三～二十三章的一切便照常適用。
+不必自己擁有叢集——用租的。書中走過 **Amazon Elastic MapReduce（EMR）**：啟動叢集、用範本設定、跑工作、拆掉——只付用掉的分鐘數。**Segue** 把這套包起來，讓 R 使用者幾乎不必懂 Hadoop 就能在 EMR 上跑平行 `lapply`。
 
-`from.dfs()` 與 `to.dfs()` 在 R 記憶體與 HDFS 間搬資料；你只帶回塞得下的部分。
+```{r,eval=FALSE,echo=TRUE}
+# Segue 風格：在租來的叢集上做平行 lapply（概念示意）
+library(segue)
+cluster <- createCluster(numInstances=4)
+results <- emrlapply(cluster, my.list, my.function)
+stopCluster(cluster)
+```
 
-## 現代地景
+## 把它放進脈絡
 
-Hadoop MapReduce 是先驅；如今的生態系已往前走，但*原則*不變：
+::: {.callout-tip}
+**歷久彌新的教訓。** Hadoop 這個產品在退場，但它的想法無所不在：(1) **切分**資料與運算；(2) 把工作表達成 **map**（獨立、平行）後 **reduce**（合併）；(3) **把運算搬向資料**，而非反過來；(4) 在雲端**租用**彈性算力。現代 R 透過 `sparklyr`、`arrow`、`duckdb`，以及平行化的 `future`／`furrr` 觸及大數據——但你會在它們之中都認出 Map/Reduce。
+:::
 
-- **Apache Spark** 搭配 `sparklyr` 套件——記憶體內分散式運算，遠快於以磁碟為基礎的 MapReduce，附 `dplyr` 前端與內建機器學習。
-- **`arrow` / `duckdb`**——在單機上有效率地查詢大過記憶體的資料，常常根本免去叢集的需要。
-- **雲端資料倉儲**（BigQuery、Snowflake）透過 DBI 從 R 查詢——把 SQL 推給倉儲，取回摘要。
-
-決策法則與第十一章相同：在資料所在之處做粗重工作，只帶回答案。
-
-## 課程總結
-
-二十六章一路從 `1 + 1` 走到分散式運算：
-
-- **第一、二部分**——安裝 R 與語言結構；
-- **第三部分**——把真實資料讀進來並清理；
-- **第四部分**——三套繪圖系統；
-- **第五部分**——統計工具箱，從 t 檢定到隨機森林到 ARIMA；
-- **第六部分**——效能與規模。
-
-同一套語言貫穿全程。從這裡開始，深度來自練習與後續的專題課程——而這些講義裡的每一份資料集，只要 `download.file()` 加 `load()` 兩行就能隨時拿來實驗。
+本章為《R in a Nutshell》收尾——從安裝 R（第一章）到讓它跨叢集執行。貫穿全書的主軸：同一種語言、同一套物件、同一批函式，從一個主控台一路擴展到數千台機器。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

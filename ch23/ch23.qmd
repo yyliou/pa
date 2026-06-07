@@ -38,99 +38,95 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **Data with a Clock**
+# **Data Over Time**
 
-## Time Series Objects
+## Why Time Series Are Different
 
-Observations ordered in time violate the independence assumed everywhere else — they need their own tools [@shumway2011time]. The course data sets include two monthly price series:
-
-```{r,echo=TRUE,cache=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
-load(temp)
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/ham.price.ts.rda", temp, mode = "wb")
-load(temp)
-turkey.price.ts
-```
-
-```{r,echo=TRUE,out.width="62%"}
-plot(turkey.price.ts, ylab = "US cents/lb")
-```
-
-## Autocorrelation Functions
-
-How strongly does a series correlate *with its own past*?
-
-```{r,echo=TRUE,out.width="62%"}
-acf(turkey.price.ts)
-```
-
-- Spikes at lag 12 (and 24): annual seasonality — November discounts echo every year.
-- `pacf()` shows *partial* autocorrelations — the direct effect of lag $k$ after removing shorter lags — the standard tool for choosing AR order.
-
-```{r,echo=TRUE,out.width="62%"}
-pacf(turkey.price.ts)
-```
-
-## Cross-Correlation
-
-Do two series move together, possibly at a delay?
-
-```{r,echo=TRUE,out.width="62%"}
-ccf(turkey.price.ts, ham.price.ts, main = "Turkey vs. ham prices")
-```
-
-`ccf()` correlates one series with lagged copies of another — peaks away from lag 0 suggest one series leads the other.
-
-## Decomposition and Smoothing
-
-Split a series into trend + seasonal + remainder:
-
-```{r,echo=TRUE,out.width="65%"}
-plot(stl(turkey.price.ts, s.window = "periodic"))
-```
-
-- `stl()` uses loess smoothing; `decompose()` is the moving-average classic.
-- `filter()` computes moving averages directly; `diff()` removes trend by differencing — the "I" in ARIMA.
-
-## ARIMA Models
-
-The ARMA family models a (differenced) series as autoregression plus moving-average noise:
-
-$$x_t = \phi_1 x_{t-1} + \cdots + \phi_p x_{t-p} + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}$$
+Time series carry **long-term trends** and **periodic patterns** that ordinary summary statistics miss. Analyzing them needs tools that respect *order* and *lag*. We revisit the turkey-price series from Chapter 7:
 
 ```{r,echo=TRUE}
-fit <- arima(turkey.price.ts, order = c(1, 0, 0),
-             seasonal = list(order = c(1, 0, 0), period = 12))
-fit
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
+              temp, mode = "wb")
+load(temp)
 ```
 
-- `order = c(p, d, q)`: AR order, differencing, MA order; `seasonal=` adds the seasonal counterpart.
-- Choose orders from ACF/PACF shapes, or by AIC comparison across candidates; `tsdiag(fit)` checks the residuals.
+# Autocorrelation
 
-## Forecasting
+## acf and pacf
 
-```{r,echo=TRUE,out.width="65%"}
-pr <- predict(fit, n.ahead = 24)
-ts.plot(turkey.price.ts, pr$pred,
-        pr$pred + 2 * pr$se, pr$pred - 2 * pr$se,
-        lty = c(1, 2, 3, 3), col = c("black", "red", "grey", "grey"))
+The **autocorrelation function** measures how correlated a series is with its own past, by lag — the signature of seasonality and cycles:
+
+```{r,eval=FALSE,echo=TRUE}
+acf(x, lag.max = NULL, type = c("correlation", "covariance", "partial"),
+    plot = TRUE, na.action, demean = TRUE, ...)
+pacf(x, lag.max, plot, na.action, ...)   # alias: type = "partial"
 ```
 
-- `predict()` returns point forecasts and standard errors; the cone widens — honesty about growing uncertainty.
-- The `forecast` package automates order selection (`auto.arima()`) and adds exponential smoothing (`ets()`).
+```{r,echo=TRUE,fig.height=3.6}
+acf(turkey.price.ts, plot=FALSE)
+```
 
-## A Time Series Checklist
+- `acf` plots by default; `plot=FALSE` returns the numbers.
+- **`pacf`** (partial autocorrelation) — correlation at a lag *after removing* the influence of shorter lags; it helps identify the order of an AR model.
 
-1. Plot the series; note trend, seasonality, breaks.
-2. Stabilize: log-transform if variance grows; difference until stationary.
-3. Inspect `acf()`/`pacf()`; propose ARIMA orders.
-4. Fit `arima()`; compare candidates by AIC.
-5. Validate residuals (`tsdiag`, Ljung–Box) — they should look like white noise.
-6. Forecast with intervals, never just the point line.
+The turkey series shows strong positive autocorrelation at 12-month lags, negative at 6 — clear annual seasonality.
+
+# Time Series Models
+
+## Autoregressive Models: ar
+
+Time-series models predict future values from past ones. The **autoregressive (AR)** model regresses each value on its predecessors — `ar` even picks the order automatically by AIC:
+
+```{r,eval=FALSE,echo=TRUE}
+ar(x, aic = TRUE, order.max = NULL, method = c("yule-walker","burg",
+   "ols","mle","yw"), ...)
+```
+
+```{r,echo=TRUE}
+turkey.price.ts.ar <- ar(turkey.price.ts)
+turkey.price.ts.ar$order      # order chosen by AIC
+```
+
+- `aic=TRUE` selects the order; `order.max` caps it; `method` chooses the estimation algorithm.
+- The fitted object reports the chosen order and the AR coefficients.
+
+## Forecasting with predict
+
+`predict` on an `ar` object projects future values, with standard errors:
+
+```{r,echo=TRUE}
+turkey.forecast <- predict(turkey.price.ts.ar, n.ahead=12)
+turkey.forecast$pred
+```
+
+```{r,echo=TRUE,fig.height=3.4}
+ts.plot(turkey.price.ts, turkey.forecast$pred, col=c("black","blue"), lty=c(1,2))
+```
+
+## ARIMA and Beyond
+
+For richer dynamics, **`arima`** fits autoregressive integrated moving-average models — the order `(p, d, q)` capturing AR terms, differencing, and MA terms; seasonal terms extend it to **SARIMA**:
+
+```{r,echo=TRUE}
+turkey.arima <- arima(turkey.price.ts, order=c(1,0,0),
+                      seasonal=list(order=c(1,0,0), period=12))
+turkey.arima
+predict(turkey.arima, n.ahead=6)$pred
+```
+
+Supporting tools: `diff` (differencing to remove trend), `Box.test` (testing residual autocorrelation), `HoltWinters` (exponential smoothing), `StructTS` (structural models), and `decompose`/`stl` (splitting a series into trend, seasonal, and remainder).
+
+::: {.callout-tip}
+**The Box-Jenkins rhythm.** Plot the series; check `acf`/`pacf`; difference until stationary; fit an `arima`; check that the *residuals* look like white noise (`acf`, `Box.test`); then forecast. The modern `forecast` and `fable` packages automate much of this (`auto.arima`).
+:::
+
+## Additional Topics
+
+The book closes by pointing onward: time series feed into broader analyses — regression with lagged predictors, volatility models (GARCH, package `tseries`), and multivariate series (VAR). The `ts` class (Chapter 7) is the common substrate; specialized classes like `zoo` and `xts` handle irregular spacing and richer date indexing.
 
 ## Copyright Notice
 
