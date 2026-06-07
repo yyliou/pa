@@ -236,6 +236,8 @@ one <- 1; two <- 2
 one == two   # compares
 ```
 
+---
+
 - **`->` assigns to the right** — occasionally handy when you typed a long expression and only then remembered to save it:
 
 ```{r,echo=TRUE}
@@ -533,6 +535,8 @@ names(cars)
 summary(cars)
 ```
 
+---
+
 Plot the relationship, with labeled axes:
 
 ```{r,echo=TRUE}
@@ -575,6 +579,8 @@ The book's author found the defaults hard to read (labels too big, shared scales
 dotplot(Amount ~ Year | Food, data = consumption,
         aspect = "xy", scales = list(relation = "sliced", cex = .4))
 ```
+
+---
 
 - `aspect` adjusts panel aspect ratios so changes bank toward 45° (easiest to perceive);
 - `scales` controls axis drawing — `"sliced"` gives each panel its own slice of the range.
@@ -630,4 +636,3 @@ vignette(all = TRUE)    # vignettes in all installed packages
 - **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
 
 - **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.
-               

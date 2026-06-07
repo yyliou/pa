@@ -83,14 +83,14 @@ All software is free and open-source: **R** at <https://cran.r-project.org>, **R
 
 4. Week 7: Part IV — Data visualization with base graphics (Ch. 13).
 
-5. Weeks 8–9: Mid-term presentations.
+5. Weeks 8–9: Mid-term exam.
 
 6. Week 10: Part IV — Lattice graphics and `ggplot2` (Ch. 14–15).
 
 7. Weeks 11–14: Part V — Statistics with R: analyzing data, probability distributions, statistical tests, power tests, regression, classification, machine learning, and time series (Ch. 16–23).
 
-8. Weeks 15–16: Final presentations.
+8. Weeks 15–16: Final exam.
 
 9. Weeks 17–18: Flexible learning weeks; Part VI (Ch. 24–26) provided as self-study material.
 
-*Syllabus is subject to change. Any updates will be announced on the
+*Syllabus is subject to change. Any updates will be announced on the course website.*
