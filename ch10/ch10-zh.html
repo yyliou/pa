@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,20 +211,203 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="有教養的物件" class="title-slide slide level1 center">
-<h1><strong>有教養的物件</strong></h1>
+<section id="兩套物件系統" class="title-slide slide level1 center">
+<h1><strong>兩套物件系統</strong></h1>
 
 </section>
-<section id="兩套系統一個概念" class="slide level2">
-<h2>兩套系統，一個概念</h2>
-<p>R 本質上是函數式語言，但內建了物件導向機制——而且有兩套：</p>
+<section id="支援-oop-的函數式語言" class="slide level2">
+<h2>支援 OOP 的函數式語言</h2>
+<p>R 骨子裡是<strong>函數式</strong>語言——寫函數式程式完全是好做法。但 R 也支援<strong>物件導向程式設計（OOP）</strong>：Java、C#、Ruby、C++ 的主流範式。許多 R 套件以 R 物件打造，包括核心的 <code>stats</code>、<code>lattice</code> 與 <code>ggplot2</code>。OOP 在表示複雜事物（統計模型、圖表）時特別好用。</p>
+<p>R 有兩套機制並存，皆承自 S：</p>
 <ul>
-<li><strong>S3</strong>：非正式、輕量、無所不在。類別只是一個 <code>class</code> 屬性；分派靠命名慣例。</li>
-<li><strong>S4</strong>：正式類別，具備宣告的槽位（slots）、有效性檢查與註冊式方法 <span class="citation" data-cites="chambers2008software">(Chambers 2008)</span>。</li>
+<li><strong>S3</strong>（約 1990）：用 class 屬性實現單引數方法。經典建模軟體用 S3，所以它無所不在。</li>
+<li><strong>S4</strong>：正式的類別與方法——多重分派、抽象型別、精緻的繼承。許多較新套件採用，Bioconductor 用得尤其多。</li>
 </ul>
+<p>書中建議：<em>新的</em>抽象用 <strong>S4</strong> 打造；<strong>S3</strong> 也得學，因為你必須閱讀並擴充大量使用它的既有程式碼。</p>
+</section>
+<section id="以時間序列認識關鍵概念" class="slide level2">
+<h2>以時間序列認識關鍵概念</h2>
+<p>時間序列——等距時間間隔的測量值，有起點、終點、頻率——讓每個 OOP 概念都變具體：</p>
+<ul>
+<li><strong>類別（class）</strong>是正式定義；每個實際的時間序列是一個<strong>實例（instance）</strong>；操作該類別的函式是<strong>方法（method）</strong>；</li>
+<li>把儲存細節（資料框？向量？文字？）藏在方法之後，叫<strong>封裝（encapsulation）</strong>；</li>
+<li>體重紀錄類別<em>重用</em>時間序列的機制、只增添不同之處，這展示了<strong>繼承（inheritance）</strong>——時間序列是<strong>父類別</strong>、體重紀錄是<strong>子類別</strong>；</li>
+<li>同一個名字（<code>period</code>）對不同類別各自做對的事，叫<strong>多型（polymorphism）</strong>；</li>
+<li>由多個成分類別組成新類別叫<strong>組合（composition）</strong>——繼承一個以上的類別叫<strong>多重繼承</strong>，R 是允許的。</li>
+</ul>
+<p>（沒錯，R 早有時間序列類別——<code>stats</code> 裡的 S3 類別 <code>ts</code>。這是故意的：我們先用 S4 重蓋一遍，再解剖 S3 原版。）</p>
+</section></section>
+<section>
+<section id="s4-實作範例" class="title-slide slide level1 center">
+<h1>S4 實作範例</h1>
+
+</section>
+<section id="setclass定義-timeseries" class="slide level2">
+<h2>setClass：定義 TimeSeries</h2>
+<p>槽位（slot）是物件存放資訊的地方。我們用三個槽位表示時間序列——資料、起始時間、結束時間（單位、頻率、週期都能推導）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb1-2"><a href=""></a>  <span class="fu">representation</span>(</span>
+<span id="cb1-3"><a href=""></a>    <span class="at">data=</span><span class="st">"numeric"</span>,</span>
+<span id="cb1-4"><a href=""></a>    <span class="at">start=</span><span class="st">"POSIXct"</span>,</span>
+<span id="cb1-5"><a href=""></a>    <span class="at">end=</span><span class="st">"POSIXct"</span></span>
+<span id="cb1-6"><a href=""></a>  )</span>
+<span id="cb1-7"><a href=""></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>representation</code> 說明每個槽位所裝物件的類別。</p>
+</section>
+<section id="new建立實例" class="slide level2">
+<h2>new：建立實例</h2>
+<p><code>new</code> 是通用建構子：第一個引數是類別名，其餘填入槽位。S4 預設的列印方法逐一顯示槽位：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>my.TimeSeries <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb2-2"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>),</span>
+<span id="cb2-3"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb2-4"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb2-5"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:05:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb2-6"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>))</span>
+<span id="cb2-7"><a href=""></a>my.TimeSeries</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class "TimeSeries"
+Slot "data":
+[1] 1 2 3 4 5 6
+
+Slot "start":
+[1] "2009-07-01 GMT"
+
+Slot "end":
+[1] "2009-07-01 00:05:00 GMT"</code></pre>
+</div>
+</div>
+</section>
+<section id="setvalidity拒絕壞物件" class="slide level2">
+<h2>setValidity：拒絕壞物件</h2>
+<p>不是所有槽位值都合理：<code>end</code> 不能早於 <code>start</code>，兩者長度都得是 1。用 <code>setValidity</code> 註冊驗證函式、用 <code>validObject</code> 檢查：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">setValidity</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb4-2"><a href=""></a>  <span class="cf">function</span>(object) {</span>
+<span id="cb4-3"><a href=""></a>    object<span class="sc">@</span>start <span class="sc">&lt;=</span> object<span class="sc">@</span>end <span class="sc">&amp;&amp;</span></span>
+<span id="cb4-4"><a href=""></a>    <span class="fu">length</span>(object<span class="sc">@</span>start) <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span></span>
+<span id="cb4-5"><a href=""></a>    <span class="fu">length</span>(object<span class="sc">@</span>end) <span class="sc">==</span> <span class="dv">1</span></span>
+<span id="cb4-6"><a href=""></a>  }</span>
+<span id="cb4-7"><a href=""></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Class "TimeSeries" [in ".GlobalEnv"]
+
+Slots:
+                              
+Name:     data   start     end
+Class: numeric POSIXct POSIXct</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">validObject</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>（也可以在 <code>setClass</code> 時就指定驗證函式——見其完整定義。）</p>
+</section>
+<section id="驗證的實際效果" class="slide level2">
+<h2>驗證的實際效果</h2>
+<p>從此 <code>new</code> 會檢查每個候選物件、拒絕不合格者：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>good.TimeSeries <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb8-2"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>),</span>
+<span id="cb8-3"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:06:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb8-4"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb8-5"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:11:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb8-6"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>))</span>
+<span id="cb8-7"><a href=""></a>bad.TimeSeries <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb8-8"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>),</span>
+<span id="cb8-9"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:06:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb8-10"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb8-11"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/1999 0:11:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb8-12"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>))   <span class="co"># 還沒開始就結束了！</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `validObject()`:
+! invalid class "TimeSeries" object: FALSE</code></pre>
+</div>
+</div>
+</section>
+<section id="第一個方法period" class="slide level2">
+<h2>第一個方法：period</h2>
+<p>從槽位計算週期的普通函式：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>period.TimeSeries <span class="ot">&lt;-</span> <span class="cf">function</span>(object) {</span>
+<span id="cb10-2"><a href=""></a>  <span class="cf">if</span> (<span class="fu">length</span>(object<span class="sc">@</span>data) <span class="sc">&gt;</span> <span class="dv">1</span>) {</span>
+<span id="cb10-3"><a href=""></a>    (object<span class="sc">@</span>end <span class="sc">-</span> object<span class="sc">@</span>start) <span class="sc">/</span> (<span class="fu">length</span>(object<span class="sc">@</span>data) <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb10-4"><a href=""></a>  } <span class="cf">else</span> {</span>
+<span id="cb10-5"><a href=""></a>    <span class="cn">Inf</span></span>
+<span id="cb10-6"><a href=""></a>  }</span>
+<span id="cb10-7"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>@</code> 運算子直探槽位——那是實作者的視角。使用者該得到更友善的動詞；泛型函式登場。</p>
+</section>
+<section id="setgenericseries" class="slide level2">
+<h2>setGeneric：series</h2>
+<p>想從<em>任何</em>合適的物件抽出資料序列——多型——先定義函式、再升格為<strong>泛型</strong>；舊的函式主體成為預設方法：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>series <span class="ot">&lt;-</span> <span class="cf">function</span>(object) { object<span class="sc">@</span>data }</span>
+<span id="cb11-2"><a href=""></a><span class="fu">setGeneric</span>(<span class="st">"series"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "series"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">series</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 3 4 5 6</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">showMethods</span>(<span class="st">"series"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Function: series (package .GlobalEnv)
+object="ANY"
+object="TimeSeries"
+    (inherited from: object="ANY")</code></pre>
+</div>
+</div>
+<p>（OOP 術語稱此為函式的<em>多載（overloading）</em>。）</p>
+</section>
+<section id="setmethod替-timeseries-註冊-period" class="slide level2">
+<h2>setMethod：替 TimeSeries 註冊 period</h2>
+<p>建立泛型 <code>period</code>，再把 <code>period.TimeSeries</code> 註冊為 <code>TimeSeries</code> 簽名的方法：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>period <span class="ot">&lt;-</span> <span class="cf">function</span>(object) { object<span class="sc">@</span>period }</span>
+<span id="cb17-2"><a href=""></a><span class="fu">setGeneric</span>(<span class="st">"period"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "period"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">setMethod</span>(period, <span class="at">signature=</span><span class="fu">c</span>(<span class="st">"TimeSeries"</span>), <span class="at">definition=</span>period.TimeSeries)</span>
+<span id="cb19-2"><a href=""></a><span class="fu">period</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of 1 mins</code></pre>
+</div>
+</div>
+<p>呼叫泛型，R 依類別分派到正確的定義。</p>
+</section>
+<section id="為既有泛型寫方法連運算子也行" class="slide level2">
+<h2>為既有泛型寫方法——連運算子也行</h2>
+<p>你可以替既存的泛型（如 <code>summary</code>）掛上方法——甚至<strong>運算子</strong>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">setMethod</span>(<span class="st">"summary"</span>, <span class="at">signature=</span><span class="st">"TimeSeries"</span>,</span>
+<span id="cb21-2"><a href=""></a>  <span class="at">definition=</span><span class="cf">function</span>(object, ...) {</span>
+<span id="cb21-3"><a href=""></a>    <span class="fu">print</span>(<span class="fu">paste</span>(object<span class="sc">@</span>start, <span class="st">" to "</span>, object<span class="sc">@</span>end, <span class="at">sep=</span><span class="st">""</span>, <span class="at">collapse=</span><span class="st">""</span>))</span>
+<span id="cb21-4"><a href=""></a>    <span class="fu">print</span>(<span class="fu">paste</span>(object<span class="sc">@</span>data, <span class="at">sep=</span><span class="st">""</span>, <span class="at">collapse=</span><span class="st">","</span>))</span>
+<span id="cb21-5"><a href=""></a>  }</span>
+<span id="cb21-6"><a href=""></a>)</span>
+<span id="cb21-7"><a href=""></a><span class="fu">summary</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2009-07-01 to 2009-07-01 00:05:00"
+[1] "1,2,3,4,5,6"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">setMethod</span>(<span class="st">"["</span>, <span class="at">signature=</span><span class="fu">c</span>(<span class="st">"TimeSeries"</span>),</span>
+<span id="cb23-2"><a href=""></a>  <span class="at">definition=</span><span class="cf">function</span>(x, i, j, ..., drop) { x<span class="sc">@</span>data[i] }</span>
+<span id="cb23-3"><a href=""></a>)</span>
+<span id="cb23-4"><a href=""></a>my.TimeSeries[<span class="dv">3</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+</div>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -234,194 +417,427 @@
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>核心概念。</strong> <strong>類別</strong>（class）描述一種物件；物件是其類別的<strong>實例</strong>（instance）。<strong>泛型函式</strong>（如 <code>print</code>、<code>summary</code>）透過<strong>分派</strong>（dispatch）到類別專屬的<strong>方法</strong>（method）決定行為。<strong>繼承</strong>（inheritance）讓一個類別擴充另一個。</p>
+<p>這招只對<em>部分</em>內建函式有效——<code>print</code> 就不能這樣重定義。可重定義的泛型清單見 <code>?S4groupGeneric</code>；原因在後面的 S3 一節說明。</p>
 </div>
 </div>
 </div>
-<p>S3 撐起了 base R 的大半江山；S4 撐起 Bioconductor 與講究嚴謹的程式。我們先看 S4，再看 S3。</p>
 </section>
-<section id="貫穿全章的例子" class="slide level2">
-<h2>貫穿全章的例子</h2>
-<p>假設要追蹤多位使用者的體重變化。自然的設計是：</p>
-<ul>
-<li>一個 <code>TimeSeries</code> 類別，存放數值與起迄時間戳；</li>
-<li>一個 <code>WeightHistory</code> 類別，<strong>擴充</strong> <code>TimeSeries</code> 並加上人名；</li>
-<li>各類別實作泛型操作——<code>period()</code>、<code>series()</code>。</li>
-</ul>
-<p>這個例子會把本章所有 S4 功能演練一遍。</p>
-</section>
-<section id="定義-s4-類別" class="slide level2">
-<h2>定義 S4 類別</h2>
-<p><code>setClass()</code> 宣告類別名稱與<strong>槽位</strong>（具型別的欄位）：</p>
+<section id="繼承weighthistory" class="slide level2">
+<h2>繼承：WeightHistory</h2>
+<p>體重紀錄＝時間序列＋姓名與身高。<code>contains</code> 宣告父類別；新類別只加自己的額外槽位：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">library</span>(methods)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">setClass</span>(<span class="st">"TimeSeries"</span>,</span>
-<span id="cb1-3"><a href=""></a>  <span class="fu">representation</span>(<span class="at">data =</span> <span class="st">"numeric"</span>, <span class="at">start =</span> <span class="st">"POSIXct"</span>, <span class="at">end =</span> <span class="st">"POSIXct"</span>))</span>
-<span id="cb1-4"><a href=""></a></span>
-<span id="cb1-5"><a href=""></a>my.ts <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"TimeSeries"</span>,</span>
-<span id="cb1-6"><a href=""></a>  <span class="at">data  =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">5</span>),</span>
-<span id="cb1-7"><a href=""></a>  <span class="at">start =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-09-22 09:00:00"</span>),</span>
-<span id="cb1-8"><a href=""></a>  <span class="at">end   =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-09-22 09:04:00"</span>))</span>
-<span id="cb1-9"><a href=""></a>my.ts<span class="sc">@</span>data            <span class="co"># 槽位以 @ 存取</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 2 1 4 5</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"WeightHistory"</span>,</span>
+<span id="cb25-2"><a href=""></a>  <span class="fu">representation</span>(<span class="at">height =</span> <span class="st">"numeric"</span>, <span class="at">name =</span> <span class="st">"character"</span>),</span>
+<span id="cb25-3"><a href=""></a>  <span class="at">contains =</span> <span class="st">"TimeSeries"</span>)</span>
+<span id="cb25-4"><a href=""></a>john.doe <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"WeightHistory"</span>,</span>
+<span id="cb25-5"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">170</span>, <span class="dv">169</span>, <span class="dv">171</span>, <span class="dv">168</span>, <span class="dv">170</span>, <span class="dv">169</span>),</span>
+<span id="cb25-6"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"02/14/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb25-7"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb25-8"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"03/28/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb25-9"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb25-10"><a href=""></a>  <span class="at">height=</span><span class="dv">72</span>, <span class="at">name=</span><span class="st">"John Doe"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<p><code>new()</code> 建構實例；列印 S4 物件會列出槽位。</p>
+<p>R 會自動驗證內嵌的 TimeSeries（你可以自己試試塞個壞的）。</p>
 </section>
-<section id="有效性檢查" class="slide level2">
-<h2>有效性檢查</h2>
-<p>有效性函式能在建構當下擋掉不合法的物件：</p>
+<section id="多重繼承person-timeseries" class="slide level2">
+<h2>多重繼承：Person ＋ TimeSeries</h2>
+<p>更乾淨的組合：先定義 <code>Person</code> 類別，再<strong>同時</strong>繼承兩者：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">setValidity</span>(<span class="st">"TimeSeries"</span>, <span class="cf">function</span>(object) {</span>
-<span id="cb3-2"><a href=""></a>  <span class="cf">if</span> (object<span class="sc">@</span>start <span class="sc">&lt;=</span> object<span class="sc">@</span>end) <span class="cn">TRUE</span></span>
-<span id="cb3-3"><a href=""></a>  <span class="cf">else</span> <span class="st">"start must precede end"</span></span>
-<span id="cb3-4"><a href=""></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"Person"</span>,</span>
+<span id="cb26-2"><a href=""></a>  <span class="fu">representation</span>(<span class="at">height =</span> <span class="st">"numeric"</span>, <span class="at">name =</span> <span class="st">"character"</span>))</span>
+<span id="cb26-3"><a href=""></a><span class="fu">setClass</span>(<span class="st">"AltWeightHistory"</span>,</span>
+<span id="cb26-4"><a href=""></a>  <span class="at">contains =</span> <span class="fu">c</span>(<span class="st">"TimeSeries"</span>, <span class="st">"Person"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>行為一模一樣、設計略勝一籌——而且 <code>AltWeightHistory</code> 同時繼承兩個父類別的方法。</p>
+</section>
+<section id="虛擬類別setclassunion" class="slide level2">
+<h2>虛擬類別：setClassUnion</h2>
+<p>加一個 <code>Cat</code> 類別——貓也有名字。想寫一個同時涵蓋人<em>與</em>貓的 <code>is.fluffy</code> 方法，就用 <code>setClassUnion</code> 在兩者之上建立<strong>虛擬類別</strong>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"Cat"</span>,</span>
+<span id="cb27-2"><a href=""></a>  <span class="fu">representation</span>(<span class="at">breed =</span> <span class="st">"character"</span>, <span class="at">name =</span> <span class="st">"character"</span>))</span>
+<span id="cb27-3"><a href=""></a><span class="fu">setClassUnion</span>(<span class="st">"NamedThing"</span>, <span class="fu">c</span>(<span class="st">"Person"</span>, <span class="st">"Cat"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>方法可以鎖定 <code>NamedThing</code>；但不能從它建立物件（表示法有歧義）。若在子類別（如 <code>Person</code>）另外定義 <code>is.fluffy</code>，會覆寫父類別的版本。附帶好處——類別成員資格可以檢驗：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a>jane.doe <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"AltWeightHistory"</span>,</span>
+<span id="cb28-2"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">130</span>, <span class="dv">129</span>, <span class="dv">131</span>, <span class="dv">128</span>, <span class="dv">130</span>, <span class="dv">129</span>),</span>
+<span id="cb28-3"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"02/14/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb28-4"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb28-5"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"03/28/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb28-6"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb28-7"><a href=""></a>  <span class="at">height=</span><span class="dv">67</span>, <span class="at">name=</span><span class="st">"Jane Doe"</span>)</span>
+<span id="cb28-8"><a href=""></a><span class="fu">is</span>(jane.doe, <span class="st">"NamedThing"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Class "TimeSeries" [in ".GlobalEnv"]
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a><span class="fu">is</span>(john.doe, <span class="st">"TimeSeries"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="深入-s4" class="title-slide slide level1 center">
+<h1>深入 S4</h1>
 
-Slots:
-                              
-Name:     data   start     end
-Class: numeric POSIXct POSIXct</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">new</span>(<span class="st">"TimeSeries"</span>, <span class="at">data =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">0</span>,</span>
-<span id="cb5-2"><a href=""></a>    <span class="at">start =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-01-02"</span>), <span class="at">end =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-01-01"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-error">
-<pre><code>Error in `validObject()`:
-! invalid class "TimeSeries" object: start must precede end</code></pre>
-</div>
-</div>
-<p>這是 S4 相對 S3 最實際的優勢：系統替你強制執行不變條件。</p>
 </section>
-<section id="泛型函式與方法s4" class="slide level2">
-<h2>泛型函式與方法（S4）</h2>
-<p><code>setGeneric()</code> 宣告泛型；<code>setMethod()</code> 替某個類別註冊實作：</p>
+<section id="setclass-完整簽名" class="slide level2">
+<h2>setClass 完整簽名</h2>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">setGeneric</span>(<span class="st">"period"</span>, <span class="cf">function</span>(object) <span class="fu">standardGeneric</span>(<span class="st">"period"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "period"</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">setClass</span>(Class, representation, prototype, <span class="at">contains=</span><span class="fu">character</span>(),</span>
+<span id="cb32-2"><a href=""></a>         validity, access, where, version, sealed, package,</span>
+<span id="cb32-3"><a href=""></a>         <span class="at">S3methods =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">setMethod</span>(<span class="st">"period"</span>, <span class="st">"TimeSeries"</span>, <span class="cf">function</span>(object) {</span>
-<span id="cb9-2"><a href=""></a>  (object<span class="sc">@</span>end <span class="sc">-</span> object<span class="sc">@</span>start) <span class="sc">/</span> (<span class="fu">length</span>(object<span class="sc">@</span>data) <span class="sc">-</span> <span class="dv">1</span>)</span>
-<span id="cb9-3"><a href=""></a>})</span>
-<span id="cb9-4"><a href=""></a><span class="fu">period</span>(my.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Time difference of 1 mins</code></pre>
-</div>
-</div>
-<p>你也可以為<em>既有的</em>泛型新增方法——例如替 <code>TimeSeries</code> 寫一個 <code>summary</code> 方法——R 會自動分派。</p>
-</section>
-<section id="繼承s4" class="slide level2">
-<h2>繼承（S4）</h2>
-<p><code>contains=</code> 讓一個類別擴充另一個；子類別繼承槽位、有效性與方法：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"WeightHistory"</span>,</span>
-<span id="cb11-2"><a href=""></a>  <span class="at">contains =</span> <span class="st">"TimeSeries"</span>,</span>
-<span id="cb11-3"><a href=""></a>  <span class="fu">representation</span>(<span class="at">name =</span> <span class="st">"character"</span>))</span>
-<span id="cb11-4"><a href=""></a></span>
-<span id="cb11-5"><a href=""></a>kim <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"WeightHistory"</span>,</span>
-<span id="cb11-6"><a href=""></a>  <span class="at">data  =</span> <span class="fu">c</span>(<span class="dv">63</span>, <span class="fl">62.5</span>, <span class="dv">62</span>),</span>
-<span id="cb11-7"><a href=""></a>  <span class="at">start =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-01-01"</span>), <span class="at">end =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-03-01"</span>),</span>
-<span id="cb11-8"><a href=""></a>  <span class="at">name  =</span> <span class="st">"Kim"</span>)</span>
-<span id="cb11-9"><a href=""></a><span class="fu">period</span>(kim)        <span class="co"># 繼承來的方法直接可用</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Time difference of 29.5 days</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a>kim<span class="sc">@</span>name</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "Kim"</code></pre>
-</div>
-</div>
-<p>類別可以繼承多個父類別；方法分派會挑選最特定的匹配。</p>
-</section>
-<section id="s3靠慣例的類別" class="slide level2">
-<h2>S3：靠慣例的類別</h2>
-<p>在 S3 中，「類別」不過是一個屬性，「方法」不過是叫做 <code>generic.class</code> 的函式：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>cat_record <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">name =</span> <span class="st">"Mochi"</span>, <span class="at">weight =</span> <span class="fl">4.2</span>)</span>
-<span id="cb15-2"><a href=""></a><span class="fu">class</span>(cat_record) <span class="ot">&lt;-</span> <span class="st">"cat"</span></span>
-<span id="cb15-3"><a href=""></a></span>
-<span id="cb15-4"><a href=""></a>print.cat <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
-<span id="cb15-5"><a href=""></a>  <span class="fu">cat</span>(<span class="st">"Cat:"</span>, x<span class="sc">$</span>name, <span class="st">"—"</span>, x<span class="sc">$</span>weight, <span class="st">"kg</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb15-6"><a href=""></a>}</span>
-<span id="cb15-7"><a href=""></a><span class="fu">print</span>(cat_record)        <span class="co"># print() 分派到 print.cat</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Cat: Mochi — 4.2 kg</code></pre>
-</div>
-</div>
-<p>沒有宣告、沒有驗證——從頭到尾都是慣例。函式內呼叫 <code>UseMethod()</code> 就讓它成為泛型。</p>
-</section>
-<section id="s3-分派的運作方式" class="slide level2">
-<h2>S3 分派的運作方式</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>describe <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">UseMethod</span>(<span class="st">"describe"</span>)</span>
-<span id="cb17-2"><a href=""></a>describe.default <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="st">"some object"</span></span>
-<span id="cb17-3"><a href=""></a>describe.numeric <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">paste</span>(<span class="st">"numbers, mean ="</span>, <span class="fu">mean</span>(x))</span>
-<span id="cb17-4"><a href=""></a><span class="fu">describe</span>(letters)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "some object"</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">describe</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "numbers, mean = 2"</code></pre>
-</div>
-</div>
-<ul>
-<li><code>class()</code> 向量由左至右搜尋是否存在對應的 <code>generic.class</code> 函式；<code>.default</code> 是後備。</li>
-<li><code>methods("describe")</code> 列出現有方法；<code>inherits(x, "cat")</code> 檢查類別歸屬。</li>
-</ul>
-</section>
-<section id="s3-與-s4-的比較" class="slide level2">
-<h2>S3 與 S4 的比較</h2>
 <table class="caption-top">
 <thead>
 <tr class="header">
-<th style="text-align: left;">面向</th>
-<th style="text-align: left;">S3</th>
-<th style="text-align: left;">S4</th>
+<th>引數</th>
+<th>說明</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">類別定義</td>
-<td style="text-align: left;"><code>class(x) &lt;- "name"</code></td>
-<td style="text-align: left;"><code>setClass()</code> 加上具型別槽位</td>
+<td><code>Class</code></td>
+<td>新類別的名稱（唯一必填）</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">欄位存取</td>
-<td style="text-align: left;"><code>x$field</code></td>
-<td style="text-align: left;"><code>x@slot</code></td>
+<td><code>representation</code></td>
+<td>槽位及其類別的具名串列（<code>"ANY"</code> 表示什麼都能放）</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">方法</td>
-<td style="text-align: left;">名為 <code>generic.class</code> 的函式</td>
-<td style="text-align: left;"><code>setMethod()</code></td>
+<td><code>prototype</code></td>
+<td>槽位預設值的物件</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">驗證</td>
-<td style="text-align: left;">無</td>
-<td style="text-align: left;"><code>setValidity()</code></td>
+<td><code>contains</code></td>
+<td>此類別擴充的父類別名稱</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">成本</td>
-<td style="text-align: left;">極低</td>
-<td style="text-align: left;">較繁瑣</td>
+<td><code>validity</code></td>
+<td>驗證函式（預設不檢查；可用 <code>setValidity</code> 補設）</td>
+</tr>
+<tr class="even">
+<td><code>where</code></td>
+<td>存放定義的環境（預設：呼叫 <code>setClass</code> 之處）</td>
+</tr>
+<tr class="odd">
+<td><code>sealed</code></td>
+<td>是否禁止再以同名 <code>setClass</code> 重定義</td>
+</tr>
+<tr class="even">
+<td><code>package</code></td>
+<td>類別所屬套件名</td>
+</tr>
+<tr class="odd">
+<td><code>S3methods</code></td>
+<td>是否允許為此類別寫 S3 方法（預設 <code>FALSE</code>）</td>
+</tr>
+<tr class="even">
+<td><code>access</code>、<code>version</code></td>
+<td>不使用；S-PLUS 相容性保留</td>
 </tr>
 </tbody>
 </table>
+<p><code>methods</code> 套件的 <code>representation()</code> 與 <code>prototype()</code> 輔助函式，在「擴充基本型別」「多個父類別」「兩者混合」時特別好用。</p>
+</section>
+<section id="槽位規則.data-與其他" class="slide level2">
+<h2>槽位規則、.Data 與其他</h2>
 <ul>
-<li>日常工作與快速多型用 <strong>S3</strong>；<code>lm</code>、<code>data.frame</code> 與多數 CRAN 套件都是它。</li>
-<li>當正確性比簡潔更重要——大型系統、複雜階層、Bioconductor——用 <strong>S4</strong>。</li>
-<li>還有更新的系統（R5 參照類別、R6、S7），全都建立在同一套屬性機制上。</li>
+<li><strong>禁用的槽位名</strong>——保留給屬性：<code>class</code>、<code>comment</code>、<code>dim</code>、<code>dimnames</code>、<code>names</code>、<code>row.names</code>、<code>tsp</code>。（物件可以同時擁有槽位<em>與</em>屬性。）</li>
+<li>擴充<strong>基本型別</strong>（本章稍後的表）會得到一個存放基本部分的 <code>.Data</code> 槽位——針對內建型別寫的程式碼照常運作，作用在 <code>.Data</code> 上。</li>
+<li><code>setIs(class1, class2, ...)</code> 明確宣告繼承關係——<code>contains</code> 之外的另一條路。</li>
+<li>建立物件時，R 會執行類別的 <strong><code>initialize</code></strong> 方法（若有定義）——通常用來計算衍生槽位。</li>
+<li><code>setClassUnion(name, members, where)</code> 建立前面看過的虛擬父類別。</li>
 </ul>
+</section>
+<section id="建立物件與槽位存取" class="slide level2">
+<h2>建立物件與槽位存取</h2>
+<ul>
+<li><code>new(c, ...)</code>——<strong>建構子</strong>：具名引數填槽位；之後執行 <code>initialize</code> 方法（若有）。</li>
+<li>讀槽位：<code>object@slotname</code>，或等價的 <code>slot(object, "slotname")</code>。</li>
+<li>寫槽位用普通指派，預設會驗證：</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a>birthdate<span class="sc">@</span>month <span class="ot">&lt;-</span> <span class="st">"June"</span></span>
+<span id="cb33-2"><a href=""></a><span class="fu">slot</span>(birthdate, <span class="st">"month"</span>) <span class="ot">&lt;-</span> <span class="st">"June"</span></span>
+<span id="cb33-3"><a href=""></a><span class="fu">slot</span>(birthdate, <span class="st">"month"</span>, <span class="at">check=</span><span class="cn">FALSE</span>) <span class="ot">&lt;-</span> <span class="st">"June"</span>   <span class="co"># 跳過驗證：通常不智</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="物件操作與轉型" class="slide level2">
+<h2>物件操作與轉型</h2>
+<p>物件檢視詞彙：</p>
+<ul>
+<li><code>is(o, c)</code>——物件 <code>o</code> 屬於類別 <code>c</code> 嗎？<code>extends(c1, c2)</code>——類別 <code>c1</code> 擴充 <code>c2</code> 嗎？</li>
+<li><code>slotNames(o)</code>／<code>slotNames(c)</code>——物件／類別的槽位名；<code>getSlots(c)</code>——各槽位的<em>類別</em>（有點反直覺）。</li>
+</ul>
+<p>轉換：<code>as(o, c)</code> 把物件 <code>o</code> 轉成類別 <code>c</code>。自己的類別要用 <strong><code>setAs</code></strong> 註冊轉型方法：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>from</code>、<code>to</code></td>
+<td>輸入與輸出的類別名</td>
+</tr>
+<tr class="even">
+<td><code>def</code></td>
+<td>執行轉換的函式</td>
+</tr>
+<tr class="odd">
+<td><code>replace</code></td>
+<td>替換形式用的函式（<code>as</code> 被指派時）</td>
+</tr>
+<tr class="even">
+<td><code>where</code></td>
+<td>存放定義的環境</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="setgeneric-與-setmethod-完整簽名" class="slide level2">
+<h2>setGeneric 與 setMethod 完整簽名</h2>
+<p><code>setGeneric(name, def=, group=list(), valueClass=character(), where=, package=, signature=, useAsDefault=, ...)</code>——重點引數：</p>
+<ul>
+<li><code>name</code>／<code>def</code>——名稱與（可選的）定義函式；<code>group</code>——群組泛型（見 <code>?S4groupGeneric</code>）；</li>
+<li><code>valueClass</code>——回傳值必須隸屬的類別；<code>signature</code>——形式引數名與類別（<code>"ANY"</code> 表示不限）；</li>
+<li><code>useAsDefault</code>——指定哪個函式當預設方法。</li>
+</ul>
+<p><code>setMethod(f, signature=character(), definition, where=, valueClass=NULL, sealed=FALSE)</code>：</p>
+<ul>
+<li><code>f</code>——泛型（或其名稱）；<code>signature</code>——要比對的引數類別；<code>definition</code>——被呼叫的函式；<code>sealed</code>——禁止重定義。</li>
+</ul>
+</section>
+<section id="管理泛型與方法" class="slide level2">
+<h2>管理泛型與方法</h2>
+<p><code>methods</code> 套件的記帳函式：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>函式</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isGeneric</code>／<code>isGroup</code></td>
+<td>是否存在此名稱的泛型／群組泛型</td>
+</tr>
+<tr class="even">
+<td><code>removeGeneric</code>／<code>removeMethods</code></td>
+<td>移除泛型連同方法／只移除方法</td>
+</tr>
+<tr class="odd">
+<td><code>getMethod</code>、<code>selectMethod</code></td>
+<td>取得某函式＋簽名的方法</td>
+</tr>
+<tr class="even">
+<td><code>existsMethod</code>、<code>hasMethod</code></td>
+<td>該方法存在嗎？</td>
+</tr>
+<tr class="odd">
+<td><code>findMethod</code></td>
+<td>哪些套件含有此方法？</td>
+</tr>
+<tr class="even">
+<td><code>showMethods</code></td>
+<td>顯示 S4 泛型的所有方法</td>
+</tr>
+<tr class="odd">
+<td><code>dumpMethod</code>／<code>dumpMethods</code></td>
+<td>傾印一個／全部方法為程式碼</td>
+</tr>
+<tr class="even">
+<td><code>findFunction</code></td>
+<td>函式定義在搜尋路徑的哪裡</td>
+</tr>
+</tbody>
+</table>
+<p>更多協助：<code>library(help="methods")</code>。</p>
+</section>
+<section id="基本類別" class="slide level2">
+<h2>基本類別</h2>
+<p>內建型別的類別——一切類別都建立在這些之上，而且你可以為它們寫方法：</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>分類</th>
+<th>物件型別</th>
+<th>類別</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>向量</td>
+<td><code>integer</code>／<code>double</code>／<code>complex</code>／<code>character</code>／<code>logical</code>／<code>raw</code></td>
+<td><code>integer</code>／<code>numeric</code>／<code>complex</code>／<code>character</code>／<code>logical</code>／<code>raw</code></td>
+</tr>
+<tr class="even">
+<td>複合</td>
+<td><code>list</code>／<code>pairlist</code>／<code>environment</code></td>
+<td><code>list</code>／<code>pairlist</code>／<code>environment</code></td>
+</tr>
+<tr class="odd">
+<td>特殊</td>
+<td><code>NULL</code></td>
+<td><code>NULL</code></td>
+</tr>
+<tr class="even">
+<td>語言</td>
+<td><code>symbol</code>／<code>language</code>／<code>expression</code></td>
+<td><code>name</code>／<code>call</code>／<code>expression</code></td>
+</tr>
+<tr class="odd">
+<td>函式</td>
+<td><code>closure</code>／<code>special</code>／<code>builtin</code></td>
+<td><code>function</code></td>
+</tr>
+<tr class="even">
+<td>其他</td>
+<td><code>externalptr</code></td>
+<td><code>externalptr</code></td>
+</tr>
+</tbody>
+</table>
+<p>六個向量類別都擴充虛擬類別 <code>vector</code>。</p>
+</section></section>
+<section>
+<section id="老派-oops3" class="title-slide slide level1 center">
+<h1>老派 OOP：S3</h1>
+
+</section>
+<section id="s3-類別不過是屬性" class="slide level2">
+<h2>S3 類別不過是屬性</h2>
+<p>S3 物件＝基本物件＋額外屬性，其中一個叫 <code>class</code>。沒有正式定義；屬性（包括 class）可以徒手改。（S3 很像 JavaScript 這類原型語言。）解剖內建的 <code>ts</code> 類別：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a>my.ts <span class="ot">&lt;-</span> <span class="fu">ts</span>(<span class="at">data=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>), <span class="at">start=</span><span class="fu">c</span>(<span class="dv">2009</span>, <span class="dv">2</span>), <span class="at">frequency=</span><span class="dv">12</span>)</span>
+<span id="cb34-2"><a href=""></a>my.ts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     Feb Mar Apr May Jun
+2009   1   2   3   4   5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a><span class="fu">attributes</span>(my.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$tsp
+[1] 2009.083 2009.417   12.000
+
+$class
+[1] "ts"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a><span class="fu">typeof</span>(my.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "double"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">unclass</span>(my.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 3 4 5
+attr(,"tsp")
+[1] 2009.083 2009.417   12.000</code></pre>
+</div>
+</div>
+<p><code>ts</code> 就是一條 double 向量，外加 <code>class</code> 與 <code>tsp</code> 兩個屬性。S4 的工具在這裡不適用：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>my.ts<span class="sc">@</span>tsp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `my.ts@tsp`:
+! no applicable method for `@` applied to an object of class "ts"</code></pre>
+</div>
+</div>
+<p>S3 的繼承是非正式的——class 屬性若有多個元素，第一個是物件的類別、其餘是「繼承」的類別，使繼承成了<em>物件</em>的性質、而非類別的。封裝不受語言強制；參數化多型也付之闕如。不過簡單多型行得通——靠 S3 泛型。</p>
+</section>
+<section id="s3-方法命名慣例-usemethod" class="slide level2">
+<h2>S3 方法：命名慣例＋ UseMethod</h2>
+<p>S3 泛型靠<strong>命名慣例</strong>分派，不靠註冊：</p>
+<ol type="1">
+<li>取個泛型名，例如 <code>gname</code>；</li>
+<li>定義 <code>gname</code>，主體為 <code>UseMethod("gname")</code>；</li>
+<li>對每個目標類別，定義 <code>gname.classname</code>，第一個引數是該類別的物件。</li>
+</ol>
+<p>來看真品：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a>plot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y, ...) 
+UseMethod("plot")
+&lt;bytecode: 0xc2a65bbd0&gt;
+&lt;environment: namespace:base&gt;</code></pre>
+</div>
+</div>
+<p><code>UseMethod</code> 沿著物件的 class 向量找 <code>plot.class</code>；全部落空就找 <code>plot.default</code>。（<code>NextMethod</code> 可在方法內呼叫，交棒給下一個可用的方法。）</p>
+</section>
+<section id="替我們的-s4-類別加-s3-方法" class="slide level2">
+<h2>替我們的 S4 類別加 S3 方法</h2>
+<p>替 <code>TimeSeries</code> 加 plot 方法，<em>只需把函式取對名字</em>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a>plot.TimeSeries <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
+<span id="cb46-2"><a href=""></a>  <span class="fu">plot</span>(x<span class="sc">@</span>data, ...)</span>
+<span id="cb46-3"><a href=""></a>}</span>
+<span id="cb46-4"><a href=""></a><span class="fu">plot</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch10-zh_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><code>plot(my.TimeSeries)</code> 默默變成 <code>plot.TimeSeries(my.TimeSeries)</code>。</p>
+</section>
+<section id="s4-裡用-s3setoldclass" class="slide level2">
+<h2>S4 裡用 S3：setOldClass</h2>
+<p>S4 槽位不能直接放 S3 類別——得先用 <code>setOldClass(Classes, prototype, where, test=FALSE, S4Class)</code> 包裝：</p>
+<ul>
+<li><code>Classes</code>——舊式類別的名稱；</li>
+<li><code>prototype</code>——S4 類別的預設物件；</li>
+<li><code>test</code>——可能多重繼承時設 <code>TRUE</code>；</li>
+<li><code>S4Class</code>——作為基礎的 S4 類別定義。</li>
+</ul>
+</section>
+<section id="找出被藏起來的-s3-方法" class="slide level2">
+<h2>找出被藏起來的 S3 方法</h2>
+<p>套件作者可能<strong>隱藏</strong>個別方法，逼你使用泛型——用隱蔽實現封裝：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href=""></a><span class="fu">library</span>(lattice)</span>
+<span id="cb47-2"><a href=""></a><span class="fu">methods</span>(histogram)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] histogram.data.frame* histogram.factor*     histogram.formula*   
+[4] histogram.numeric*   
+see '?methods' for accessing help and source code</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href=""></a><span class="fu">histogram.factor</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `histogram.factor()`:
+! could not find function "histogram.factor"</code></pre>
+</div>
+</div>
+<p>無論如何想讀隱藏的程式碼：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href=""></a><span class="fu">getS3method</span>(<span class="at">f=</span><span class="st">"histogram"</span>, <span class="at">class=</span><span class="st">"formula"</span>)</span>
+<span id="cb51-2"><a href=""></a><span class="fu">getAnywhere</span>(histogram.formula)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>現代註腳。</strong> 今日的生態系又添了幾套系統——可變參照物件的 <code>R6</code>，以及計畫統一 S3/S4 的接班人 <code>S7</code>。你剛學的概念（類別、方法、分派、繼承）全部直接通用。</p>
+</div>
+</div>
+</div>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

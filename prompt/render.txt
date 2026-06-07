@@ -1,1 +1,3 @@
 quarto render '/Users/oliverliou/pCloud Drive/!-git/teach/pa/ch*/ch*.qmd'
+
+quarto render '/Users/oliverliou/pCloud Drive/!-git/teach/pa/ch15/ch15.qmd'

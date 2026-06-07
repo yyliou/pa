@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,163 +211,261 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="the-d-p-q-r-system" class="title-slide slide level1 center">
-<h1><strong>The d-p-q-r System</strong></h1>
+<section id="d-p-q-r" class="title-slide slide level1 center">
+<h1><strong>d, p, q, r</strong></h1>
 
 </section>
-<section id="four-letters-every-distribution" class="slide level2">
-<h2>Four Letters, Every Distribution</h2>
-<p>For each distribution <code>xxx</code>, R supplies four functions:</p>
+<section id="why-distributions-matter-here" class="slide level2">
+<h2>Why Distributions Matter Here</h2>
+<p>Many statistical tests compute a test statistic, then compare it to a value from a <strong>theoretical distribution</strong> — exactly what Chapter 18 will do. R supplies, for every common distribution, functions to calculate <strong>densities</strong>, <strong>distribution functions</strong> (cumulative probabilities), <strong>quantiles</strong>, and <strong>random draws</strong>. This chapter walks through the normal distribution in detail, then catalogs the whole family.</p>
+</section></section>
+<section>
+<section id="the-normal-distribution" class="title-slide slide level1 center">
+<h1>The Normal Distribution</h1>
+
+</section>
+<section id="dnorm-the-density" class="slide level2">
+<h2>dnorm: the Density</h2>
+<p><span class="math display">\[f(x) = \frac{1}{\sigma\sqrt{2\pi}}\, e^{-\frac{(x-\mu)^2}{2\sigma^2}}\]</span></p>
+<p><code>dnorm(x, mean=0, sd=1, log=FALSE)</code> evaluates the density at <code>x</code> (<code>log=TRUE</code> returns its logarithm). Plotting it is one line:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">plot</span>(dnorm, <span class="sc">-</span><span class="dv">3</span>, <span class="dv">3</span>, <span class="at">main =</span> <span class="st">"Normal Distribution"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch17_files/figure-revealjs/unnamed-chunk-1-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="pnorm-the-distribution-function" class="slide level2">
+<h2>pnorm: the Distribution Function</h2>
+<p><code>pnorm(q, mean=0, sd=1, lower.tail=TRUE, log.p=FALSE)</code> returns <span class="math inline">\(p = \Pr(x \le q)\)</span> — the probability that a random value falls at or below <code>q</code>. <code>lower.tail=FALSE</code> flips to <span class="math inline">\(\Pr(x &gt; q)\)</span>; <code>log.p=TRUE</code> returns <span class="math inline">\(\log(p)\)</span>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">pnorm</span>(<span class="dv">0</span>)          <span class="co"># symmetric around 0, so exactly .5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">pnorm</span>(<span class="sc">-</span><span class="dv">1</span>)         <span class="co"># below one sd under the mean</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.1586553</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">pnorm</span>(<span class="fl">1.96</span>) <span class="sc">-</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fl">1.96</span>)   <span class="co"># within 1.96 sd: the famous 95%</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9500042</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">plot</span>(pnorm, <span class="sc">-</span><span class="dv">3</span>, <span class="dv">3</span>, <span class="at">main =</span> <span class="st">"Cumulative Normal Distribution"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch17_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="qnorm-the-quantile-function" class="slide level2">
+<h2>qnorm: the Quantile Function</h2>
+<p><code>qnorm(p, mean=0, sd=1, lower.tail=TRUE, log.p=FALSE)</code> is <code>pnorm</code>’s inverse: it returns the <code>q</code> for which <span class="math inline">\(p = \Pr(x \le q)\)</span>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">qnorm</span>(<span class="fl">0.5</span>)                     <span class="co"># the median</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">qnorm</span>(<span class="fu">log</span>(<span class="fl">0.5</span>), <span class="at">log.p=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">qnorm</span>(<span class="fu">pnorm</span>(<span class="sc">-</span><span class="dv">1</span>))               <span class="co"># inverse, demonstrated</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -1</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">c</span>(<span class="fu">qnorm</span>(.<span class="dv">025</span>), <span class="fu">qnorm</span>(.<span class="dv">975</span>))    <span class="co"># both ends of a 95% confidence interval</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -1.959964  1.959964</code></pre>
+</div>
+</div>
+</section>
+<section id="rnorm-random-draws" class="slide level2">
+<h2>rnorm: Random Draws</h2>
+<p><code>rnorm(n, mean=0, sd=1)</code> generates <code>n</code> random values — for testing functions, simulations, sampling methods:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">hist</span>(<span class="fu">rnorm</span>(<span class="dv">10000</span>), <span class="at">breaks=</span><span class="dv">50</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch17_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
+<section>
+<section id="the-naming-system" class="title-slide slide level1 center">
+<h1>The Naming System</h1>
+
+</section>
+<section id="four-prefixes-shared-arguments" class="slide level2">
+<h2>Four Prefixes, Shared Arguments</h2>
+<p>Nearly every distribution follows one convention:</p>
+<ul>
+<li><strong><code>d</code></strong> — probability density function (for discrete distributions, technically the probability <em>mass</em> function);</li>
+<li><strong><code>p</code></strong> — distribution function;</li>
+<li><strong><code>q</code></strong> — quantile function;</li>
+<li><strong><code>r</code></strong> — random number generator.</li>
+</ul>
+<p>And shared arguments by type: density functions take <code>x</code>, <code>log</code>; distribution functions take <code>q</code>, <code>lower.tail</code>, <code>log.p</code>; quantile functions take <code>p</code>, <code>lower.tail</code>, <code>log.p</code>; random generators take <code>n</code> (renamed <code>nn</code> for the hypergeometric, whose parameters claimed the letter). Knowing the system, you can usually <em>guess</em> the function you need.</p>
+</section></section>
+<section>
+<section id="distribution-function-families" class="title-slide slide level1 center">
+<h1>Distribution Function Families</h1>
+
+</section>
+<section id="continuous-distributions" class="slide level2">
+<h2>Continuous Distributions</h2>
 <table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Prefix</th>
-<th style="text-align: left;">Function</th>
-<th style="text-align: left;">Question answered</th>
+<th>Family</th>
+<th>R functions</th>
+<th>Family arguments</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>d</code></td>
-<td style="text-align: left;">density / mass</td>
-<td style="text-align: left;">how likely is the value <span class="math inline">\(x\)</span>?</td>
+<td>Beta</td>
+<td><code>dbeta</code> <code>pbeta</code> <code>qbeta</code> <code>rbeta</code></td>
+<td><code>shape1</code>, <code>shape2</code>, <code>ncp=0</code></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>p</code></td>
-<td style="text-align: left;">cumulative distribution</td>
-<td style="text-align: left;"><span class="math inline">\(P(X \le q)\)</span>?</td>
+<td>Cauchy</td>
+<td><code>dcauchy</code> <code>pcauchy</code> <code>qcauchy</code> <code>rcauchy</code></td>
+<td><code>location</code>, <code>scale</code></td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><code>q</code></td>
-<td style="text-align: left;">quantile</td>
-<td style="text-align: left;">which value has probability <span class="math inline">\(p\)</span> below it?</td>
+<td>Chi-squared</td>
+<td><code>dchisq</code> <code>pchisq</code> <code>qchisq</code> <code>rchisq</code></td>
+<td><code>df</code>, <code>ncp=0</code></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>r</code></td>
-<td style="text-align: left;">random generation</td>
-<td style="text-align: left;">give me <span class="math inline">\(n\)</span> draws</td>
+<td>Exponential</td>
+<td><code>dexp</code> <code>pexp</code> <code>qexp</code> <code>rexp</code></td>
+<td><code>rate</code></td>
+</tr>
+<tr class="odd">
+<td>F</td>
+<td><code>df</code> <code>pf</code> <code>qf</code> <code>rf</code></td>
+<td><code>df1</code>, <code>df2</code>, <code>ncp</code></td>
+</tr>
+<tr class="even">
+<td>Gamma</td>
+<td><code>dgamma</code> <code>pgamma</code> <code>qgamma</code> <code>rgamma</code></td>
+<td><code>shape</code>, <code>rate=1</code>, <code>scale=1/rate</code></td>
+</tr>
+<tr class="odd">
+<td>Log-normal</td>
+<td><code>dlnorm</code> <code>plnorm</code> <code>qlnorm</code> <code>rlnorm</code></td>
+<td><code>meanlog</code>, <code>sdlog</code></td>
+</tr>
+<tr class="even">
+<td>Logistic</td>
+<td><code>dlogis</code> <code>plogis</code> <code>qlogis</code> <code>rlogis</code></td>
+<td><code>location</code>, <code>scale</code></td>
+</tr>
+<tr class="odd">
+<td>Normal</td>
+<td><code>dnorm</code> <code>pnorm</code> <code>qnorm</code> <code>rnorm</code></td>
+<td><code>mean</code>, <code>sd</code></td>
+</tr>
+<tr class="even">
+<td>Student’s t</td>
+<td><code>dt</code> <code>pt</code> <code>qt</code> <code>rt</code></td>
+<td><code>df</code>, <code>ncp</code></td>
+</tr>
+<tr class="odd">
+<td>Uniform</td>
+<td><code>dunif</code> <code>punif</code> <code>qunif</code> <code>runif</code></td>
+<td><code>min</code>, <code>max</code></td>
+</tr>
+<tr class="even">
+<td>Weibull</td>
+<td><code>dweibull</code> <code>pweibull</code> <code>qweibull</code> <code>rweibull</code></td>
+<td><code>shape</code>, <code>scale</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="discrete-and-special-distributions" class="slide level2">
+<h2>Discrete and Special Distributions</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Family</th>
+<th>R functions</th>
+<th>Family arguments</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Binomial</td>
+<td><code>dbinom</code> <code>pbinom</code> <code>qbinom</code> <code>rbinom</code></td>
+<td><code>size</code>, <code>prob</code></td>
+</tr>
+<tr class="even">
+<td>Birthday (coincidences)</td>
+<td><code>pbirthday</code> <code>qbirthday</code></td>
+<td><code>classes</code>, <code>coincident</code></td>
+</tr>
+<tr class="odd">
+<td>Geometric</td>
+<td><code>dgeom</code> <code>pgeom</code> <code>qgeom</code> <code>rgeom</code></td>
+<td><code>prob</code></td>
+</tr>
+<tr class="even">
+<td>Hypergeometric</td>
+<td><code>dhyper</code> <code>phyper</code> <code>qhyper</code> <code>rhyper</code></td>
+<td><code>m</code>, <code>n</code>, <code>k</code> (random’s count is <code>nn</code>!)</td>
+</tr>
+<tr class="odd">
+<td>Multinomial</td>
+<td><code>dmultinom</code> <code>rmultinom</code></td>
+<td><code>size</code>, <code>prob</code></td>
+</tr>
+<tr class="even">
+<td>Negative binomial</td>
+<td><code>dnbinom</code> <code>pnbinom</code> <code>qnbinom</code> <code>rnbinom</code></td>
+<td><code>size</code>, <code>prob</code>, <code>mu</code></td>
+</tr>
+<tr class="odd">
+<td>Poisson</td>
+<td><code>dpois</code> <code>ppois</code> <code>qpois</code> <code>rpois</code></td>
+<td><code>lambda</code></td>
+</tr>
+<tr class="even">
+<td>Studentized range</td>
+<td><code>ptukey</code> <code>qtukey</code></td>
+<td><code>nmeans</code>, <code>df</code>, <code>nranges</code></td>
+</tr>
+<tr class="odd">
+<td>Wilcoxon rank sum</td>
+<td><code>dwilcox</code> <code>pwilcox</code> <code>qwilcox</code> <code>rwilcox</code></td>
+<td><code>m</code>, <code>n</code></td>
+</tr>
+<tr class="even">
+<td>Wilcoxon signed rank</td>
+<td><code>dsignrank</code> <code>psignrank</code> <code>qsignrank</code> <code>rsignrank</code></td>
+<td><code>n</code></td>
 </tr>
 </tbody>
 </table>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">dnorm</span>(<span class="dv">0</span>)              <span class="co"># standard normal density at 0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.3989423</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">pnorm</span>(<span class="fl">1.96</span>)           <span class="co"># P(Z &lt;= 1.96)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9750021</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">qnorm</span>(<span class="fl">0.975</span>)          <span class="co"># the famous 1.96, recovered</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1.959964</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">1</span>); <span class="fu">rnorm</span>(<span class="dv">3</span>) <span class="co"># three random normals</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] -0.6264538  0.1836433 -0.8356286</code></pre>
-</div>
-</div>
-</section>
-<section id="the-normal-distribution" class="slide level2">
-<h2>The Normal Distribution</h2>
-<p><span class="math display">\[f(x) = \frac{1}{\sigma\sqrt{2\pi}}\, e^{-\frac{(x-\mu)^2}{2\sigma^2}}\]</span></p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="at">length.out =</span> <span class="dv">200</span>)</span>
-<span id="cb9-2"><a href=""></a><span class="fu">plot</span>(x, <span class="fu">dnorm</span>(x), <span class="at">type =</span> <span class="st">"l"</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">ylab =</span> <span class="st">"density"</span>)</span>
-<span id="cb9-3"><a href=""></a><span class="fu">lines</span>(x, <span class="fu">dnorm</span>(x, <span class="at">sd =</span> <span class="fl">1.5</span>), <span class="at">lty =</span> <span class="dv">2</span>)</span>
-<span id="cb9-4"><a href=""></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="fu">c</span>(<span class="st">"sd = 1"</span>, <span class="st">"sd = 1.5"</span>), <span class="at">lty =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch17_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p><code>mean=</code> and <code>sd=</code> shift and stretch; defaults give the standard normal.</p>
-</section>
-<section id="visualizing-p-and-q" class="slide level2">
-<h2>Visualizing p and q</h2>
-<p>The shaded area <em>is</em> <code>pnorm()</code>; <code>qnorm()</code> runs the lookup backwards:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="at">length.out =</span> <span class="dv">200</span>)</span>
-<span id="cb10-2"><a href=""></a><span class="fu">plot</span>(x, <span class="fu">dnorm</span>(x), <span class="at">type =</span> <span class="st">"l"</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">ylab =</span> <span class="st">"density"</span>)</span>
-<span id="cb10-3"><a href=""></a>xs <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">4</span>, <span class="fu">qnorm</span>(<span class="fl">0.975</span>), <span class="at">length.out =</span> <span class="dv">120</span>)</span>
-<span id="cb10-4"><a href=""></a><span class="fu">polygon</span>(<span class="fu">c</span>(xs, <span class="fu">rev</span>(xs)), <span class="fu">c</span>(<span class="fu">dnorm</span>(xs), <span class="fu">rep</span>(<span class="dv">0</span>, <span class="dv">120</span>)),</span>
-<span id="cb10-5"><a href=""></a>        <span class="at">col =</span> <span class="st">"lightsteelblue"</span>, <span class="at">border =</span> <span class="cn">NA</span>)</span>
-<span id="cb10-6"><a href=""></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="fu">qnorm</span>(<span class="fl">0.975</span>), <span class="at">lty =</span> <span class="dv">2</span>)</span>
-<span id="cb10-7"><a href=""></a><span class="fu">text</span>(<span class="fl">2.6</span>, <span class="fl">0.1</span>, <span class="st">"97.5%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch17_files/figure-revealjs/unnamed-chunk-3-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"></section>
-<section id="continuous-families" class="slide level2">
-<h2>Continuous Families</h2>
-<p>The same four-letter pattern covers every classic continuous family:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">punif</span>(<span class="fl">0.5</span>)                  <span class="co"># uniform on [0,1]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.5</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">pexp</span>(<span class="dv">1</span>, <span class="at">rate =</span> <span class="dv">1</span>)           <span class="co"># exponential</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.6321206</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">pt</span>(<span class="fl">2.086</span>, <span class="at">df =</span> <span class="dv">20</span>)          <span class="co"># Student's t</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9750018</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">pchisq</span>(<span class="fl">3.84</span>, <span class="at">df =</span> <span class="dv">1</span>)        <span class="co"># chi-squared</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9499565</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">pf</span>(<span class="fl">4.35</span>, <span class="at">df1 =</span> <span class="dv">2</span>, <span class="at">df2 =</span> <span class="dv">20</span>) <span class="co"># F</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9729927</code></pre>
-</div>
-</div>
-<ul>
-<li><code>t</code>, <code>chisq</code>, and <code>f</code> are the workhorses of Chapter 18’s tests — their <code>q</code> functions generate the critical-value tables you once looked up in appendices.</li>
-<li>Also available: <code>lnorm</code>, <code>gamma</code>, <code>beta</code>, <code>weibull</code>, <code>cauchy</code>, and more.</li>
-</ul>
-</section>
-<section id="discrete-families" class="slide level2">
-<h2>Discrete Families</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">dbinom</span>(<span class="dv">7</span>, <span class="at">size =</span> <span class="dv">10</span>, <span class="at">prob =</span> <span class="fl">0.5</span>)   <span class="co"># exactly 7 heads in 10 tosses</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">dbinom</span>(<span class="dv">3</span>, <span class="at">size=</span><span class="dv">10</span>, <span class="at">prob=</span><span class="fl">0.5</span>)    <span class="co"># exactly 3 heads in 10 fair flips</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.1171875</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">pbinom</span>(<span class="dv">7</span>, <span class="at">size =</span> <span class="dv">10</span>, <span class="at">prob =</span> <span class="fl">0.5</span>)   <span class="co"># at most 7</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">ppois</span>(<span class="dv">2</span>, <span class="at">lambda=</span><span class="dv">4</span>)              <span class="co"># at most 2 events when 4 are expected</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9453125</code></pre>
+<pre><code>[1] 0.2381033</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">dpois</span>(<span class="dv">3</span>, <span class="at">lambda =</span> <span class="dv">2</span>)               <span class="co"># Poisson: 3 events when mean is 2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">qbirthday</span>(<span class="fl">0.5</span>)                  <span class="co"># people needed for a 50% shared birthday</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.180447</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">dgeom</span>(<span class="dv">2</span>, <span class="at">prob =</span> <span class="fl">0.2</span>)               <span class="co"># first success on 3rd trial</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.128</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">dhyper</span>(<span class="dv">2</span>, <span class="at">m =</span> <span class="dv">4</span>, <span class="at">n =</span> <span class="dv">8</span>, <span class="at">k =</span> <span class="dv">3</span>)     <span class="co"># sampling without replacement</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.2181818</code></pre>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">barplot</span>(<span class="fu">dbinom</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">10</span>, <span class="fl">0.5</span>), <span class="at">names.arg =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>,</span>
-<span id="cb31-2"><a href=""></a>        <span class="at">main =</span> <span class="st">"Binomial(10, 0.5)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch17_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"></section>
-<section id="random-numbers-and-reproducibility" class="slide level2">
-<h2>Random Numbers and Reproducibility</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">2026</span>)</span>
-<span id="cb32-2"><a href=""></a><span class="fu">rbinom</span>(<span class="dv">5</span>, <span class="at">size =</span> <span class="dv">10</span>, <span class="at">prob =</span> <span class="fl">0.3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 4 3 1 2 3</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">"H"</span>, <span class="st">"T"</span>), <span class="dv">5</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "H" "H" "T" "T" "T"</code></pre>
+<pre><code>[1] 23</code></pre>
 </div>
 </div>
 <div class="callout callout-tip callout-titled callout-style-default">
@@ -379,27 +477,10 @@ Yu-You Liou (NTU)
 <p><strong>Tip</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Always <code>set.seed()</code> in homework and reports.</strong> Pseudo-random sequences restart identically from a seed, so your graders — and your future self — can reproduce every simulation exactly.</p>
+<p><strong>The d-p-q-r grid is your map.</strong> Test statistics (Chapter 18) live in <code>pt</code>/<code>pf</code>/<code>pchisq</code>; confidence intervals in <code>qt</code>/<code>qnorm</code>; simulations in <code>r*</code>. Whenever a formula says “compare to the χ² distribution with k degrees of freedom,” the R translation is one <code>pchisq</code> call.</p>
 </div>
 </div>
 </div>
-</section>
-<section id="simulation-as-a-tool" class="slide level2">
-<h2>Simulation as a Tool</h2>
-<p>When theory gets hard, simulate. What is the chance that the maximum of five dice is 6?</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">7</span>)</span>
-<span id="cb36-2"><a href=""></a>sims <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">10000</span>, <span class="fu">max</span>(<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="dv">5</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)))</span>
-<span id="cb36-3"><a href=""></a><span class="fu">mean</span>(sims <span class="sc">==</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.6019</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a><span class="dv">1</span> <span class="sc">-</span> (<span class="dv">5</span><span class="sc">/</span><span class="dv">6</span>)<span class="sc">^</span><span class="dv">5</span>          <span class="co"># exact answer, for comparison</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.5981224</code></pre>
-</div>
-</div>
-<p><code>replicate()</code> plus the <code>r</code> functions turn probability puzzles into ten-second experiments — the same pattern that powers the bootstrap (Chapter 16) and power analysis (Chapter 19).</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

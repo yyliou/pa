@@ -556,9 +556,11 @@ Hadley Wickham's **reshape** package (not the function!) replaces all that with 
 
 ```{r,echo=TRUE,message=FALSE,warning=FALSE}
 library(reshape)
-my.molten.quotes <- melt(my.quotes[, 1:8])
+my.molten.quotes <- melt(my.quotes[, 1:8], id.vars=c("symbol", "Date"))
 head(my.molten.quotes)
 ```
+
+(The book's call omitted `id.vars` — its CSV-imported `Date` was a *factor*, which `melt` auto-detects as an id. Ours is a true `Date`, which would otherwise be melted as a measurement, so we name the ids explicitly.)
 
 ## cast: Three Shapes from One Molten Frame
 

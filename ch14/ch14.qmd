@@ -238,7 +238,7 @@ Birth weights: not quite normal.
 
 ## The San Francisco Home Sales Data
 
-Second running example: 3,281 San Francisco home sales, 2008-02-13 to 2009-07-14, compiled by the author from newspaper listings, geocoded, and joined to Zillow neighborhood shapefiles (with `sp`/`maptools` and `point.in.polygon`). Variables: `street`, `city`, `zip`, `saledate`, `price`, `bedrooms`, `squarefeet`, `lotsize`, `yearbuilt`, `condolike`, `latitude`/`longitude`, `neighborhood`. Real data — imperfect, partially missing:
+Second running example: 3,281 San Francisco home sales, 2008-02-13 to 2009-07-14, compiled by the author from newspaper listings, geocoded, and joined to Zillow neighborhood shapefiles (with `sp`/`maptools` and `point.in.polygon`). Variables (as packaged — the book's text names a few differently): `line`, `county`, `street`, `city`, `zip`, `date` (sale date), `price`, `bedrooms`, `squarefeet`, `lotsize`, `year` (built), `latitude`/`longitude`, `month`, `neighborhood`. Real data — imperfect, partially missing:
 
 ```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
@@ -292,7 +292,7 @@ The linear relationship sharpens within each zip — neighborhood conditioning (
 Distribution of prices over time — round dates to months with `cut`. The raw attempt drowns in outliers; log-transform and rotate the labels:
 
 ```{r,echo=TRUE}
-bwplot(log(price)~cut(saledate, "month"),
+bwplot(log(price)~cut(date, "month"),
        data=sanfrancisco.home.sales,
        scales=list(x=list(rot=90)))
 ```

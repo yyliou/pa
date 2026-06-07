@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,207 +211,450 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
+<section id="writing-valid-r" class="title-slide slide level1 center">
+<h1><strong>Writing Valid R</strong></h1>
+
+</section>
+<section id="sugar-over-function-calls" class="slide level2">
+<h2>Sugar over Function Calls</h2>
+<p>Chapter 5 showed that <em>every</em> R expression can be rewritten as a function call. Yet R provides special syntax — <strong>syntactic sugar</strong> — so that assignments, lookups, and arithmetic read naturally. (Without it, R code would look like LISP, all parentheses; no coincidence, since S was inspired by LISP.)</p>
+<p>This chapter is a readable, not exhaustive, guide to writing valid R expressions:</p>
+<ul>
+<li>constants: numbers, characters, symbols;</li>
+<li>operators and their precedence;</li>
+<li>assignments, grouping, control structures;</li>
+<li>the indexing notation for data structures;</li>
+<li>and a few words on code style.</li>
+</ul>
+</section></section>
+<section>
 <section id="constants" class="title-slide slide level1 center">
-<h1><strong>Constants</strong></h1>
+<h1>Constants</h1>
 
 </section>
 <section id="numeric-vectors" class="slide level2">
 <h2>Numeric Vectors</h2>
-<p>Literal numbers default to double-precision floating point; suffixes and prefixes change the interpretation:</p>
+<p>Numbers are interpreted literally — and hexadecimal works with the <code>0x</code> prefix:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fl">1.1</span>                 <span class="co"># double</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fl">1.1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1.1</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="dv">123</span>L                <span class="co"># the L suffix forces an integer</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 123</code></pre>
+<pre><code>[1] 2</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fl">1e3</span>                 <span class="co"># scientific notation</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="dv">2</span><span class="sc">^</span><span class="dv">1023</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1000</code></pre>
+<pre><code>[1] 8.988466e+307</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="dv">0xFF</span>                <span class="co"># hexadecimal</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="dv">0x1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 255</code></pre>
+<pre><code>[1] 1</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="dv">1</span><span class="sc">+</span><span class="dv">2</span>i                <span class="co"># complex</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="dv">0xFFFF</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1+2i</code></pre>
+<pre><code>[1] 65535</code></pre>
 </div>
 </div>
-<ul>
-<li><code>class()</code> distinguishes <code>numeric</code> (double), <code>integer</code>, and <code>complex</code>.</li>
-<li>Very large or very small magnitudes print in scientific notation automatically.</li>
-</ul>
-</section>
-<section id="character-vectors" class="slide level2">
-<h2>Character Vectors</h2>
-<p>Strings may be quoted with double or single quotes; special characters are written with backslash escapes:</p>
+<p>By default every number — even a plain integer — is stored as a <strong>double-precision floating-point</strong> value. To get a true integer, use sequence notation or <code>as</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="st">"hello"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">typeof</span>(<span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "hello"</code></pre>
+<pre><code>[1] "double"</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="st">'also a string'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">typeof</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "also a string"</code></pre>
+<pre><code>[1] "integer"</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">cat</span>(<span class="st">"tab:</span><span class="sc">\t</span><span class="st">newline:</span><span class="sc">\n</span><span class="st">quote:</span><span class="sc">\"</span><span class="st">done</span><span class="sc">\"\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">typeof</span>(<span class="fu">as</span>(<span class="dv">1</span>, <span class="st">"integer"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>tab:    newline:
-quote:"done"</code></pre>
+<pre><code>[1] "integer"</code></pre>
 </div>
 </div>
-<ul>
-<li><code>\t</code>, <code>\n</code>, <code>\\</code>, <code>\"</code> are the escapes you will actually use.</li>
-<li><code>nchar()</code> counts characters; <code>paste()</code> glues strings together.</li>
-</ul>
 </section>
-<section id="logical-constants-and-symbols" class="slide level2">
-<h2>Logical Constants and Symbols</h2>
+<section id="precision-and-size-limits" class="slide level2">
+<h2>Precision and Size Limits</h2>
+<p><code>a:b</code> yields the integers from <code>a</code> to <code>b</code>; arbitrary sets combine with <code>c</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="cn">TRUE</span>; <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">173</span>, <span class="dv">12</span>, <span class="fl">1.12312</span>, <span class="sc">-</span><span class="dv">93</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Flexibility has limits — doubles cannot distinguish or represent everything:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>(<span class="dv">2</span><span class="sc">^</span><span class="dv">1023</span> <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">==</span> <span class="dv">2</span><span class="sc">^</span><span class="dv">1023</span>   <span class="co"># limits of precision</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="dv">2</span><span class="sc">^</span><span class="dv">1024</span>                   <span class="co"># limits of size</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE</code></pre>
+<pre><code>[1] Inf</code></pre>
 </div>
 </div>
-<ul>
-<li>Always spell out <code>TRUE</code>/<code>FALSE</code>. The shortcuts <code>T</code>/<code>F</code> are ordinary variables that someone can reassign — a classic trap.</li>
-<li>A <strong>syntactic name</strong> starts with a letter (or a dot not followed by a digit) and contains letters, digits, dots, and underscores.</li>
-<li>Any other name can still be used if wrapped in backquotes:</li>
-</ul>
+<p>In practice this rarely matters: the databases your data comes from can’t represent such numbers either.</p>
+</section>
+<section id="complex-numbers" class="slide level2">
+<h2>Complex Numbers</h2>
+<p>Complex values are written as <em>real part</em> <code>+</code> <em>imaginary part</em> <code>i</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="st">`</span><span class="at">my odd name</span><span class="st">`</span> <span class="ot">&lt;-</span> <span class="dv">42</span></span>
-<span id="cb20-2"><a href=""></a><span class="st">`</span><span class="at">my odd name</span><span class="st">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="dv">0</span><span class="sc">+</span><span class="dv">1</span>i <span class="sc">^</span> <span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 42</code></pre>
+<pre><code>[1] -1+0i</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">sqrt</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">+</span><span class="dv">0</span>i)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0+1i</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">exp</span>(<span class="dv">0</span><span class="sc">+</span><span class="dv">1</span>i <span class="sc">*</span> pi)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -1+1.224647e-16i</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">sqrt</span>(<span class="sc">-</span><span class="dv">1</span>)        <span class="co"># NaN! sqrt returns the same type it was given</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in sqrt(-1): NaNs produced</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NaN</code></pre>
 </div>
 </div>
+<p>Note the last line: handed the <em>numeric</em> <code>-1</code>, <code>sqrt</code> answers in numerics — and the numeric answer to √−1 is <code>NaN</code>, with a warning. Handed a complex number, it answers in complex.</p>
+</section>
+<section id="character-vectors" class="slide level2">
+<h2>Character Vectors</h2>
+<p>A character object is the text between a pair of quotes — double or single, your choice, or escaped with backslashes:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="st">"hello"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "hello"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a><span class="st">'hello'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "hello"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a><span class="fu">identical</span>(<span class="st">"</span><span class="sc">\"</span><span class="st">hello</span><span class="sc">\"</span><span class="st">"</span>, <span class="st">'"hello"'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a><span class="fu">identical</span>(<span class="st">'</span><span class="sc">\'</span><span class="st">hello</span><span class="sc">\'</span><span class="st">'</span>, <span class="st">"'hello'"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>Single quotes are convenient when the text itself contains double quotes (and vice versa). Longer vectors, as always, come from <code>c</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a>numbers <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"one"</span>, <span class="st">"two"</span>, <span class="st">"three"</span>, <span class="st">"four"</span>, <span class="st">"five"</span>)</span>
+<span id="cb39-2"><a href=""></a>numbers</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "one"   "two"   "three" "four"  "five" </code></pre>
+</div>
+</div>
+</section>
+<section id="symbols" class="slide level2">
+<h2>Symbols</h2>
+<p>A <strong>symbol</strong> is a constant that refers to another object — the name of a variable. <code>x &lt;- 1</code> means “map the symbol <code>x</code> to the value 1 in the current environment.”</p>
+<p>Names that start with a letter and contain letters, digits, periods, and underscores can be typed directly — and <strong>case matters</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href=""></a>x1 <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb41-2"><a href=""></a>X1 <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb41-3"><a href=""></a>x1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href=""></a>X1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href=""></a>x1<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb45-2"><a href=""></a>x1<span class="fl">.1</span>_1 <span class="ot">&lt;-</span> <span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="backquotes-and-reserved-words" class="slide level2">
+<h2>Backquotes and Reserved Words</h2>
+<p>Symbols with special syntax are reached by enclosing them in <strong>backquotes</strong> — that is how you get help on the assignment operator (<code>?`&lt;-`</code>), and, if you insist, how you create perverse names:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="st">`</span><span class="at">1+2=3</span><span class="st">`</span> <span class="ot">&lt;-</span> <span class="st">"hello"</span></span>
+<span id="cb46-2"><a href=""></a><span class="st">`</span><span class="at">1+2=3</span><span class="st">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "hello"</code></pre>
+</div>
+</div>
+<p>Some words are <strong>reserved</strong> and cannot be used as symbols: <code>if</code>, <code>else</code>, <code>repeat</code>, <code>while</code>, <code>function</code>, <code>for</code>, <code>in</code>, <code>next</code>, <code>break</code>, <code>TRUE</code>, <code>FALSE</code>, <code>NULL</code>, <code>Inf</code>, <code>NaN</code>, <code>NA</code>, <code>NA_integer_</code>, <code>NA_real_</code>, <code>NA_complex_</code>, <code>NA_character_</code>, <code>...</code>, and <code>..1</code> through <code>..9</code>.</p>
+</section>
+<section id="redefining-built-ins" class="slide level2">
+<h2>Redefining Built-ins</h2>
+<p>Primitive functions <em>not</em> on the reserved list can be redefined — even <code>c</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a>c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (...)  .Primitive("c")</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a>c <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb50-2"><a href=""></a>c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)   <span class="co"># and yet the combine function still works!</span></span>
+<span id="cb52-2"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 3</code></pre>
+</div>
+</div>
+<p>R can tell from context that <code>c(1, 2, 3)</code> needs a <em>function</em> named <code>c</code>, and finds the original. Clever — but shadowing built-in names is still a recipe for confusion; avoid it in real code.</p>
 </section></section>
 <section>
 <section id="operators" class="title-slide slide level1 center">
 <h1>Operators</h1>
 
 </section>
-<section id="the-operator-zoo" class="slide level2">
-<h2>The Operator Zoo</h2>
+<section id="binary-and-unary-operators" class="slide level2">
+<h2>Binary and Unary Operators</h2>
+<p>An <strong>operator</strong> is a function of one or two arguments that can be written without parentheses:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="dv">7</span> <span class="sc">%%</span> <span class="dv">3</span>              <span class="co"># modulus</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href=""></a><span class="dv">1</span> <span class="sc">+</span> <span class="dv">19</span>      <span class="co"># addition</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1</code></pre>
+<pre><code>[1] 20</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="dv">7</span> <span class="sc">%/%</span> <span class="dv">3</span>             <span class="co"># integer division</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href=""></a><span class="dv">5</span> <span class="sc">*</span> <span class="dv">4</span>       <span class="co"># multiplication</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
+<pre><code>[1] 20</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="dv">2</span> <span class="sc">^</span> <span class="dv">5</span>               <span class="co"># exponentiation</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href=""></a><span class="dv">41</span> <span class="sc">%%</span> <span class="dv">21</span>    <span class="co"># modulus</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 32</code></pre>
+<pre><code>[1] 20</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>) <span class="co"># set membership</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href=""></a><span class="dv">20</span> <span class="sc">^</span> <span class="dv">1</span>      <span class="co"># exponent</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE  TRUE  TRUE</code></pre>
+<pre><code>[1] 20</code></pre>
 </div>
-</div>
-<p>Comparison (<code>&lt;</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code>) and logical operators (<code>!</code>, <code>&amp;</code>, <code>|</code>, <code>&amp;&amp;</code>, <code>||</code>) return logical vectors:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>) <span class="sc">&gt;</span> <span class="dv">4</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href=""></a><span class="dv">21</span> <span class="sc">%/%</span> <span class="dv">2</span>    <span class="co"># integer division</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE  TRUE  TRUE</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="cn">TRUE</span> <span class="sc">&amp;</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1]  TRUE FALSE</code></pre>
+<pre><code>[1] 10</code></pre>
 </div>
 </div>
-<ul>
-<li>Single <code>&amp;</code>/<code>|</code> are vectorized; double <code>&amp;&amp;</code>/<code>||</code> examine one condition only and are reserved for <code>if()</code> tests.</li>
-<li>Users can define new binary operators named <code>%anything%</code>.</li>
-</ul>
+<p>Unary operators take a single operand — negation (<code>-7</code>) and help (<code>?</code>) are familiar examples.</p>
 </section>
-<section id="order-of-operations" class="slide level2">
-<h2>Order of Operations</h2>
-<p>Operator precedence mostly matches school algebra — <code>^</code> before <code>*</code>/<code>/</code> before <code>+</code>/<code>-</code>, arithmetic before comparison before logic, assignment last:</p>
+<section id="defining-your-own-operator" class="slide level2">
+<h2>Defining Your Own Operator</h2>
+<p>A user-defined binary operator is any function of two variables assigned to a name of the form <code>%text%</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="dv">2</span> <span class="sc">+</span> <span class="dv">3</span> <span class="sc">*</span> <span class="dv">4</span> <span class="sc">^</span> <span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 50</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a><span class="sc">-</span><span class="dv">2</span> <span class="sc">^</span> <span class="dv">2</span>              <span class="co"># unary minus binds AFTER ^: this is -(2^2)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] -4</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a>(<span class="sc">-</span><span class="dv">2</span>) <span class="sc">^</span> <span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href=""></a><span class="st">`</span><span class="at">%myop%</span><span class="st">`</span> <span class="ot">&lt;-</span> <span class="cf">function</span>(a, b) { <span class="dv">2</span><span class="sc">*</span>a <span class="sc">+</span> <span class="dv">2</span><span class="sc">*</span>b }</span>
+<span id="cb64-2"><a href=""></a><span class="dv">1</span> <span class="sc">%myop%</span> <span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 4</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href=""></a><span class="dv">1</span> <span class="sc">%myop%</span> <span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 6</code></pre>
 </div>
-<div class="callout callout-tip callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
 </div>
-<p><strong>Tip</strong></p>
+<p>Some core language constructs are themselves binary operators: <strong>assignment</strong> (symbol on the left, value on the right), <strong>indexing</strong> (symbol left, index right), and even <strong>function calls</strong> (function left, arguments right — don’t be fooled by the closing bracket or parenthesis):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span>
+<span id="cb68-2"><a href=""></a>x[<span class="dv">3</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
 </div>
-<div class="callout-content">
-<p><strong>When in doubt, parenthesize.</strong> Parentheses cost nothing and document intent; see <code>?Syntax</code> for the full precedence table.</p>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href=""></a><span class="fu">max</span>(<span class="dv">1</span>, <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
 </div>
 </div>
 </section>
-<section id="assignments" class="slide level2">
-<h2>Assignments</h2>
-<p>Several assignment forms exist:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">5</span>              <span class="co"># the standard</span></span>
-<span id="cb40-2"><a href=""></a><span class="dv">6</span> <span class="ot">-&gt;</span> y              <span class="co"># rightward (rare)</span></span>
-<span id="cb40-3"><a href=""></a>z <span class="ot">=</span> <span class="dv">7</span>               <span class="co"># allowed at top level</span></span>
-<span id="cb40-4"><a href=""></a><span class="fu">assign</span>(<span class="st">"w"</span>, <span class="dv">8</span>)      <span class="co"># assignment as a function call</span></span>
-<span id="cb40-5"><a href=""></a><span class="fu">c</span>(x, y, z, w)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 5 6 7 8</code></pre>
-</div>
-</div>
-<ul>
-<li>Inside function calls, <code>=</code> names an argument, it does not assign — one more reason to standardize on <code>&lt;-</code>.</li>
-<li>The superassignment operator <code>&lt;&lt;-</code> modifies a variable in an enclosing environment (Chapter 8); use sparingly.</li>
-<li>Replacement forms like <code>names(x) &lt;- ...</code> and <code>dim(x) &lt;- ...</code> look like magic but are ordinary function calls (<code>"names&lt;-"</code>).</li>
-</ul>
+<section id="order-of-operations" class="slide level2">
+<h2>Order of Operations</h2>
+<p>Just as in school math (<code>1 + 2 × 5</code> multiplies first), R resolves ambiguity with fixed <strong>precedence</strong> rules. From highest to lowest, roughly: function calls and grouping; indexing and lookup; arithmetic; comparison; formulas; assignment; help.</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Operators (by priority)</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>( {</code></td>
+<td>Function calls, grouping</td>
+</tr>
+<tr class="even">
+<td><code>[ [[</code></td>
+<td>Indexing</td>
+</tr>
+<tr class="odd">
+<td><code>:: :::</code></td>
+<td>Namespace access</td>
+</tr>
+<tr class="even">
+<td><code>$ @</code></td>
+<td>Component / slot extraction</td>
+</tr>
+<tr class="odd">
+<td><code>^</code></td>
+<td>Exponentiation (right to left)</td>
+</tr>
+<tr class="even">
+<td><code>- +</code></td>
+<td>Unary minus, plus</td>
+</tr>
+<tr class="odd">
+<td><code>:</code></td>
+<td>Sequence</td>
+</tr>
+<tr class="even">
+<td><code>%any%</code></td>
+<td>Special operators</td>
+</tr>
+<tr class="odd">
+<td><code>* /</code></td>
+<td>Multiply, divide</td>
+</tr>
+<tr class="even">
+<td><code>+ -</code></td>
+<td>Binary add, subtract</td>
+</tr>
+<tr class="odd">
+<td><code>&lt; &gt; &lt;= &gt;= == !=</code></td>
+<td>Ordering, comparison</td>
+</tr>
+<tr class="even">
+<td><code>!</code></td>
+<td>Negation</td>
+</tr>
+<tr class="odd">
+<td><code>&amp; &amp;&amp;</code></td>
+<td>And</td>
+</tr>
+<tr class="even">
+<td><code>| ||</code></td>
+<td>Or</td>
+</tr>
+<tr class="odd">
+<td><code>~</code></td>
+<td>Formulas</td>
+</tr>
+<tr class="even">
+<td><code>-&gt; -&gt;&gt;</code></td>
+<td>Rightward assignment</td>
+</tr>
+<tr class="odd">
+<td><code>=</code></td>
+<td>Assignment (right to left)</td>
+</tr>
+<tr class="even">
+<td><code>&lt;- &lt;&lt;-</code></td>
+<td>Assignment (right to left)</td>
+</tr>
+<tr class="odd">
+<td><code>?</code></td>
+<td>Help</td>
+</tr>
+</tbody>
+</table>
+<p>The authoritative, current list: <code>help(syntax)</code>.</p>
 </section></section>
 <section>
-<section id="expressions" class="title-slide slide level1 center">
-<h1>Expressions</h1>
+<section id="assignments" class="title-slide slide level1 center">
+<h1>Assignments</h1>
 
 </section>
-<section id="separating-and-grouping-expressions" class="slide level2">
-<h2>Separating and Grouping Expressions</h2>
+<section id="plain-and-property-assignments" class="slide level2">
+<h2>Plain and Property Assignments</h2>
+<p>Most assignments simply bind an object to a symbol:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="dv">1</span>; b <span class="ot">&lt;-</span> <span class="dv">2</span>          <span class="co"># semicolons separate expressions on one line</span></span>
-<span id="cb42-2"><a href=""></a>{                       <span class="co"># braces group; value = last expression</span></span>
-<span id="cb42-3"><a href=""></a>  s <span class="ot">&lt;-</span> a <span class="sc">+</span> b</span>
-<span id="cb42-4"><a href=""></a>  s <span class="sc">*</span> <span class="dv">10</span></span>
-<span id="cb42-5"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 30</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb72-2"><a href=""></a>y <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">shoes=</span><span class="st">"loafers"</span>, <span class="at">hat=</span><span class="st">"Yankees cap"</span>, <span class="at">shirt=</span><span class="st">"white"</span>)</span>
+<span id="cb72-3"><a href=""></a>z <span class="ot">&lt;-</span> <span class="cf">function</span>(a, b, c) { a <span class="sc">^</span> b <span class="sc">/</span> c }</span>
+<span id="cb72-4"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<ul>
-<li>Parentheses both override precedence and return their contents visibly:</li>
-</ul>
+<p>But R also allows <strong>a function on the left-hand side</strong> — replacing an object with a modified version of itself:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a>(v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>))       <span class="co"># assign AND print in one stroke</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href=""></a><span class="fu">dim</span>(v) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>)        <span class="co"># v is now a 2x4 matrix</span></span>
+<span id="cb73-2"><a href=""></a>v[<span class="dv">2</span>, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb73-3"><a href=""></a><span class="fu">formals</span>(z) <span class="ot">&lt;-</span> <span class="fu">alist</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">2</span>, <span class="at">c=</span><span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="replacement-functions" class="slide level2">
+<h2>Replacement Functions</h2>
+<p>The magic behind the scenes: a statement of the form <code>fun(sym) &lt;- val</code> is syntactic sugar for</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href=""></a><span class="st">`</span><span class="at">fun&lt;-</span><span class="st">`</span>(sym, val)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>which replaces the object bound to <code>sym</code> in the current environment. By convention <code>fun</code> names a <em>property</em> of the object. Define your own method named <code>myproperty&lt;-</code>, and R lets you write <code>myproperty(x) &lt;- value</code> — your own left-hand-side function.</p>
+</section></section>
+<section>
+<section id="grouping-expressions" class="title-slide slide level1 center">
+<h1>Grouping Expressions</h1>
+
+</section>
+<section id="semicolons-and-parentheses" class="slide level2">
+<h2>Semicolons and Parentheses</h2>
+<p>Expressions go on separate lines, or on one line separated by semicolons:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><strong>Parentheses</strong> return the result of the expression inside — precedence-wise the same as a function call. Indeed, grouping is equivalent to calling an identity function:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href=""></a><span class="dv">2</span> <span class="sc">*</span> (<span class="dv">5</span> <span class="sc">+</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 2 3</code></pre>
+<pre><code>[1] 12</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x</span>
+<span id="cb78-2"><a href=""></a><span class="dv">2</span> <span class="sc">*</span> <span class="fu">f</span>(<span class="dv">5</span> <span class="sc">+</span> <span class="dv">1</span>)        <span class="co"># the same thing</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 12</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href=""></a><span class="dv">2</span> <span class="sc">*</span> <span class="dv">5</span> <span class="sc">+</span> <span class="dv">1</span>           <span class="co"># versus the default order of operations</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 11</code></pre>
 </div>
 </div>
+</section>
+<section id="curly-braces" class="slide level2">
+<h2>Curly Braces</h2>
+<p><strong>Curly braces</strong> evaluate a series of expressions (newline- or semicolon-separated) and return only the last:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>() { x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; x <span class="sc">+</span> y }</span>
+<span id="cb82-2"><a href=""></a><span class="fu">f</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href=""></a>{ x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; x <span class="sc">+</span> y }    <span class="co"># braces work outside functions too</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+</div>
+</section>
+<section id="braces-do-not-create-environments" class="slide level2">
+<h2>Braces Do Not Create Environments</h2>
+<p>A crucial difference: a <strong>function call</strong> creates a new environment; <strong>braces do not</strong> — their contents evaluate in the current environment:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>() { u <span class="ot">&lt;-</span> <span class="dv">1</span>; v <span class="ot">&lt;-</span> <span class="dv">2</span>; u <span class="sc">+</span> v }</span>
+<span id="cb86-2"><a href=""></a><span class="fu">f</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href=""></a>u                       <span class="co"># not defined out here!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error:
+! object 'u' not found</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href=""></a>{ u <span class="ot">&lt;-</span> <span class="dv">1</span>; v <span class="ot">&lt;-</span> <span class="dv">2</span>; u <span class="sc">+</span> v }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb92"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href=""></a>u                       <span class="co"># defined: braces ran in the current environment</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb94"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
+</div>
+</div>
+<p>Internally, brace notation is a call to the <code>`{`</code> function — though its arguments are not evaluated like a standard function’s. (Scope and environments: Chapter 8.)</p>
 </section></section>
 <section>
 <section id="control-structures" class="title-slide slide level1 center">
@@ -420,52 +663,134 @@ quote:"done"</code></pre>
 </section>
 <section id="conditional-statements" class="slide level2">
 <h2>Conditional Statements</h2>
+<p>The forms are <code>if (condition) true_expression else false_expression</code> and <code>if (condition) expression</code>. Because the branches are <em>not always evaluated</em>, <code>if</code> has type <strong>special</strong>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">7</span></span>
-<span id="cb46-2"><a href=""></a><span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">5</span>) <span class="st">"big"</span> <span class="cf">else</span> <span class="st">"small"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb96"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href=""></a><span class="fu">typeof</span>(<span class="st">`</span><span class="at">if</span><span class="st">`</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "big"</code></pre>
+<pre><code>[1] "special"</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a><span class="co"># vectorized version: one test per element</span></span>
-<span id="cb48-2"><a href=""></a><span class="fu">ifelse</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">9</span>, <span class="dv">3</span>) <span class="sc">&gt;</span> <span class="dv">5</span>, <span class="st">"big"</span>, <span class="st">"small"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb98"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href=""></a><span class="cf">if</span> (<span class="cn">FALSE</span>) <span class="st">"this will not be printed"</span></span>
+<span id="cb98-2"><a href=""></a><span class="cf">if</span> (<span class="cn">FALSE</span>) <span class="st">"this will not be printed"</span> <span class="cf">else</span> <span class="st">"this will be printed"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "small" "big"   "small"</code></pre>
+<pre><code>[1] "this will be printed"</code></pre>
 </div>
-</div>
-<p><code>switch()</code> selects among named alternatives:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a>grade <span class="ot">&lt;-</span> <span class="cf">function</span>(letter)</span>
-<span id="cb50-2"><a href=""></a>  <span class="cf">switch</span>(letter, <span class="at">A =</span> <span class="st">"excellent"</span>, <span class="at">B =</span> <span class="st">"good"</span>, <span class="st">"see me"</span>)</span>
-<span id="cb50-3"><a href=""></a><span class="fu">grade</span>(<span class="st">"A"</span>); <span class="fu">grade</span>(<span class="st">"C"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb100"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb100-2"><a href=""></a><span class="cf">if</span> (<span class="fu">is</span>(x, <span class="st">"numeric"</span>)) x<span class="sc">/</span><span class="dv">2</span> <span class="cf">else</span> <span class="fu">print</span>(<span class="st">"x is not numeric"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "excellent"</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "see me"</code></pre>
+<pre><code>[1] 5</code></pre>
 </div>
 </div>
-<p>The unnamed final argument is the default case.</p>
 </section>
-<section id="loops-for-while-repeat" class="slide level2">
-<h2>Loops: for, while, repeat</h2>
+<section id="conditions-must-be-scalar-ifelse-is-the-vector-version" class="slide level2">
+<h2>Conditions Must Be Scalar; ifelse Is the Vector Version</h2>
+<p>An <code>if</code> condition is <strong>not</strong> a vector operation. In the book’s era a longer condition used the first element with a warning; <strong>modern R (≥ 4.2) makes it an error</strong>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href=""></a>total <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb53-2"><a href=""></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>) total <span class="ot">&lt;-</span> total <span class="sc">+</span> i</span>
-<span id="cb53-3"><a href=""></a>total</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb102"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb102-2"><a href=""></a>y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">3</span>, <span class="dv">17</span>)</span>
+<span id="cb102-3"><a href=""></a><span class="cf">if</span> (x <span class="sc">&lt;</span> y) x <span class="cf">else</span> y</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `if (x &lt; y) ...`:
+! the condition has length &gt; 1</code></pre>
+</div>
+</div>
+<p>For an element-wise choice, use <code>ifelse</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb104"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"a"</span>)</span>
+<span id="cb104-2"><a href=""></a>b <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>)</span>
+<span id="cb104-3"><a href=""></a><span class="fu">ifelse</span>(<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>), a, b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 15</code></pre>
+<pre><code>[1] "a" "b" "a" "b" "a"</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href=""></a>n <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb55-2"><a href=""></a><span class="cf">while</span> (n <span class="sc">&lt;</span> <span class="dv">100</span>) n <span class="ot">&lt;-</span> n <span class="sc">*</span> <span class="dv">2</span></span>
-<span id="cb55-3"><a href=""></a>n</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="switch" class="slide level2">
+<h2>switch</h2>
+<p>Returning different values for different inputs via chained <code>else if</code>s is verbose:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb106"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href=""></a>switcheroo.if.then <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb106-2"><a href=""></a>  <span class="cf">if</span> (x <span class="sc">==</span> <span class="st">"a"</span>)      <span class="st">"alligator"</span></span>
+<span id="cb106-3"><a href=""></a>  <span class="cf">else</span> <span class="cf">if</span> (x <span class="sc">==</span> <span class="st">"b"</span>) <span class="st">"bear"</span></span>
+<span id="cb106-4"><a href=""></a>  <span class="cf">else</span> <span class="cf">if</span> (x <span class="sc">==</span> <span class="st">"c"</span>) <span class="st">"camel"</span></span>
+<span id="cb106-5"><a href=""></a>  <span class="cf">else</span>               <span class="st">"moose"</span></span>
+<span id="cb106-6"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>switch</code> does the same job tidily — named arguments map inputs to results; the unnamed argument is the default:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb107"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href=""></a>switcheroo.switch <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb107-2"><a href=""></a>  <span class="cf">switch</span>(x, <span class="at">a=</span><span class="st">"alligator"</span>, <span class="at">b=</span><span class="st">"bear"</span>, <span class="at">c=</span><span class="st">"camel"</span>, <span class="st">"moose"</span>)</span>
+<span id="cb107-3"><a href=""></a>}</span>
+<span id="cb107-4"><a href=""></a><span class="fu">switcheroo.if.then</span>(<span class="st">"a"</span>); <span class="fu">switcheroo.switch</span>(<span class="st">"a"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 128</code></pre>
+<pre><code>[1] "alligator"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "alligator"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb110"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb110-1"><a href=""></a><span class="fu">switcheroo.if.then</span>(<span class="st">"f"</span>); <span class="fu">switcheroo.switch</span>(<span class="st">"f"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "moose"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "moose"</code></pre>
 </div>
 </div>
-<ul>
-<li><code>repeat { }</code> loops forever until <code>break</code>; <code>next</code> skips to the following iteration.</li>
-<li><code>for</code> iterates over any vector or list, not just numbers.</li>
-</ul>
+</section>
+<section id="loops-repeat" class="slide level2">
+<h2>Loops: repeat</h2>
+<p>R has three looping constructs. The simplest, <code>repeat</code>, just repeats an expression — forever, unless you <code>break</code> (and <code>next</code> skips to the next iteration). Multiples of 5 up to 25:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb113"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb113-1"><a href=""></a>i <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb113-2"><a href=""></a><span class="cf">repeat</span> { <span class="cf">if</span> (i <span class="sc">&gt;</span> <span class="dv">25</span>) <span class="cf">break</span> <span class="cf">else</span> { <span class="fu">print</span>(i); i <span class="ot">&lt;-</span> i <span class="sc">+</span> <span class="dv">5</span> } }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5
+[1] 10
+[1] 15
+[1] 20
+[1] 25</code></pre>
+</div>
+</div>
+<p>Forget the <code>break</code> and you have an infinite loop — occasionally useful for interactive applications, otherwise a bug.</p>
+</section>
+<section id="loops-while" class="slide level2">
+<h2>Loops: while</h2>
+<p><code>while (condition) expression</code> repeats as long as the condition holds; <code>break</code> and <code>next</code> work here too:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb115"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb115-1"><a href=""></a>i <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb115-2"><a href=""></a><span class="cf">while</span> (i <span class="sc">&lt;=</span> <span class="dv">25</span>) { <span class="fu">print</span>(i); i <span class="ot">&lt;-</span> i <span class="sc">+</span> <span class="dv">5</span> }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5
+[1] 10
+[1] 15
+[1] 20
+[1] 25</code></pre>
+</div>
+</div>
+</section>
+<section id="loops-for" class="slide level2">
+<h2>Loops: for</h2>
+<p><code>for (var in list) expression</code> iterates over the elements of a vector or list:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb117"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href=""></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq</span>(<span class="at">from=</span><span class="dv">5</span>, <span class="at">to=</span><span class="dv">25</span>, <span class="at">by=</span><span class="dv">5</span>)) <span class="fu">print</span>(i)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5
+[1] 10
+[1] 15
+[1] 20
+[1] 25</code></pre>
+</div>
+</div>
+<p>Two properties to remember:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb119"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb119-1"><a href=""></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq</span>(<span class="at">from=</span><span class="dv">5</span>, <span class="at">to=</span><span class="dv">25</span>, <span class="at">by=</span><span class="dv">5</span>)) i   <span class="co"># 1. no printing unless you print()</span></span>
+<span id="cb119-2"><a href=""></a>i                                        <span class="co"># 2. the loop variable leaks into the calling environment</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 25</code></pre>
+</div>
+</div>
+<p>Like conditionals, <code>repeat</code>, <code>while</code>, and <code>for</code> have type <strong>special</strong> — their body is not necessarily evaluated.</p>
+</section>
+<section id="looping-extensions-iterators-and-foreach" class="slide level2">
+<h2>Looping Extensions: iterators and foreach</h2>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -475,28 +800,355 @@ quote:"done"</code></pre>
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Loops are often unnecessary.</strong> Vectorized arithmetic (<code>x * 2</code>) and the apply family (<code>sapply</code>, <code>lapply</code>, Chapter 9) express most iterations more clearly — and usually faster.</p>
+<p>Missing Java-style iterators or foreach? CRAN add-on packages supply both — and they make code easier to parallelize.</p>
 </div>
+</div>
+</div>
+<p><strong>iterators</strong>: <code>iter(obj, checkFunc=..., recycle=...)</code> builds an iterator; <code>nextElem</code> fetches values (filtered by <code>checkFunc</code>) until it stops with “StopIteration”:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb121"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href=""></a><span class="fu">library</span>(iterators)</span>
+<span id="cb121-2"><a href=""></a>onetofive <span class="ot">&lt;-</span> <span class="fu">iter</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span>
+<span id="cb121-3"><a href=""></a><span class="fu">nextElem</span>(onetofive); <span class="fu">nextElem</span>(onetofive); <span class="fu">nextElem</span>(onetofive)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb125"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb125-1"><a href=""></a><span class="fu">nextElem</span>(onetofive); <span class="fu">nextElem</span>(onetofive)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb128"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb128-1"><a href=""></a><span class="fu">nextElem</span>(onetofive)    <span class="co"># exhausted</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error:
+! StopIteration</code></pre>
+</div>
+</div>
+<p><strong>foreach</strong>: builds a loop object, evaluated by the <code>%do%</code> (serial) or <code>%dopar%</code> (parallel — Chapter 26) operators:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb130"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb130-1"><a href=""></a><span class="fu">library</span>(foreach)</span>
+<span id="cb130-2"><a href=""></a>sqrts<span class="fl">.1</span>to5 <span class="ot">&lt;-</span> <span class="fu">foreach</span>(<span class="at">i=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>) <span class="sc">%do%</span> <span class="fu">sqrt</span>(i)</span>
+<span id="cb130-3"><a href=""></a>sqrts<span class="fl">.1</span>to5[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+[1] 1
+
+[[2]]
+[1] 1.414214
+
+[[3]]
+[1] 1.732051</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="accessing-data-structures" class="title-slide slide level1 center">
+<h1>Accessing Data Structures</h1>
+
+</section>
+<section id="the-four-access-operators" class="slide level2">
+<h2>The Four Access Operators</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Syntax</th>
+<th>Objects</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x[i]</code></td>
+<td>vectors, lists</td>
+<td>Elements described by <code>i</code> — an integer, character (names), or logical vector. No partial matching. On a list returns a <strong>list</strong>; on a vector, a vector.</td>
+</tr>
+<tr class="even">
+<td><code>x[[i]]</code></td>
+<td>vectors, lists</td>
+<td>A <strong>single</strong> element matching <code>i</code> (integer or character of length 1). Partial name matching with <code>exact=FALSE</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>x$n</code></td>
+<td>lists</td>
+<td>The element named <code>n</code>.</td>
+</tr>
+<tr class="even">
+<td><code>x@n</code></td>
+<td>S4 objects</td>
+<td>The value in slot <code>n</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Single vs.&nbsp;double brackets, three differences: <code>[[</code> returns exactly one element while <code>[</code> may return several; by <em>name</em>, <code>[</code> matches exactly while <code>[[</code> allows partial matches; on lists, <code>[</code> returns a list but <code>[[</code> returns the element itself.</p>
+</section>
+<section id="indexing-by-integer-vector" class="slide level2">
+<h2>Indexing by Integer Vector</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb132"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb132-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="dv">100</span><span class="sc">:</span><span class="dv">119</span></span>
+<span id="cb132-2"><a href=""></a>v[<span class="dv">5</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 104</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb134"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb134-1"><a href=""></a>v[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 100 101 102 103 104</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb136"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb136-1"><a href=""></a>v[<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">6</span>, <span class="dv">11</span>, <span class="dv">16</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 100 105 110 115</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb138"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb138-1"><a href=""></a>v[[<span class="dv">3</span>]]              <span class="co"># double brackets: single element</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 102</code></pre>
+</div>
+</div>
+<p><strong>Negative integers exclude</strong> the named positions:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb140"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb140-1"><a href=""></a>v[<span class="sc">-</span><span class="dv">15</span><span class="sc">:-</span><span class="dv">1</span>]           <span class="co"># everything except elements 1..15</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 115 116 117 118 119</code></pre>
 </div>
 </div>
 </section>
-<section id="loop-accumulators-done-right" class="slide level2">
-<h2>Loop Accumulators Done Right</h2>
-<p>Growing an object inside a loop re-allocates memory at every step. Pre-allocate instead:</p>
+<section id="integer-indexing-of-lists" class="slide level2">
+<h2>Integer Indexing of Lists</h2>
+<p>The same notation applies to lists:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a>squares <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">10</span>)       <span class="co"># pre-allocate</span></span>
-<span id="cb57-2"><a href=""></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) squares[i] <span class="ot">&lt;-</span> i<span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb57-3"><a href=""></a>squares</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb142"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb142-1"><a href=""></a>l <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">2</span>, <span class="at">c=</span><span class="dv">3</span>, <span class="at">d=</span><span class="dv">4</span>, <span class="at">e=</span><span class="dv">5</span>, <span class="at">f=</span><span class="dv">6</span>, <span class="at">g=</span><span class="dv">7</span>, <span class="at">h=</span><span class="dv">8</span>, <span class="at">i=</span><span class="dv">9</span>, <span class="at">j=</span><span class="dv">10</span>)</span>
+<span id="cb142-2"><a href=""></a>l[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> [1]   1   4   9  16  25  36  49  64  81 100</code></pre>
+<pre><code>$a
+[1] 1
+
+$b
+[1] 2
+
+$c
+[1] 3</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href=""></a><span class="co"># the idiomatic one-liner</span></span>
-<span id="cb59-2"><a href=""></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="cf">function</span>(i) i<span class="sc">^</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb144"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb144-1"><a href=""></a>l[<span class="sc">-</span><span class="dv">7</span><span class="sc">:-</span><span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> [1]   1   4   9  16  25  36  49  64  81 100</code></pre>
+<pre><code>$h
+[1] 8
+
+$i
+[1] 9
+
+$j
+[1] 10</code></pre>
 </div>
 </div>
-<p>This habit matters enormously for performance (Chapter 24).</p>
+</section>
+<section id="integer-indexing-of-matrices" class="slide level2">
+<h2>Integer Indexing of Matrices</h2>
+<p>For multidimensional structures, give one index per dimension — or omit one to take everything along it:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb146"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb146-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">data=</span><span class="fu">c</span>(<span class="dv">101</span><span class="sc">:</span><span class="dv">112</span>), <span class="at">nrow=</span><span class="dv">3</span>, <span class="at">ncol=</span><span class="dv">4</span>)</span>
+<span id="cb146-2"><a href=""></a>m</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2] [,3] [,4]
+[1,]  101  104  107  110
+[2,]  102  105  108  111
+[3,]  103  106  109  112</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb148"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb148-1"><a href=""></a>m[<span class="dv">3</span>]        <span class="co"># single index: positions in the underlying vector</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 103</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb150"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb150-1"><a href=""></a>m[<span class="dv">3</span>, <span class="dv">4</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 112</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb152"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb152-1"><a href=""></a>m[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2]
+[1,]  101  104
+[2,]  102  105</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb154"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb154-1"><a href=""></a>m[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2] [,3] [,4]
+[1,]  101  104  107  110
+[2,]  102  105  108  111</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb156"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb156-1"><a href=""></a>m[, <span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2]
+[1,]  107  110
+[2,]  108  111
+[3,]  109  112</code></pre>
+</div>
+</div>
+</section>
+<section id="dimension-dropping-and-dropfalse" class="slide level2">
+<h2>Dimension Dropping and drop=FALSE</h2>
+<p>Subsets are automatically <strong>coerced to the fewest sensible dimensions</strong>: a matrix-shaped subset returns a matrix, a vector-shaped one a vector. Disable with <code>drop=FALSE</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb158"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="at">data=</span><span class="fu">c</span>(<span class="dv">101</span><span class="sc">:</span><span class="dv">124</span>), <span class="at">dim=</span><span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>))</span>
+<span id="cb158-2"><a href=""></a><span class="fu">class</span>(a[<span class="dv">1</span>, <span class="dv">1</span>, ])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "integer"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb160"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb160-1"><a href=""></a><span class="fu">class</span>(a[<span class="dv">1</span>, , ])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "matrix" "array" </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb162"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb162-1"><a href=""></a><span class="fu">class</span>(a[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "array"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb164"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb164-1"><a href=""></a><span class="fu">class</span>(a[<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="at">drop=</span><span class="cn">FALSE</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "array"</code></pre>
+</div>
+</div>
+</section>
+<section id="replacing-and-extending-by-index" class="slide level2">
+<h2>Replacing and Extending by Index</h2>
+<p>The same notation <strong>assigns</strong> — single cells, blocks, even positions beyond the current end (gaps become <code>NA</code>):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb166"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb166-1"><a href=""></a>m[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb166-2"><a href=""></a>m[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1001</span><span class="sc">:</span><span class="dv">1004</span>), <span class="at">nrow=</span><span class="dv">2</span>, <span class="at">ncol=</span><span class="dv">2</span>)</span>
+<span id="cb166-3"><a href=""></a>m</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2] [,3] [,4]
+[1,] 1001 1003  107  110
+[2,] 1002 1004  108  111
+[3,]  103  106  109  112</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb168"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb168-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span></span>
+<span id="cb168-2"><a href=""></a>v[<span class="dv">15</span>] <span class="ot">&lt;-</span> <span class="dv">15</span></span>
+<span id="cb168-3"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]  1  2  3  4  5  6  7  8  9 10 11 12 NA NA 15</code></pre>
+</div>
+</div>
+<p>A factor used as an index is interpreted as an integer vector.</p>
+</section>
+<section id="indexing-by-logical-vector" class="slide level2">
+<h2>Indexing by Logical Vector</h2>
+<p>A logical vector selects the <code>TRUE</code> positions — and is <strong>recycled</strong> if shorter than the target:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb170"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb170-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="dv">100</span><span class="sc">:</span><span class="dv">119</span></span>
+<span id="cb170-2"><a href=""></a>v[<span class="fu">rep</span>(<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>), <span class="dv">10</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 100 102 104 106 108 110 112 114 116 118</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb172"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb172-1"><a href=""></a>v[(v <span class="sc">==</span> <span class="dv">103</span>)]          <span class="co"># compute the mask from the vector itself</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 103</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb174"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb174-1"><a href=""></a>v[(v <span class="sc">%%</span> <span class="dv">3</span> <span class="sc">==</span> <span class="dv">0</span>)]       <span class="co"># multiples of three</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 102 105 108 111 114 117</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb176"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb176-1"><a href=""></a>v[<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">FALSE</span>)]   <span class="co"># recycled mask</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 100 103 106 109 112 115 118</code></pre>
+</div>
+</div>
+<p>Lists too:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb178"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb178-1"><a href=""></a>l[(l <span class="sc">&gt;</span> <span class="dv">7</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$h
+[1] 8
+
+$i
+[1] 9
+
+$j
+[1] 10</code></pre>
+</div>
+</div>
+</section>
+<section id="indexing-by-name" class="slide level2">
+<h2>Indexing by Name</h2>
+<p>List elements may be named; index them with <code>$</code>, or by name vectors in single brackets:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb180"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb180-1"><a href=""></a>l <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">2</span>, <span class="at">c=</span><span class="dv">3</span>, <span class="at">d=</span><span class="dv">4</span>, <span class="at">e=</span><span class="dv">5</span>, <span class="at">f=</span><span class="dv">6</span>, <span class="at">g=</span><span class="dv">7</span>, <span class="at">h=</span><span class="dv">8</span>, <span class="at">i=</span><span class="dv">9</span>, <span class="at">j=</span><span class="dv">10</span>)</span>
+<span id="cb180-2"><a href=""></a>l<span class="sc">$</span>j</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb182"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb182-1"><a href=""></a>l[<span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$a
+[1] 1
+
+$b
+[1] 2
+
+$c
+[1] 3</code></pre>
+</div>
+</div>
+<p>Double brackets take a single name — and uniquely allow <strong>partial matching</strong> with <code>exact=FALSE</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb184"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb184-1"><a href=""></a>dairy <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">milk=</span><span class="st">"1 gallon"</span>, <span class="at">butter=</span><span class="st">"1 pound"</span>, <span class="at">eggs=</span><span class="dv">12</span>)</span>
+<span id="cb184-2"><a href=""></a>dairy<span class="sc">$</span>milk</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1 gallon"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb186"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb186-1"><a href=""></a>dairy[[<span class="st">"milk"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1 gallon"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb188"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb188-1"><a href=""></a>dairy[[<span class="st">"mil"</span>]]                  <span class="co"># no exact match: NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb190"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb190-1"><a href=""></a>dairy[[<span class="st">"mil"</span>, exact<span class="ot">=</span><span class="cn">FALSE</span>]]     <span class="co"># partial match allowed</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1 gallon"</code></pre>
+</div>
+</div>
+</section>
+<section id="indexing-nested-lists" class="slide level2">
+<h2>Indexing Nested Lists</h2>
+<p>For lists of lists, <code>[[</code> accepts a <em>vector</em> and walks down the levels:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb192"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb192-1"><a href=""></a>fruit <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">apples=</span><span class="dv">6</span>, <span class="at">oranges=</span><span class="dv">3</span>, <span class="at">bananas=</span><span class="dv">10</span>)</span>
+<span id="cb192-2"><a href=""></a>shopping.list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">dairy=</span>dairy, <span class="at">fruit=</span>fruit)</span>
+<span id="cb192-3"><a href=""></a>shopping.list[[<span class="fu">c</span>(<span class="st">"dairy"</span>, <span class="st">"milk"</span>)]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1 gallon"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb194"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb194-1"><a href=""></a>shopping.list[[<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>)]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1 pound"</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="r-code-style-standards" class="title-slide slide level1 center">
+<h1>R Code Style Standards</h1>
+
+</section>
+<section id="readable-code-is-maintainable-code" class="slide level2">
+<h2>Readable Code Is Maintainable Code</h2>
+<p>Style isn’t syntax, but it decides whether others (and future you) can read your code. The book follows Google’s R Style Guide; the highlights:</p>
+<ul>
+<li><strong>Indentation:</strong> two spaces, never tabs; inside parentheses, align to the innermost.</li>
+<li><strong>Spacing:</strong> single spaces around binary operators and after commas; none between a function name and its argument list.</li>
+<li><strong>Blocks:</strong> opening brace <code>{</code> not on its own line; closing brace <code>}</code> on its own line; indent inner blocks two spaces.</li>
+<li><strong>Semicolons:</strong> omit when optional.</li>
+<li><strong>Naming:</strong> objects in lowercase words separated by periods; function names in CapWords and preferably verbs.</li>
+<li><strong>Assignment:</strong> use <code>&lt;-</code>, not <code>=</code>.</li>
+</ul>
+<p>And no — you are not obliged to name your objects <code>field.goals</code> or <code>top.bacon.searching.cities</code>. It’s just convention. (The modern community mostly follows the <em>tidyverse style guide</em>, which prefers <code>snake_case</code> — pick one style and stay consistent.)</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

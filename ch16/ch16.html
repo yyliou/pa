@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,197 +211,378 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="first-numbers-from-the-data" class="title-slide slide level1 center">
-<h1><strong>First Numbers from the Data</strong></h1>
+<section id="first-analyses" class="title-slide slide level1 center">
+<h1><strong>First Analyses</strong></h1>
 
 </section>
-<section id="summary-statistics" class="slide level2">
-<h2>Summary Statistics</h2>
-<p>The basic vocabulary of description, each one function away:</p>
+<section id="summary-statistics-mean-min-max" class="slide level2">
+<h2>Summary Statistics: mean, min, max</h2>
+<p>The building blocks for everything that follows. With the <code>dow30</code> quote data from Chapter 12 (packaged in <code>nutshell</code>):</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a>x <span class="ot">&lt;-</span> dow30<span class="sc">$</span>Open</span>
-<span id="cb1-5"><a href=""></a><span class="fu">mean</span>(x); <span class="fu">median</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda"</span>,</span>
+<span id="cb1-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb1-5"><a href=""></a><span class="fu">mean</span>(dow30<span class="sc">$</span>Open); <span class="fu">min</span>(dow30<span class="sc">$</span>Open); <span class="fu">max</span>(dow30<span class="sc">$</span>Open)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 36.24574</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 30.155</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">var</span>(x); <span class="fu">sd</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 495.1713</code></pre>
+<pre><code>[1] 0.99</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 22.25245</code></pre>
+<pre><code>[1] 122.45</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">range</span>(x); <span class="fu">quantile</span>(x, <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Two arguments worth memorizing:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="cn">NA</span>))                  <span class="co"># any NA poisons the result...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NA</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="cn">NA</span>), <span class="at">na.rm=</span><span class="cn">TRUE</span>)      <span class="co"># ...unless you remove it</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">0</span><span class="sc">:</span><span class="dv">100</span>, <span class="dv">2000</span>))                    <span class="co"># outliers drag the mean...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 68.43689</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">0</span><span class="sc">:</span><span class="dv">100</span>, <span class="dv">2000</span>), <span class="at">trim=</span><span class="fl">0.1</span>)          <span class="co"># ...trim filters that fraction</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 50</code></pre>
+</div>
+</div>
+</section>
+<section id="range-quantile-fivenum-iqr" class="slide level2">
+<h2>range, quantile, fivenum, IQR</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">range</span>(dow30<span class="sc">$</span>Open)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1]   0.99 122.45</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">quantile</span>(dow30<span class="sc">$</span>Open, <span class="at">probs=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">1.0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   25%    50%    75% 
-19.655 30.155 51.680 </code></pre>
+<pre><code>     0%     25%     50%     75%    100% 
+  0.990  19.655  30.155  51.680 122.450 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">fivenum</span>(dow30<span class="sc">$</span>Open)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]   0.990  19.650  30.155  51.680 122.450</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">IQR</span>(dow30<span class="sc">$</span>Open)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 32.025</code></pre>
 </div>
 </div>
+<p>All of these combine naturally with <code>apply</code>/<code>tapply</code> for per-group statistics (Chapter 12).</p>
+</section>
+<section id="summary-and-str" class="slide level2">
+<h2>summary and str</h2>
+<p>The most convenient overview is generic <code>summary</code> — quartiles + mean for numerics, top counts for factors (nothing meaningful for plain character vectors):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">summary</span>(dow30[, <span class="fu">c</span>(<span class="st">"Open"</span>, <span class="st">"Volume"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      Open            Volume         
+ Min.   :  0.99   Min.   :1.336e+06  
+ 1st Qu.: 19.66   1st Qu.:1.111e+07  
+ Median : 30.16   Median :1.822e+07  
+ Mean   : 36.25   Mean   :5.226e+07  
+ 3rd Qu.: 51.68   3rd Qu.:4.255e+07  
+ Max.   :122.45   Max.   :2.672e+09  </code></pre>
+</div>
+</div>
+<p>The popular alternative <code>str</code> displays an object’s <em>structure</em>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">str</span>(dow30)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>'data.frame':   7482 obs. of  8 variables:
+ $ symbol   : Factor w/ 30 levels "MMM","AA","AXP",..: 1 1 1 1 1 1 1 1 1 1 ...
+ $ Date     : Factor w/ 252 levels "2008-09-22","2008-09-23",..: 252 251 250 249 248 247 246 245 244 243 ...
+ $ Open     : num  73.9 75.1 75.3 74.8 74.6 ...
+ $ High     : num  74.7 75.2 75.5 75.5 74.9 ...
+ $ Low      : num  73.9 74.5 74.5 74.5 74 ...
+ $ Close    : num  74.5 74.6 74.9 75.4 74.7 ...
+ $ Volume   : num  2560400 4387900 3371500 2722500 3566900 ...
+ $ Adj.Close: num  74.5 74.6 74.9 75.4 74.7 ...</code></pre>
+</div>
+</div>
+</section>
+<section id="stem-a-text-histogram" class="slide level2">
+<h2>stem: a Text Histogram</h2>
+<p><code>stem(x, scale=1, width=80, atom=1e-08)</code> draws a stem-and-leaf plot right in the console. Distances of <em>missed</em> NFL field goals, 2005:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb25-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda"</span>,</span>
+<span id="cb25-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb25-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb25-5"><a href=""></a><span class="fu">stem</span>(<span class="fu">subset</span>(field.goals, play.type<span class="sc">==</span><span class="st">"FG no"</span>)<span class="sc">$</span>yards)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  The decimal point is at the |
+
+  20 | 0
+  22 | 
+  24 | 
+  26 | 00
+  28 | 0000000
+  30 | 0000000
+  32 | 00000000
+  34 | 000
+  36 | 0000
+  38 | 00000000000000
+  40 | 0000000000
+  42 | 0000000000000000
+  44 | 000000000000
+  46 | 000000000000000000
+  48 | 000000000000000000
+  50 | 000000000000
+  52 | 0000000000000000000
+  54 | 0000
+  56 | 000
+  58 | 00
+  60 | 00
+  62 | 0</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="correlation-and-covariance" class="title-slide slide level1 center">
+<h1>Correlation and Covariance</h1>
+
+</section>
+<section id="three-correlation-measures" class="slide level2">
+<h2>Three Correlation Measures</h2>
+<p>Correlation answers “when x rises, does y rise — and how tightly?”, measuring <strong>linear dependence</strong> on a −1…1 scale. Three statistics:</p>
 <ul>
-<li><code>mean(x, trim = 0.1)</code> resists outliers; every function here accepts <code>na.rm=TRUE</code>.</li>
-<li><code>fivenum()</code> gives Tukey’s five-number summary; <code>IQR()</code> the interquartile range.</li>
+<li><strong>Pearson</strong> — Excel’s <code>CORREL</code>; rooted in normal-distribution theory, best for normal-ish data;</li>
+<li><strong>Spearman</strong> — nonparametric, no distributional assumptions (correlates the <em>ranks</em>);</li>
+<li><strong>Kendall’s tau</strong> — compares concordant vs.&nbsp;discordant <em>pairs of rankings</em>.</li>
 </ul>
-</section>
-<section id="summary-everywhere" class="slide level2">
-<h2>summary() Everywhere</h2>
-<p><code>summary()</code> adapts to its argument — numeric vectors, factors, data frames, models:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">summary</span>(dow30[, <span class="fu">c</span>(<span class="st">"Open"</span>, <span class="st">"Close"</span>, <span class="st">"Volume"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      Open            Close            Volume         
- Min.   :  0.99   Min.   :  0.75   Min.   :1.336e+06  
- 1st Qu.: 19.66   1st Qu.: 19.65   1st Qu.:1.111e+07  
- Median : 30.16   Median : 30.10   Median :1.822e+07  
- Mean   : 36.25   Mean   : 36.24   Mean   :5.226e+07  
- 3rd Qu.: 51.68   3rd Qu.: 51.58   3rd Qu.:4.255e+07  
- Max.   :122.45   Max.   :122.11   Max.   :2.672e+09  </code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">cor</span>(x, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">use =</span> <span class="st">"everything"</span>,</span>
+<span id="cb27-2"><a href=""></a>    <span class="at">method =</span> <span class="fu">c</span>(<span class="st">"pearson"</span>, <span class="st">"kendall"</span>, <span class="st">"spearman"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<p>For a fast all-in-one look at any new data set: <code>summary(df)</code> plus <code>str(df)</code> answers “what am I holding?” in two lines.</p>
+<p><code>x</code>,<code>y</code> may be two vectors, or one data frame/matrix (→ a correlation <em>matrix</em>). <code>use</code> handles <code>NA</code>s: <code>"all.obs"</code> (error), <code>"everything"</code> (NA result), <code>"complete.obs"</code> / <code>"na.or.complete"</code> (drop incomplete rows), <code>"pairwise.complete.obs"</code> (drop per pair).</p>
 </section>
-<section id="correlation-and-covariance" class="slide level2">
-<h2>Correlation and Covariance</h2>
-<p>How do two series move together?</p>
+<section id="example-weight-gain-and-birth-weight" class="slide level2">
+<h2>Example: Weight Gain and Birth Weight</h2>
+<p>Does the mother’s weight gain correlate with the baby’s weight? Clean first (valid values, single births, gestation &gt; 35 weeks), then look — 100k+ points need <code>smoothScatter</code>, not <code>plot</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">cov</span>(dow30<span class="sc">$</span>Open, dow30<span class="sc">$</span>Close)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb28-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda"</span>,</span>
+<span id="cb28-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb28-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb28-5"><a href=""></a>births2006.cln <span class="ot">&lt;-</span> births2006.smpl[</span>
+<span id="cb28-6"><a href=""></a>  <span class="sc">!</span><span class="fu">is.na</span>(births2006.smpl<span class="sc">$</span>WTGAIN) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(births2006.smpl<span class="sc">$</span>DBWT) <span class="sc">&amp;</span></span>
+<span id="cb28-7"><a href=""></a>  births2006.smpl<span class="sc">$</span>DPLURAL <span class="sc">==</span> <span class="st">"1 Single"</span> <span class="sc">&amp;</span> births2006.smpl<span class="sc">$</span>ESTGEST<span class="sc">&gt;</span><span class="dv">35</span>,]</span>
+<span id="cb28-8"><a href=""></a><span class="fu">smoothScatter</span>(births2006.cln<span class="sc">$</span>WTGAIN, births2006.cln<span class="sc">$</span>DBWT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">cor</span>(births2006.cln<span class="sc">$</span>WTGAIN, births2006.cln<span class="sc">$</span>DBWT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 495.3305</code></pre>
+<pre><code>[1] 0.1751866</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">cor</span>(dow30<span class="sc">$</span>Open, dow30<span class="sc">$</span>Close)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">cor</span>(births2006.cln<span class="sc">$</span>WTGAIN, births2006.cln<span class="sc">$</span>DBWT, <span class="at">method=</span><span class="st">"spearman"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9988589</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">cor</span>(dow30[, <span class="fu">c</span>(<span class="st">"Open"</span>, <span class="st">"High"</span>, <span class="st">"Low"</span>, <span class="st">"Close"</span>)])[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>           Open      High       Low     Close
-Open  1.0000000 0.9994177 0.9993623 0.9988589
-High  0.9994177 1.0000000 0.9989249 0.9993634
-Low   0.9993623 0.9989249 1.0000000 0.9993333
-Close 0.9988589 0.9993634 0.9993333 1.0000000</code></pre>
+<pre><code>[1] 0.1776192</code></pre>
 </div>
 </div>
-<ul>
-<li><code>cor()</code> defaults to Pearson; <code>method = "spearman"</code> or <code>"kendall"</code> ranks instead — robust to outliers and nonlinearity.</li>
-<li>A correlation matrix is the standard reconnaissance before regression (Chapter 20).</li>
-</ul>
-<div class="callout callout-warning callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Warning</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>Correlation is not causation.</strong> It is also blind to nonlinear structure — always look at the scatter plot too.</p>
-</div>
-</div>
-</div>
+<img data-src="ch16_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>A modest correlation by either measure — the blob is angled, just barely. (The book used the full 3.2M-record file; our 10% sample gives near-identical values.)</p>
 </section>
-<section id="principal-components-analysis" class="slide level2">
-<h2>Principal Components Analysis</h2>
-<p>PCA re-expresses correlated variables as orthogonal <strong>components</strong> ordered by explained variance:</p>
+<section id="covariance" class="slide level2">
+<h2>Covariance</h2>
+<p><strong>Covariance</strong> is the Pearson numerator — same arguments as <code>cor</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>pca <span class="ot">&lt;-</span> <span class="fu">prcomp</span>(USArrests, <span class="at">scale. =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb18-2"><a href=""></a><span class="fu">summary</span>(pca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a><span class="fu">cov</span>(births2006.cln<span class="sc">$</span>WTGAIN, births2006.cln<span class="sc">$</span>DBWT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1176.469</code></pre>
+</div>
+</div>
+<p>Relatives: <code>cov2cor</code> converts a covariance matrix to a correlation matrix; <code>cov.wt(x, wt=, cor=, center=, method=c("unbiased","ML"))</code> computes <em>weighted</em> covariance.</p>
+</section></section>
+<section>
+<section id="principal-components-analysis" class="title-slide slide level1 center">
+<h1>Principal Components Analysis</h1>
+
+</section>
+<section id="prcomp-and-princomp" class="slide level2">
+<h2>prcomp and princomp</h2>
+<p><strong>PCA</strong> rewrites possibly-correlated variables as uncorrelated components. Two implementations: <code>prcomp</code> (preferred; formula method <code>prcomp(~..., data=, subset=, na.action=)</code>, default method with <code>retx</code>, <code>center=TRUE</code>, <code>scale.</code>, <code>tol</code>) and the S-PLUS-compatible <code>princomp</code> (eigendecomposition of the correlation/covariance matrix) — the book demonstrates the latter.</p>
+<p>Data: team batting statistics 2000–2008, extracted from the Baseball Databank by SQL (renamed to readable play names) and packaged as <code>team.batting.00to08</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb35-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda"</span>,</span>
+<span id="cb35-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb35-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb35-5"><a href=""></a>batting.pca <span class="ot">&lt;-</span> <span class="fu">princomp</span>(<span class="sc">~</span>singles<span class="sc">+</span>doubles<span class="sc">+</span>triples<span class="sc">+</span>homeruns<span class="sc">+</span></span>
+<span id="cb35-6"><a href=""></a>                          walks<span class="sc">+</span>hitbypitch<span class="sc">+</span>sacrificeflies<span class="sc">+</span></span>
+<span id="cb35-7"><a href=""></a>                          stolenbases<span class="sc">+</span>caughtstealing,</span>
+<span id="cb35-8"><a href=""></a>                        <span class="at">data=</span>team.batting<span class="fl">.00</span>to08)</span>
+<span id="cb35-9"><a href=""></a><span class="fu">summary</span>(batting.pca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Importance of components:
-                          PC1    PC2     PC3     PC4
-Standard deviation     1.5749 0.9949 0.59713 0.41645
-Proportion of Variance 0.6201 0.2474 0.08914 0.04336
-Cumulative Proportion  0.6201 0.8675 0.95664 1.00000</code></pre>
+                           Comp.1     Comp.2     Comp.3      Comp.4      Comp.5
+Standard deviation     74.9009809 61.8710858 31.8113983 27.98819003 23.78885885
+Proportion of Variance  0.4610727  0.3146081  0.0831687  0.06437897  0.04650949
+Cumulative Proportion   0.4610727  0.7756807  0.8588494  0.92322841  0.96973790
+                            Comp.6      Comp.7      Comp.8      Comp.9
+Standard deviation     12.88429066 9.150840397 8.283972499 7.060503344
+Proportion of Variance  0.01364317 0.006882026 0.005639904 0.004096998
+Cumulative Proportion   0.98338107 0.990263099 0.995903002 1.000000000</code></pre>
 </div>
 </div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">biplot</span>(pca, <span class="at">cex =</span> <span class="fl">0.6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch16_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><ul>
-<li><code>scale.=TRUE</code> standardizes first — essential when units differ.</li>
-<li>The first two components often capture most of the structure: a built-in dimensionality reduction for plotting and modeling.</li>
-</ul>
+<p>Two components already carry ~78% of the variance; four carry ~92%.</p>
 </section>
-<section id="factor-analysis" class="slide level2">
-<h2>Factor Analysis</h2>
-<p>Where PCA is pure variance bookkeeping, <strong>factor analysis</strong> posits latent variables that explain observed correlations:</p>
+<section id="loadings-scree-plot-biplot" class="slide level2">
+<h2>loadings, Scree Plot, Biplot</h2>
+<p><code>loadings</code> shows each variable’s contribution to each component:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a>fa <span class="ot">&lt;-</span> <span class="fu">factanal</span>(mtcars[, <span class="fu">c</span>(<span class="st">"mpg"</span>, <span class="st">"disp"</span>, <span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"qsec"</span>, <span class="st">"drat"</span>)],</span>
-<span id="cb21-2"><a href=""></a>               <span class="at">factors =</span> <span class="dv">2</span>)</span>
-<span id="cb21-3"><a href=""></a>fa<span class="sc">$</span>loadings</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a><span class="fu">loadings</span>(batting.pca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Loadings:
-     Factor1 Factor2
-mpg  -0.842   0.376 
-disp  0.864  -0.389 
-hp    0.596  -0.698 
-wt    0.974  -0.116 
-qsec          0.962 
-drat -0.745         
+               Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6 Comp.7 Comp.8 Comp.9
+singles         0.313  0.929  0.136         0.136                            
+doubles                       0.437  0.121 -0.877                0.100       
+triples                                                  -0.424 -0.775  0.449
+homeruns       -0.235         0.383  0.825  0.324                            
+walks          -0.914  0.328 -0.150 -0.182                                   
+hitbypitch                                         0.989                     
+sacrificeflies                                           -0.321 -0.330 -0.882
+stolenbases            0.131 -0.758  0.502 -0.307         0.232              
+caughtstealing               -0.208  0.104               -0.813  0.521  0.105
 
-               Factor1 Factor2
-SS loadings      3.317   1.722
-Proportion Var   0.553   0.287
-Cumulative Var   0.553   0.840</code></pre>
+               Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6 Comp.7 Comp.8 Comp.9
+SS loadings     1.000  1.000  1.000  1.000  1.000  1.000  1.000  1.000  1.000
+Proportion Var  0.111  0.111  0.111  0.111  0.111  0.111  0.111  0.111  0.111
+Cumulative Var  0.111  0.222  0.333  0.444  0.556  0.667  0.778  0.889  1.000</code></pre>
 </div>
 </div>
-<ul>
-<li>Loadings show how strongly each observed variable reflects each hidden factor.</li>
-<li>Common in psychometrics and survey research: “do these 20 questions measure 2 underlying traits?”</li>
-</ul>
-</section>
-<section id="bootstrap-resampling" class="slide level2">
-<h2>Bootstrap Resampling</h2>
-<p>When no formula exists for a statistic’s uncertainty, <strong>resample</strong>: draw observations with replacement, recompute, repeat:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">library</span>(boot)</span>
-<span id="cb23-2"><a href=""></a>med.fun <span class="ot">&lt;-</span> <span class="cf">function</span>(d, i) <span class="fu">median</span>(d[i])</span>
-<span id="cb23-3"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb23-4"><a href=""></a>b <span class="ot">&lt;-</span> <span class="fu">boot</span>(dow30<span class="sc">$</span>Open, med.fun, <span class="at">R =</span> <span class="dv">1000</span>)</span>
-<span id="cb23-5"><a href=""></a>b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">plot</span>(batting.pca)                                      <span class="co"># "scree" plot</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch16_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">biplot</span>(batting.pca, <span class="at">cex=</span><span class="fl">0.5</span>, <span class="at">col=</span><span class="fu">c</span>(<span class="st">"gray50"</span>, <span class="st">"black"</span>)) <span class="co"># variables + observations</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch16_files/figure-revealjs/unnamed-chunk-12-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The biplot draws variable contributions to components 1–2 <em>and</em> the observations on one scale: singles and walks dominate the first two components. (This data returns for linear modeling in Chapter 20.)</p>
+</section></section>
+<section>
+<section id="factor-analysis" class="title-slide slide level1 center">
+<h1>Factor Analysis</h1>
+
+</section>
+<section id="factanal" class="slide level2">
+<h2>factanal</h2>
+<p>Some quantities are observable (test scores); some are not (intelligence). <strong>Factor analysis</strong> infers hidden factors from observed variables — <code>factanal</code> in <code>stats</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href=""></a><span class="fu">factanal</span>(x, factors, <span class="at">data =</span> <span class="cn">NULL</span>, <span class="at">covmat =</span> <span class="cn">NULL</span>, <span class="at">n.obs =</span> <span class="cn">NA</span>,</span>
+<span id="cb41-2"><a href=""></a>         subset, na.action, <span class="at">start =</span> <span class="cn">NULL</span>,</span>
+<span id="cb41-3"><a href=""></a>         <span class="at">scores =</span> <span class="fu">c</span>(<span class="st">"none"</span>, <span class="st">"regression"</span>, <span class="st">"Bartlett"</span>),</span>
+<span id="cb41-4"><a href=""></a>         <span class="at">rotation =</span> <span class="st">"varimax"</span>, <span class="at">control =</span> <span class="cn">NULL</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x</code> / <code>data</code></td>
+<td>formula or numeric matrix (+ data frame for the formula)</td>
+</tr>
+<tr class="even">
+<td><code>factors</code></td>
+<td>how many factors to fit</td>
+</tr>
+<tr class="odd">
+<td><code>covmat</code> / <code>n.obs</code></td>
+<td>alternatively: a covariance matrix (or <code>cov.wt</code> output) + observation count</td>
+</tr>
+<tr class="even">
+<td><code>subset</code> / <code>na.action</code> / <code>start</code></td>
+<td>the usual suspects</td>
+</tr>
+<tr class="odd">
+<td><code>scores</code></td>
+<td><code>"none"</code>, <code>"regression"</code> (Thompson), <code>"Bartlett"</code> (weighted least squares)</td>
+</tr>
+<tr class="even">
+<td><code>rotation</code></td>
+<td>factor rotation function, default <code>"varimax"</code></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="bootstrap-resampling" class="title-slide slide level1 center">
+<h1>Bootstrap Resampling</h1>
+
+</section>
+<section id="the-idea-and-boot" class="slide level2">
+<h2>The Idea, and boot</h2>
+<p>Is your statistic sensitive to a few outliers? What’s its sampling range? <strong>Bootstrapping</strong> answers for <em>any</em> statistic: repeatedly resample observations <strong>with replacement</strong>, recompute the statistic, study the spread — formally, an estimate of an estimator’s <strong>bias</strong>.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a><span class="fu">library</span>(boot)</span>
+<span id="cb42-2"><a href=""></a><span class="fu">boot</span>(data, statistic, R, <span class="at">sim=</span><span class="st">"ordinary"</span>, <span class="at">stype=</span><span class="st">"i"</span>,</span>
+<span id="cb42-3"><a href=""></a>     <span class="at">strata=</span><span class="fu">rep</span>(<span class="dv">1</span>,n), <span class="at">L=</span><span class="cn">NULL</span>, <span class="at">m=</span><span class="dv">0</span>, <span class="at">weights=</span><span class="cn">NULL</span>,</span>
+<span id="cb42-4"><a href=""></a>     <span class="at">ran.gen=</span><span class="cf">function</span>(d, p) d, <span class="at">mle=</span><span class="cn">NULL</span>, <span class="at">simple=</span><span class="cn">FALSE</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Key arguments: <code>data</code>; <code>statistic</code> — a <em>function of (data, selection)</em> where <code>stype</code> defines the second argument (<code>"i"</code> indices, <code>"f"</code> frequencies, <code>"w"</code> weights); <code>R</code> — number of replicates; <code>sim</code> — <code>"ordinary"</code>, <code>"parametric"</code>, <code>"balanced"</code>, <code>"permutation"</code>, <code>"antithetic"</code>; <code>strata</code> for multisample problems; <code>ran.gen</code>/<code>mle</code> for parametric simulation; <code>simple=TRUE</code> trades time for memory.</p>
+</section>
+<section id="example-how-biased-is-the-median" class="slide level2">
+<h2>Example: How Biased Is the Median?</h2>
+<p>Media report <em>median</em> home prices. Bootstrapping June 2008 San Francisco sale prices:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb43-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda"</span>,</span>
+<span id="cb43-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb43-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb43-5"><a href=""></a>home.sale.prices.june2008 <span class="ot">&lt;-</span> <span class="fu">subset</span>(sanfrancisco.home.sales,</span>
+<span id="cb43-6"><a href=""></a>  <span class="fu">format</span>(date, <span class="st">"%Y-%m"</span>)<span class="sc">==</span><span class="st">"2008-06"</span>)<span class="sc">$</span>price</span>
+<span id="cb43-7"><a href=""></a><span class="fu">library</span>(boot)</span>
+<span id="cb43-8"><a href=""></a>b <span class="ot">&lt;-</span> <span class="fu">boot</span>(<span class="at">data=</span>home.sale.prices.june2008,</span>
+<span id="cb43-9"><a href=""></a>          <span class="at">statistic=</span><span class="cf">function</span>(d, i) { <span class="fu">median</span>(d[i]) },</span>
+<span id="cb43-10"><a href=""></a>          <span class="at">R=</span><span class="dv">1000</span>)</span>
+<span id="cb43-11"><a href=""></a>b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 ORDINARY NONPARAMETRIC BOOTSTRAP
 
 
 Call:
-boot(data = dow30$Open, statistic = med.fun, R = 1000)
+boot(data = home.sale.prices.june2008, statistic = function(d, 
+    i) {
+    median(d[i])
+}, R = 1000)
 
 
 Bootstrap Statistics :
     original  bias    std. error
-t1*   30.155  0.0087   0.2879809</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">boot.ci</span>(b, <span class="at">type =</span> <span class="st">"perc"</span>)<span class="sc">$</span>percent</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>     conf                          
-[1,] 0.95 25.03 975.98 29.63 30.735</code></pre>
+t1*   845000 -3457.5    23134.49</code></pre>
 </div>
 </div>
-<p>The spread of the 1,000 recomputed medians estimates the sampling distribution — no normality assumption required.</p>
-</section>
-<section id="a-workflow" class="slide level2">
-<h2>A Workflow</h2>
-<ol type="1">
-<li><code>str()</code> and <code>summary()</code> — types, ranges, missingness.</li>
-<li>Plots — histograms and scatter plots (Chapters 13–15).</li>
-<li>Correlations — what moves together?</li>
-<li>Reduce — PCA/factors if there are many variables.</li>
-<li>Quantify uncertainty — bootstrap when in doubt.</li>
-</ol>
-<p>Then, and only then, the formal tests of Chapter 18 and the models of Chapters 20–21.</p>
+<p>Verdict: the median is a very slightly biased estimator here — and now we also know its standard error, free of any normality assumption.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

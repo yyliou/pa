@@ -130,11 +130,12 @@ qplot(x=Condition, data=outcome.of.care.measures.national,
 
 ## ……或並列
 
-丟掉分面，設 `position="dodge"` 讓條並肩而立：
+丟掉分面，設 `position="dodge"` 讓條並肩而立。書中寫的是 `qplot(..., position="dodge")`，但新版 ggplot2 已移除 `qplot` 的 `position` 引數——位置調整如今屬於*圖層*，所以改用完整文法寫：
 
 ```{r,echo=TRUE}
-qplot(x=Condition, data=outcome.of.care.measures.national,
-      geom="bar", weight=Rate, fill=Measure, position="dodge")
+ggplot(outcome.of.care.measures.national,
+       aes(x=Condition, weight=Rate, fill=Measure)) +
+  geom_bar(position="dodge")
 ```
 
 兩種都有效——但*論點不同*：分面版引導讀者在每個指標內比較病症；並列版引導在每個病症內比較指標。圖表的呈現就是一種論證。

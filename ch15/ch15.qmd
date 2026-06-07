@@ -130,11 +130,12 @@ qplot(x=Condition, data=outcome.of.care.measures.national,
 
 ## ...or Dodging
 
-Drop the facets, set `position="dodge"` to place bars side by side:
+Drop the facets, set `position="dodge"` to place bars side by side. The book wrote `qplot(..., position="dodge")`, but modern ggplot2 has removed `qplot`'s `position` argument — position adjustments now belong to the *layer*, so we write it the full-grammar way:
 
 ```{r,echo=TRUE}
-qplot(x=Condition, data=outcome.of.care.measures.national,
-      geom="bar", weight=Rate, fill=Measure, position="dodge")
+ggplot(outcome.of.care.measures.national,
+       aes(x=Condition, weight=Rate, fill=Measure)) +
+  geom_bar(position="dodge")
 ```
 
 Both work — *differently*: faceting invites comparing conditions within each measure; dodging invites comparing measures within each condition. The display is an argument.

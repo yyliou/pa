@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,200 +211,556 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="base-graphics" class="title-slide slide level1 center">
 <h1><strong>Base Graphics</strong></h1>
 
 </section>
-<section id="the-painters-model" class="slide level2">
-<h2>The Painter’s Model</h2>
-<p>Base graphics follow a “pen on paper” model: high-level functions draw a complete chart, low-level functions add ink on top, and nothing can be erased — only redrawn <span class="citation" data-cites="tukey1977exploratory cleveland1993visualizing">(Tukey 1977; Cleveland 1993)</span>.</p>
+<section id="three-plotting-systems-one-chapter-each" class="slide level2">
+<h2>Three Plotting Systems, One Chapter Each</h2>
+<p>R plots graphics many ways; the book focuses on the three most popular packages:</p>
 <ul>
-<li><strong>High-level</strong>: <code>plot()</code>, <code>hist()</code>, <code>barplot()</code>, <code>pie()</code>, <code>boxplot()</code>, …</li>
-<li><strong>Low-level</strong>: <code>points()</code>, <code>lines()</code>, <code>text()</code>, <code>legend()</code>, <code>abline()</code>, …</li>
-<li>Output goes to the active <strong>graphics device</strong> (screen, PDF, PNG).</li>
+<li><strong>graphics</strong> (this chapter) — the classic system: easy to customize, easy to modify, interactive on screen;</li>
+<li><strong>lattice</strong> (Chapter 14) — built for <em>splitting data by a conditioning variable</em>;</li>
+<li><strong>ggplot2</strong> (Chapter 15) — a different metaphor that makes complex, pretty charts easy.</li>
 </ul>
-<p>Our example data, loaded the course way:</p>
+<p>This chapter: a tour of the common chart types, then graphics devices, then the full machinery of customization (<code>par</code>, low-level functions).</p>
+</section></section>
+<section>
+<section id="scatter-plots" class="title-slide slide level1 center">
+<h1>Scatter Plots</h1>
+
+</section>
+<section id="plot-the-generic-entry-point" class="slide level2">
+<h2>plot: the Generic Entry Point</h2>
+<p>Our example data: 2008 cancer cases (American Cancer Society) and 2006 toxic releases by state (EPA), packaged as <code>toxins.and.cancer</code>:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-5"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-6"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-7"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-8"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-9"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda"</span>,</span>
+<span id="cb1-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</section>
-<section id="scatter-plots" class="slide level2">
-<h2>Scatter Plots</h2>
-<p>Does environmental toxin release relate to cancer mortality? One <code>plot()</code> call per question:</p>
+<p><code>plot</code> is generic — vectors, tables, time series all plot. For two vectors, <code>plot.default</code> runs. Cancer death rate vs.&nbsp;toxin release rate:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">plot</span>(toxins.and.cancer<span class="sc">$</span>total_toxic_chemicals <span class="sc">/</span> toxins.and.cancer<span class="sc">$</span>Surface_Area,</span>
-<span id="cb2-2"><a href=""></a>     toxins.and.cancer<span class="sc">$</span>deaths_total <span class="sc">/</span> toxins.and.cancer<span class="sc">$</span>Population,</span>
-<span id="cb2-3"><a href=""></a>     <span class="at">xlab =</span> <span class="st">"Toxins released per sq mile"</span>,</span>
-<span id="cb2-4"><a href=""></a>     <span class="at">ylab =</span> <span class="st">"Deaths per capita"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">attach</span>(toxins.and.cancer)</span>
+<span id="cb2-2"><a href=""></a><span class="fu">plot</span>(total_toxic_chemicals<span class="sc">/</span>Surface_Area, deaths_total<span class="sc">/</span>Population)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch13_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p><code>plot(x, y)</code> is the universal entry point; formula notation <code>plot(y ~ x, data = df)</code> works too.</p>
-</section>
-<section id="identifying-points" class="slide level2">
-<h2>Identifying Points</h2>
-<p>Label interesting observations with low-level additions:</p>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="plot.default-arguments" class="slide level2">
+<h2>plot.default: Arguments</h2>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">attach</span>(toxins.and.cancer)</span>
-<span id="cb3-2"><a href=""></a><span class="fu">plot</span>(air_on_site <span class="sc">/</span> Surface_Area, deaths_lung <span class="sc">/</span> Population,</span>
-<span id="cb3-3"><a href=""></a>     <span class="at">xlab =</span> <span class="st">"Air toxins"</span>, <span class="at">ylab =</span> <span class="st">"Lung-cancer deaths per capita"</span>)</span>
-<span id="cb3-4"><a href=""></a><span class="fu">text</span>(air_on_site <span class="sc">/</span> Surface_Area, deaths_lung <span class="sc">/</span> Population,</span>
-<span id="cb3-5"><a href=""></a>     <span class="at">labels =</span> State_Abbrev, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">pos =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">detach</span>(toxins.and.cancer)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">plot</span>(x, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">type =</span> <span class="st">"p"</span>, <span class="at">xlim =</span> <span class="cn">NULL</span>, <span class="at">ylim =</span> <span class="cn">NULL</span>, <span class="at">log =</span> <span class="st">""</span>,</span>
+<span id="cb3-2"><a href=""></a>     <span class="at">main =</span> <span class="cn">NULL</span>, <span class="at">sub =</span> <span class="cn">NULL</span>, <span class="at">xlab =</span> <span class="cn">NULL</span>, <span class="at">ylab =</span> <span class="cn">NULL</span>,</span>
+<span id="cb3-3"><a href=""></a>     <span class="at">ann =</span> <span class="fu">par</span>(<span class="st">"ann"</span>), <span class="at">axes =</span> <span class="cn">TRUE</span>, <span class="at">frame.plot =</span> axes,</span>
+<span id="cb3-4"><a href=""></a>     <span class="at">panel.first =</span> <span class="cn">NULL</span>, <span class="at">panel.last =</span> <span class="cn">NULL</span>, <span class="at">asp =</span> <span class="cn">NA</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<img data-src="ch13_files/figure-revealjs/unnamed-chunk-3-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><p>Interactively, <code>identify()</code> and <code>locator()</code> let you click on the device to find points and coordinates.</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x</code>, <code>y</code></td>
+<td>data: two vectors, or a time series / formula / list / two-column matrix (see <code>?xy.coords</code>)</td>
+</tr>
+<tr class="even">
+<td><code>type</code></td>
+<td><code>"p"</code> points, <code>"l"</code> lines, <code>"o"</code> overplotted, <code>"b"</code> both, <code>"s"</code> steps, <code>"h"</code> vertical lines, <code>"n"</code> nothing</td>
+</tr>
+<tr class="odd">
+<td><code>xlim</code> / <code>ylim</code></td>
+<td>axis limits</td>
+</tr>
+<tr class="even">
+<td><code>log</code></td>
+<td>logarithmic axes: <code>""</code>, <code>"x"</code>, <code>"y"</code>, <code>"xy"</code></td>
+</tr>
+<tr class="odd">
+<td><code>main</code> / <code>sub</code> / <code>xlab</code> / <code>ylab</code></td>
+<td>titles and axis labels</td>
+</tr>
+<tr class="even">
+<td><code>ann</code> / <code>axes</code> / <code>frame.plot</code></td>
+<td>draw annotation / axes / surrounding box?</td>
+</tr>
+<tr class="odd">
+<td><code>panel.first</code> / <code>panel.last</code></td>
+<td>expressions evaluated before / after points are drawn</td>
+</tr>
+<tr class="even">
+<td><code>asp</code></td>
+<td>aspect ratio y/x</td>
+</tr>
+<tr class="odd">
+<td><code>...</code></td>
+<td>graphical parameters (see below)</td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="plotting-time-series" class="slide level2">
-<h2>Plotting Time Series</h2>
-<p><code>plot()</code> knows what a <code>ts</code> object is and draws lines against the calendar:</p>
+<section id="interactive-identification-and-labels" class="slide level2">
+<h2>Interactive Identification, and Labels</h2>
+<p>A stronger correlation appears between <em>airborne</em> toxins and <em>lung</em> cancer:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">plot</span>(turkey.price.ts, <span class="at">ylab =</span> <span class="st">"US cents per pound"</span>,</span>
-<span id="cb5-2"><a href=""></a>     <span class="at">main =</span> <span class="st">"Average turkey price by month"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">plot</span>(air_on_site<span class="sc">/</span>Surface_Area, deaths_lung<span class="sc">/</span>Population,</span>
+<span id="cb4-2"><a href=""></a>     <span class="at">xlab=</span><span class="st">"Air Release Rate of Toxic Chemicals"</span>,</span>
+<span id="cb4-3"><a href=""></a>     <span class="at">ylab=</span><span class="st">"Lung Cancer Death Rate"</span>)</span>
+<span id="cb4-4"><a href=""></a><span class="fu">text</span>(air_on_site<span class="sc">/</span>Surface_Area, deaths_lung<span class="sc">/</span>Population,</span>
+<span id="cb4-5"><a href=""></a>     <span class="at">labels=</span>State_Abbrev, <span class="at">cex=</span><span class="fl">0.5</span>, <span class="at">adj=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="sc">-</span><span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch13_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p>Holiday demand is visible at a glance — prices dip every November.</p>
-</section>
-<section id="bar-charts" class="slide level2">
-<h2>Bar Charts</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>doubles.by.team <span class="ot">&lt;-</span> <span class="fu">tapply</span>(batting<span class="fl">.2008</span><span class="sc">$</span><span class="st">`</span><span class="at">2B</span><span class="st">`</span>, batting<span class="fl">.2008</span><span class="sc">$</span>teamID, sum)</span>
-<span id="cb6-2"><a href=""></a><span class="fu">barplot</span>(<span class="fu">sort</span>(doubles.by.team, <span class="at">decreasing =</span> <span class="cn">TRUE</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>],</span>
-<span id="cb6-3"><a href=""></a>        <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">"Doubles by team, 2008 (top 8)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch13_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><ul>
-<li><code>horiz=TRUE</code> flips the bars; matrix input draws grouped or stacked bars (<code>beside=</code>).</li>
-<li><code>las=2</code> rotates axis labels — small flag, big readability gain.</li>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><ul>
+<li>Interactively: <code>locator(1)</code> prints the coordinates of a clicked point; <code>identify(x, y, labels)</code> labels points as you click them.</li>
+<li>For all labels at once, <code>text</code> does it (here resized with <code>cex</code>, repositioned with <code>adj</code>). The relationship <em>is</em> statistically significant (Chapter 18) — though that alone argues no causal story.</li>
 </ul>
 </section>
-<section id="pie-charts-and-mosaic-plots" class="slide level2">
-<h2>Pie Charts and Mosaic Plots</h2>
+<section id="matplot-smoothscatter-pairs" class="slide level2">
+<h2>matplot, smoothScatter, pairs</h2>
+<p>Three relatives for special situations:</p>
+<ul>
+<li><strong><code>matplot(x, y, type=, lty=, lwd=, pch=, col=, cex=, ..., add=)</code></strong> plots all columns of one matrix against all columns of another; the usual <code>par</code>-style arguments accept <em>vectors</em>, one entry per series.</li>
+<li><strong><code>smoothScatter</code></strong> shades regions by point <em>density</em> — the cure for overplotting with very many points (see Chapter 16).</li>
+<li><strong><code>pairs</code></strong> draws a scatter plot matrix for every pair of variables:</li>
+</ul>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">pie</span>(<span class="fu">c</span>(<span class="at">Good =</span> <span class="dv">787</span>, <span class="at">Missed =</span> <span class="dv">163</span>, <span class="at">Blocked =</span> <span class="dv">24</span>),</span>
-<span id="cb7-2"><a href=""></a>    <span class="at">main =</span> <span class="st">"Field goal outcomes, 2005"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb5-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda"</span>,</span>
+<span id="cb5-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb5-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb5-5"><a href=""></a><span class="fu">pairs</span>(batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>AB<span class="sc">&gt;</span><span class="dv">100</span>, <span class="fu">c</span>(<span class="st">"H"</span>, <span class="st">"R"</span>, <span class="st">"SO"</span>, <span class="st">"BB"</span>, <span class="st">"HR"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch13_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:55.0%"><ul>
-<li>Perception research is brutal to pie charts: humans compare lengths better than angles. Prefer bars when values are close.</li>
-<li>For two categorical variables, <code>mosaicplot(~ cut + color, data = ...)</code> tiles the plane proportionally to the cross-tabulation.</li>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
+<section>
+<section id="plotting-time-series" class="title-slide slide level1 center">
+<h1>Plotting Time Series</h1>
+
+</section>
+<section id="plot.ts-and-acf" class="slide level2">
+<h2>plot.ts and acf</h2>
+<p><code>plot</code> has a time-series method (<code>plot.type</code> = <code>"multiple"</code>/<code>"single"</code>, <code>panel</code>, <code>nc</code>, <code>yax.flip</code>, margin controls…). The turkey prices of Chapter 7:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb6-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>,</span>
+<span id="cb6-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb6-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb6-5"><a href=""></a><span class="fu">plot</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Strongly seasonal: November/December sales (Thanksgiving, Christmas), minor spring dips (Easter).</p>
+</section>
+<section id="the-correlogram" class="slide level2">
+<h2>The Correlogram</h2>
+<p>The <strong>autocorrelation function</strong> shows how correlated points are with their past, by lag — <code>acf</code> computes it and plots by default:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">acf</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Correlated at 12-month cycles, inversely at 6-month cycles. (Time series analysis proper: Chapter 23.)</p>
+</section></section>
+<section>
+<section id="bar-charts" class="title-slide slide level1 center">
+<h1>Bar Charts</h1>
+
+</section>
+<section id="barplot-basics" class="slide level2">
+<h2>barplot Basics</h2>
+<p>US doctoral degrees, 2001–2006 (Statistical Abstract), entered directly:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>doctorates <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb8-2"><a href=""></a>  <span class="at">year=</span><span class="fu">c</span>(<span class="dv">2001</span>, <span class="dv">2002</span>, <span class="dv">2003</span>, <span class="dv">2004</span>, <span class="dv">2005</span>, <span class="dv">2006</span>),</span>
+<span id="cb8-3"><a href=""></a>  <span class="at">engineering=</span><span class="fu">c</span>(<span class="dv">5323</span>, <span class="dv">5511</span>, <span class="dv">5079</span>, <span class="dv">5280</span>, <span class="dv">5777</span>, <span class="dv">6425</span>),</span>
+<span id="cb8-4"><a href=""></a>  <span class="at">science=</span><span class="fu">c</span>(<span class="dv">20643</span>, <span class="dv">20017</span>, <span class="dv">19529</span>, <span class="dv">20001</span>, <span class="dv">20498</span>, <span class="dv">21564</span>),</span>
+<span id="cb8-5"><a href=""></a>  <span class="at">education=</span><span class="fu">c</span>(<span class="dv">6436</span>, <span class="dv">6349</span>, <span class="dv">6503</span>, <span class="dv">6643</span>, <span class="dv">6635</span>, <span class="dv">6226</span>),</span>
+<span id="cb8-6"><a href=""></a>  <span class="at">health=</span><span class="fu">c</span>(<span class="dv">1591</span>, <span class="dv">1541</span>, <span class="dv">1654</span>, <span class="dv">1633</span>, <span class="dv">1720</span>, <span class="dv">1785</span>),</span>
+<span id="cb8-7"><a href=""></a>  <span class="at">humanities=</span><span class="fu">c</span>(<span class="dv">5213</span>, <span class="dv">5178</span>, <span class="dv">5051</span>, <span class="dv">5020</span>, <span class="dv">5013</span>, <span class="dv">4949</span>),</span>
+<span id="cb8-8"><a href=""></a>  <span class="at">other=</span><span class="fu">c</span>(<span class="dv">2159</span>, <span class="dv">2141</span>, <span class="dv">2209</span>, <span class="dv">2180</span>, <span class="dv">2480</span>, <span class="dv">2436</span>))</span>
+<span id="cb8-9"><a href=""></a>doctorates.m <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(doctorates[<span class="dv">2</span><span class="sc">:</span><span class="dv">7</span>])   <span class="co"># barplot wants a matrix,</span></span>
+<span id="cb8-10"><a href=""></a><span class="fu">rownames</span>(doctorates.m) <span class="ot">&lt;-</span> doctorates[, <span class="dv">1</span>]    <span class="co"># not a data frame</span></span>
+<span id="cb8-11"><a href=""></a><span class="fu">barplot</span>(doctorates.m[<span class="dv">1</span>, ])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Default behavior: y-axis drawn, no x-axis line, bars named from column names.</p>
+</section>
+<section id="grouped-and-stacked-bars" class="slide level2">
+<h2>Grouped and Stacked Bars</h2>
+<p>Side-by-side horizontal bars with a legend; then stacked columns (transpose so columns = years, widen <code>ylim</code> to fit the legend):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">barplot</span>(doctorates.m, <span class="at">beside=</span><span class="cn">TRUE</span>, <span class="at">horiz=</span><span class="cn">TRUE</span>, <span class="at">legend=</span><span class="cn">TRUE</span>, <span class="at">cex.names=</span>.<span class="dv">75</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch13_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">barplot</span>(<span class="fu">t</span>(doctorates.m), <span class="at">legend=</span><span class="cn">TRUE</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">66000</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch13_files/figure-revealjs/unnamed-chunk-9-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="barplot-arguments" class="slide level2">
+<h2>barplot: Arguments</h2>
+<p>Key arguments (of many):</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>height</code></td>
+<td>vector, or matrix (stacked if <code>beside=FALSE</code>, grouped if <code>TRUE</code>)</td>
+</tr>
+<tr class="even">
+<td><code>width</code> / <code>space</code></td>
+<td>bar widths / gaps (with <code>beside=TRUE</code>: <code>c(within, between)</code> groups)</td>
+</tr>
+<tr class="odd">
+<td><code>names.arg</code> / <code>legend.text</code></td>
+<td>bar labels / legend (logical = use rownames)</td>
+</tr>
+<tr class="even">
+<td><code>beside</code> / <code>horiz</code></td>
+<td>grouped vs.&nbsp;stacked / horizontal vs.&nbsp;vertical</td>
+</tr>
+<tr class="odd">
+<td><code>density</code> / <code>angle</code></td>
+<td>shading lines per inch / their slope</td>
+</tr>
+<tr class="even">
+<td><code>col</code> / <code>border</code></td>
+<td>bar colors / border color</td>
+</tr>
+<tr class="odd">
+<td><code>main</code>, <code>sub</code>, <code>xlab</code>, <code>ylab</code>, <code>xlim</code>, <code>ylim</code>, <code>log</code>, <code>axes</code></td>
+<td>the usual annotations</td>
+</tr>
+<tr class="even">
+<td><code>xpd</code></td>
+<td>may bars overflow the plot region?</td>
+</tr>
+<tr class="odd">
+<td><code>cex.axis</code> / <code>cex.names</code> / <code>axisnames</code> / <code>axis.lty</code></td>
+<td>axis text sizing and styling</td>
+</tr>
+<tr class="even">
+<td><code>inside</code> / <code>offset</code> / <code>add</code> / <code>args.legend</code></td>
+<td>separators, baseline shift, overplot, legend options</td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="pie-charts" class="title-slide slide level1 center">
+<h1>Pie Charts</h1>
+
+</section>
+<section id="pie-use-sparingly" class="slide level2">
+<h2>pie — Use Sparingly</h2>
+<p>What happened to US-caught fish in 2006 (millions of pounds):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>domestic.catch<span class="fl">.2006</span> <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">7752</span>, <span class="dv">1166</span>, <span class="dv">463</span>, <span class="dv">108</span>)</span>
+<span id="cb11-2"><a href=""></a><span class="fu">names</span>(domestic.catch<span class="fl">.2006</span>) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Fresh and frozen"</span>,</span>
+<span id="cb11-3"><a href=""></a>  <span class="st">"Reduced to meal, oil, etc."</span>, <span class="st">"Canned"</span>, <span class="st">"Cured"</span>)</span>
+<span id="cb11-4"><a href=""></a><span class="fu">pie</span>(domestic.catch<span class="fl">.2006</span>, <span class="at">init.angle=</span><span class="dv">100</span>, <span class="at">cex=</span>.<span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Arguments: <code>x</code> (nonnegative values), <code>labels</code>, <code>edges</code> (polygon smoothness), <code>radius</code>, <code>clockwise</code> + <code>init.angle</code>, <code>density</code>/<code>angle</code> shading, <code>col</code> (default: six pastels), <code>border</code>, <code>lty</code>, <code>main</code>.</p>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Warning</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>The help file itself says it:</strong> “Pie charts are a very bad way of displaying information. The eye is good at judging linear measures and bad at judging relative areas. A bar chart or dot chart is a preferable way of displaying this type of data.”</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="plotting-categorical-data" class="title-slide slide level1 center">
+<h1>Plotting Categorical Data</h1>
+
+</section>
+<section id="conditional-density-cdplot" class="slide level2">
+<h2>Conditional Density: cdplot</h2>
+<p>How does a <em>categorical</em> outcome vary along a <em>numeric</em> axis? <code>cdplot</code> smooths with kernel density estimates (<code>density</code> underneath; arguments <code>bw</code>, <code>n</code>, <code>from</code>, <code>to</code> pass through; <code>ylevels</code> reorders; formula+<code>data</code>+<code>subset</code> supported). Batting hand by batting average:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>batting.w.names<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">transform</span>(batting<span class="fl">.2008</span>,</span>
+<span id="cb12-2"><a href=""></a>  <span class="at">AVG=</span>H<span class="sc">/</span>AB, <span class="at">bats=</span><span class="fu">as.factor</span>(bats), <span class="at">throws=</span><span class="fu">as.factor</span>(throws))</span>
+<span id="cb12-3"><a href=""></a><span class="fu">cdplot</span>(bats<span class="sc">~</span>AVG, <span class="at">data=</span>batting.w.names<span class="fl">.2008</span>,</span>
+<span id="cb12-4"><a href=""></a>       <span class="at">subset=</span>(batting.w.names<span class="fl">.2008</span><span class="sc">$</span>AB<span class="sc">&gt;</span><span class="dv">100</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>The proportion of switch hitters (<code>B</code>) rises with batting average.</p>
+</section>
+<section id="mosaic-spine-and-association-plots" class="slide level2">
+<h2>Mosaic, Spine, and Association Plots</h2>
+<p>For two factors, three displays of the contingency structure:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">mosaicplot</span>(<span class="at">formula=</span>bats<span class="sc">~</span>throws, <span class="at">data=</span>batting.w.names<span class="fl">.2008</span>, <span class="at">color=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><ul>
+<li><code>mosaicplot</code> boxes are proportional to counts; further arguments: <code>sort</code>, <code>off</code> (spacing), <code>dir</code> (orientations), <code>shade</code> (extended plots coloring log-linear residuals), <code>margin</code>, <code>type</code> (<code>"pearson"</code>/<code>"deviance"</code>/<code>"FT"</code> residuals).</li>
+<li><code>spineplot(bats~throws, data=...)</code> — the close sibling.</li>
+<li><code>assocplot(table(bats, throws))</code> — bars showing each cell’s <em>deviation from independence</em> (Cohen–Friendly).</li>
+<li>See also <code>stars</code> and <code>fourfoldplot</code>.</li>
+</ul>
+</section></section>
+<section>
+<section id="three-dimensional-data" class="title-slide slide level1 center">
+<h1>Three-Dimensional Data</h1>
+
+</section>
+<section id="the-yosemite-elevation-data" class="slide level2">
+<h2>The Yosemite Elevation Data</h2>
+<p>All 3-D functions plot a <strong>matrix</strong>: row index = x, column index = y, cell = z. The book’s example: USGS elevation data for Yosemite Valley, downloaded as GridFloat (a 562×253 stream of 4-byte floats read with <code>readBin(..., size=4, endian="little")</code>, then given <code>dim</code>); packaged as <code>yosemite</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb14-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda"</span>,</span>
+<span id="cb14-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb14-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb14-5"><a href=""></a><span class="fu">dim</span>(yosemite)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 562 253</code></pre>
+</div>
+</div>
+</section>
+<section id="persp-surfaces-in-perspective" class="slide level2">
+<h2>persp: Surfaces in Perspective</h2>
+<p>Key arguments: <code>x</code>/<code>y</code> (coordinates of rows/columns), <code>z</code> (the matrix), <code>theta</code>/<code>phi</code> (viewing azimuth/colatitude), <code>r</code>/<code>d</code> (viewpoint distance, perspective strength), <code>expand</code> (z exaggeration), <code>col</code>/<code>border</code>, <code>ltheta</code>/<code>lphi</code> (light source), <code>shade</code>, <code>box</code>/<code>axes</code>/<code>nticks</code>/<code>ticktype</code>.</p>
+<p>Looking toward Half Dome — flip the columns (persp draws y bottom-up), take a square 253-column subset (mind the fencepost <code>+1</code>!), rotate and light:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a>halfdome <span class="ot">&lt;-</span> yosemite[(<span class="fu">nrow</span>(yosemite) <span class="sc">-</span> <span class="fu">ncol</span>(yosemite) <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span><span class="dv">562</span>,</span>
+<span id="cb16-2"><a href=""></a>                     <span class="fu">seq</span>(<span class="at">from=</span><span class="dv">253</span>, <span class="at">to=</span><span class="dv">1</span>)]</span>
+<span id="cb16-3"><a href=""></a><span class="fu">persp</span>(halfdome, <span class="at">col=</span><span class="fu">grey</span>(.<span class="dv">25</span>), <span class="at">border=</span><span class="cn">NA</span>, <span class="at">expand=</span>.<span class="dv">15</span>,</span>
+<span id="cb16-4"><a href=""></a>      <span class="at">theta=</span><span class="dv">225</span>, <span class="at">phi=</span><span class="dv">20</span>, <span class="at">ltheta=</span><span class="dv">45</span>, <span class="at">lphi=</span><span class="dv">20</span>, <span class="at">shade=</span>.<span class="dv">75</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-14-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="image-and-heatmap" class="slide level2">
+<h2>image and heatmap</h2>
+<p><code>image</code> color-codes the matrix as a grid (arguments: <code>zlim</code>, <code>col</code> — typically <code>heat.colors</code>, <code>topo.colors</code>, <code>terrain.colors</code>, <code>breaks</code>, <code>oldstyle</code>, <code>add</code>):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">image</span>(yosemite, <span class="at">asp=</span><span class="dv">253</span><span class="sc">/</span><span class="dv">562</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>), <span class="at">col=</span><span class="fu">sapply</span>((<span class="dv">0</span><span class="sc">:</span><span class="dv">32</span>)<span class="sc">/</span><span class="dv">32</span>, gray))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-15-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>(Tweaks: aspect ratio matching the data, reversed y, 32 grays.) The biology-flavored relative <strong><code>heatmap</code></strong> adds optional <strong>dendrograms</strong> along the margins — <code>Rowv</code>/<code>Colv</code>, <code>distfun</code>/<code>hclustfun</code>, <code>scale</code>, <code>margins</code>, <code>cexRow</code>/<code>cexCol</code> and friends.</p>
+</section>
+<section id="contour" class="slide level2">
+<h2>contour</h2>
+<p><code>contour</code> joins equal values with lines — arguments <code>nlevels</code>/<code>levels</code>, <code>labels</code>/<code>labcex</code>/<code>drawlabels</code>/<code>method</code> (label placement: <code>"simple"</code>, <code>"edge"</code>, <code>"flattest"</code>), <code>vfont</code>, plus the usual <code>col</code>/<code>lty</code>/<code>lwd</code>/<code>add</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">contour</span>(yosemite, <span class="at">asp=</span><span class="dv">253</span><span class="sc">/</span><span class="dv">562</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-16-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Contours are commonly <em>added to</em> an image plot (<code>add=TRUE</code>).</p>
+</section></section>
+<section>
+<section id="plotting-distributions" class="title-slide slide level1 center">
+<h1>Plotting Distributions</h1>
+
+</section>
+<section id="histograms" class="slide level2">
+<h2>Histograms</h2>
+<p>Plate appearances (PA = AB+BB+HBP+SF+SH) per batter, 2008:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>batting<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">transform</span>(batting<span class="fl">.2008</span>, <span class="at">PA=</span>AB<span class="sc">+</span>BB<span class="sc">+</span>HBP<span class="sc">+</span>SF<span class="sc">+</span>SH)</span>
+<span id="cb19-2"><a href=""></a><span class="fu">hist</span>(batting<span class="fl">.2008</span><span class="sc">$</span>PA)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch13_files/figure-revealjs/unnamed-chunk-17-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>A horde of sub-50-PA players — worth excluding from rate statistics. Zoom in and refine the bins:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">hist</span>(batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>PA<span class="sc">&gt;</span><span class="dv">25</span>, <span class="st">"PA"</span>], <span class="at">breaks=</span><span class="dv">50</span>, <span class="at">cex.main=</span>.<span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch13_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="density-plots-and-rugs" class="slide level2">
+<h2>Density Plots and Rugs</h2>
+<p>Many statisticians prefer <strong>density plots</strong> — more robust, easier to read. Compute with <code>density</code>, draw with <code>plot</code>, garnish with a <code>rug</code> (a strip plot along the axis):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">plot</span>(<span class="fu">density</span>(batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>PA<span class="sc">&gt;</span><span class="dv">25</span>, <span class="st">"PA"</span>]))</span>
+<span id="cb21-2"><a href=""></a><span class="fu">rug</span>(batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>PA<span class="sc">&gt;</span><span class="dv">25</span>, <span class="st">"PA"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-19-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="quantile-quantile-plots" class="slide level2">
+<h2>Quantile-Quantile Plots</h2>
+<p>A <strong>Q-Q plot</strong> charts sample quantiles against theoretical ones — points on the 45° diagonal mean the distributions match. <code>qqnorm</code> compares against the normal; <code>qqplot</code> compares two arbitrary distributions:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">qqnorm</span>(batting<span class="fl">.2008</span><span class="sc">$</span>AB)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-20-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>At-bats are decidedly <em>not</em> normal — the bowed shape says it instantly.</p>
+</section></section>
+<section>
+<section id="box-plots" class="title-slide slide level1 center">
+<h1>Box Plots</h1>
+
+</section>
+<section id="anatomy-and-function" class="slide level2">
+<h2>Anatomy and Function</h2>
+<p>A <strong>box plot</strong> compacts a distribution: box = interquartile range (25th–75th percentile), inner line = median, whiskers = <em>adjacent values</em> (largest observation ≤ Q3 + 1.5·IQR; smallest ≥ Q1 − 1.5·IQR), loose points = outside values.</p>
+<p>Key <code>boxplot</code> arguments: formula <code>y~grp</code> + <code>data</code> + <code>subset</code> (or vectors directly); <code>range</code> (whisker reach), <code>width</code>/<code>varwidth</code> (∝ √n), <code>notch</code> (±1.58·IQR/√n intervals), <code>outline</code>, <code>names</code>, <code>plot</code> (FALSE returns statistics), <code>border</code>/<code>col</code>, <code>log</code>, <code>horizontal</code>, <code>add</code>, <code>at</code>, <code>pars</code>.</p>
+</section>
+<section id="obp-by-team" class="slide level2">
+<h2>OBP by Team</h2>
+<p>On-base percentage by American League team, regulars only:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>batting<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">transform</span>(batting<span class="fl">.2008</span>, <span class="at">OBP=</span>(H<span class="sc">+</span>BB<span class="sc">+</span>HBP)<span class="sc">/</span>(AB<span class="sc">+</span>BB<span class="sc">+</span>HBP<span class="sc">+</span>SF))</span>
+<span id="cb23-2"><a href=""></a><span class="fu">boxplot</span>(OBP<span class="sc">~</span>teamID,</span>
+<span id="cb23-3"><a href=""></a>        <span class="at">data=</span>batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>PA<span class="sc">&gt;</span><span class="dv">100</span> <span class="sc">&amp;</span> batting<span class="fl">.2008</span><span class="sc">$</span>lgID<span class="sc">==</span><span class="st">"AL"</span>,],</span>
+<span id="cb23-4"><a href=""></a>        <span class="at">cex.axis=</span>.<span class="dv">7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-21-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
+<section>
+<section id="graphics-devices" class="title-slide slide level1 center">
+<h1>Graphics Devices</h1>
+
+</section>
+<section id="screens-and-files" class="slide level2">
+<h2>Screens and Files</h2>
+<p>Graphics land on a <strong>device</strong>. Defaults by platform: <code>windows</code> (Windows), <code>X11</code> (Unix), <code>quartz</code> (macOS). File devices: <code>bmp</code>, <code>jpeg</code>, <code>png</code>, <code>tiff</code>, plus <code>postscript</code>, <code>pdf</code>, <code>pictex</code> (LaTeX), <code>xfig</code>, <code>bitmap</code>.</p>
+<ul>
+<li>Most accept <code>width</code>, <code>height</code>, <code>pointsize</code>; file devices take a <code>file</code> argument. (Pedantically <code>filename</code> for bmp/jpeg/png/tiff — but partial matching lets <code>file</code> work everywhere.)</li>
+<li><strong>Close the device with <code>dev.off()</code></strong> to actually write the file. The book’s own figures were produced exactly this way:</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">png</span>(<span class="st">"scatter.1.png"</span>, <span class="at">width=</span><span class="fl">4.3</span>, <span class="at">height=</span><span class="fl">4.3</span>, <span class="at">units=</span><span class="st">"in"</span>, <span class="at">res=</span><span class="dv">72</span>)</span>
+<span id="cb24-2"><a href=""></a><span class="fu">plot</span>(total_toxic_chemicals<span class="sc">/</span>Surface_Area, deaths_total<span class="sc">/</span>Population)</span>
+<span id="cb24-3"><a href=""></a><span class="fu">dev.off</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section></section>
+<section>
+<section id="customizing-charts" class="title-slide slide level1 center">
+<h1>Customizing Charts</h1>
+
+</section>
+<section id="four-routes-and-common-arguments" class="slide level2">
+<h2>Four Routes, and Common Arguments</h2>
+<p>Customize via (1) arguments to charting functions, (2) session parameters (<code>par</code>), (3) functions that modify an existing chart, or (4) writing your own functions. Arguments most chart functions share: <code>add</code>, <code>axes</code>, <code>log</code>, <code>type</code>, <code>xlab</code>/<code>ylab</code>, <code>main</code>, <code>sub</code>.</p>
+<p><strong><code>par</code></strong> queries and sets parameters on the active device — set once, affect every subsequent plot:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">par</span>(<span class="st">"bg"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "white"</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">par</span>(<span class="at">bg=</span><span class="st">"white"</span>)           <span class="co"># set</span></span>
+<span id="cb27-2"><a href=""></a><span class="fu">par</span>()                     <span class="co"># list everything</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>All parameters are read-write except the read-only <code>cin</code>, <code>cra</code>, <code>csi</code>, <code>cxy</code>, <code>din</code>. Caution: some functions reuse parameter names with different meanings (e.g., <code>bg</code> in <code>points</code> = point background).</p>
+</section>
+<section id="layout-margins-and-multiple-plots" class="slide level2">
+<h2>Layout: Margins and Multiple Plots</h2>
+<ul>
+<li><strong>Margins:</strong> <code>mai</code> (inches) / <code>mar</code> (text lines, default <code>c(5.1, 4.1, 4.1, 2.1)</code> for bottom/left/top/right) / <code>mex</code> (line-size factor); title-label spacing via <code>mgp</code>; device size via read-only <code>din</code>; square plot region via <code>pty="s"</code>.</li>
+<li><strong>Multiple figures:</strong> <code>mfcol=c(3,2)</code> (fill by column) or <code>mfrow</code> (by row) split the device; <code>mfg</code> jumps to a chosen cell. Outer margins: <code>omi</code>/<code>oma</code>/<code>omd</code>. Per-figure geometry: <code>pin</code>, <code>plt</code>, <code>fig</code>. Clipping: <code>xpd</code>.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfcol=</span><span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">2</span>))</span>
+<span id="cb28-2"><a href=""></a><span class="fu">pie</span>(<span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">3</span>)); <span class="fu">plot</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="fl">1.1</span>,<span class="fl">1.9</span>,<span class="dv">3</span>,<span class="fl">3.9</span>,<span class="dv">6</span>))</span>
+<span id="cb28-3"><a href=""></a><span class="fu">barplot</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>)); <span class="fu">barplot</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), <span class="at">horiz=</span><span class="cn">TRUE</span>)</span>
+<span id="cb28-4"><a href=""></a><span class="fu">pie</span>(<span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">1</span>)); <span class="fu">plot</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">6</span>,<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfcol=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-25-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>(Easier alternatives: <code>layout</code>, <code>split.screen</code> — or the grid/lattice packages.)</p>
+</section>
+<section id="text-lines-colors-axes-points" class="slide level2">
+<h2>Text, Lines, Colors, Axes, Points</h2>
+<ul>
+<li><strong>Text size:</strong> <code>ps</code> (point size) × <code>cex</code> (global scale) × <code>cex.axis</code>/<code>cex.lab</code>/<code>cex.main</code>/<code>cex.sub</code>. <strong>Typeface:</strong> <code>family</code>; style via <code>font</code> (+ <code>.axis</code>, <code>.lab</code>, <code>.main</code>, <code>.sub</code>). Alignment <code>adj</code>, line spacing <code>lheight</code>, rotation <code>crt</code> (characters) / <code>srt</code> (strings).</li>
+<li><strong>Lines:</strong> type <code>lty</code> (0=blank, 1=solid, 2=dashed, 3=dotted, 4=dotdash, 5=longdash, 6=twodash), width <code>lwd</code>, ends <code>lend</code>, joins <code>ljoin</code>/<code>lmitre</code>; plot box style <code>bty</code> (<code>"o"</code>, <code>"l"</code>, <code>"7"</code>, <code>"]"</code>, <code>"c"</code>, <code>"u"</code>, <code>"n"</code>).</li>
+<li><strong>Colors:</strong> <code>bg</code>, <code>fg</code>, <code>col</code> (+ <code>.axis</code>, <code>.lab</code>, <code>.main</code>, <code>.sub</code>). Specify by name (<code>colors()</code>), <code>"#RRGGBB"</code>, or palette index (<code>palette()</code>); generators: <code>rgb</code>, <code>hsv</code>, <code>hcl</code>, <code>gray</code>, <code>rainbow</code>.</li>
+<li><strong>Axes:</strong> <code>lab</code> (tick counts), <code>las</code> (label orientation), <code>mgp</code>, tick sizes <code>tcl</code>/<code>tck</code>, tick positions <code>xaxp</code>/<code>yaxp</code>, interval style <code>xaxs</code>/<code>yaxs</code> (<code>"r"</code> extends 4%, <code>"i"</code> internal), suppress with <code>xaxt="n"</code>/<code>yaxt="n"</code>; log flags <code>xlog</code>/<code>ylog</code>.</li>
+<li><strong>Points:</strong> symbol via <code>pch</code> (19 solid circle, 20 bullet, 21 filled circle, 22 square, 23 diamond, 24/25 triangles; see <code>?points</code>); symbol size historically <code>mkh</code>.</li>
+<li>Others: <code>ann</code> (annotation on/off), <code>ask</code> (prompt before new page), <code>new</code> (overplot pretender), <code>usr</code> (user-coordinate extremes), <code>smo</code>, <code>err</code>.</li>
+</ul>
+</section></section>
+<section>
+<section id="basic-graphics-functions" class="title-slide slide level1 center">
+<h1>Basic Graphics Functions</h1>
+
+</section>
+<section id="the-low-level-layer" class="slide level2">
+<h2>The Low-Level Layer</h2>
+<p>High-level functions are <em>assembled from</em> low-level ones — <code>plot</code> calls <code>title</code>, <code>plot.new</code>, <code>plot.window</code>, <code>points</code>, <code>lines</code>, <code>axis</code>, <code>box</code>; <code>pie</code> calls <code>polygon</code>, <code>lines</code>, <code>text</code>, <code>title</code>; <code>boxplot</code> delegates to <code>bxp</code>; and so on. Knowing the low level means you can pass customization <em>through</em> the high level, or build charts from scratch.</p>
+<ul>
+<li><strong><code>points(x, y, type="p", ...)</code></strong> — add points (useful: <code>col</code>, <code>bg</code>, <code>pch</code>, <code>cex</code>, <code>lwd</code>); matrix version <code>matpoints</code>.</li>
+<li><strong><code>lines(x, y, ...)</code></strong> — add connected segments (useful: <code>lty</code>, <code>lwd</code>, <code>col</code>, <code>lend</code>, <code>ljoin</code>, <code>lmitre</code>); matrix version <code>matlines</code>.</li>
+<li><strong><code>curve(expr, from, to, n=101, add=, ...)</code></strong> — plot an expression in <code>x</code> or a function name.</li>
 </ul>
 </section>
-<section id="three-dimensional-data" class="slide level2">
-<h2>Three-Dimensional Data</h2>
-<p>Surfaces and grids have three friends: <code>image()</code>, <code>contour()</code>, and <code>persp()</code>. Yosemite Valley’s elevation grid:</p>
+<section id="straight-lines-shapes-segments" class="slide level2">
+<h2>Straight Lines, Shapes, Segments</h2>
+<p><strong><code>abline</code></strong> draws one line across the plot — by intercept+slope (<code>a</code>, <code>b</code>), horizontal (<code>h</code>), vertical (<code>v</code>), regression object (<code>reg</code>), or <code>coef</code>; <code>untf</code> un-transforms on log axes:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">image</span>(yosemite, <span class="at">col =</span> <span class="fu">terrain.colors</span>(<span class="dv">64</span>), <span class="at">asp =</span> <span class="dv">1</span>,</span>
-<span id="cb8-2"><a href=""></a>      <span class="at">main =</span> <span class="st">"Half Dome (elevation raster)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch13_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">persp</span>(yosemite[<span class="fu">seq</span>(<span class="dv">1</span>, <span class="fu">nrow</span>(yosemite), <span class="dv">6</span>), <span class="fu">seq</span>(<span class="dv">1</span>, <span class="fu">ncol</span>(yosemite), <span class="dv">6</span>)],</span>
-<span id="cb9-2"><a href=""></a>      <span class="at">expand =</span> <span class="fl">0.2</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">20</span>, <span class="at">shade =</span> <span class="fl">0.6</span>, <span class="at">border =</span> <span class="cn">NA</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch13_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center" style="width:55.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="plotting-distributions" class="slide level2">
-<h2>Plotting Distributions</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">hist</span>(batting<span class="fl">.2008</span><span class="sc">$</span>AB[batting<span class="fl">.2008</span><span class="sc">$</span>AB <span class="sc">&gt;</span> <span class="dv">100</span>], <span class="at">breaks =</span> <span class="dv">30</span>,</span>
-<span id="cb10-2"><a href=""></a>     <span class="at">xlab =</span> <span class="st">"Batting average"</span>, <span class="at">main =</span> <span class="st">"Hitters with 100+ at-bats"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch13_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">plot</span>(<span class="fu">density</span>(batting<span class="fl">.2008</span><span class="sc">$</span>AB[batting<span class="fl">.2008</span><span class="sc">$</span>AB <span class="sc">&gt;</span> <span class="dv">100</span>]),</span>
-<span id="cb11-2"><a href=""></a>     <span class="at">main =</span> <span class="st">"Kernel density estimate"</span>)</span>
-<span id="cb11-3"><a href=""></a><span class="fu">rug</span>(batting<span class="fl">.2008</span><span class="sc">$</span>AB[batting<span class="fl">.2008</span><span class="sc">$</span>AB <span class="sc">&gt;</span> <span class="dv">100</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch13_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<p><code>qqnorm()</code> compares a sample against the normal distribution — points on the line mean “plausibly normal.”</p>
-</section>
-<section id="box-plots" class="slide level2">
-<h2>Box Plots</h2>
-<p>The five-number summary as a picture, one box per group:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">boxplot</span>(AB <span class="sc">~</span> teamID, <span class="at">data =</span> batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>AB <span class="sc">&gt;</span> <span class="dv">100</span>, ],</span>
-<span id="cb12-2"><a href=""></a>        <span class="at">las =</span> <span class="dv">2</span>, <span class="at">cex.axis =</span> <span class="fl">0.7</span>, <span class="at">ylab =</span> <span class="st">"Batting average"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a><span class="fu">plot</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>))</span>
+<span id="cb30-2"><a href=""></a><span class="fu">abline</span>(<span class="at">h=</span><span class="dv">4</span>); <span class="fu">abline</span>(<span class="at">v=</span><span class="dv">3</span>)</span>
+<span id="cb30-3"><a href=""></a><span class="fu">abline</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">1</span>); <span class="fu">abline</span>(<span class="at">coef=</span><span class="fu">c</span>(<span class="dv">10</span>, <span class="sc">-</span><span class="dv">1</span>))</span>
+<span id="cb30-4"><a href=""></a><span class="fu">polygon</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">4</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">2</span>))</span>
+<span id="cb30-5"><a href=""></a><span class="fu">segments</span>(<span class="at">x0=</span><span class="dv">6</span>, <span class="at">y0=</span><span class="dv">6</span>, <span class="at">x1=</span><span class="dv">8</span>, <span class="at">y1=</span><span class="dv">9</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch13_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:68.0%"><p>Whiskers extend to 1.5 × IQR; dots beyond are flagged as outliers — Tukey’s recipe, unchanged since 1977.</p>
+<img data-src="ch13_files/figure-revealjs/unnamed-chunk-26-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Vector arguments draw many lines at once (<code>abline(h=1:10, v=1:10)</code>) — though for a grid, use <code>grid(nx, ny, col, lty, lwd)</code>. Shapes: <code>polygon(x, y, density, angle, border, col, lty)</code>; rectangles via <code>rect(xleft, ybottom, xright, ytop, ...)</code>; point-pair segments via <code>segments(x0, y0, x1, y1, ...)</code>; arrows via <code>arrows</code>.</p>
 </section>
-<section id="graphics-devices" class="slide level2">
-<h2>Graphics Devices</h2>
-<p>Charts render on a <strong>device</strong>. The screen is the default; files are devices you open and close:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">pdf</span>(<span class="st">"figure.pdf"</span>, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">5</span>)    <span class="co"># vector: crisp at any size</span></span>
-<span id="cb13-2"><a href=""></a><span class="fu">plot</span>(turkey.price.ts)</span>
-<span id="cb13-3"><a href=""></a><span class="fu">dev.off</span>()                                    <span class="co"># ALWAYS close the device</span></span>
-<span id="cb13-4"><a href=""></a></span>
-<span id="cb13-5"><a href=""></a><span class="fu">png</span>(<span class="st">"figure.png"</span>, <span class="at">width =</span> <span class="dv">800</span>, <span class="at">height =</span> <span class="dv">600</span>) <span class="co"># raster: for web pages</span></span>
-<span id="cb13-6"><a href=""></a><span class="fu">plot</span>(turkey.price.ts)</span>
-<span id="cb13-7"><a href=""></a><span class="fu">dev.off</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Forgetting <code>dev.off()</code> leaves a half-written file — the most common graphics bug in scripts.</p>
-</section>
-<section id="customizing-charts" class="slide level2">
-<h2>Customizing Charts</h2>
-<p>Most chart functions share arguments; <code>par()</code> sets session-wide graphical parameters:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">1</span>))   <span class="co"># 1x2 layout</span></span>
-<span id="cb14-2"><a href=""></a><span class="fu">plot</span>(cars, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">col =</span> <span class="st">"steelblue"</span>, <span class="at">main =</span> <span class="st">"pch &amp; col"</span>)</span>
-<span id="cb14-3"><a href=""></a><span class="fu">plot</span>(cars, <span class="at">type =</span> <span class="st">"l"</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">"lines"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<img data-src="ch13_files/figure-revealjs/unnamed-chunk-13-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><ul>
-<li>Per-call: <code>pch</code> (symbol), <code>col</code>, <code>lty</code>/<code>lwd</code> (line type/width), <code>cex</code> (size), <code>xlim</code>/<code>ylim</code>, <code>main</code>/<code>xlab</code>/<code>ylab</code>.</li>
-<li>Session: <code>par(mfrow=)</code> for panel grids, <code>par(mar=)</code> for margins. Save and restore <code>par()</code> like we did above.</li>
+<section id="text-mtext-title-legend" class="slide level2">
+<h2>text, mtext, title, legend</h2>
+<ul>
+<li><strong><code>text(x, y, labels, adj, pos, offset, vfont, cex, col, font)</code></strong> — text at coordinates (<code>pos</code>: 1 below, 2 left, 3 above, 4 right).</li>
+<li><strong><code>mtext(text, side=3, line=0, outer=, at=, ...)</code></strong> — text in a <em>margin</em> (sides 1–4 = bottom/left/top/right).</li>
+<li><strong><code>title(main, sub, xlab, ylab, line=, outer=)</code></strong> — annotate after the fact.</li>
+<li><strong><code>legend(x, y, legend, ...)</code></strong> — the kitchen sink: <code>fill</code> (color boxes), <code>col</code>/<code>lty</code>/<code>lwd</code>/<code>pch</code> (sample lines/points), <code>bty</code>/<code>bg</code>/<code>box.*</code> (the legend box), <code>pt.bg</code>/<code>pt.cex</code>/<code>pt.lwd</code>, <code>xjust</code>/<code>yjust</code>, <code>x.intersp</code>/<code>y.intersp</code>/<code>adj</code>/<code>text.width</code>/<code>text.col</code>, <code>merge</code>, <code>ncol</code>/<code>horiz</code>, <code>title</code>, <code>inset</code>, <code>xpd</code>.</li>
 </ul>
 </section>
-<section id="annotation-functions" class="slide level2">
-<h2>Annotation Functions</h2>
-<p>Build up a figure layer by layer:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">plot</span>(cars, <span class="at">pch =</span> <span class="dv">19</span>)</span>
-<span id="cb16-2"><a href=""></a><span class="fu">abline</span>(<span class="fu">lm</span>(dist <span class="sc">~</span> speed, <span class="at">data =</span> cars), <span class="at">col =</span> <span class="st">"red"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
-<span id="cb16-3"><a href=""></a><span class="fu">text</span>(<span class="dv">8</span>, <span class="dv">100</span>, <span class="st">"fitted line"</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span>
-<span id="cb16-4"><a href=""></a><span class="fu">legend</span>(<span class="st">"topleft"</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"data"</span>, <span class="st">"fit"</span>),</span>
-<span id="cb16-5"><a href=""></a>       <span class="at">pch =</span> <span class="fu">c</span>(<span class="dv">19</span>, <span class="cn">NA</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">1</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"black"</span>, <span class="st">"red"</span>))</span>
-<span id="cb16-6"><a href=""></a><span class="fu">title</span>(<span class="at">main =</span> <span class="st">"Stopping distance vs. speed"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch13_files/figure-revealjs/unnamed-chunk-14-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><p><code>points()</code>, <code>lines()</code>, <code>segments()</code>, <code>arrows()</code>, <code>rect()</code>, and <code>polygon()</code> complete the ink-adding toolkit.</p>
+<section id="axis-box-trans3d" class="slide level2">
+<h2>axis, box, trans3d</h2>
+<ul>
+<li><strong><code>axis(side, at, labels, tick, line, pos, outer, font, lty, lwd, lwd.ticks, col, col.ticks, hadj, padj)</code></strong> — draw an axis where and how you want (sides 1–4 as usual).</li>
+<li><strong><code>box(which="plot", lty="solid")</code></strong> — frame the <code>"plot"</code>, <code>"figure"</code>, <code>"inner"</code>, or <code>"outer"</code> region.</li>
+<li><strong><code>trans3d(x, y, z, pmat)</code></strong> — project 3-D points onto a <code>persp</code> plot, using the perspective matrix that <code>persp</code> returns. The bridge between 3-D surfaces and 2-D annotation.</li>
+</ul>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

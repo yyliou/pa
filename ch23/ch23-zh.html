@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,97 +211,105 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="帶著時鐘的資料" class="title-slide slide level1 center">
-<h1><strong>帶著時鐘的資料</strong></h1>
+<section id="隨時間變動的資料" class="title-slide slide level1 center">
+<h1><strong>隨時間變動的資料</strong></h1>
 
 </section>
-<section id="時間序列物件" class="slide level2">
-<h2>時間序列物件</h2>
-<p>依時間排序的觀測值違反了其他章節到處假設的獨立性——需要專屬工具 <span class="citation" data-cites="shumway2011time">(Shumway and Stoffer 2011)</span>。課程資料集裡有兩條月度價格序列：</p>
+<section id="時間序列為何特別" class="slide level2">
+<h2>時間序列為何特別</h2>
+<p>時間序列帶有<strong>長期趨勢</strong>與<strong>週期型態</strong>，是一般摘要統計量看不見的。分析它需要尊重<em>順序</em>與<em>落後（lag）</em>的工具。我們重訪第七章的火雞價格序列：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/ham.price.ts.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-5"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-6"><a href=""></a>turkey.price.ts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
-2001 1.58 1.75 1.63 1.45 1.56 2.07 1.81 1.74 1.54 1.45 0.57 1.15
-2002 1.50 1.66 1.34 1.67 1.81 1.60 1.70 1.87 1.47 1.59 0.74 0.82
-2003 1.43 1.77 1.47 1.38 1.66 1.66 1.61 1.74 1.62 1.39 0.70 1.07
-2004 1.48 1.48 1.50 1.27 1.56 1.61 1.55 1.69 1.49 1.32 0.53 1.03
-2005 1.62 1.63 1.40 1.73 1.73 1.80 1.92 1.77 1.71 1.53 0.67 1.09
-2006 1.71 1.90 1.68 1.46 1.86 1.85 1.88 1.86 1.62 1.45 0.67 1.18
-2007 1.68 1.74 1.70 1.49 1.81 1.96 1.97 1.91 1.89 1.65 0.70 1.17
-2008 1.76 1.78 1.53 1.90                                        </code></pre>
+<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>,</span>
+<span id="cb1-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">plot</span>(turkey.price.ts, <span class="at">ylab =</span> <span class="st">"US cents/lb"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section></section>
+<section>
+<section id="自我相關" class="title-slide slide level1 center">
+<h1>自我相關</h1>
 
-</div>
-<img data-src="ch23-zh_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"></section>
-<section id="自相關函數" class="slide level2">
-<h2>自相關函數</h2>
-<p>序列與<em>自己的過去</em>相關有多強？</p>
+</section>
+<section id="acf-與-pacf" class="slide level2">
+<h2>acf 與 pacf</h2>
+<p><strong>自我相關函數</strong>度量序列與自身過去（按落後）的相關——是季節性與循環的指紋：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">acf</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch23-zh_files/figure-revealjs/unnamed-chunk-3-1.png" class="quarto-figure quarto-figure-center" style="width:62.0%"></p>
-</figure>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">acf</span>(x, <span class="at">lag.max =</span> <span class="cn">NULL</span>, <span class="at">type =</span> <span class="fu">c</span>(<span class="st">"correlation"</span>, <span class="st">"covariance"</span>, <span class="st">"partial"</span>),</span>
+<span id="cb2-2"><a href=""></a>    <span class="at">plot =</span> <span class="cn">TRUE</span>, na.action, <span class="at">demean =</span> <span class="cn">TRUE</span>, ...)</span>
+<span id="cb2-3"><a href=""></a><span class="fu">pacf</span>(x, lag.max, plot, na.action, ...)   <span class="co"># 別名：type = "partial"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">acf</span>(turkey.price.ts, <span class="at">plot=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Autocorrelations of series 'turkey.price.ts', by lag
+
+0.0000 0.0833 0.1667 0.2500 0.3333 0.4167 0.5000 0.5833 0.6667 0.7500 0.8333 
+ 1.000  0.465 -0.019 -0.165 -0.145 -0.219 -0.215 -0.122 -0.136 -0.200 -0.016 
+0.9167 1.0000 1.0833 1.1667 1.2500 1.3333 1.4167 1.5000 1.5833 
+ 0.368  0.723  0.403 -0.013 -0.187 -0.141 -0.180 -0.226 -0.130 </code></pre>
 </div>
 </div>
 <ul>
-<li>落後 12（與 24）期的尖峰：年度季節性——十一月的折扣年年迴響。</li>
-<li><code>pacf()</code> 顯示<em>偏</em>自相關——移除較短落後期後，落後 <span class="math inline">\(k\)</span> 期的直接效果——是挑選 AR 階數的標準工具。</li>
+<li><code>acf</code> 預設畫圖；<code>plot=FALSE</code> 回傳數值。</li>
+<li><strong><code>pacf</code></strong>（偏自我相關）——<em>扣除</em>較短落後影響後、某個落後的相關；有助於辨識 AR 模型的階數。</li>
 </ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">pacf</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch23-zh_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" style="width:62.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="交叉相關" class="slide level2">
-<h2>交叉相關</h2>
-<p>兩條序列是否同步波動，甚至帶有延遲？</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">ccf</span>(turkey.price.ts, ham.price.ts, <span class="at">main =</span> <span class="st">"Turkey vs. ham prices"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>火雞序列在 12 個月落後呈強正自我相關、6 個月呈負——清楚的年度季節性。</p>
+</section></section>
+<section>
+<section id="時間序列模型" class="title-slide slide level1 center">
+<h1>時間序列模型</h1>
 
-</div>
-<img data-src="ch23-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><p><code>ccf()</code> 把一條序列與另一條的各種落後版本求相關——尖峰偏離 0 落後期，暗示其中一條領先另一條。</p>
 </section>
-<section id="分解與平滑" class="slide level2">
-<h2>分解與平滑</h2>
-<p>把序列拆成趨勢＋季節＋餘項：</p>
+<section id="自我迴歸模型ar" class="slide level2">
+<h2>自我迴歸模型：ar</h2>
+<p>時間序列模型用過去值預測未來值。<strong>自我迴歸（AR）</strong>模型把每個值對其前值做迴歸——<code>ar</code> 甚至依 AIC 自動選階：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">plot</span>(<span class="fu">stl</span>(turkey.price.ts, <span class="at">s.window =</span> <span class="st">"periodic"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">ar</span>(x, <span class="at">aic =</span> <span class="cn">TRUE</span>, <span class="at">order.max =</span> <span class="cn">NULL</span>, <span class="at">method =</span> <span class="fu">c</span>(<span class="st">"yule-walker"</span>,<span class="st">"burg"</span>,</span>
+<span id="cb5-2"><a href=""></a>   <span class="st">"ols"</span>,<span class="st">"mle"</span>,<span class="st">"yw"</span>), ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<img data-src="ch23-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><ul>
-<li><code>stl()</code> 用 loess 平滑；<code>decompose()</code> 是移動平均的經典版。</li>
-<li><code>filter()</code> 直接計算移動平均；<code>diff()</code> 以差分移除趨勢——ARIMA 裡的那個「I」。</li>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>turkey.price.ts.ar <span class="ot">&lt;-</span> <span class="fu">ar</span>(turkey.price.ts)</span>
+<span id="cb6-2"><a href=""></a>turkey.price.ts.ar<span class="sc">$</span>order      <span class="co"># 依 AIC 選出的階數</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 12</code></pre>
+</div>
+</div>
+<ul>
+<li><code>aic=TRUE</code> 選階；<code>order.max</code> 設上限；<code>method</code> 選估計演算法。</li>
+<li>配適好的物件會報告選定的階數與 AR 係數。</li>
 </ul>
 </section>
-<section id="arima-模型" class="slide level2">
-<h2>ARIMA 模型</h2>
-<p>ARMA 家族把（差分後的）序列建模為自迴歸加移動平均雜訊：</p>
-<p><span class="math display">\[x_t = \phi_1 x_{t-1} + \cdots + \phi_p x_{t-p} + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}\]</span></p>
+<section id="用-predict-預測" class="slide level2">
+<h2>用 predict 預測</h2>
+<p>對 <code>ar</code> 物件呼叫 <code>predict</code> 投射未來值，附標準誤：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">arima</span>(turkey.price.ts, <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
-<span id="cb8-2"><a href=""></a>             <span class="at">seasonal =</span> <span class="fu">list</span>(<span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>), <span class="at">period =</span> <span class="dv">12</span>))</span>
-<span id="cb8-3"><a href=""></a>fit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>turkey.forecast <span class="ot">&lt;-</span> <span class="fu">predict</span>(turkey.price.ts.ar, <span class="at">n.ahead=</span><span class="dv">12</span>)</span>
+<span id="cb8-2"><a href=""></a>turkey.forecast<span class="sc">$</span>pred</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           Jan       Feb       Mar       Apr       May       Jun       Jul
+2008                                         1.8827277 1.7209182 1.7715016
+2009 1.5439290 1.6971933 1.5849406 1.7800358                              
+           Aug       Sep       Oct       Nov       Dec
+2008 1.9416776 1.7791961 1.4822070 0.9894343 1.1588863
+2009                                                  </code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">ts.plot</span>(turkey.price.ts, turkey.forecast<span class="sc">$</span>pred, <span class="at">col=</span><span class="fu">c</span>(<span class="st">"black"</span>,<span class="st">"blue"</span>), <span class="at">lty=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch23-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="arima-及其延伸" class="slide level2">
+<h2>ARIMA 及其延伸</h2>
+<p>要更豐富的動態，<strong><code>arima</code></strong> 配適自我迴歸整合移動平均模型——階數 <code>(p, d, q)</code> 分別捕捉 AR 項、差分、MA 項；加上季節項即延伸為 <strong>SARIMA</strong>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>turkey.arima <span class="ot">&lt;-</span> <span class="fu">arima</span>(turkey.price.ts, <span class="at">order=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>),</span>
+<span id="cb11-2"><a href=""></a>                      <span class="at">seasonal=</span><span class="fu">list</span>(<span class="at">order=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>), <span class="at">period=</span><span class="dv">12</span>))</span>
+<span id="cb11-3"><a href=""></a>turkey.arima</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -315,43 +323,37 @@ s.e.  0.1127  0.0475     0.0956
 
 sigma^2 estimated as 0.02875:  log likelihood = 23.22,  aic = -38.44</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">predict</span>(turkey.arima, <span class="at">n.ahead=</span><span class="dv">6</span>)<span class="sc">$</span>pred</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          May      Jun      Jul      Aug      Sep      Oct
+2008 1.846322 1.917925 1.916521 1.863201 1.845705 1.639351</code></pre>
 </div>
-<ul>
-<li><code>order = c(p, d, q)</code>：AR 階數、差分次數、MA 階數；<code>seasonal=</code> 加上季節對應項。</li>
-<li>階數可從 ACF/PACF 的形狀推測，或對候選模型比 AIC；<code>tsdiag(fit)</code> 檢查殘差。</li>
-</ul>
-</section>
-<section id="預測" class="slide level2">
-<h2>預測</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>pr <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">n.ahead =</span> <span class="dv">24</span>)</span>
-<span id="cb10-2"><a href=""></a><span class="fu">ts.plot</span>(turkey.price.ts, pr<span class="sc">$</span>pred,</span>
-<span id="cb10-3"><a href=""></a>        pr<span class="sc">$</span>pred <span class="sc">+</span> <span class="dv">2</span> <span class="sc">*</span> pr<span class="sc">$</span>se, pr<span class="sc">$</span>pred <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> pr<span class="sc">$</span>se,</span>
-<span id="cb10-4"><a href=""></a>        <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">3</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"black"</span>, <span class="st">"red"</span>, <span class="st">"grey"</span>, <span class="st">"grey"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
 </div>
-<img data-src="ch23-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><ul>
-<li><code>predict()</code> 回傳點預測與標準誤；錐形隨期數張開——對「不確定性會長大」誠實以告。</li>
-<li><code>forecast</code> 套件能自動選階（<code>auto.arima()</code>）並補上指數平滑（<code>ets()</code>）。</li>
-</ul>
+<p>輔助工具：<code>diff</code>（差分去趨勢）、<code>Box.test</code>（檢驗殘差自我相關）、<code>HoltWinters</code>（指數平滑）、<code>StructTS</code>（結構模型）、<code>decompose</code>／<code>stl</code>（把序列拆成趨勢、季節、餘項）。</p>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Box-Jenkins 的節奏。</strong> 畫出序列；看 <code>acf</code>／<code>pacf</code>；差分到定態；配 <code>arima</code>；確認<em>殘差</em>像白噪音（<code>acf</code>、<code>Box.test</code>）；再預測。現代的 <code>forecast</code> 與 <code>fable</code> 套件把這套大半自動化（<code>auto.arima</code>）。</p>
+</div>
+</div>
+</div>
 </section>
-<section id="時間序列檢查清單" class="slide level2">
-<h2>時間序列檢查清單</h2>
-<ol type="1">
-<li>先畫序列；記下趨勢、季節性、斷點。</li>
-<li>穩定化：變異數隨水準成長就取對數；差分到平稳為止。</li>
-<li>檢視 <code>acf()</code>/<code>pacf()</code>；提出 ARIMA 階數。</li>
-<li>用 <code>arima()</code> 配適；以 AIC 比較候選模型。</li>
-<li>驗證殘差（<code>tsdiag</code>、Ljung–Box）——它們該長得像白雜訊。</li>
-<li>預測一定附區間，絕不只給點預測線。</li>
-</ol>
+<section id="其他主題" class="slide level2">
+<h2>其他主題</h2>
+<p>書末指向前路：時間序列匯入更廣的分析——含落後預測變數的迴歸、波動度模型（GARCH，套件 <code>tseries</code>）、多變量序列（VAR）。<code>ts</code> 類別（第七章）是共同基礎；<code>zoo</code>、<code>xts</code> 等專門類別處理不規則間距與更豐富的日期索引。</p>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

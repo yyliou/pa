@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,40 +211,61 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="modeling-relationships" class="title-slide slide level1 center">
-<h1><strong>Modeling Relationships</strong></h1>
+<section id="predicting-continuous-values" class="title-slide slide level1 center">
+<h1><strong>Predicting Continuous Values</strong></h1>
 
 </section>
-<section id="a-question-to-model" class="slide level2">
-<h2>A Question to Model</h2>
-<p>How many runs does a baseball team score, given its hitting statistics? Team batting data for 2000–2008, loaded the course way:</p>
+<section id="what-regression-is-for" class="slide level2">
+<h2>What Regression Is For</h2>
+<p>A <strong>regression model</strong> relates a continuous <strong>response</strong> (dependent variable) to a set of <strong>predictors</strong> (independent/stimulus variables). Three uses:</p>
+<ul>
+<li><strong>prediction</strong> — a warfarin dose from a patient’s weight; a credit customer’s balance;</li>
+<li><strong>explanation</strong> — how weight relates to food intake, <em>adjusting for</em> age, exercise, genetics;</li>
+<li><strong>inference</strong> — visualizing trends, ANOVA, testing variable significance.</li>
+</ul>
+<p>This chapter starts with the simplest model — <strong>linear regression by ordinary least squares (OLS)</strong> — then builds, evaluates, refines it, and surveys richer model types. Classification waits for Chapter 21.</p>
+</section></section>
+<section>
+<section id="a-simple-linear-model" class="title-slide slide level1 center">
+<h1>A Simple Linear Model</h1>
+
+</section>
+<section id="the-data-and-the-question" class="slide level2">
+<h2>The Data and the Question</h2>
+<p>Which batting metrics predict a team’s runs? Team batting 2000–2008 (extracted by SQL in Chapter 16, packaged as <code>team.batting.00to08</code>):</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">names</span>(team.batting<span class="fl">.00</span>to08)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code> [1] "teamID"         "yearID"         "runs"           "singles"       
- [5] "doubles"        "triples"        "homeruns"       "walks"         
- [9] "stolenbases"    "caughtstealing" "hitbypitch"     "sacrificeflies"
-[13] "atbats"        </code></pre>
+<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda"</span>,</span>
+<span id="cb1-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<p>The linear model assumes</p>
-<p><span class="math display">\[\text{runs} = c_0 + c_1 x_1 + \cdots + c_n x_n + \varepsilon,\]</span></p>
-<p>and <code>lm()</code> estimates the coefficients by least squares.</p>
-</section>
-<section id="fitting-a-model" class="slide level2">
-<h2>Fitting a Model</h2>
+<p>A lattice scatter of runs against each variable hints at importance — home runs and <em>walks</em> both track runs strongly:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>runs.mdl <span class="ot">&lt;-</span> <span class="fu">lm</span>(runs <span class="sc">~</span> singles <span class="sc">+</span> doubles <span class="sc">+</span> triples <span class="sc">+</span> homeruns <span class="sc">+</span></span>
-<span id="cb3-2"><a href=""></a>                 walks <span class="sc">+</span> hitbypitch <span class="sc">+</span> sacrificeflies <span class="sc">+</span></span>
-<span id="cb3-3"><a href=""></a>                 stolenbases <span class="sc">+</span> caughtstealing,</span>
-<span id="cb3-4"><a href=""></a>               <span class="at">data =</span> team.batting<span class="fl">.00</span>to08)</span>
-<span id="cb3-5"><a href=""></a>runs.mdl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(lattice)</span>
+<span id="cb2-2"><a href=""></a><span class="fu">attach</span>(team.batting<span class="fl">.00</span>to08)</span>
+<span id="cb2-3"><a href=""></a>forplot <span class="ot">&lt;-</span> <span class="fu">make.groups</span>(</span>
+<span id="cb2-4"><a href=""></a>  <span class="at">singles=</span><span class="fu">data.frame</span>(<span class="at">value=</span>singles, runs), <span class="at">doubles=</span><span class="fu">data.frame</span>(<span class="at">value=</span>doubles, runs),</span>
+<span id="cb2-5"><a href=""></a>  <span class="at">triples=</span><span class="fu">data.frame</span>(<span class="at">value=</span>triples, runs), <span class="at">homeruns=</span><span class="fu">data.frame</span>(<span class="at">value=</span>homeruns, runs),</span>
+<span id="cb2-6"><a href=""></a>  <span class="at">walks=</span><span class="fu">data.frame</span>(<span class="at">value=</span>walks, runs))</span>
+<span id="cb2-7"><a href=""></a><span class="fu">detach</span>(team.batting<span class="fl">.00</span>to08)</span>
+<span id="cb2-8"><a href=""></a><span class="fu">xyplot</span>(runs<span class="sc">~</span>value<span class="sc">|</span>which, <span class="at">data=</span>forplot, <span class="at">scales=</span><span class="fu">list</span>(<span class="at">relation=</span><span class="st">"free"</span>),</span>
+<span id="cb2-9"><a href=""></a>       <span class="at">pch=</span><span class="dv">19</span>, <span class="at">cex=</span>.<span class="dv">2</span>, <span class="at">layout=</span><span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch20_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="lm-fitting" class="slide level2">
+<h2>lm: Fitting</h2>
+<p><code>lm</code> fits a linear model by OLS. Note: in formulas <code>+ * - ^</code> are <em>special</em>; wrap literal arithmetic in <code>I()</code>, and generate polynomial terms with <code>poly(x, degree=)</code>.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>runs.mdl <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
+<span id="cb3-2"><a href=""></a>  <span class="at">formula=</span>runs<span class="sc">~</span>singles<span class="sc">+</span>doubles<span class="sc">+</span>triples<span class="sc">+</span>homeruns<span class="sc">+</span></span>
+<span id="cb3-3"><a href=""></a>            walks<span class="sc">+</span>hitbypitch<span class="sc">+</span>sacrificeflies<span class="sc">+</span></span>
+<span id="cb3-4"><a href=""></a>            stolenbases<span class="sc">+</span>caughtstealing,</span>
+<span id="cb3-5"><a href=""></a>  <span class="at">data=</span>team.batting<span class="fl">.00</span>to08)</span>
+<span id="cb3-6"><a href=""></a>runs.mdl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -259,10 +280,10 @@ Coefficients:
        0.30118         0.37750         0.87218         0.04369        -0.01533  </code></pre>
 </div>
 </div>
-<p>Each coefficient reads “extra runs per extra unit, holding the rest fixed” — a home run is worth roughly three times a single.</p>
+<p>R prints almost nothing on fitting — <strong>information comes from helper functions</strong> (a deliberate contrast with SAS/SPSS).</p>
 </section>
-<section id="evaluating-the-fit" class="slide level2">
-<h2>Evaluating the Fit</h2>
+<section id="inspecting-a-model-summary" class="slide level2">
+<h2>Inspecting a Model: summary</h2>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">summary</span>(runs.mdl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -296,169 +317,221 @@ Multiple R-squared:  0.9144,    Adjusted R-squared:  0.9114
 F-statistic: 308.6 on 9 and 260 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
-<p>Read in this order: residual spread, coefficient significance (stars), then <span class="math inline">\(R^2\)</span> — the share of variance explained.</p>
+<p>The report: residual distribution; a <strong>coefficient table</strong> (estimate, std. error, t-value, p-value, significance stars); and fit statistics — <strong>R² = 0.914</strong>, adjusted R² = 0.911, an overwhelmingly significant F-statistic. Singles, doubles, triples, home runs, walks, HBP, sac flies all matter; stolen bases and caught-stealing do not.</p>
+</section>
+<section id="model-accessors" class="slide level2">
+<h2>Model Accessors</h2>
+<p>Beyond <code>summary</code>, a family of extractors:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">formula</span>(runs.mdl)          <span class="co"># the formula used</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>runs ~ singles + doubles + triples + homeruns + walks + hitbypitch + 
+    sacrificeflies + stolenbases + caughtstealing</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">coef</span>(runs.mdl)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]        <span class="co"># coefficients (alias: coefficients)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> (Intercept)      singles      doubles      triples 
+-507.1601976    0.5670487    0.6911042    1.1583609 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">head</span>(<span class="fu">residuals</span>(runs.mdl))  <span class="co"># residuals; fitted() gives fitted values</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1          2          3          4          5          6 
+-35.572347 -10.526473  -5.920721  57.798284  -4.279294  -4.668995 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">confint</span>(runs.mdl)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, ]   <span class="co"># confidence intervals for coefficients</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                   2.5 %       97.5 %
+(Intercept) -570.8582801 -443.4621151
+singles        0.5158302    0.6182671
+doubles        0.5744958    0.8077126
+triples        0.8175297    1.4991921</code></pre>
+</div>
+</div>
+<p>Others: <code>effects</code> (orthogonal effects), <code>vcov</code> (variance-covariance matrix), <code>deviance</code>, <code>influence</code> / <code>influence.measures</code>, <code>anova</code> (ANOVA table).</p>
+</section>
+<section id="predicting-new-values" class="slide level2">
+<h2>Predicting New Values</h2>
+<p><code>predict(object, newdata, interval=c("none","confidence","prediction"), level=0.95, ...)</code> applies the model to fresh data — optionally with intervals:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>newdata <span class="ot">&lt;-</span> team.batting<span class="fl">.00</span>to08[<span class="dv">1</span>, ]</span>
+<span id="cb15-2"><a href=""></a><span class="fu">predict</span>(runs.mdl, newdata, <span class="at">interval=</span><span class="st">"confidence"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       fit      lwr      upr
+1 899.5723 890.1239 909.0208</code></pre>
+</div>
+</div>
+<p><code>anova(model1, model2, ...)</code> compares nested models; <code>update(model, formula)</code> refits after a formula change — far cheaper than building from scratch on large data.</p>
 </section>
 <section id="diagnostic-plots" class="slide level2">
 <h2>Diagnostic Plots</h2>
-<p><code>plot(model)</code> produces the standard panel:</p>
+<p><code>plot(lm.object)</code> draws the standard diagnostics — residuals vs.&nbsp;fitted, a normal Q-Q of residuals, scale-location, and residuals vs.&nbsp;leverage:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
-<span id="cb7-2"><a href=""></a><span class="fu">plot</span>(runs.mdl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>))</span>
+<span id="cb17-2"><a href=""></a><span class="fu">plot</span>(runs.mdl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<img data-src="ch20_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:72.0%"><p>Look for: curvature in <em>Residuals vs.&nbsp;Fitted</em> (nonlinearity), departures in the <em>Q–Q plot</em> (non-normal errors), funnels in <em>Scale–Location</em> (heteroskedasticity), and influential points in <em>Leverage</em>.</p>
+<img data-src="ch20_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Look for: structure in residuals (nonlinearity), departures from the Q-Q line (non-normality), a fanning scale-location (heteroscedasticity), and high-leverage outliers.</p>
 </section>
-<section id="refining-the-model" class="slide level2">
-<h2>Refining the Model</h2>
-<p>Drop weak terms and compare nested models:</p>
+<section id="lm-in-detail" class="slide level2">
+<h2>lm in Detail</h2>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>runs.mdl2 <span class="ot">&lt;-</span> <span class="fu">update</span>(runs.mdl, . <span class="sc">~</span> . <span class="sc">-</span> caughtstealing <span class="sc">-</span> stolenbases)</span>
-<span id="cb9-2"><a href=""></a><span class="fu">anova</span>(runs.mdl2, runs.mdl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Analysis of Variance Table
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">lm</span>(formula, data, subset, weights, na.action,</span>
+<span id="cb19-2"><a href=""></a>   <span class="at">method =</span> <span class="st">"qr"</span>, <span class="at">model =</span> <span class="cn">TRUE</span>, <span class="at">x =</span> <span class="cn">FALSE</span>, <span class="at">y =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb19-3"><a href=""></a>   <span class="at">qr =</span> <span class="cn">TRUE</span>, <span class="at">singular.ok =</span> <span class="cn">TRUE</span>, <span class="at">contrasts =</span> <span class="cn">NULL</span>, offset, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The model is <span class="math inline">\(y = c_0 + c_1 x_1 + \cdots + c_n x_n + \varepsilon\)</span>; OLS chooses the <span class="math inline">\(c_i\)</span> minimizing the sum of squared <strong>residuals</strong>. Key arguments: <code>formula</code> (required); <code>data</code>, <code>subset</code>, <code>weights</code>, <code>na.action</code>; <code>contrasts</code> controls factor coding (treatment, Helmert, …); <code>weights</code> gives weighted least squares. Companions <code>glm</code>, <code>nls</code>, <code>loess</code>, <code>rlm</code> share many of these argument names.</p>
+</section></section>
+<section>
+<section id="when-ols-isnt-enough" class="title-slide slide level1 center">
+<h1>When OLS Isn’t Enough</h1>
 
-Model 1: runs ~ singles + doubles + triples + homeruns + walks + hitbypitch + 
-    sacrificeflies
-Model 2: runs ~ singles + doubles + triples + homeruns + walks + hitbypitch + 
-    sacrificeflies + stolenbases + caughtstealing
-  Res.Df    RSS Df Sum of Sq      F Pr(&gt;F)
-1    262 140440                           
-2    260 140078  2    362.56 0.3365 0.7146</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">AIC</span>(runs.mdl, runs.mdl2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>          df      AIC
-runs.mdl  11 2476.140
-runs.mdl2  9 2472.838</code></pre>
-</div>
-</div>
+</section>
+<section id="assumptions-and-their-tests" class="slide level2">
+<h2>Assumptions and Their Tests</h2>
+<p>OLS is technically valid only under assumptions — yet often predicts well even when they’re bent:</p>
 <ul>
-<li><code>update()</code> edits a formula without retyping it.</li>
-<li><code>anova()</code> tests whether the extra terms earn their keep; <code>AIC</code>/<code>BIC</code> balance fit against complexity.</li>
-<li><code>step(runs.mdl)</code> automates the search by AIC.</li>
+<li><strong>linearity</strong> of the response in the predictors;</li>
+<li><strong>constant error variance</strong> (homoscedasticity) — test with <code>car::ncvTest</code> (non-constant variance score test);</li>
+<li>predictors not collinear (singular fits);</li>
+<li>normally distributed, independent errors.</li>
 </ul>
-</section>
-<section id="details-of-lm" class="slide level2">
-<h2>Details of lm</h2>
-<p>Useful arguments and extractors:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">lm</span>(formula, data, <span class="at">subset =</span> year <span class="sc">&gt;</span> <span class="dv">2003</span>,   <span class="co"># fit on a subset</span></span>
-<span id="cb13-2"><a href=""></a>   <span class="at">weights =</span> w, <span class="at">na.action =</span> na.exclude)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">coef</span>(runs.mdl2)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code> (Intercept)      singles      doubles      triples 
--506.6388774    0.5711526    0.6822661    1.1789353 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">head</span>(<span class="fu">residuals</span>(runs.mdl2), <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>         1          2          3 
--35.719379  -9.345620  -7.916084 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">predict</span>(runs.mdl2, <span class="at">newdata =</span> team.batting<span class="fl">.00</span>to08[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, ],</span>
-<span id="cb18-2"><a href=""></a>        <span class="at">interval =</span> <span class="st">"prediction"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>       fit      lwr      upr
-1 899.7194 853.4491 945.9896
-2 803.3456 757.4048 849.2865</code></pre>
-</div>
-</div>
-<p><code>confint()</code>, <code>fitted()</code>, <code>model.matrix()</code> complete the extraction toolkit.</p>
+<p>When they fail badly, reach for the alternatives below.</p>
 </section>
 <section id="robust-and-resistant-regression" class="slide level2">
 <h2>Robust and Resistant Regression</h2>
-<p>Outliers can drag least squares anywhere. Robust alternatives down-weight them:</p>
+<p>Outliers wreck OLS. Two defenses (package <code>MASS</code>):</p>
+<ul>
+<li><strong>Resistant regression</strong> — <code>lqs</code> (least trimmed squares, least median of squares): fits using a <em>subset</em> of points, ignoring extreme ones;</li>
+<li><strong>Robust regression</strong> — <code>rlm</code>: M-estimation, down-weighting (rather than discarding) large residuals iteratively.</li>
+</ul>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">library</span>(MASS)</span>
-<span id="cb20-2"><a href=""></a>runs.rlm <span class="ot">&lt;-</span> <span class="fu">rlm</span>(runs <span class="sc">~</span> singles <span class="sc">+</span> doubles <span class="sc">+</span> triples <span class="sc">+</span> homeruns <span class="sc">+</span> walks,</span>
-<span id="cb20-3"><a href=""></a>                <span class="at">data =</span> team.batting<span class="fl">.00</span>to08)</span>
-<span id="cb20-4"><a href=""></a><span class="fu">round</span>(<span class="fu">coef</span>(runs.rlm), <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>(Intercept)     singles     doubles     triples    homeruns       walks 
-   -501.236       0.593       0.739       1.211       1.530       0.318 </code></pre>
+<span id="cb20-2"><a href=""></a><span class="fu">lqs</span>(runs<span class="sc">~</span>homeruns<span class="sc">+</span>walks, <span class="at">data=</span>team.batting<span class="fl">.00</span>to08)   <span class="co"># resistant</span></span>
+<span id="cb20-3"><a href=""></a><span class="fu">rlm</span>(runs<span class="sc">~</span>homeruns<span class="sc">+</span>walks, <span class="at">data=</span>team.batting<span class="fl">.00</span>to08)   <span class="co"># robust</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<ul>
-<li><code>rlm()</code> — M-estimation (<code>MASS</code>); <code>lqs()</code> — resistant fits like least trimmed squares.</li>
-<li>If robust and ordinary fits disagree sharply, investigate the influential observations before trusting either.</li>
-</ul>
 </section>
 <section id="subset-selection-and-shrinkage" class="slide level2">
 <h2>Subset Selection and Shrinkage</h2>
-<p>With many correlated predictors, three strategies tame variance:</p>
+<p>Too many predictors? Three remedies:</p>
 <ul>
-<li><strong>Subset selection</strong>: <code>step()</code>, or exhaustive search via the <code>leaps</code> package.</li>
-<li><strong>Ridge regression</strong>: keep all terms, shrink coefficients (<span class="math inline">\(L_2\)</span> penalty) — <code>lm.ridge()</code> in <code>MASS</code>.</li>
-<li><strong>Lasso</strong>: shrink <em>and</em> select (<span class="math inline">\(L_1\)</span> penalty) — the <code>glmnet</code> package fits whole regularization paths efficiently.</li>
+<li><strong>Stepwise selection</strong> — <code>step</code> (and <code>MASS::stepAIC</code>, wider model range) add/drop terms by AIC.</li>
+<li><strong>Ridge regression</strong> — <code>MASS::lm.ridge(formula, data, lambda=)</code> shrinks coefficients toward zero (L2 penalty), taming collinearity.</li>
+<li><strong>Lasso / least angle regression</strong> — <code>lars::lars(x, y, type=c("lasso","lar","forward.stagewise","stepwise"))</code> (L1 penalty) shrinks <em>and</em> selects, zeroing some coefficients; it computes the entire path at once.</li>
+</ul>
+<p>Ridge and lasso are both <strong>penalized regression</strong>; the modern unified tool is <code>glmnet</code>.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">step</span>(runs.mdl)                          <span class="co"># stepwise by AIC</span></span>
+<span id="cb21-2"><a href=""></a>MASS<span class="sc">::</span><span class="fu">lm.ridge</span>(runs<span class="sc">~</span>., team.batting<span class="fl">.00</span>to08, <span class="at">lambda=</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="fl">0.1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="principal-components-and-pls-regression" class="slide level2">
+<h2>Principal Components and PLS Regression</h2>
+<p>When predictors are many and correlated, regress on <em>components</em> instead — package <code>pls</code>, both via <code>mvr</code> (aliases <code>pcr</code>, <code>plsr</code>):</p>
+<ul>
+<li><strong>Principal components regression (<code>pcr</code>)</strong> — regress on the leading principal components of the predictors;</li>
+<li><strong>Partial least squares (<code>plsr</code>)</strong> — components chosen to also correlate with the response.</li>
+</ul>
+</section></section>
+<section>
+<section id="generalized-and-nonlinear-models" class="title-slide slide level1 center">
+<h1>Generalized and Nonlinear Models</h1>
+
+</section>
+<section id="glm-generalized-linear-models" class="slide level2">
+<h2>glm: Generalized Linear Models</h2>
+<p><code>glm</code> extends linear models to non-normal responses via a <strong>family</strong> and a <strong>link function</strong> — predicting the link of the expected response:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">glm</span>(formula, <span class="at">family =</span> gaussian, data, weights, subset,</span>
+<span id="cb22-2"><a href=""></a>    na.action, <span class="at">start =</span> <span class="cn">NULL</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Family</th>
+<th>Typical link</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>gaussian</code></td>
+<td>identity</td>
+<td>ordinary linear regression</td>
+</tr>
+<tr class="even">
+<td><code>binomial</code></td>
+<td>logit</td>
+<td>binary / proportion outcomes (Chapter 21)</td>
+</tr>
+<tr class="odd">
+<td><code>poisson</code></td>
+<td>log</td>
+<td>counts</td>
+</tr>
+<tr class="even">
+<td><code>Gamma</code></td>
+<td>inverse</td>
+<td>positive continuous, skewed</td>
+</tr>
+<tr class="odd">
+<td><code>inverse.gaussian</code></td>
+<td>1/μ²</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>(<code>glmnet</code> also fits <em>penalized</em> GLMs — <code>family</code>, <code>lambda</code>, <code>alpha</code> choosing ridge↔︎lasso.)</p>
+</section>
+<section id="nonlinear-models" class="slide level2">
+<h2>Nonlinear Models</h2>
+<p>When the relationship isn’t linear in the parameters:</p>
+<ul>
+<li><strong><code>nls(formula, data, start, ...)</code></strong> — nonlinear least squares; you supply the functional form and starting values.</li>
+<li><strong>Survival models</strong> — <code>survival::survreg</code> (parametric) and <code>coxph</code> (Cox proportional hazards), reporting Wald tests on coefficients.</li>
 </ul>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">library</span>(glmnet)</span>
-<span id="cb22-2"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">glmnet</span>(<span class="at">x =</span> <span class="fu">as.matrix</span>(predictors), <span class="at">y =</span> runs, <span class="at">alpha =</span> <span class="dv">1</span>)  <span class="co"># lasso</span></span>
-<span id="cb22-3"><a href=""></a>cv  <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(<span class="fu">as.matrix</span>(predictors), runs)   <span class="co"># pick lambda by CV</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">nls</span>(y <span class="sc">~</span> a <span class="sc">*</span> <span class="fu">exp</span>(b <span class="sc">*</span> x), <span class="at">data=</span>d, <span class="at">start=</span><span class="fu">list</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="fl">0.1</span>))</span>
+<span id="cb23-2"><a href=""></a><span class="fu">library</span>(survival)</span>
+<span id="cb23-3"><a href=""></a><span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> age <span class="sc">+</span> sex, <span class="at">data=</span>lung)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Principal-components and partial-least-squares regression (<code>pls</code> package) are the projection-based cousins.</p>
 </section>
-<section id="generalized-linear-models" class="slide level2">
-<h2>Generalized Linear Models</h2>
-<p><code>glm()</code> extends the linear model through a <strong>link function</strong> and an error <strong>family</strong> — one interface for counts, rates, and probabilities:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>counts <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">events =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">7</span>, <span class="dv">9</span>, <span class="dv">14</span>),</span>
-<span id="cb23-2"><a href=""></a>                     <span class="at">exposure =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>)</span>
-<span id="cb23-3"><a href=""></a>fit.pois <span class="ot">&lt;-</span> <span class="fu">glm</span>(events <span class="sc">~</span> exposure, <span class="at">family =</span> poisson, <span class="at">data =</span> counts)</span>
-<span id="cb23-4"><a href=""></a><span class="fu">coef</span>(<span class="fu">summary</span>(fit.pois))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>               Estimate Std. Error     z value     Pr(&gt;|z|)
-(Intercept) -0.04133056  0.5588550 -0.07395579 9.410456e-01
-exposure     0.45144078  0.1142353  3.95184880 7.754973e-05</code></pre>
-</div>
-</div>
+<section id="smoothing-splines-surfaces-kernels" class="slide level2">
+<h2>Smoothing: Splines, Surfaces, Kernels</h2>
+<p>For flexible, nonparametric trends:</p>
 <ul>
-<li><code>gaussian</code> reproduces <code>lm()</code>; <code>poisson</code> models counts; <code>binomial</code> gives logistic regression (Chapter 21).</li>
-<li>Coefficients live on the link scale — exponentiate Poisson/logit coefficients to interpret.</li>
+<li><strong>Splines</strong> — <code>smooth.spline</code>, and <code>splines::ns</code>/<code>bs</code> for use inside formulas;</li>
+<li><strong>Polynomial surfaces</strong> — <code>loess</code> (local regression) fits a smooth surface from local polynomial fits;</li>
+<li><strong>Kernel smoothing</strong> — <code>ksmooth</code>, <code>density</code>.</li>
 </ul>
-</section>
-<section id="nonlinear-and-smooth-models" class="slide level2">
-<h2>Nonlinear and Smooth Models</h2>
-<p>When the relationship is genuinely curved:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a>fit.lo <span class="ot">&lt;-</span> <span class="fu">loess</span>(dist <span class="sc">~</span> speed, <span class="at">data =</span> cars)</span>
-<span id="cb25-2"><a href=""></a><span class="fu">plot</span>(cars, <span class="at">pch =</span> <span class="dv">19</span>)</span>
-<span id="cb25-3"><a href=""></a><span class="fu">lines</span>(<span class="fu">seq</span>(<span class="dv">4</span>, <span class="dv">25</span>), <span class="fu">predict</span>(fit.lo, <span class="fu">data.frame</span>(<span class="at">speed =</span> <span class="fu">seq</span>(<span class="dv">4</span>, <span class="dv">25</span>))),</span>
-<span id="cb25-4"><a href=""></a>      <span class="at">col =</span> <span class="st">"red"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">plot</span>(cars<span class="sc">$</span>speed, cars<span class="sc">$</span>dist)</span>
+<span id="cb24-2"><a href=""></a><span class="fu">lines</span>(<span class="fu">smooth.spline</span>(cars<span class="sc">$</span>speed, cars<span class="sc">$</span>dist), <span class="at">col=</span><span class="st">"blue"</span>)</span>
+<span id="cb24-3"><a href=""></a><span class="fu">lines</span>(<span class="fu">loess.smooth</span>(cars<span class="sc">$</span>speed, cars<span class="sc">$</span>dist), <span class="at">col=</span><span class="st">"red"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch20_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><ul>
-<li><code>nls()</code> fits parametric nonlinear curves (you supply the formula and starting values).</li>
-<li><code>loess()</code> fits local polynomials; <code>smooth.spline()</code> penalized splines; <code>mgcv::gam()</code> full generalized additive models.</li>
+<img data-src="ch20_files/figure-revealjs/unnamed-chunk-13-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="machine-learning-regression" class="slide level2">
+<h2>Machine-Learning Regression</h2>
+<p>The chapter closes by previewing tree-based regression (full treatment: Chapters 21–22):</p>
+<ul>
+<li><strong><code>rpart</code></strong> — recursive partitioning (regression trees);</li>
+<li><strong>bagging</strong>, <strong>boosting</strong> (<code>gbm</code>), <strong>random forests</strong> (<code>randomForest</code>) — ensembles of trees, each highly parallelizable (Chapter 26);</li>
+<li><strong>PRIM</strong> (patient rule induction method) — bump hunting.</li>
 </ul>
-</section>
-<section id="survival-models" class="slide level2">
-<h2>Survival Models</h2>
-<p>Time-to-event data with censoring use the <code>survival</code> package:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">library</span>(survival)</span>
-<span id="cb26-2"><a href=""></a>fit.km <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> x, <span class="at">data =</span> aml)</span>
-<span id="cb26-3"><a href=""></a><span class="fu">plot</span>(fit.km, <span class="at">lty =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">xlab =</span> <span class="st">"Weeks"</span>, <span class="at">ylab =</span> <span class="st">"Survival"</span>)</span>
-<span id="cb26-4"><a href=""></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="fu">c</span>(<span class="st">"Maintained"</span>, <span class="st">"Nonmaintained"</span>), <span class="at">lty =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
 </div>
-<img data-src="ch20_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><ul>
-<li><code>survfit()</code> — Kaplan–Meier curves; <code>survdiff()</code> — log-rank test; <code>coxph()</code> — Cox proportional hazards regression.</li>
-<li>The <code>Surv(time, status)</code> object encodes censoring; ignoring censoring biases everything.</li>
-</ul>
-</section>
-<section id="a-modeling-recipe" class="slide level2">
-<h2>A Modeling Recipe</h2>
-<ol type="1">
-<li>Plot first (Chapters 13–15); guess the functional form.</li>
-<li>Fit the simplest plausible model with <code>lm()</code>/<code>glm()</code>.</li>
-<li>Diagnose: <code>plot(model)</code>, residuals, influence.</li>
-<li>Refine: transform, add/drop terms, or regularize.</li>
-<li>Validate on held-out data (Chapter 22’s discipline).</li>
-<li>Report effect sizes with <code>confint()</code>, not just stars <span class="citation" data-cites="hastie2009elements">(Hastie et al. 2009)</span>.</li>
-</ol>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>A workflow, not a function.</strong> Fit with <code>lm</code>, <em>read</em> <code>summary</code>, <em>look</em> at <code>plot</code>, then iterate with <code>update</code> — adding, dropping, or transforming terms. Reach for robust/penalized/nonlinear tools only when the diagnostics demand it.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

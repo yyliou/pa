@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,39 +211,394 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="data-in-data-out" class="title-slide slide level1 center">
-<h1><strong>Data In, Data Out</strong></h1>
+<section id="getting-data-in-and-out" class="title-slide slide level1 center">
+<h1><strong>Getting Data In and Out</strong></h1>
 
 </section>
-<section id="entering-data-within-r" class="slide level2">
-<h2>Entering Data Within R</h2>
-<p>For small data sets, the constructors from Part II are all you need:</p>
+<section id="the-plan" class="slide level2">
+<h2>The Plan</h2>
+<p>Analysis needs data. This chapter covers the whole pipeline:</p>
+<ul>
+<li><strong>entering</strong> data inside R (commands, the data editor);</li>
+<li><strong>saving and loading</strong> R objects;</li>
+<li><strong>importing</strong> external files — delimited text, fixed-width text, other packages’ formats;</li>
+<li><strong>exporting</strong> data to text files;</li>
+<li><strong>databases</strong> — RODBC and DBI.</li>
+</ul>
+</section></section>
+<section>
+<section id="entering-data-within-r" class="title-slide slide level1 center">
+<h1>Entering Data Within R</h1>
+
+</section>
+<section id="entering-data-using-r-commands" class="slide level2">
+<h2>Entering Data Using R Commands</h2>
+<p>For a handful of observations, the console suffices: build vectors with <code>c</code>, then assemble them with <code>data.frame</code>. The book’s example — 2008’s five highest NFL salaries:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>salary <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">18700000</span>, <span class="dv">14626720</span>, <span class="dv">14137500</span>)</span>
-<span id="cb1-2"><a href=""></a>position <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"QB"</span>, <span class="st">"QB"</span>, <span class="st">"DE"</span>)</span>
-<span id="cb1-3"><a href=""></a>top.contracts <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(position, salary)</span>
-<span id="cb1-4"><a href=""></a>top.contracts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>salary <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">18700000</span>, <span class="dv">14626720</span>, <span class="dv">14137500</span>, <span class="dv">13980000</span>, <span class="dv">12916666</span>)</span>
+<span id="cb1-2"><a href=""></a>position <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"QB"</span>, <span class="st">"QB"</span>, <span class="st">"DE"</span>, <span class="st">"QB"</span>, <span class="st">"QB"</span>)</span>
+<span id="cb1-3"><a href=""></a>team <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Colts"</span>, <span class="st">"Patriots"</span>, <span class="st">"Panthers"</span>, <span class="st">"Bengals"</span>, <span class="st">"Giants"</span>)</span>
+<span id="cb1-4"><a href=""></a>name.last <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Manning"</span>, <span class="st">"Brady"</span>, <span class="st">"Pepper"</span>, <span class="st">"Palmer"</span>, <span class="st">"Manning"</span>)</span>
+<span id="cb1-5"><a href=""></a>name.first <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Peyton"</span>, <span class="st">"Tom"</span>, <span class="st">"Julius"</span>, <span class="st">"Carson"</span>, <span class="st">"Eli"</span>)</span>
+<span id="cb1-6"><a href=""></a>top.<span class="fl">5.</span>salaries <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(name.last, name.first, team, position, salary)</span>
+<span id="cb1-7"><a href=""></a>top.<span class="fl">5.</span>salaries</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  position   salary
-1       QB 18700000
-2       QB 14626720
-3       DE 14137500</code></pre>
+<pre><code>  name.last name.first     team position   salary
+1   Manning     Peyton    Colts       QB 18700000
+2     Brady        Tom Patriots       QB 14626720
+3    Pepper     Julius Panthers       DE 14137500
+4    Palmer     Carson  Bengals       QB 13980000
+5   Manning        Eli   Giants       QB 12916666</code></pre>
+</div>
+</div>
+</section>
+<section id="the-data-editor-edit-and-fix" class="slide level2">
+<h2>The Data Editor: edit and fix</h2>
+<p>Statement-by-statement entry gets awkward beyond a few rows. R’s <strong>data editor</strong> edits tabular objects in a GUI:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>top.<span class="fl">5.</span>salaries <span class="ot">&lt;-</span> <span class="fu">edit</span>(top.<span class="fl">5.</span>salaries)   <span class="co"># must assign, or edits are lost!</span></span>
+<span id="cb3-2"><a href=""></a><span class="fu">fix</span>(top.<span class="fl">5.</span>salaries)                      <span class="co"># edit + assign back, in one step</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li><code>edit</code> opens the editor and <em>returns</em> the edited object — forget the assignment and your work vanishes. <code>fix</code> calls <code>edit</code> and reassigns for you.</li>
+<li>Designed for data frames and matrices; on vectors, functions, or lists it falls back to a text editor.</li>
+<li>Platform flavors: <strong>Windows</strong> — click cells to edit, click a column name to rename or retype it, type into empty cells to grow the table (also reachable via <em>Edit → Data Editor</em>). <strong>macOS</strong> — toolbar buttons add/delete rows and columns; column types and names are <em>not</em> editable. <strong>Linux (X11)</strong> — like Windows, plus Copy/Paste/Quit buttons.</li>
+</ul>
+</section>
+<section id="editor-vs.-spreadsheet" class="slide level2">
+<h2>Editor vs.&nbsp;Spreadsheet</h2>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Warning</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Fine for inspection, wrong for serious entry.</strong> The book’s three reasons: the R data editor has <strong>no Undo/Redo</strong>; it has <strong>no Save button</strong> (you must close, save, reopen — awkward and error-prone); and spreadsheets or desktop databases offer <strong>data-entry forms</strong>, far friendlier for complicated records. Enter big data elsewhere, then import it.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="saving-and-loading-r-objects" class="title-slide slide level1 center">
+<h1>Saving and Loading R Objects</h1>
+
+</section>
+<section id="save-and-load" class="slide level2">
+<h2>save and load</h2>
+<p>The simplest persistence: <code>save</code> writes objects to a file, <code>load</code> brings them back —</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>target <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">"top.5.salaries.RData"</span>)</span>
+<span id="cb4-2"><a href=""></a><span class="fu">save</span>(top.<span class="fl">5.</span>salaries, <span class="at">file =</span> target)</span>
+<span id="cb4-3"><a href=""></a><span class="fu">rm</span>(top.<span class="fl">5.</span>salaries)</span>
+<span id="cb4-4"><a href=""></a><span class="fu">load</span>(target)</span>
+<span id="cb4-5"><a href=""></a>top.<span class="fl">5.</span>salaries[<span class="dv">1</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  name.last name.first  team position   salary
+1   Manning     Peyton Colts       QB 18700000</code></pre>
 </div>
 </div>
 <ul>
-<li><code>rbind()</code> appends rows; <code>cbind()</code> appends columns.</li>
-<li><code>scan()</code> reads values typed interactively — handy for quick experiments.</li>
+<li>File paths always use <strong>forward slashes</strong> — even on Windows (<code>"C:/Documents and Settings/..."</code>).</li>
+<li>The <code>file</code> argument <strong>must be named</strong> (the book’s author forgets nine times out of ten).</li>
+<li>Saved files are <strong>cross-platform</strong>: written on macOS, they load on Windows and Linux.</li>
+<li>Save several objects by listing them; save <em>everything</em> with <code>save.image()</code> — exactly what “Save workspace?” does when you quit R.</li>
 </ul>
 </section>
-<section id="the-edit-gui" class="slide level2">
-<h2>The Edit GUI</h2>
-<p>R ships a minimal spreadsheet-style editor:</p>
+<section id="save-the-full-signature" class="slide level2">
+<h2>save: the Full Signature</h2>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>top.contracts <span class="ot">&lt;-</span> <span class="fu">edit</span>(top.contracts)  <span class="co"># edit returns the NEW object</span></span>
-<span id="cb3-2"><a href=""></a><span class="fu">fix</span>(top.contracts)                    <span class="co"># fix saves the result back itself</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">save</span>(..., <span class="at">list =</span>, <span class="at">file =</span>, <span class="at">ascii =</span>, <span class="at">version =</span>, <span class="at">envir =</span>,</span>
+<span id="cb6-2"><a href=""></a>     <span class="at">compress =</span>, <span class="at">eval.promises =</span>, <span class="at">precheck =</span> )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>...</code> / <code>list</code></td>
+<td>objects to save, as symbols / as a character vector</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>file</code></td>
+<td>filename or connection</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>ascii</code></td>
+<td>human-readable text instead of binary?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>version</code></td>
+<td>file-format version (2 from R 1.4.0 on)</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td><code>envir</code></td>
+<td>where to find the objects</td>
+<td>calling environment</td>
+</tr>
+<tr class="even">
+<td><code>compress</code></td>
+<td>gzip the output?</td>
+<td><code>TRUE</code> for binary</td>
+</tr>
+<tr class="odd">
+<td><code>eval.promises</code></td>
+<td>force promises before saving?</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>precheck</code></td>
+<td>verify objects exist before writing?</td>
+<td><code>TRUE</code></td>
+</tr>
+</tbody>
+</table>
+<p>Sensible defaults all around: compressed binary, no accidental overwrites of your objects.</p>
+</section></section>
+<section>
+<section id="importing-data-from-external-files" class="title-slide slide level1 center">
+<h1>Importing Data from External Files</h1>
+
+</section>
+<section id="anatomy-of-a-text-data-file" class="slide level2">
+<h2>Anatomy of a Text Data File</h2>
+<p>Most data text files share a shape: one line per <strong>observation</strong>, each line holding that observation’s <strong>variables</strong> — separated by a <strong>delimiter</strong> character, or distinguished by fixed positions on the line. A delimited example, <code>top.5.salaries.csv</code>:</p>
+<pre><code>name.last,name.first,team,position,salary
+"Manning","Peyton","Colts","QB",18700000
+"Brady","Tom","Patriots","QB",14626720
+...</code></pre>
+<p>Reading it off: the first row holds <strong>column names</strong>; text fields wear <strong>quotes</strong>; <strong>commas</strong> separate fields.</p>
+</section>
+<section id="read.table" class="slide level2">
+<h2>read.table</h2>
+<p>The workhorse importer returns a data frame — one row per observation, one column per variable. For the file above: header present, comma delimiter, double-quote quoting:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>top.<span class="fl">5.</span>salaries <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"top.5.salaries.csv"</span>,</span>
+<span id="cb8-2"><a href=""></a>                             <span class="at">header=</span><span class="cn">TRUE</span>, <span class="at">sep=</span><span class="st">","</span>, <span class="at">quote=</span><span class="st">"</span><span class="sc">\"</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>top.<span class="fl">5.</span>salaries</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  name.last name.first     team position   salary
+1   Manning     Peyton    Colts       QB 18700000
+2     Brady        Tom Patriots       QB 14626720
+3    Pepper     Julius Panthers       DE 14137500
+4    Palmer     Carson  Bengals       QB 13980000
+5   Manning        Eli   Giants       QB 12916666</code></pre>
+</div>
+</div>
+</section>
+<section id="read.table-arguments-1" class="slide level2">
+<h2>read.table Arguments (1)</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>file</code></td>
+<td>filename, connection, or <strong>URL</strong> (the one required argument)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>header</code></td>
+<td>first row holds variable names?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>sep</code></td>
+<td>field separator (<code>""</code> = any whitespace)</td>
+<td><code>""</code></td>
+</tr>
+<tr class="even">
+<td><code>quote</code></td>
+<td>quote characters for text</td>
+<td><code>"</code> and <code>'</code></td>
+</tr>
+<tr class="odd">
+<td><code>dec</code></td>
+<td>decimal-point character</td>
+<td><code>.</code></td>
+</tr>
+<tr class="even">
+<td><code>row.names</code> / <code>col.names</code></td>
+<td>names for rows / columns</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>as.is</code></td>
+<td>per-column: suppress factor conversion</td>
+<td><code>!stringsAsFactors</code></td>
+</tr>
+<tr class="even">
+<td><code>na.strings</code></td>
+<td>values to read as <code>NA</code></td>
+<td><code>"NA"</code></td>
+</tr>
+<tr class="odd">
+<td><code>colClasses</code></td>
+<td>class to assign each column</td>
+<td><code>NA</code></td>
+</tr>
+<tr class="even">
+<td><code>nrows</code></td>
+<td>number of rows to read</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="read.table-arguments-2" class="slide level2">
+<h2>read.table Arguments (2)</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>skip</code></td>
+<td>rows to skip before reading</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><code>check.names</code></td>
+<td>verify column names are valid symbols?</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td><code>fill</code></td>
+<td>pad short rows with blanks?</td>
+<td><code>!blank.lines.skip</code></td>
+</tr>
+<tr class="even">
+<td><code>strip.white</code></td>
+<td>trim spaces around character fields?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>blank.lines.skip</code></td>
+<td>ignore blank lines?</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>comment.char</code></td>
+<td>comment-line marker</td>
+<td><code>"#"</code></td>
+</tr>
+<tr class="odd">
+<td><code>allowEscapes</code></td>
+<td>interpret <code>\n</code> etc.?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>flush</code></td>
+<td>skip rest of line once fields are read?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>stringsAsFactors</code></td>
+<td>convert text to factors?</td>
+<td><code>FALSE</code> since R 4.0</td>
+</tr>
+<tr class="even">
+<td><code>encoding</code></td>
+<td>input file encoding</td>
+<td><code>"unknown"</code></td>
+</tr>
+</tbody>
+</table>
+<p>The two you nearly always need: <strong><code>sep</code></strong> and <strong><code>header</code></strong>.</p>
+</section>
+<section id="the-convenience-family" class="slide level2">
+<h2>The Convenience Family</h2>
+<p>Wrappers preset the usual choices:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>header</th>
+<th>sep</th>
+<th>dec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>read.table</code></td>
+<td><code>FALSE</code></td>
+<td>whitespace</td>
+<td><code>.</code></td>
+</tr>
+<tr class="even">
+<td><code>read.csv</code></td>
+<td><code>TRUE</code></td>
+<td><code>,</code></td>
+<td><code>.</code></td>
+</tr>
+<tr class="odd">
+<td><code>read.csv2</code></td>
+<td><code>TRUE</code></td>
+<td><code>;</code></td>
+<td><code>,</code></td>
+</tr>
+<tr class="even">
+<td><code>read.delim</code></td>
+<td><code>TRUE</code></td>
+<td>tab</td>
+<td><code>.</code></td>
+</tr>
+<tr class="odd">
+<td><code>read.delim2</code></td>
+<td><code>TRUE</code></td>
+<td>tab</td>
+<td><code>,</code></td>
+</tr>
+</tbody>
+</table>
+<p>In practice <code>read.csv</code> and <code>read.delim</code> cover most files unmodified (the <code>2</code> variants serve European comma-decimal conventions).</p>
+</section>
+<section id="reading-from-a-url" class="slide level2">
+<h2>Reading from a URL</h2>
+<p><code>file</code> accepts a URL, so web data loads directly. The book pulled ten years of monthly S&amp;P 500 quotes straight from Yahoo! Finance:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>sp500 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">paste</span>(<span class="st">"http://ichart.finance.yahoo.com/table.csv?"</span>,</span>
+<span id="cb11-2"><a href=""></a>  <span class="st">"s=%5EGSPC&amp;a=03&amp;b=1&amp;c=1999&amp;d=03&amp;e=1&amp;f=2009&amp;g=m&amp;ignore=.csv"</span>, <span class="at">sep=</span><span class="st">""</span>))</span>
+<span id="cb11-3"><a href=""></a>sp500[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span>
+<span id="cb11-4"><a href=""></a><span class="do">##         Date   Open   High    Low  Close      Volume Adj.Close</span></span>
+<span id="cb11-5"><a href=""></a><span class="do">## 1 2009-04-01 793.59 813.62 783.32 811.08 12068280000    811.08</span></span>
+<span id="cb11-6"><a href=""></a><span class="do">## 2 2009-03-02 729.57 832.98 666.79 797.87  7633306300    797.87</span></span>
+<span id="cb11-7"><a href=""></a><span class="do">## ...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="callout callout-warning callout-titled callout-style-default">
 <div class="callout-body">
@@ -254,155 +609,445 @@ Yu-You Liou (NTU)
 <p><strong>Warning</strong></p>
 </div>
 <div class="callout-content">
-<p><strong><code>edit()</code> does not modify in place.</strong> Forgetting to assign its result is a classic data-loss moment; <code>fix()</code> exists precisely to avoid that.</p>
+<p><strong>Dead API.</strong> Yahoo! retired this service years ago — the URL no longer responds. The <em>technique</em> (any URL in place of a filename) remains fully valid; for financial data today use the <code>quantmod</code> or <code>tidyquant</code> packages.</p>
 </div>
 </div>
 </div>
+</section>
+<section id="practical-importing-tips" class="slide level2">
+<h2>Practical Importing Tips</h2>
 <ul>
-<li>The editor’s look differs by platform (Windows grid, macOS sheet, X11 window), but the function is identical.</li>
-<li>For real data entry, a spreadsheet program is more comfortable — the editor is best for quick inspection and one-cell fixes.</li>
+<li><strong>Test with a sample first.</strong> A 15-minute load that fails on a wrong separator hurts; add <code>nrows=20</code> while experimenting.</li>
+<li><strong>From Excel:</strong> export CSV or tab-delimited TXT, preferring Unix line endings (<code>\n</code>) over MS-DOS (<code>\n\r</code>). CSVs open conveniently in Excel — but commas inside text demand quoting and escaped quotation marks; tabs occur less often in text, so TXT files cause fewer surprises.</li>
+<li><strong>From databases:</strong> querying with a GUI tool and exporting beats fragile command-line scripts; the book names Toad for Data Analysts, MySQL Query Browser, and Oracle SQL Developer (today: DBeaver, and each vendor’s current tool).</li>
 </ul>
 </section>
-<section id="saving-objects" class="slide level2">
-<h2>Saving Objects</h2>
-<p><code>save()</code> writes any set of R objects to a portable binary file; <code>load()</code> restores them, names and all:</p>
+<section id="fixed-width-files-read.fwf" class="slide level2">
+<h2>Fixed-Width Files: read.fwf</h2>
+<p>When position, not a delimiter, defines the variables:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>tmp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".RData"</span>)</span>
-<span id="cb4-2"><a href=""></a><span class="fu">save</span>(top.contracts, <span class="at">file =</span> tmp)       <span class="co"># `file =` must be NAMED</span></span>
-<span id="cb4-3"><a href=""></a><span class="fu">rm</span>(top.contracts)</span>
-<span id="cb4-4"><a href=""></a><span class="fu">load</span>(tmp)</span>
-<span id="cb4-5"><a href=""></a>top.contracts[<span class="dv">1</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  position   salary
-1       QB 18700000</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">read.fwf</span>(file, widths, <span class="at">header =</span> , <span class="at">sep =</span> , <span class="at">skip =</span> ,</span>
+<span id="cb12-2"><a href=""></a>         row.names, col.names, <span class="at">n =</span> , <span class="at">buffersize =</span> , ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>file</code></td>
+<td>filename or connection (required)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>widths</code></td>
+<td>integer vector of field widths — or a <em>list</em> of vectors when one record spans several lines (required)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>header</code></td>
+<td>first line holds names (delimited by <code>sep</code>)?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>sep</code></td>
+<td>delimiter of the header names</td>
+<td>tab</td>
+</tr>
+<tr class="odd">
+<td><code>skip</code> / <code>n</code></td>
+<td>lines to skip / records to read</td>
+<td>0 / <code>-1</code></td>
+</tr>
+<tr class="even">
+<td><code>row.names</code> / <code>col.names</code></td>
+<td>row / column names</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>buffersize</code></td>
+<td>lines read per batch (a performance knob)</td>
+<td>2000</td>
+</tr>
+</tbody>
+</table>
+<p><code>read.fwf</code> also accepts <code>read.table</code> arguments such as <code>as.is</code>, <code>na.strings</code>, <code>colClasses</code>, <code>strip.white</code>.</p>
+</section>
+<section id="big-fixed-width-files-preprocess-first" class="slide level2">
+<h2>Big Fixed-Width Files: Preprocess First</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>The CDC mortality file, a cautionary tale.</strong> The US CDC publishes every death as fixed-width records — 1.1 GB for 2006. In theory one giant <code>read.fwf</code> call (the book lists all 43 widths and names) loads a subset; in practice it crawls: R parses text slowly, and single-character category codes balloon from 1 byte to 4-byte integers in memory. The book’s remedy: preprocess with a scripting language — its Perl script <code>unpack</code>s each line and emits a slim CSV, then <code>read.csv</code> finishes the job. (The author drafts the width/name lists in Excel and generates the code with formulas.) The modern remedy: <code>readr::read_fwf</code> or <code>data.table::fread</code>, dramatically faster.</p>
 </div>
 </div>
+</div>
+</section>
+<section id="line-by-line-readlines" class="slide level2">
+<h2>Line-by-Line: readLines</h2>
+<p>When observations span multiple lines or the format defies <code>read.table</code>, drop a level. <code>readLines</code> returns one character value per line — and can read interactive input too:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">readLines</span>(<span class="at">con =</span> <span class="fu">stdin</span>(), <span class="at">n =</span> <span class="sc">-</span><span class="dv">1</span>L, <span class="at">ok =</span> <span class="cn">TRUE</span>, <span class="at">warn =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-2"><a href=""></a>          <span class="at">encoding =</span> <span class="st">"unknown"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>con</code></td>
+<td>file, URL, or connection</td>
+<td><code>stdin()</code></td>
+</tr>
+<tr class="even">
+<td><code>n</code></td>
+<td>lines to read (negative = all)</td>
+<td><code>-1L</code></td>
+</tr>
+<tr class="odd">
+<td><code>ok</code></td>
+<td>tolerate fewer than <code>n</code> lines?</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>warn</code></td>
+<td>warn on missing final EOL?</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td><code>encoding</code></td>
+<td>input encoding</td>
+<td><code>"unknown"</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="structured-low-level-reading-scan" class="slide level2">
+<h2>Structured Low-Level Reading: scan</h2>
+<p><code>scan</code> reads into a <em>specified structure</em> via <code>what</code> — a single type, or a list of types yielding a list of columns:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">scan</span>(<span class="at">file =</span> <span class="st">""</span>, <span class="at">what =</span> <span class="fu">double</span>(<span class="dv">0</span>), <span class="at">nmax =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">n =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">sep =</span> <span class="st">""</span>,</span>
+<span id="cb14-2"><a href=""></a>     <span class="at">quote =</span> , <span class="at">dec =</span> <span class="st">"."</span>, <span class="at">skip =</span> <span class="dv">0</span>, <span class="at">nlines =</span> <span class="dv">0</span>, <span class="at">na.strings =</span> <span class="st">"NA"</span>,</span>
+<span id="cb14-3"><a href=""></a>     <span class="at">flush =</span> <span class="cn">FALSE</span>, <span class="at">fill =</span> <span class="cn">FALSE</span>, <span class="at">strip.white =</span> <span class="cn">FALSE</span>, <span class="at">quiet =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb14-4"><a href=""></a>     <span class="at">blank.lines.skip =</span> <span class="cn">TRUE</span>, <span class="at">multi.line =</span> <span class="cn">TRUE</span>, <span class="at">comment.char =</span> <span class="st">""</span>,</span>
+<span id="cb14-5"><a href=""></a>     <span class="at">allowEscapes =</span> <span class="cn">FALSE</span>, <span class="at">encoding =</span> <span class="st">"unknown"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Highlights: <code>what</code> — target type(s) (<code>logical</code>, <code>integer</code>, <code>numeric</code>, <code>complex</code>, <code>character</code>, <code>raw</code>, or a list); <code>nmax</code>/<code>n</code> — values or records to read; <code>multi.line</code> — let records span lines when <code>what</code> is a list; <code>flush</code> — discard the rest of each line after the last requested field (enables trailing comments); <code>quiet</code> — suppress the “Read n items” message. The rest mirror <code>read.table</code>.</p>
+</section>
+<section id="files-from-other-software" class="slide level2">
+<h2>Files from Other Software</h2>
+<p>The <code>foreign</code> package (and friends) reads other systems’ native files directly:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Format</th>
+<th>Reading</th>
+<th>Writing</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ARFF (Weka)</td>
+<td><code>read.arff</code></td>
+<td><code>write.arff</code></td>
+</tr>
+<tr class="even">
+<td>DBF</td>
+<td><code>read.dbf</code></td>
+<td><code>write.dbf</code></td>
+</tr>
+<tr class="odd">
+<td>Stata</td>
+<td><code>read.dta</code></td>
+<td><code>write.dta</code></td>
+</tr>
+<tr class="even">
+<td>Epi Info</td>
+<td><code>read.epiinfo</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>Minitab</td>
+<td><code>read.mtp</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Octave</td>
+<td><code>read.octave</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>S3 binary / <code>data.dump</code></td>
+<td><code>read.S</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>SPSS</td>
+<td><code>read.spss</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>SAS permanent dataset</td>
+<td><code>read.ssd</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Systat</td>
+<td><code>read.systat</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>SAS XPORT</td>
+<td><code>read.xport</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>(Modern alternative: the <code>haven</code> package for SPSS/Stata/SAS, <code>readxl</code> for Excel.)</p>
+</section></section>
+<section>
+<section id="exporting-data" class="title-slide slide level1 center">
+<h1>Exporting Data</h1>
+
+</section>
+<section id="write.table-and-friends" class="slide level2">
+<h2>write.table and Friends</h2>
+<p>Exporting reverses the trip — <code>write.table</code>, with <code>write.csv</code>/<code>write.csv2</code> preset for spreadsheet-friendly CSVs:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">write.table</span>(x, <span class="at">file =</span> <span class="st">""</span>, <span class="at">append =</span> <span class="cn">FALSE</span>, <span class="at">quote =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">" "</span>,</span>
+<span id="cb15-2"><a href=""></a>            <span class="at">eol =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">na =</span> <span class="st">"NA"</span>, <span class="at">dec =</span> <span class="st">"."</span>, <span class="at">row.names =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb15-3"><a href=""></a>            <span class="at">col.names =</span> <span class="cn">TRUE</span>, <span class="at">qmethod =</span> <span class="fu">c</span>(<span class="st">"escape"</span>, <span class="st">"double"</span>))</span>
+<span id="cb15-4"><a href=""></a><span class="fu">write.csv</span>(top.<span class="fl">5.</span>salaries, <span class="at">file =</span> <span class="st">"salaries.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x</code> / <code>file</code></td>
+<td>object to export / filename or connection</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>append</code></td>
+<td>append rather than overwrite?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>quote</code></td>
+<td>quote character columns (or a numeric column selection)?</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>sep</code> / <code>eol</code></td>
+<td>field separator / line ending</td>
+<td><code>" "</code> / <code>"\n"</code></td>
+</tr>
+<tr class="odd">
+<td><code>na</code> / <code>dec</code></td>
+<td>text for <code>NA</code> / decimal character</td>
+<td><code>"NA"</code> / <code>"."</code></td>
+</tr>
+<tr class="even">
+<td><code>row.names</code> / <code>col.names</code></td>
+<td>include them (or supply alternatives)?</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td><code>qmethod</code></td>
+<td>escape embedded quotes with <code>\</code> or by doubling</td>
+<td><code>"escape"</code></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="importing-data-from-databases" class="title-slide slide level1 center">
+<h1>Importing Data from Databases</h1>
+
+</section>
+<section id="strategy-export-then-import-or-connect" class="slide level2">
+<h2>Strategy: Export Then Import — or Connect</h2>
+<p>Large organizations keep data in relational databases. Two routes into R:</p>
 <ul>
-<li>Files are cross-platform; compression is on by default.</li>
-<li><code>save.image()</code> snapshots the whole workspace (what “Save workspace?” does on exit).</li>
-<li><code>saveRDS()</code>/<code>readRDS()</code> save a <em>single</em> object without its name — often cleaner for programmatic use.</li>
+<li><strong>Export to text, then import.</strong> For very large extracts (1 GB+), the book finds text files load <em>faster</em> than database connections — the best approach for one-time pulls.</li>
+<li><strong>Connect directly.</strong> Better when R produces recurring reports or repeats an analysis: no manual export step each time.</li>
 </ul>
-</section>
-<section id="loading-from-the-web-the-course-convention" class="slide level2">
-<h2>Loading from the Web: the Course Convention</h2>
-<p><code>download.file()</code> fetches any file from a URL to disk (<code>mode = "wb"</code> for binary files); <code>load()</code> then restores it. This is exactly how all course data sets are loaded:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb6-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/top.bacon.searching.cities.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb6-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb6-4"><a href=""></a>top.bacon.searching.cities</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>            city rank
-1        Seattle  100
-2     Washington   96
-3        Chicago   94
-4       New York   93
-5       Portland   93
-6       St Louis   92
-7         Denver   90
-8         Boston   90
-9    Minneapolis   89
-10        Austin   87
-11  Philadelphia   85
-12 San Francisco   84
-13       Atlanta   82
-14   Los Angeles   80
-15    Richardson   80</code></pre>
-</div>
-</div>
-<p>The textbook’s <code>library(nutshell); data(...)</code> is always replaced by this three-line pattern.</p>
-</section>
-<section id="importing-text-files" class="slide level2">
-<h2>Importing Text Files</h2>
-<p>The <code>read.table()</code> family parses delimited text into data frames:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>df  <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"file.txt"</span>, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>)</span>
-<span id="cb8-2"><a href=""></a>csv <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"file.csv"</span>)             <span class="co"># comma-separated</span></span>
-<span id="cb8-3"><a href=""></a>eu  <span class="ot">&lt;-</span> <span class="fu">read.csv2</span>(<span class="st">"file.csv"</span>)            <span class="co"># ; separator, , decimal</span></span>
-<span id="cb8-4"><a href=""></a>fwf <span class="ot">&lt;-</span> <span class="fu">read.fwf</span>(<span class="st">"file.dat"</span>, <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">4</span>, <span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Key arguments worth memorizing: <code>header</code>, <code>sep</code>, <code>na.strings</code>, <code>stringsAsFactors</code>, <code>skip</code>, <code>colClasses</code> (huge speed win on big files).</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="co"># readLines shows raw lines — always look at a file before parsing it</span></span>
-<span id="cb9-2"><a href=""></a><span class="fu">readLines</span>(<span class="fu">textConnection</span>(<span class="st">"a,b</span><span class="sc">\n</span><span class="st">1,2</span><span class="sc">\n</span><span class="st">3,4"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "a,b" "1,2" "3,4"</code></pre>
-</div>
-</div>
-</section>
-<section id="other-software-and-spreadsheets" class="slide level2">
-<h2>Other Software and Spreadsheets</h2>
+<p>Two connection frameworks exist:</p>
 <ul>
-<li>The <code>foreign</code> package reads legacy statistics formats: SAS (<code>read.xport</code>), SPSS (<code>read.spss</code>), Stata (<code>read.dta</code>), and more.</li>
-<li>Excel files: the <code>readxl</code> package (<code>read_excel("book.xlsx")</code>) needs no Excel installation; <code>openxlsx</code> also writes.</li>
-<li>The quick-and-dirty route still works: export a sheet to CSV, then <code>read.csv()</code>.</li>
+<li><strong>RODBC</strong> — fetches data over ODBC, the cross-program standard interface;</li>
+<li><strong>DBI</strong> — a common database abstraction using native or JDBC drivers, one add-on package per database.</li>
 </ul>
+<p>Choosing: ODBC drivers are easy to find on Windows/Linux (historically harder on macOS; JDBC exists everywhere); native drivers can be faster and expose product features; not every package runs on every platform; and DBI is built on S4, encouraging better code.</p>
+</section>
+<section id="the-running-example-sqlite" class="slide level2">
+<h2>The Running Example: SQLite</h2>
+<p><strong>SQLite</strong> stores a whole database in one file via a C library — nothing to install or configure, ideal for practice. The book ships the <em>Baseball Databank</em> database as <code>bb.db</code> inside the <code>nutshell</code> package, addressed as:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">library</span>(readxl)</span>
-<span id="cb11-2"><a href=""></a>roster <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"stu/roster.xlsx"</span>, <span class="at">sheet =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">system.file</span>(<span class="st">"extdata"</span>, <span class="st">"bb.db"</span>, <span class="at">package =</span> <span class="st">"nutshell"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Course note.</strong> Since <code>nutshell</code> left CRAN, grab the same file once from the GitHub mirror and reuse it locally:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">download.file</span>(<span class="fu">paste0</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/"</span>,</span>
+<span id="cb17-2"><a href=""></a>                     <span class="st">"master/inst/extdata/bb.db"</span>), <span class="st">"bb.db"</span>, <span class="at">mode =</span> <span class="st">"wb"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The database chunks below are shown unevaluated — run them after installing the relevant packages and, for ODBC, configuring a driver.</p>
+</div>
+</div>
 </div>
 </section>
-<section id="exporting-data" class="slide level2">
-<h2>Exporting Data</h2>
-<p>Every importer has a mirror image:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">write.csv</span>(top.contracts, <span class="st">"contracts.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-2"><a href=""></a><span class="fu">write.table</span>(top.contracts, <span class="st">"contracts.txt"</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>)</span>
-<span id="cb12-3"><a href=""></a><span class="fu">saveRDS</span>(top.contracts, <span class="st">"contracts.rds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<ul>
-<li><code>row.names = FALSE</code> avoids the mysterious extra first column that surprises spreadsheet users.</li>
-<li>For data interchange with other languages, CSV remains the lingua franca; for R-to-R, use <code>.rds</code>.</li>
-</ul>
-</section>
-<section id="importing-from-databases" class="slide level2">
-<h2>Importing from Databases</h2>
-<p>Three strategies, in increasing order of integration:</p>
+<section id="rodbc-setup" class="slide level2">
+<h2>RODBC Setup</h2>
+<p>Three one-time steps:</p>
 <ol type="1">
-<li><strong>Export then import</strong>: dump a query result to CSV from the database tool, then <code>read.csv()</code> it. Crude but dependable.</li>
-<li><strong>RODBC</strong>: connect through ODBC drivers — works with virtually any database that has a driver.</li>
-<li><strong>DBI</strong>: R’s native database interface, with backend packages per engine (<code>RSQLite</code>, <code>RPostgres</code>, <code>RMariaDB</code>, …).</li>
+<li><strong>Install the package:</strong> <code>install.packages("RODBC")</code>; verify with <code>library(RODBC)</code>.</li>
+<li><strong>Install an ODBC driver</strong> for your database, if not already present. Vendors and third parties (MySQL, Oracle, PostgreSQL, Microsoft, Data Direct, Easysoft, Actual Technologies, OpenLink, Christian Werner’s SQLite ODBC…) publish drivers for the major platforms.</li>
+<li><strong>Configure a DSN</strong> (database source name). The book walks through SQLite ODBC on macOS (build with <code>configure; make; sudo make install</code>, then register the driver and a DSN named <code>bbdb</code> in ODBC Administrator, with keyword <code>Database</code> = path to <code>bb.db</code>) and on Windows (run the installer, then add a User/System DSN in the ODBC Data Source Administrator, browsing to the file).</li>
 </ol>
-</section>
-<section id="rodbc-in-brief" class="slide level2">
-<h2>RODBC in Brief</h2>
+<p>Test the result:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">library</span>(RODBC)</span>
-<span id="cb13-2"><a href=""></a>ch <span class="ot">&lt;-</span> <span class="fu">odbcConnect</span>(<span class="st">"dsn_name"</span>, <span class="at">uid =</span> <span class="st">"user"</span>, <span class="at">pwd =</span> <span class="st">"pass"</span>)</span>
-<span id="cb13-3"><a href=""></a>df <span class="ot">&lt;-</span> <span class="fu">sqlQuery</span>(ch, <span class="st">"SELECT player, yards FROM kicks WHERE good = 1"</span>)</span>
-<span id="cb13-4"><a href=""></a><span class="fu">sqlTables</span>(ch)              <span class="co"># list tables</span></span>
-<span id="cb13-5"><a href=""></a><span class="fu">close</span>(ch)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>bbdb <span class="ot">&lt;-</span> <span class="fu">odbcConnect</span>(<span class="st">"bbdb"</span>)</span>
+<span id="cb18-2"><a href=""></a><span class="fu">odbcGetInfo</span>(bbdb)    <span class="co"># DBMS name/version, driver, paths...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</section>
+<section id="rodbc-opening-a-channel-and-looking-around" class="slide level2">
+<h2>RODBC: Opening a Channel and Looking Around</h2>
+<p><code>odbcConnect(dsn, uid="", pwd="", ...)</code> returns an <code>RODBC</code> object — a <strong>channel</strong>. Exploration tools:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">library</span>(RODBC)</span>
+<span id="cb19-2"><a href=""></a>bbdb <span class="ot">&lt;-</span> <span class="fu">odbcConnect</span>(<span class="st">"bbdb"</span>)</span>
+<span id="cb19-3"><a href=""></a><span class="fu">sqlTables</span>(bbdb)               <span class="co"># data frame of readable tables: Allstar,</span></span>
+<span id="cb19-4"><a href=""></a>                              <span class="co">#   Batting, Master, Teams, Salaries, ...</span></span>
+<span id="cb19-5"><a href=""></a><span class="fu">sqlColumns</span>(bbdb, <span class="st">"Allstar"</span>)   <span class="co"># column names, types, sizes, nullability</span></span>
+<span id="cb19-6"><a href=""></a><span class="co"># sqlPrimaryKeys(bbdb, ...)   # primary keys of a table</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="rodbc-fetching-data" class="slide level2">
+<h2>RODBC: Fetching Data</h2>
+<p><code>sqlFetch(channel, sqtable, ..., colnames=, rownames=)</code> pulls a whole table into a data frame; afterward it’s ordinary R:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>teams <span class="ot">&lt;-</span> <span class="fu">sqlFetch</span>(bbdb, <span class="st">"Teams"</span>)</span>
+<span id="cb20-2"><a href=""></a><span class="fu">dim</span>(teams)</span>
+<span id="cb20-3"><a href=""></a><span class="do">## [1] 2595   48</span></span>
+<span id="cb20-4"><a href=""></a><span class="fu">subset</span>(teams, <span class="at">subset=</span>(teams<span class="sc">$</span>yearID<span class="sc">==</span><span class="dv">2008</span> <span class="sc">&amp;</span> teams<span class="sc">$</span>lgID<span class="sc">==</span><span class="st">"AL"</span>),</span>
+<span id="cb20-5"><a href=""></a>       <span class="at">select=</span><span class="fu">c</span>(<span class="st">"teamID"</span>, <span class="st">"W"</span>, <span class="st">"L"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Arbitrary SQL — SELECT, but equally INSERT/UPDATE/DELETE and CREATE/DROP/ALTER — goes through <code>sqlQuery</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">sqlQuery</span>(bbdb,</span>
+<span id="cb21-2"><a href=""></a>  <span class="st">"SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>(Writing back: <code>sqlSave</code> saves a data frame as a table, <code>sqlUpdate</code> updates one.)</p>
+</section>
+<section id="rodbc-piecewise-results-and-cleanup" class="slide level2">
+<h2>RODBC: Piecewise Results and Cleanup</h2>
+<p>For huge results, fetch in pieces: call <code>sqlQuery</code>/<code>sqlFetch</code> with <code>max=n</code>, then <code>sqlGetResults</code> (or <code>sqlFetchMore</code>) for the rest. Key arguments of <code>sqlQuery</code>/<code>sqlGetResults</code>: <code>errors</code> (stop or return −1 on error, default <code>TRUE</code>); <code>max</code> (0 = no maximum); <code>rows_at_time</code> (driver fetch batch — try 1024 with modern drivers); <code>as.is</code>, <code>stringsAsFactors</code> (factor conversion); <code>buffsize</code>, <code>believeNRows</code> (performance); <code>nullstring</code>, <code>na.strings</code>, <code>dec</code> (value mapping).</p>
 <ul>
-<li><code>sqlFetch(ch, "tbl")</code> grabs a whole table; <code>sqlSave()</code> writes a data frame back.</li>
-<li>ODBC setup happens <em>outside</em> R (driver + data source name), which is most of the work in practice.</li>
+<li>Lower-level cousins exist — <code>odbcQuery</code>, <code>odbcTables</code>, <code>odbcColumns</code>, <code>odbcPrimaryKeys</code> return C-style integer status codes, <code>odbcFetchResults</code> returns lists, <code>odbcGetErrMsg</code> retrieves errors — more control, less convenience.</li>
+<li>Done? <code>odbcClose(bbdb)</code> — or <code>odbcCloseAll()</code> — frees resources on both ends.</li>
 </ul>
 </section>
-<section id="dbi-in-brief" class="slide level2">
-<h2>DBI in Brief</h2>
+<section id="dbi-drivers-and-connections" class="slide level2">
+<h2>DBI: Drivers and Connections</h2>
+<p><strong>DBI</strong> is a framework: one core package plus a driver package per database — <code>RMySQL</code>, <code>RSQLite</code>, <code>ROracle</code>, <code>RPostgreSQL</code>, <code>RJDBC</code> (anything with JDBC). All S4-based. With SQLite:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">library</span>(DBI)</span>
-<span id="cb14-2"><a href=""></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">":memory:"</span>)   <span class="co"># a throwaway database</span></span>
-<span id="cb14-3"><a href=""></a><span class="fu">dbWriteTable</span>(con, <span class="st">"contracts"</span>, top.contracts)</span>
-<span id="cb14-4"><a href=""></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT position, MAX(salary) AS top FROM contracts GROUP BY position"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  position      top
-1       DE 14137500
-2       QB 18700000</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"RSQLite"</span>)</span>
+<span id="cb22-2"><a href=""></a><span class="fu">library</span>(RSQLite)          <span class="co"># loads DBI too</span></span>
+<span id="cb22-3"><a href=""></a>drv <span class="ot">&lt;-</span> <span class="fu">dbDriver</span>(<span class="st">"SQLite"</span>)</span>
+<span id="cb22-4"><a href=""></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(drv, <span class="at">dbname =</span> <span class="st">"bb.db"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">dbDisconnect</span>(con)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<ul>
-<li>One generic API — <code>dbConnect</code>, <code>dbGetQuery</code>, <code>dbWriteTable</code>, <code>dbDisconnect</code> — over interchangeable backends.</li>
-<li>Prepared statements and incremental fetching (<code>dbSendQuery</code> + <code>dbFetch</code>) handle result sets too large for memory.</li>
-</ul>
+<p>You may skip the explicit driver (<code>dbConnect("SQLite", ...)</code>), but keeping it lets you query open connections and later free its resources. Connection arguments (<code>dbname</code>, usernames…) vary by database — read that driver’s help.</p>
 </section>
-<section id="bigger-pipelines" class="slide level2">
-<h2>Bigger Pipelines</h2>
+<section id="dbi-inspecting-the-connection" class="slide level2">
+<h2>DBI: Inspecting the Connection</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">class</span>(con)                 <span class="co"># "SQLiteConnection" — meaningful S4 classes</span></span>
+<span id="cb23-2"><a href=""></a><span class="fu">dbListConnections</span>(drv)     <span class="co"># connections belonging to a driver</span></span>
+<span id="cb23-3"><a href=""></a><span class="fu">dbGetInfo</span>(con)             <span class="co"># host, user, dbname, server version...</span></span>
+<span id="cb23-4"><a href=""></a><span class="fu">dbListTables</span>(con)          <span class="co"># "Allstar" "Batting" ... "Teams" ...</span></span>
+<span id="cb23-5"><a href=""></a><span class="fu">dbListFields</span>(con, <span class="st">"Allstar"</span>)</span>
+<span id="cb23-6"><a href=""></a><span class="do">## [1] "playerID" "yearID"   "lgID"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="dbi-queries" class="slide level2">
+<h2>DBI: Queries</h2>
+<p><code>dbGetQuery(con, sql)</code> runs a statement and returns the data frame:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a>wlrecords<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con,</span>
+<span id="cb24-2"><a href=""></a>  <span class="st">"SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'"</span>)</span>
+<span id="cb24-3"><a href=""></a>batting<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con,</span>
+<span id="cb24-4"><a href=""></a>  <span class="fu">paste</span>(<span class="st">"SELECT m.nameLast, m.nameFirst, m.weight, m.height, "</span>,</span>
+<span id="cb24-5"><a href=""></a>        <span class="st">"m.bats, m.throws, m.debut, m.birthYear, b.* "</span>,</span>
+<span id="cb24-6"><a href=""></a>        <span class="st">"from Master m inner join Batting b "</span>,</span>
+<span id="cb24-7"><a href=""></a>        <span class="st">"on m.playerID=b.playerID where b.yearID=2008"</span>))</span>
+<span id="cb24-8"><a href=""></a><span class="fu">dim</span>(batting<span class="fl">.2008</span>)</span>
+<span id="cb24-9"><a href=""></a><span class="do">## [1] 1384   31</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This joined data set returns throughout the book (and ships in <code>nutshell</code> as <code>batting.2008</code>).</p>
+</section>
+<section id="dbi-sendfetch-errors-whole-tables" class="slide level2">
+<h2>DBI: Send/Fetch, Errors, Whole Tables</h2>
+<p>Submitting and fetching separately gives finer control:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a>res <span class="ot">&lt;-</span> <span class="fu">dbSendQuery</span>(con,</span>
+<span id="cb25-2"><a href=""></a>  <span class="st">"SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'"</span>)</span>
+<span id="cb25-3"><a href=""></a>wlrecords<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">fetch</span>(res)       <span class="co"># n = max rows; omit or -1 for all</span></span>
+<span id="cb25-4"><a href=""></a><span class="fu">dbClearResult</span>(res)                 <span class="co"># discard pending results</span></span>
+<span id="cb25-5"><a href=""></a><span class="fu">dbGetException</span>(con)                <span class="co"># last error number + message</span></span>
+<span id="cb25-6"><a href=""></a>batters <span class="ot">&lt;-</span> <span class="fu">dbReadTable</span>(con, <span class="st">"Batting"</span>)   <span class="co"># a whole table</span></span>
+<span id="cb25-7"><a href=""></a><span class="co"># dbWriteTable / dbExistsTable / dbRemoveTable: write, test, delete</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Cleanup mirrors the setup:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">dbDisconnect</span>(con)</span>
+<span id="cb26-2"><a href=""></a><span class="fu">dbUnloadDriver</span>(drv)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="tsdbi-and-hadoop" class="slide level2">
+<h2>TSDBI and Hadoop</h2>
+<p>Two pointers to close the chapter:</p>
 <ul>
-<li><strong>TSDBI</strong> offers a database interface specialized for time series.</li>
-<li>Data living in <strong>Hadoop</strong>/distributed storage is the subject of Chapter 26 — the usual pattern is to reduce it first, then pull the summary into R.</li>
-<li>Rule of thumb: push heavy filtering and joins into the database (<code>WHERE</code>, <code>GROUP BY</code>), and bring into R only what analysis actually needs.</li>
+<li><strong>TSDBI</strong> — a database interface <em>specifically for time series</em>, with per-database packages: <code>TSMySQL</code>, <code>TSSQLite</code>, <code>TSFame</code>, <code>TSPostgreSQL</code>, and <code>TSODBC</code> for anything with an ODBC driver.</li>
+<li><strong>Hadoop</strong> — the book’s era’s big-data platform; its Chapter 26 covers R packages for HDFS and HBase. (Today’s landscape favors Spark via <code>sparklyr</code>, or cloud warehouses spoken to through DBI.)</li>
 </ul>
 </section>
 <section id="copyright-notice" class="slide level2">

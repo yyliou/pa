@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,289 +211,587 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="asking-yesno-questions-of-data" class="title-slide slide level1 center">
-<h1><strong>Asking Yes/No Questions of Data</strong></h1>
+<section id="hypotheses-on-trial" class="title-slide slide level1 center">
+<h1><strong>Hypotheses on Trial</strong></h1>
 
 </section>
-<section id="the-logic-of-a-test" class="slide level2">
-<h2>The Logic of a Test</h2>
-<p>Every classical test follows one script: state a <strong>null hypothesis</strong> <span class="math inline">\(H_0\)</span>, compute a statistic whose distribution under <span class="math inline">\(H_0\)</span> is known (Chapter 17), and report a <strong>p-value</strong> — the probability of a result at least this extreme if <span class="math inline">\(H_0\)</span> were true.</p>
-<div class="callout callout-note callout-titled callout-style-default">
+<section id="the-shape-of-the-chapter" class="slide level2">
+<h2>The Shape of the Chapter</h2>
+<p>“Does the new drug beat the placebo?” “Does the redesign sell more?” “Does this strategy beat the index?” — formulate a hypothesis, design an experiment, collect data, test. Two halves:</p>
+<ul>
+<li><strong>continuous data</strong> — normal-theory tests, then nonparametric counterparts;</li>
+<li><strong>discrete data</strong> — proportions, binomial trials, contingency tables.</li>
+</ul>
+<div class="callout callout-warning callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<p><strong>Note</strong></p>
+<p><strong>Warning</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Reading a p-value.</strong> Small <span class="math inline">\(p\)</span> (conventionally <span class="math inline">\(&lt; 0.05\)</span>) means the data are surprising under <span class="math inline">\(H_0\)</span>, so we reject it. A large <span class="math inline">\(p\)</span> never <em>proves</em> <span class="math inline">\(H_0\)</span>; it only says the data are compatible with it.</p>
+<p><strong>The book’s own disclaimer applies here too:</strong> these slides remind you <em>when</em> and <em>how</em> to run each test in R — they are no substitute for a proper statistics course on where the formulas come from and when they’re safe.</p>
 </div>
 </div>
 </div>
-<p>Every test below returns an object of class <code>htest</code> — same structure, same reading skills.</p>
-</section>
-<section id="one-sample-t-test" class="slide level2">
-<h2>One-Sample t-Test</h2>
-<p>Is the mean tire-test score different from a benchmark?</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a>spd <span class="ot">&lt;-</span> tires.sus<span class="sc">$</span>Time_To_Failure[tires.sus<span class="sc">$</span>Tire_Type <span class="sc">==</span> <span class="st">"E"</span>]</span>
-<span id="cb1-5"><a href=""></a><span class="fu">t.test</span>(spd, <span class="at">mu =</span> <span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="co"># data sets used throughout this chapter</span></span>
+<span id="cb1-2"><a href=""></a><span class="cf">for</span> (d <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"tires.sus"</span>, <span class="st">"field.goals"</span>, <span class="st">"SPECint2006"</span>,</span>
+<span id="cb1-3"><a href=""></a>            <span class="st">"mort06.smpl"</span>, <span class="st">"births2006.smpl"</span>)) {</span>
+<span id="cb1-4"><a href=""></a>  temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb1-5"><a href=""></a>  <span class="fu">download.file</span>(<span class="fu">paste0</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/"</span>,</span>
+<span id="cb1-6"><a href=""></a>                       <span class="st">"master/data/"</span>, d, <span class="st">".rda"</span>), temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-7"><a href=""></a>  <span class="fu">load</span>(temp, <span class="at">envir =</span> <span class="fu">globalenv</span>())</span>
+<span id="cb1-8"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section></section>
+<section>
+<section id="continuous-data-normal-theory-tests" class="title-slide slide level1 center">
+<h1>Continuous Data: Normal-Theory Tests</h1>
+
+</section>
+<section id="t.test-one-sample-against-a-hypothesized-mean" class="slide level2">
+<h2>t.test: One Sample Against a Hypothesized Mean</h2>
+<p><code>t.test(x, y=NULL, alternative=c("two.sided","less","greater"), mu=0, paired=FALSE, var.equal=FALSE, conf.level=0.95)</code> — <code>y=NULL</code> compares one vector against <code>mu</code>; <code>var.equal</code> chooses pooled variance vs.&nbsp;the Welch method. Suppose type-H tires “should” last 9 hours:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>times.to.failure.h <span class="ot">&lt;-</span> <span class="fu">subset</span>(tires.sus,</span>
+<span id="cb2-2"><a href=""></a>  Tire_Type<span class="sc">==</span><span class="st">"H"</span> <span class="sc">&amp;</span> Speed_At_Failure_km_h<span class="sc">==</span><span class="dv">160</span>)<span class="sc">$</span>Time_To_Failure</span>
+<span id="cb2-3"><a href=""></a><span class="fu">mean</span>(times.to.failure.h)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10.182</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">t.test</span>(times.to.failure.h, <span class="at">mu=</span><span class="dv">9</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     One Sample t-test
 
-data:  spd
-t = -30.475, df = 14, p-value = 3.359e-14
-alternative hypothesis: true mean is not equal to 8
+data:  times.to.failure.h
+t = 0.75694, df = 9, p-value = 0.4684
+alternative hypothesis: true mean is not equal to 9
 95 percent confidence interval:
- 3.772004 4.327996
+  6.649536 13.714464
 sample estimates:
 mean of x 
-     4.05 </code></pre>
+   10.182 </code></pre>
 </div>
 </div>
-<p>The output bundles the statistic, df, p-value, confidence interval, and sample mean — extract pieces with <code>$p.value</code>, <code>$conf.int</code>.</p>
+<p>Reading it: statistic <code>t</code>, degrees of freedom, <strong>p-value 0.4684</strong> — the alternative (“true mean ≠ 9”) is <em>not</em> supported; the evidence does not imply the mean differs from 9. The 95% CI and sample mean close the report.</p>
 </section>
-<section id="two-sample-and-paired-t-tests" class="slide level2">
-<h2>Two-Sample and Paired t-Tests</h2>
+<section id="t.test-two-samples" class="slide level2">
+<h2>t.test: Two Samples</h2>
+<p>Three tire types shared speed rating S — equal lifetimes expected. E vs.&nbsp;D, then E vs.&nbsp;B:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>b <span class="ot">&lt;-</span> tires.sus<span class="sc">$</span>Time_To_Failure[tires.sus<span class="sc">$</span>Tire_Type <span class="sc">==</span> <span class="st">"B"</span>]</span>
-<span id="cb3-2"><a href=""></a>d <span class="ot">&lt;-</span> tires.sus<span class="sc">$</span>Time_To_Failure[tires.sus<span class="sc">$</span>Tire_Type <span class="sc">==</span> <span class="st">"D"</span>]</span>
-<span id="cb3-3"><a href=""></a><span class="fu">t.test</span>(b, d)                      <span class="co"># Welch two-sample by default</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>times.to.failure.e <span class="ot">&lt;-</span> <span class="fu">subset</span>(tires.sus,</span>
+<span id="cb6-2"><a href=""></a>  Tire_Type<span class="sc">==</span><span class="st">"E"</span> <span class="sc">&amp;</span> Speed_At_Failure_km_h<span class="sc">==</span><span class="dv">180</span>)<span class="sc">$</span>Time_To_Failure</span>
+<span id="cb6-3"><a href=""></a>times.to.failure.d <span class="ot">&lt;-</span> <span class="fu">subset</span>(tires.sus,</span>
+<span id="cb6-4"><a href=""></a>  Tire_Type<span class="sc">==</span><span class="st">"D"</span> <span class="sc">&amp;</span> Speed_At_Failure_km_h<span class="sc">==</span><span class="dv">180</span>)<span class="sc">$</span>Time_To_Failure</span>
+<span id="cb6-5"><a href=""></a>times.to.failure.b <span class="ot">&lt;-</span> <span class="fu">subset</span>(tires.sus,</span>
+<span id="cb6-6"><a href=""></a>  Tire_Type<span class="sc">==</span><span class="st">"B"</span> <span class="sc">&amp;</span> Speed_At_Failure_km_h<span class="sc">==</span><span class="dv">180</span>)<span class="sc">$</span>Time_To_Failure</span>
+<span id="cb6-7"><a href=""></a><span class="fu">t.test</span>(times.to.failure.e, times.to.failure.d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Welch Two Sample t-test
 
-data:  b and d
-t = -1.3553, df = 16.258, p-value = 0.1938
+data:  times.to.failure.e and times.to.failure.d
+t = -2.5042, df = 8.961, p-value = 0.03373
 alternative hypothesis: true difference in means is not equal to 0
 95 percent confidence interval:
- -0.7680672  0.1685067
+ -0.82222528 -0.04148901
 sample estimates:
 mean of x mean of y 
- 4.453077  4.752857 </code></pre>
+ 4.321000  4.752857 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">t.test</span>(times.to.failure.e, times.to.failure.b)<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.1639728</code></pre>
 </div>
 </div>
+<p>E vs.&nbsp;D: significant at 95% (p = 0.034). E vs.&nbsp;B: not (p = 0.164) — and note R never <em>says</em> “significant”; you read the p-value yourself.</p>
+</section>
+<section id="t.test-the-formula-interface" class="slide level2">
+<h2>t.test: the Formula Interface</h2>
+<p>With data in a frame and groups in a factor: <code>t.test(formula, data, subset, na.action)</code>. TV pundits insist outdoor kicking is harder — do successful field goals differ in distance?</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>before <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">198</span>, <span class="dv">201</span>, <span class="dv">210</span>, <span class="dv">185</span>, <span class="dv">192</span>)</span>
-<span id="cb5-2"><a href=""></a>after  <span class="ot">&lt;-</span> before <span class="sc">-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">7</span>, <span class="dv">2</span>, <span class="dv">9</span>, <span class="dv">1</span>)</span>
-<span id="cb5-3"><a href=""></a><span class="fu">t.test</span>(before, after, <span class="at">paired =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>good <span class="ot">&lt;-</span> <span class="fu">transform</span>(</span>
+<span id="cb10-2"><a href=""></a>  field.goals[field.goals<span class="sc">$</span>play.type<span class="sc">==</span><span class="st">"FG good"</span>, <span class="fu">c</span>(<span class="st">"yards"</span>,<span class="st">"stadium.type"</span>)],</span>
+<span id="cb10-3"><a href=""></a>  <span class="at">outside=</span>(stadium.type<span class="sc">==</span><span class="st">"Out"</span>))</span>
+<span id="cb10-4"><a href=""></a>bad <span class="ot">&lt;-</span> <span class="fu">transform</span>(</span>
+<span id="cb10-5"><a href=""></a>  field.goals[field.goals<span class="sc">$</span>play.type<span class="sc">==</span><span class="st">"FG no"</span>, <span class="fu">c</span>(<span class="st">"yards"</span>,<span class="st">"stadium.type"</span>)],</span>
+<span id="cb10-6"><a href=""></a>  <span class="at">outside=</span>(stadium.type<span class="sc">==</span><span class="st">"Out"</span>))</span>
+<span id="cb10-7"><a href=""></a><span class="fu">t.test</span>(yards<span class="sc">~</span>outside, <span class="at">data=</span>good)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Welch Two Sample t-test
+
+data:  yards by outside
+t = 1.1259, df = 319.43, p-value = 0.261
+alternative hypothesis: true difference in means between group FALSE and group TRUE is not equal to 0
+95 percent confidence interval:
+ -0.6851121  2.5185711
+sample estimates:
+mean in group FALSE  mean in group TRUE 
+           35.31707            34.40034 </code></pre>
+</div>
+</div>
+<p>A yard longer indoors on average — not significant (p = 0.26). Misses (<code>data=bad</code>): p = 0.23. Attempts overall: p = 0.12. The pundits remain unvindicated.</p>
+</section>
+<section id="paired-data" class="slide level2">
+<h2>Paired Data</h2>
+<p>Two observations per subject (before/after) call for a <strong>paired t-test</strong>: <code>paired=TRUE</code>. SPEC’s CPU benchmarks report a <em>baseline</em> and an <em>optimized</em> result per system — paired by machine. Single-chip dual-core systems:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">t.test</span>(<span class="fu">subset</span>(SPECint2006, Num.Chips<span class="sc">==</span><span class="dv">1</span> <span class="sc">&amp;</span> Num.Cores<span class="sc">==</span><span class="dv">2</span>)<span class="sc">$</span>Baseline,</span>
+<span id="cb12-2"><a href=""></a>       <span class="fu">subset</span>(SPECint2006, Num.Chips<span class="sc">==</span><span class="dv">1</span> <span class="sc">&amp;</span> Num.Cores<span class="sc">==</span><span class="dv">2</span>)<span class="sc">$</span>Result,</span>
+<span id="cb12-3"><a href=""></a>       <span class="at">paired=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Paired t-test
 
-data:  before and after
-t = 2.8642, df = 4, p-value = 0.04574
+data:  subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Baseline and subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Result
+t = -21.804, df = 111, p-value &lt; 2.2e-16
 alternative hypothesis: true mean difference is not equal to 0
 95 percent confidence interval:
- 0.1347441 8.6652559
+ -1.957837 -1.631627
 sample estimates:
 mean difference 
-            4.4 </code></pre>
+      -1.794732 </code></pre>
 </div>
 </div>
-<p>Pairing removes between-subject variation — when measurements come in natural pairs, always say so.</p>
+<p>Resoundingly significant — no shock: tuning helps, and submitting optimized results is voluntary.</p>
 </section>
-<section id="comparing-variances-and-many-means" class="slide level2">
-<h2>Comparing Variances and Many Means</h2>
+<section id="comparing-variances-var.test-and-bartlett.test" class="slide level2">
+<h2>Comparing Variances: var.test and bartlett.test</h2>
+<ul>
+<li><strong><code>var.test(x, y, ratio=1, alternative=, conf.level=)</code></strong> (or formula form) runs an <strong>F-test</strong> on two normal-population variances.</li>
+<li><strong><code>bartlett.test(x, g)</code></strong> (or formula) tests homogeneity of variance across groups.</li>
+</ul>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">var.test</span>(b, d)                    <span class="co"># F test for equal variances</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>field.goals.inout <span class="ot">&lt;-</span> <span class="fu">transform</span>(field.goals, <span class="at">outside=</span>(stadium.type<span class="sc">==</span><span class="st">"Out"</span>))</span>
+<span id="cb14-2"><a href=""></a><span class="fu">var.test</span>(yards<span class="sc">~</span>outside, <span class="at">data=</span>field.goals.inout)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     F test to compare two variances
 
-data:  b and d
-F = 1.9514, num df = 12, denom df = 6, p-value = 0.4237
+data:  yards by outside
+F = 1.2432, num df = 252, denom df = 728, p-value = 0.03098
 alternative hypothesis: true ratio of variances is not equal to 1
 95 percent confidence interval:
- 0.3636523 7.2755648
+ 1.019968 1.530612
 sample estimates:
 ratio of variances 
-          1.951447 </code></pre>
+          1.243157 </code></pre>
 </div>
-</div>
-<p>For more than two groups, one-way <strong>ANOVA</strong> generalizes the t-test:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">aov</span>(Time_To_Failure <span class="sc">~</span> Tire_Type, <span class="at">data =</span> tires.sus)</span>
-<span id="cb9-2"><a href=""></a><span class="fu">summary</span>(fit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">bartlett.test</span>(yards<span class="sc">~</span>outside, <span class="at">data=</span>field.goals.inout)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>            Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-Tire_Type    5  279.1   55.83   12.75 1.88e-08 ***
-Residuals   60  262.7    4.38                     
+<pre><code>
+    Bartlett test of homogeneity of variances
+
+data:  yards by outside
+Bartlett's K-squared = 4.5808, df = 1, p-value = 0.03233</code></pre>
+</div>
+</div>
+<p>Both p-values ≈ 0.03: the indoor/outdoor variance difference <em>is</em> significant — the means weren’t, the spreads are.</p>
+</section>
+<section id="anova-comparing-many-means" class="slide level2">
+<h2>ANOVA: Comparing Many Means</h2>
+<p><strong>Analysis of variance</strong> compares means across multiple groups (named for the method, not the result!). The quick tool is <code>aov(formula, data, projections=, qr=, contrasts=)</code>. Age at death by cause, US 2006 (<code>mort06.smpl</code>, recoded by the author from CDC files):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">aov</span>(age<span class="sc">~</span>Cause, <span class="at">data=</span>mort06.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+   aov(formula = age ~ Cause, data = mort06.smpl)
+
+Terms:
+                   Cause Residuals
+Sum of Squares  15727886  72067515
+Deg. of Freedom        9    243034
+
+Residual standard error: 17.22012
+Estimated effects may be unbalanced
+29 observations deleted due to missingness</code></pre>
+</div>
+</div>
+<p><code>model.tables(aov(...))</code> prints per-level effects (Accidents −21.4 years vs.&nbsp;overall, Homicide −40.1, Alzheimer’s +13.8…). A subtler example — weight gain by birth month:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>births2006.cln <span class="ot">&lt;-</span> births2006.smpl[births2006.smpl<span class="sc">$</span>WTGAIN<span class="sc">&lt;</span><span class="dv">99</span> <span class="sc">&amp;</span></span>
+<span id="cb20-2"><a href=""></a>                                  <span class="sc">!</span><span class="fu">is.na</span>(births2006.smpl<span class="sc">$</span>WTGAIN),]</span>
+<span id="cb20-3"><a href=""></a><span class="fu">aov</span>(WTGAIN<span class="sc">~</span>DOB_MM, births2006.cln)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+   aov(formula = WTGAIN ~ DOB_MM, data = births2006.cln)
+
+Terms:
+                  DOB_MM Residuals
+Sum of Squares     14777  73385301
+Deg. of Freedom        1    351465
+
+Residual standard error: 14.44986
+Estimated effects may be unbalanced</code></pre>
+</div>
+</div>
+</section>
+<section id="anovalm-oneway.test-and-friends" class="slide level2">
+<h2>anova(lm(…)), oneway.test, and Friends</h2>
+<p>The often-better route: fit with <code>lm</code>, extract the table with <code>anova</code> — F-statistic and p-value included (and <code>update</code> modifies big models cheaply; Chapter 20):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a>mort06.smpl.lm <span class="ot">&lt;-</span> <span class="fu">lm</span>(age<span class="sc">~</span>Cause, <span class="at">data=</span>mort06.smpl)</span>
+<span id="cb22-2"><a href=""></a><span class="fu">anova</span>(mort06.smpl.lm)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Response: age
+              Df   Sum Sq Mean Sq F value    Pr(&gt;F)    
+Cause          9 15727886 1747543  5893.3 &lt; 2.2e-16 ***
+Residuals 243034 72067515     297                      
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
-<p>A small p-value says <em>some</em> means differ; <code>TukeyHSD(fit)</code> then reports <em>which</em> pairs.</p>
+<ul>
+<li>Variances unequal? <code>oneway.test(formula, data, var.equal=FALSE)</code> — the Welch idea, generalized.</li>
+<li>More <code>aov</code> accessories: <code>proj</code> (projections), <code>TukeyHSD</code> (CIs on pairwise level differences), <code>se.contrast</code> (standard errors of contrasts).</li>
+</ul>
 </section>
-<section id="normality-and-distribution-tests" class="slide level2">
-<h2>Normality and Distribution Tests</h2>
+<section id="pairwise-t-tests" class="slide level2">
+<h2>Pairwise t-Tests</h2>
+<p>Want <em>which</em> groups differ, not just <em>whether</em>: <code>pairwise.t.test(x, g, p.adjust.method=, pool.sd=, paired=, alternative=)</code> runs all pairs with multiple-testing correction (default: Holm):</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">3</span>); z <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">100</span>)</span>
-<span id="cb11-2"><a href=""></a><span class="fu">shapiro.test</span>(z)                       <span class="co"># H0: data are normal</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">pairwise.t.test</span>(tires.sus<span class="sc">$</span>Time_To_Failure, tires.sus<span class="sc">$</span>Tire_Type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pairwise comparisons using t tests with pooled SD 
+
+data:  tires.sus$Time_To_Failure and tires.sus$Tire_Type 
+
+  B       C      D       E       H     
+C 0.2219  -      -       -       -     
+D 1.0000  0.5650 -       -       -     
+E 1.0000  0.0769 1.0000  -       -     
+H 2.4e-07 0.0029 2.6e-05 1.9e-08 -     
+L 0.1147  1.0000 0.4408  0.0291  0.0019
+
+P value adjustment method: holm </code></pre>
+</div>
+</div>
+<p>No significant difference for C–L, D–L, D–E; very significant for B–H, C–H, E–L…</p>
+</section>
+<section id="testing-normality-shapiro.test" class="slide level2">
+<h2>Testing Normality: shapiro.test</h2>
+<p>Are field-goal distances normal? Eyeball first, then the <strong>Shapiro-Wilk test</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfcol=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">ps=</span><span class="fl">6.5</span>)</span>
+<span id="cb26-2"><a href=""></a><span class="fu">hist</span>(field.goals<span class="sc">$</span>yards, <span class="at">breaks=</span><span class="dv">25</span>)</span>
+<span id="cb26-3"><a href=""></a><span class="fu">qqnorm</span>(field.goals<span class="sc">$</span>yards, <span class="at">pch=</span><span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfcol=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb27-2"><a href=""></a><span class="fu">shapiro.test</span>(field.goals<span class="sc">$</span>yards)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Shapiro-Wilk normality test
 
-data:  z
-W = 0.97928, p-value = 0.1167</code></pre>
+data:  field.goals$yards
+W = 0.97275, p-value = 1.309e-12</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">ks.test</span>(z, <span class="st">"pnorm"</span>)                   <span class="co"># against any named distribution</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<img data-src="ch18_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Bell-ish shape, roughly linear Q-Q — yet p ≈ 10⁻¹²: quite likely <em>not</em> normal. Eyes deceive; tests quantify.</p>
+</section>
+<section id="arbitrary-distributions-ks.test" class="slide level2">
+<h2>Arbitrary Distributions: ks.test</h2>
+<p>The <strong>Kolmogorov-Smirnov test</strong> compares a vector to <em>any</em> distribution (<code>y</code> = data vector, distribution name, or function), or two vectors to each other:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">ks.test</span>(field.goals<span class="sc">$</span>yards, pnorm)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in ks.test.default(field.goals$yards, pnorm): ties should not be
+present for the one-sample Kolmogorov-Smirnov test</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Asymptotic one-sample Kolmogorov-Smirnov test
 
-data:  z
-D = 0.066739, p-value = 0.7646
+data:  field.goals$yards
+D = 1, p-value &lt; 2.2e-16
+alternative hypothesis: two-sided</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">ks.test</span>(<span class="fu">jitter</span>(<span class="fu">subset</span>(SPECint2006, Num.Chips<span class="sc">==</span><span class="dv">1</span><span class="sc">&amp;</span>Num.Cores<span class="sc">==</span><span class="dv">2</span>)<span class="sc">$</span>Baseline),</span>
+<span id="cb32-2"><a href=""></a>        <span class="fu">jitter</span>(<span class="fu">subset</span>(SPECint2006, Num.Chips<span class="sc">==</span><span class="dv">1</span><span class="sc">&amp;</span>Num.Cores<span class="sc">==</span><span class="dv">2</span>)<span class="sc">$</span>Result))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Asymptotic two-sample Kolmogorov-Smirnov test
+
+data:  jitter(subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Baseline) and jitter(subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Result)
+D = 0.21429, p-value = 0.01168
 alternative hypothesis: two-sided</code></pre>
 </div>
 </div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">qqnorm</span>(z); <span class="fu">qqline</span>(z)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch18_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:55.0%"><p>The Q–Q plot is the visual companion: points hugging the line support normality — and it shows <em>where</em> departures occur.</p>
+<p>The ties warning is itself informative — true normal values almost never tie. (We <code>jitter</code> the second test to silence it.) Baseline and optimized results: unlikely to share a distribution (p = 0.012).</p>
 </section>
-<section id="non-parametric-tests" class="slide level2">
-<h2>Non-Parametric Tests</h2>
-<p>When normality is doubtful or data are ranks, swap in distribution-free analogues:</p>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th style="text-align: left;">Parametric</th>
-<th style="text-align: left;">Non-parametric</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">one/two-sample t</td>
-<td style="text-align: left;"><code>wilcox.test()</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">one-way ANOVA</td>
-<td style="text-align: left;"><code>kruskal.test()</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">paired t</td>
-<td style="text-align: left;"><code>wilcox.test(..., paired = TRUE)</code></td>
-</tr>
-</tbody>
-</table>
+<section id="correlation-tests-cor.test" class="slide level2">
+<h2>Correlation Tests: cor.test</h2>
+<p>Chapter 16’s <code>cor</code> gives a number; <code>cor.test(x, y, alternative=, method=, exact=, conf.level=)</code> (or formula form) gives <strong>significance</strong>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">wilcox.test</span>(b, d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">cor.test</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>), <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>,<span class="dv">10</span>,<span class="dv">11</span>,<span class="dv">14</span>))<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2.989378e-08</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a><span class="fu">cor.test</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>), <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">8</span>,<span class="dv">1</span>,<span class="dv">7</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>))<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.2671036</code></pre>
+</div>
+</div>
+<p>The Chapter 13 toxins-and-lung-cancer relationship, tested:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb38-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda"</span>,</span>
+<span id="cb38-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb38-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb38-5"><a href=""></a><span class="fu">with</span>(toxins.and.cancer, <span class="fu">cor.test</span>(air_on_site<span class="sc">/</span>Surface_Area,</span>
+<span id="cb38-6"><a href=""></a>                                 deaths_lung<span class="sc">/</span>Population))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's product-moment correlation
+
+data:  air_on_site/Surface_Area and deaths_lung/Population
+t = 3.4108, df = 39, p-value = 0.00152
+alternative hypothesis: true correlation is not equal to 0
+95 percent confidence interval:
+ 0.2013723 0.6858402
+sample estimates:
+      cor 
+0.4793273 </code></pre>
+</div>
+</div>
+<p>Significant positive correlation (p = 0.0015) — but resist the causal leap: industrial states may differ in income, healthcare, smoking, or even death-certificate habits.</p>
+</section></section>
+<section>
+<section id="continuous-data-nonparametric-tests" class="title-slide slide level1 center">
+<h1>Continuous Data: Nonparametric Tests</h1>
+
+</section>
+<section id="wilcox.test" class="slide level2">
+<h2>wilcox.test</h2>
+<p>When normality is doubtful, <strong>rank-based</strong> tests trade some power for robustness. The Wilcoxon test is the t-test’s counterpart: its statistic counts, over all pairs, how often y[j] &lt; x[i] (about half if the distributions match) — no one-sample-vs-mean version exists:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">wilcox.test</span>(times.to.failure.e, times.to.failure.d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Wilcoxon rank sum exact test
 
-data:  b and d
-W = 27, p-value = 0.1505
+data:  times.to.failure.e and times.to.failure.d
+W = 14.5, p-value = 0.04576
 alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">kruskal.test</span>(Time_To_Failure <span class="sc">~</span> Tire_Type, <span class="at">data =</span> tires.sus)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a><span class="fu">wilcox.test</span>(yards<span class="sc">~</span>outside, <span class="at">data=</span>good)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Wilcoxon rank sum test with continuity correction
+
+data:  yards by outside
+W = 62045, p-value = 0.393
+alternative hypothesis: true location shift is not equal to 0</code></pre>
+</div>
+</div>
+<p>Note the contrast with the t-test: E vs.&nbsp;D <em>barely misses</em> significance here (p = 0.0505). Ties trigger a normal approximation (hence the warning).</p>
+</section>
+<section id="kruskal.test-and-fligner.test" class="slide level2">
+<h2>kruskal.test and fligner.test</h2>
+<ul>
+<li><strong>Kruskal-Wallis rank-sum test</strong> — nonparametric ANOVA: <code>kruskal.test(formula, data)</code>;</li>
+<li><strong>Fligner-Killeen (median) test</strong> — nonparametric variance comparison: <code>fligner.test(formula, data)</code>.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a><span class="fu">kruskal.test</span>(age<span class="sc">~</span>Cause, <span class="at">data=</span>mort06.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Kruskal-Wallis rank sum test
 
-data:  Time_To_Failure by Tire_Type
-Kruskal-Wallis chi-squared = 40.11, df = 5, p-value = 1.419e-07</code></pre>
+data:  age by Cause
+Kruskal-Wallis chi-squared = 34868, df = 9, p-value &lt; 2.2e-16</code></pre>
 </div>
-</div>
-<p>They trade a little power for a lot of robustness.</p>
-</section>
-<section id="proportion-and-binomial-tests" class="slide level2">
-<h2>Proportion and Binomial Tests</h2>
-<p>Field-goal kickers succeeded 787 times in 974 attempts. Is the true success rate 80%?</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">prop.test</span>(<span class="dv">787</span>, <span class="dv">974</span>, <span class="at">p =</span> <span class="fl">0.80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">fligner.test</span>(age<span class="sc">~</span>Cause, <span class="at">data=</span>mort06.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-    1-sample proportions test with continuity correction
+    Fligner-Killeen test of homogeneity of variances
 
-data:  787 out of 974, null probability 0.8
-X-squared = 0.34195, df = 1, p-value = 0.5587
-alternative hypothesis: true p is not equal to 0.8
-95 percent confidence interval:
- 0.7815455 0.8320008
-sample estimates:
-        p 
-0.8080082 </code></pre>
+data:  age by Cause
+Fligner-Killeen:med chi-squared = 15788, df = 9, p-value &lt; 2.2e-16</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">binom.test</span>(<span class="dv">787</span>, <span class="dv">974</span>, <span class="at">p =</span> <span class="fl">0.80</span>)     <span class="co"># exact version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li>Scale-parameter differences: <strong><code>ansari.test(x, y, ...)</code></strong> (Ansari-Bradley) and <strong><code>mood.test(x, y, ...)</code></strong> (Mood) — both with formula variants.</li>
+</ul>
+</section></section>
+<section>
+<section id="discrete-data" class="title-slide slide level1 center">
+<h1>Discrete Data</h1>
+
+</section>
+<section id="prop.test-comparing-proportions" class="slide level2">
+<h2>prop.test: Comparing Proportions</h2>
+<p><code>prop.test(x, n, p=NULL, alternative=, conf.level=, correct=)</code> tests whether success proportions differ across groups (or equal given values). Is field-goal <em>success</em> equal indoors and out? Build a successes/failures table (dropping the 8 aborted and 24 blocked kicks), transpose, test:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a>field.goals.goodbad <span class="ot">&lt;-</span> field.goals[field.goals<span class="sc">$</span>play.type<span class="sc">==</span><span class="st">"FG good"</span> <span class="sc">|</span></span>
+<span id="cb48-2"><a href=""></a>                                   field.goals<span class="sc">$</span>play.type<span class="sc">==</span><span class="st">"FG no"</span>, ]</span>
+<span id="cb48-3"><a href=""></a>field.goals.table <span class="ot">&lt;-</span> <span class="fu">table</span>(field.goals.goodbad<span class="sc">$</span>play.type,</span>
+<span id="cb48-4"><a href=""></a>                           field.goals.goodbad<span class="sc">$</span>stadium.type)</span>
+<span id="cb48-5"><a href=""></a>field.goals.table.t <span class="ot">&lt;-</span> <span class="fu">t</span>(field.goals.table[<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>,])</span>
+<span id="cb48-6"><a href=""></a>field.goals.table.t</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      
+       FG good FG no
+  Both      53    14
+  In       152    24
+  Out      582   125</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a><span class="fu">prop.test</span>(field.goals.table.t)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    3-sample test for equality of proportions without continuity correction
+
+data:  field.goals.table.t
+X-squared = 2.3298, df = 2, p-value = 0.312
+alternative hypothesis: two.sided
+sample estimates:
+   prop 1    prop 2    prop 3 
+0.7910448 0.8636364 0.8231966 </code></pre>
+</div>
+</div>
+<p>p = 0.31: no significant difference in success rates among Both/In/Out.</p>
+</section>
+<section id="binom.test-bernoulli-trials" class="slide level2">
+<h2>binom.test: Bernoulli Trials</h2>
+<p>A series of identical two-outcome trials (coin flips) follows the <strong>binomial</strong> distribution. <code>binom.test(x, n, p=0.5, alternative=, conf.level=)</code> tests an observed success count. David Ortiz hit .264 (110/416) in 2008 — if he were “truly” a .300 hitter, how likely is hitting .264 or worse?</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href=""></a><span class="fu">binom.test</span>(<span class="at">x=</span><span class="dv">110</span>, <span class="at">n=</span><span class="dv">416</span>, <span class="at">p=</span><span class="fl">0.3</span>, <span class="at">alternative=</span><span class="st">"less"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Exact binomial test
 
-data:  787 and 974
-number of successes = 787, number of trials = 974, p-value = 0.5482
-alternative hypothesis: true probability of success is not equal to 0.8
+data:  110 and 416
+number of successes = 110, number of trials = 416, p-value = 0.06174
+alternative hypothesis: true probability of success is less than 0.3
 95 percent confidence interval:
- 0.7818429 0.8322959
+ 0.0000000 0.3023771
 sample estimates:
 probability of success 
-             0.8080082 </code></pre>
+             0.2644231 </code></pre>
 </div>
 </div>
-<p><code>prop.test()</code> with two counts compares two proportions — the A/B test in one line.</p>
+<p>p = 0.062: about a 6% chance. Notable: this p-value is the probability of being <em>at least as far</em> in the stated direction — read <code>alternative</code> carefully.</p>
 </section>
-<section id="tabular-data-chi-squared-and-friends" class="slide level2">
-<h2>Tabular Data: Chi-Squared and Friends</h2>
-<p>Do two categorical variables associate?</p>
+<section id="fisher.test-exact-independence-testing" class="slide level2">
+<h2>fisher.test: Exact Independence Testing</h2>
+<p>For contingency tables, the hypothesis is <strong>independence</strong> of the two variables. For small tables, <strong>Fisher’s exact test</strong> is best. Arguments: <code>x</code> (matrix or factor), <code>y</code> (factor when <code>x</code> is), <code>workspace</code>, <code>hybrid</code> (approximate for &gt;2×2), <code>or</code> (hypothesized odds ratio), <code>alternative</code>, <code>conf.int</code>/<code>conf.level</code>, <code>simulate.p.value</code>/<code>B</code> (Monte Carlo). Delivery method × sex, July 2006:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a>tbl <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">45</span>, <span class="dv">15</span>, <span class="dv">30</span>, <span class="dv">40</span>), <span class="at">nrow =</span> <span class="dv">2</span>,</span>
-<span id="cb24-2"><a href=""></a>              <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="at">group =</span> <span class="fu">c</span>(<span class="st">"treat"</span>, <span class="st">"control"</span>),</span>
-<span id="cb24-3"><a href=""></a>                              <span class="at">outcome =</span> <span class="fu">c</span>(<span class="st">"yes"</span>, <span class="st">"no"</span>)))</span>
-<span id="cb24-4"><a href=""></a>tbl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href=""></a>births.july<span class="fl">.2006</span> <span class="ot">&lt;-</span> births2006.smpl[births2006.smpl<span class="sc">$</span>DMETH_REC<span class="sc">!=</span><span class="st">"Unknown"</span> <span class="sc">&amp;</span></span>
+<span id="cb54-2"><a href=""></a>                                    births2006.smpl<span class="sc">$</span>DOB_MM<span class="sc">==</span><span class="dv">7</span>, ]</span>
+<span id="cb54-3"><a href=""></a>method.and.sex <span class="ot">&lt;-</span> <span class="fu">table</span>(births.july<span class="fl">.2006</span><span class="sc">$</span>SEX,</span>
+<span id="cb54-4"><a href=""></a>  <span class="fu">as.factor</span>(<span class="fu">as.character</span>(births.july<span class="fl">.2006</span><span class="sc">$</span>DMETH_REC)))</span>
+<span id="cb54-5"><a href=""></a>method.and.sex</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>         outcome
-group     yes no
-  treat    45 30
-  control  15 40</code></pre>
+<pre><code>   
+    C-section Vaginal
+  F      5326   12622
+  M      6067   13045</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">chisq.test</span>(tbl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-    Pearson's Chi-squared test with Yates' continuity correction
-
-data:  tbl
-X-squared = 12.39, df = 1, p-value = 0.0004316</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">fisher.test</span>(tbl)        <span class="co"># exact; safe for small cells</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href=""></a><span class="fu">fisher.test</span>(method.and.sex)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Fisher's Exact Test for Count Data
 
-data:  tbl
-p-value = 0.0003306
+data:  method.and.sex
+p-value = 1.604e-05
 alternative hypothesis: true odds ratio is not equal to 1
 95 percent confidence interval:
- 1.776695 9.160997
+ 0.8678345 0.9485129
 sample estimates:
 odds ratio 
-  3.954904 </code></pre>
+ 0.9072866 </code></pre>
+</div>
+</div>
+<p>Tiny p-value: reject independence — C-section rates differ by sex (46.7% vs.&nbsp;49.2% of each sex’s births… or rather, the odds ratio ≈ 0.91).</p>
+</section>
+<section id="fisher.test-on-twins-chisq.test" class="slide level2">
+<h2>fisher.test on Twins; chisq.test</h2>
+<p>For twins only, the story reverses:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href=""></a>twins<span class="fl">.2006</span> <span class="ot">&lt;-</span> births2006.smpl[births2006.smpl<span class="sc">$</span>DPLURAL<span class="sc">==</span><span class="st">"2 Twin"</span> <span class="sc">&amp;</span></span>
+<span id="cb58-2"><a href=""></a>                              births2006.smpl<span class="sc">$</span>DMETH_REC <span class="sc">!=</span> <span class="st">"Unknown"</span>,]</span>
+<span id="cb58-3"><a href=""></a>method.and.sex.twins <span class="ot">&lt;-</span> <span class="fu">table</span>(twins<span class="fl">.2006</span><span class="sc">$</span>SEX,</span>
+<span id="cb58-4"><a href=""></a>  <span class="fu">as.factor</span>(<span class="fu">as.character</span>(twins<span class="fl">.2006</span><span class="sc">$</span>DMETH_REC)))</span>
+<span id="cb58-5"><a href=""></a><span class="fu">fisher.test</span>(method.and.sex.twins)<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.6699808</code></pre>
+</div>
+</div>
+<p>p = 0.67: independence is plausible. Fisher’s test gets expensive for large tables — the workhorse alternative is the <strong>chi-squared test</strong>, which compares the sample to hypothesized probabilities (<code>chisq.test(x, y=, correct=, p=, rescale.p=, simulate.p.value=, B=)</code>):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href=""></a><span class="fu">chisq.test</span>(method.and.sex.twins)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's Chi-squared test with Yates' continuity correction
+
+data:  method.and.sex.twins
+X-squared = 0.17451, df = 1, p-value = 0.6761</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href=""></a><span class="fu">chisq.test</span>(twins<span class="fl">.2006</span><span class="sc">$</span>DMETH_REC, twins<span class="fl">.2006</span><span class="sc">$</span>SEX)<span class="sc">$</span>p.value   <span class="co"># same, from factors</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.676137</code></pre>
+</div>
+</div>
+</section>
+<section id="chisq.test-goodness-of-fit-higher-dimensions" class="slide level2">
+<h2>chisq.test: Goodness of Fit, Higher Dimensions</h2>
+<p>Births by weekday — could the weekend deficit be chance, if every day were equally likely (the default <code>p</code>)?</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href=""></a>births2006.byday <span class="ot">&lt;-</span> <span class="fu">table</span>(births2006.smpl<span class="sc">$</span>DOB_WK)</span>
+<span id="cb64-2"><a href=""></a>births2006.byday</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    1     2     3     4     5     6     7 
+40274 62757 69775 70290 70164 68380 45683 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href=""></a><span class="fu">chisq.test</span>(births2006.byday)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  births2006.byday
+X-squared = 15873, df = 6, p-value &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>Emphatically not chance (though with n this big, <em>everything</em> is significant). Multidimensional tables work too — day × month:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href=""></a><span class="fu">chisq.test</span>(<span class="fu">table</span>(births2006.smpl<span class="sc">$</span>DOB_WK, births2006.smpl<span class="sc">$</span>DOB_MM))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's Chi-squared test
+
+data:  table(births2006.smpl$DOB_WK, births2006.smpl$DOB_MM)
+X-squared = 4729.6, df = 66, p-value &lt; 2.2e-16</code></pre>
 </div>
 </div>
 <ul>
-<li>Rule of thumb: expected counts below 5 → prefer <code>fisher.test()</code>.</li>
-<li><code>mcnemar.test()</code> handles paired categorical data (before/after on the same subjects).</li>
+<li>Three-way interactions: <strong><code>mantelhaen.test(x, y, z, ...)</code></strong> (Cochran-Mantel-Haenszel).</li>
+<li>Symmetry of a 2-D table: <strong><code>mcnemar.test(x, y, correct=)</code></strong>.</li>
 </ul>
 </section>
-<section id="choosing-a-test-a-map" class="slide level2">
-<h2>Choosing a Test: a Map</h2>
-<ol type="1">
-<li><strong>One numeric sample</strong> vs.&nbsp;a reference: <code>t.test(x, mu=)</code>; non-normal → <code>wilcox.test</code>.</li>
-<li><strong>Two numeric samples</strong>: independent → <code>t.test(x, y)</code>; paired → <code>paired=TRUE</code>; non-normal → <code>wilcox.test</code>.</li>
-<li><strong>3+ groups</strong>: <code>aov()</code> → <code>TukeyHSD()</code>; non-normal → <code>kruskal.test</code>.</li>
-<li><strong>Proportions</strong>: <code>prop.test</code> / <code>binom.test</code>.</li>
-<li><strong>Two categorical variables</strong>: <code>chisq.test</code> / <code>fisher.test</code>.</li>
-</ol>
-<p>Check assumptions (normality, equal variance, independence) <em>before</em> trusting p-values — and remember that statistical significance is not practical importance.</p>
+<section id="friedman.test" class="slide level2">
+<h2>friedman.test</h2>
+<p>The <strong>Friedman rank-sum test</strong> is the nonparametric counterpart of two-way ANOVA — <code>friedman.test(y, groups, blocks)</code> or the formula/table forms:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href=""></a><span class="fu">friedman.test</span>(method.and.sex.twins)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Friedman rank sum test
+
+data:  method.and.sex.twins
+Friedman chi-squared = 2, df = 1, p-value = 0.1573</code></pre>
+</div>
+</div>
+<p>Agreeing with the chi-squared verdict: the two distributions are very likely independent.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

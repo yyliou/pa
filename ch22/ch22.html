@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,139 +211,130 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="learning-without-labels" class="title-slide slide level1 center">
-<h1><strong>Learning Without Labels</strong></h1>
+<section id="finding-structure" class="title-slide slide level1 center">
+<h1><strong>Finding Structure</strong></h1>
 
 </section>
-<section id="supervised-vs.-unsupervised" class="slide level2">
-<h2>Supervised vs.&nbsp;Unsupervised</h2>
-<p>Chapters 20–21 <em>supervised</em> learning: a known outcome guided the fit. This chapter is the <strong>unsupervised</strong> side — no labels, only structure to discover:</p>
+<section id="beyond-supervised-learning" class="slide level2">
+<h2>Beyond Supervised Learning</h2>
+<p>Chapters 20–21 were <strong>supervised</strong> — predict a known response. This chapter covers two <strong>unsupervised</strong> tasks, where there is no response to predict, only structure to discover:</p>
 <ul>
-<li><strong>Market basket analysis</strong>: which items co-occur in transactions?</li>
-<li><strong>Clustering</strong>: which observations belong together?</li>
+<li><strong>market basket analysis</strong> — which items occur together (association rules);</li>
+<li><strong>clustering</strong> — which observations are similar enough to group.</li>
 </ul>
-<p>Both are exploration tools: they generate hypotheses rather than test them <span class="citation" data-cites="hastie2009elements">(Hastie et al. 2009)</span>.</p>
+</section></section>
+<section>
+<section id="market-basket-analysis" class="title-slide slide level1 center">
+<h1>Market Basket Analysis</h1>
+
 </section>
-<section id="market-basket-analysis" class="slide level2">
-<h2>Market Basket Analysis</h2>
-<p>The <code>arules</code> package mines <strong>association rules</strong> of the form <span class="math inline">\(\{A, B\} \Rightarrow \{C\}\)</span> from transaction data:</p>
+<section id="association-rules-and-apriori" class="slide level2">
+<h2>Association Rules and apriori</h2>
+<p>Given a set of <strong>transactions</strong> (a shopping basket, a listening history), association-rule mining finds <strong>items frequently associated</strong> with each other — “customers who bought X also bought Y.” The classic algorithm is <strong>a priori</strong>, in package <code>arules</code>:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">library</span>(arules)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">data</span>(Groceries)             <span class="co"># built into arules</span></span>
-<span id="cb1-3"><a href=""></a><span class="fu">summary</span>(Groceries)<span class="sc">@</span>lengths[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sizes
-   1    2    3    4    5 
-2159 1643 1299 1005  855 </code></pre>
+<span id="cb1-2"><a href=""></a><span class="fu">apriori</span>(data, <span class="at">parameter =</span> <span class="cn">NULL</span>, <span class="at">appearance =</span> <span class="cn">NULL</span>, <span class="at">control =</span> <span class="cn">NULL</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
+<ul>
+<li><code>data</code> — a <code>transactions</code> object (or a matrix/data frame coercible to one);</li>
+<li><code>parameter</code> — thresholds, chiefly <strong>support</strong> (how often items appear together) and <strong>confidence</strong> (how reliable the rule is);</li>
+<li><code>appearance</code> constrains which items may appear on each side; <code>control</code> tunes the algorithm.</li>
+</ul>
+<p><code>arules</code> is built on S4 classes (a <code>transactions</code> class for the data) and the well-engineered apriori C implementation by Christian Borgelt.</p>
+</section>
+<section id="example-audioscrobbler" class="slide level2">
+<h2>Example: Audioscrobbler</h2>
+<p>The book mines Audioscrobbler listening data (now part of Last.fm). Load with <code>read.transactions</code>, mine, inspect:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>rules <span class="ot">&lt;-</span> <span class="fu">apriori</span>(Groceries,</span>
-<span id="cb3-2"><a href=""></a>                 <span class="at">parameter =</span> <span class="fu">list</span>(<span class="at">supp =</span> <span class="fl">0.005</span>, <span class="at">conf =</span> <span class="fl">0.5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(arules)</span>
+<span id="cb2-2"><a href=""></a>playlists <span class="ot">&lt;-</span> <span class="fu">read.transactions</span>(<span class="st">"audioscrobbler.csv"</span>, <span class="at">format=</span><span class="st">"basket"</span>, <span class="at">sep=</span><span class="st">","</span>)</span>
+<span id="cb2-3"><a href=""></a>rules <span class="ot">&lt;-</span> <span class="fu">apriori</span>(playlists,</span>
+<span id="cb2-4"><a href=""></a>                 <span class="at">parameter=</span><span class="fu">list</span>(<span class="at">support=</span><span class="fl">0.01</span>, <span class="at">confidence=</span><span class="fl">0.5</span>))</span>
+<span id="cb2-5"><a href=""></a><span class="fu">inspect</span>(<span class="fu">head</span>(<span class="fu">sort</span>(rules, <span class="at">by=</span><span class="st">"lift"</span>), <span class="dv">10</span>))   <span class="co"># strongest rules by lift</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>Resulting rules read like “listeners of Green Day and Nirvana also listen to Red Hot Chili Peppers,” each with support, confidence, and <strong>lift</strong> (how much more often than chance). A related, faster algorithm for frequent itemsets is <code>eclat</code>.</p>
+</section></section>
+<section>
+<section id="clustering" class="title-slide slide level1 center">
+<h1>Clustering</h1>
+
+</section>
+<section id="distance-measures" class="slide level2">
+<h2>Distance Measures</h2>
+<p>Clustering groups observations so that members of a cluster are more similar to each other than to outsiders — and similarity starts with <strong>distance</strong>. <code>stats::dist</code> builds a distance matrix:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">inspect</span>(<span class="fu">head</span>(<span class="fu">sort</span>(rules, <span class="at">by =</span> <span class="st">"lift"</span>), <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">dist</span>(x, <span class="at">method =</span> <span class="st">"euclidean"</span>, <span class="at">diag =</span> <span class="cn">FALSE</span>, <span class="at">upper =</span> <span class="cn">FALSE</span>, <span class="at">p =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>method</code> may be <code>"euclidean"</code>, <code>"manhattan"</code>, <code>"maximum"</code>, <code>"canberra"</code>, <code>"binary"</code>, or <code>"minkowski"</code> (with parameter <code>p</code>). The right metric matters: scale and units shape every cluster that follows, so standardize variables first when they differ in range.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>d <span class="ot">&lt;-</span> <span class="fu">dist</span>(<span class="fu">scale</span>(iris[, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]))     <span class="co"># standardize, then Euclidean distance</span></span>
+<span id="cb4-2"><a href=""></a><span class="fu">as.matrix</span>(d)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>    lhs                   rhs                    support confidence    coverage     lift count
-[1] {tropical fruit,                                                                          
-     curd}             =&gt; {yogurt}           0.005287239  0.5148515 0.010269446 3.690645    52
-[2] {citrus fruit,                                                                            
-     root vegetables,                                                                         
-     whole milk}       =&gt; {other vegetables} 0.005795628  0.6333333 0.009150991 3.273165    57
-[3] {pip fruit,                                                                               
-     root vegetables,                                                                         
-     whole milk}       =&gt; {other vegetables} 0.005490595  0.6136364 0.008947636 3.171368    54</code></pre>
+<pre><code>         1         2         3         4
+1 0.000000 1.1722914 0.8427840 1.0999999
+2 1.172291 0.0000000 0.5216255 0.4325508
+3 0.842784 0.5216255 0.0000000 0.2829432
+4 1.100000 0.4325508 0.2829432 0.0000000</code></pre>
 </div>
 </div>
 </section>
-<section id="reading-a-rule" class="slide level2">
-<h2>Reading a Rule</h2>
-<p>Three numbers qualify every rule:</p>
-<div class="callout callout-note callout-titled callout-style-default">
+<section id="partitioning-kmeans-pam-clara" class="slide level2">
+<h2>Partitioning: kmeans, pam, clara</h2>
+<p><strong>Partitioning</strong> algorithms split data into a chosen number <code>k</code> of clusters:</p>
+<ul>
+<li><strong><code>kmeans(x, centers, ...)</code></strong> — fast, minimizes within-cluster sum of squares; sensitive to outliers and starting centers.</li>
+<li><strong><code>cluster::pam(x, k)</code></strong> — partitioning around medoids; uses actual data points as centers, more robust than k-means.</li>
+<li><strong><code>cluster::clara(x, k)</code></strong> — pam scaled to large data via sampling.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb6-2"><a href=""></a>km <span class="ot">&lt;-</span> <span class="fu">kmeans</span>(<span class="fu">scale</span>(iris[, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]), <span class="at">centers=</span><span class="dv">3</span>)</span>
+<span id="cb6-3"><a href=""></a><span class="fu">table</span>(km<span class="sc">$</span>cluster, iris<span class="sc">$</span>Species)   <span class="co"># clusters vs. true species</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   
+    setosa versicolor virginica
+  1      0         39        14
+  2      0         11        36
+  3     50          0         0</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>km<span class="sc">$</span>centers[, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Sepal.Length Sepal.Width
+1  -0.05005221 -0.88042696
+2   1.13217737  0.08812645
+3  -1.01119138  0.85041372</code></pre>
+</div>
+</div>
+</section>
+<section id="cluster-quality-and-hierarchical-clustering" class="slide level2">
+<h2>Cluster Quality and Hierarchical Clustering</h2>
+<ul>
+<li><strong><code>cluster::silhouette</code></strong> measures how well each point fits its cluster (−1 to 1); the average silhouette width helps <strong>choose <code>k</code></strong>.</li>
+<li><strong>Hierarchical clustering</strong> needs no <code>k</code> up front — <code>hclust(dist_object, method=)</code> builds a tree (dendrogram), merging closest clusters step by step; <code>cluster::agnes</code> (agglomerative) and <code>diana</code> (divisive) are richer alternatives.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>hc <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="fu">dist</span>(<span class="fu">scale</span>(iris[, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>])), <span class="at">method=</span><span class="st">"ward.D2"</span>)</span>
+<span id="cb10-2"><a href=""></a><span class="fu">plot</span>(hc, <span class="at">labels=</span><span class="cn">FALSE</span>, <span class="at">main=</span><span class="st">"Hierarchical clustering of iris"</span>)</span>
+<span id="cb10-3"><a href=""></a><span class="fu">rect.hclust</span>(hc, <span class="at">k=</span><span class="dv">3</span>)              <span class="co"># cut into 3 clusters</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch22_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><code>method</code> ranges over <code>"complete"</code>, <code>"average"</code>, <code>"single"</code>, <code>"ward.D2"</code>, … — each defining “distance between clusters” differently, and each producing differently shaped clusters.</p>
+<div class="callout callout-tip callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<p><strong>Note</strong></p>
+<p><strong>Tip</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Support</strong> — share of transactions containing all the rule’s items. <strong>Confidence</strong> — <span class="math inline">\(P(\text{rhs} \mid \text{lhs})\)</span>: how often the right side appears when the left side does. <strong>Lift</strong> — confidence divided by the right side’s base rate; lift <span class="math inline">\(&gt; 1\)</span> means genuine association, not popularity.</p>
+<p><strong>Unsupervised work has no answer key.</strong> There is no accuracy to optimize — only structure to judge. Vary the distance metric, the algorithm, and <code>k</code>; validate with silhouette widths, domain knowledge, and whether the clusters are <em>useful</em>, not merely whether they exist.</p>
 </div>
 </div>
 </div>
-<ul>
-<li>High-confidence, low-lift rules (“⇒ whole milk”) merely restate that milk is popular — lift is the filter that catches this.</li>
-<li>Thresholds in <code>apriori()</code> trade rule quantity against quality.</li>
-</ul>
-</section>
-<section id="k-means-clustering" class="slide level2">
-<h2>k-Means Clustering</h2>
-<p>Partition <span class="math inline">\(n\)</span> observations into <span class="math inline">\(k\)</span> compact groups:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
-<span id="cb6-2"><a href=""></a>km <span class="ot">&lt;-</span> <span class="fu">kmeans</span>(<span class="fu">scale</span>(USArrests), <span class="at">centers =</span> <span class="dv">4</span>, <span class="at">nstart =</span> <span class="dv">25</span>)</span>
-<span id="cb6-3"><a href=""></a><span class="fu">table</span>(km<span class="sc">$</span>cluster)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
- 1  2  3  4 
-13 13 16  8 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>km<span class="sc">$</span>centers</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      Murder    Assault   UrbanPop        Rape
-1  0.6950701  1.0394414  0.7226370  1.27693964
-2 -0.9615407 -1.1066010 -0.9301069 -0.96676331
-3 -0.4894375 -0.3826001  0.5758298 -0.26165379
-4  1.4118898  0.8743346 -0.8145211  0.01927104</code></pre>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">plot</span>(<span class="fu">prcomp</span>(<span class="fu">scale</span>(USArrests))<span class="sc">$</span>x[, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>], <span class="at">col =</span> km<span class="sc">$</span>cluster, <span class="at">pch =</span> <span class="dv">19</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch22_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><ul>
-<li>Scale the variables first; <code>nstart = 25</code> restarts guard against bad local optima.</li>
-<li>Choose <span class="math inline">\(k\)</span> by the elbow of <code>km$tot.withinss</code> across candidate values, or by silhouette width (<code>cluster</code> package).</li>
-</ul>
-</section>
-<section id="hierarchical-clustering" class="slide level2">
-<h2>Hierarchical Clustering</h2>
-<p>No <span class="math inline">\(k\)</span> needed in advance — build a tree of merges and cut it later:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>d  <span class="ot">&lt;-</span> <span class="fu">dist</span>(<span class="fu">scale</span>(USArrests))</span>
-<span id="cb11-2"><a href=""></a>hc <span class="ot">&lt;-</span> <span class="fu">hclust</span>(d, <span class="at">method =</span> <span class="st">"ward.D2"</span>)</span>
-<span id="cb11-3"><a href=""></a><span class="fu">plot</span>(hc, <span class="at">cex =</span> <span class="fl">0.55</span>, <span class="at">main =</span> <span class="st">"US states by crime profile"</span>)</span>
-<span id="cb11-4"><a href=""></a><span class="fu">rect.hclust</span>(hc, <span class="at">k =</span> <span class="dv">4</span>, <span class="at">border =</span> <span class="st">"red"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch22_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:68.0%"><ul>
-<li><code>dist()</code> offers euclidean, manhattan, and more; linkage (<code>single</code>, <code>complete</code>, <code>average</code>, <code>ward.D2</code>) changes the tree’s character.</li>
-<li><code>cutree(hc, k = 4)</code> extracts cluster labels for downstream use.</li>
-</ul>
-</section>
-<section id="other-unsupervised-tools" class="slide level2">
-<h2>Other Unsupervised Tools</h2>
-<ul>
-<li><strong>Model-based clustering</strong>: the <code>mclust</code> package fits Gaussian mixtures and selects <span class="math inline">\(k\)</span> by BIC.</li>
-<li><strong>Density-based</strong>: <code>dbscan</code> finds arbitrarily shaped clusters and flags noise points.</li>
-<li><strong>Dimension reduction as preprocessing</strong>: PCA (Chapter 16) before clustering often improves both speed and quality.</li>
-<li><strong>Self-organizing maps</strong> (<code>kohonen</code>) project high-dimensional data onto a 2-D grid.</li>
-</ul>
-</section>
-<section id="honest-evaluation" class="slide level2">
-<h2>Honest Evaluation</h2>
-<p>Unsupervised results need skepticism most:</p>
-<ol type="1">
-<li>Stability — do clusters survive resampling or a different seed?</li>
-<li>Silhouette / within-cluster variance — are groups actually compact?</li>
-<li>Interpretation — can a domain expert name each cluster?</li>
-<li>For rules: validate top rules on a held-out period before acting on them.</li>
-</ol>
-<p>A clustering that cannot be named, or a rule that disappears next quarter, is noise wearing a costume.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

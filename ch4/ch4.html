@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,21 +211,333 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="extending-r" class="title-slide slide level1 center">
-<h1><strong>Extending R</strong></h1>
+<section id="the-package-system" class="title-slide slide level1 center">
+<h1><strong>The Package System</strong></h1>
 
 </section>
 <section id="what-is-a-package" class="slide level2">
 <h2>What Is a Package?</h2>
-<p>A <strong>package</strong> bundles related functions, documentation, and data sets into a single installable unit — the R counterpart of a Perl module, a C library, or a Java class collection.</p>
+<p>A <strong>package</strong> is a bundled set of related functions, help files, and data files — the unit in which R functionality is shared.</p>
 <ul>
-<li>Some packages ship with R itself (<code>stats</code>, <code>graphics</code>, <code>utils</code>, …).</li>
-<li>Thousands more live in public repositories, covering everything from finance to genomics to the latest machine-learning methods.</li>
-<li>You can also build your own.</li>
+<li>Rough analogues elsewhere: modules in Perl, libraries in C/C++, classes in Java. (Careful, C programmers: in R, “library” means the <em>place packages live</em>, not the package itself.)</li>
+<li>Typically the contents are thematically related: the <code>stats</code> package collects statistical analysis functions.</li>
+<li>The ecosystem is enormous: graphics packages, statistical tests, cutting-edge machine learning — and industry-specific tools for microarray data, credit risk modeling, the social sciences…</li>
+<li>Some packages ship with R; thousands more live in public repositories; and you can build your own. This chapter covers all three.</li>
 </ul>
+</section>
+<section id="libraries-and-why-packages-must-be-loaded" class="slide level2">
+<h2>Libraries, and Why Packages Must Be Loaded</h2>
+<p>Two steps precede using any package:</p>
+<ol type="1">
+<li>it must be <strong>installed</strong> into a local <strong>library</strong> (by default one system-level library; you can add more);</li>
+<li>it must be <strong>loaded</strong> into the current session.</li>
+</ol>
+<p>Why insist on explicit loading instead of loading everything?</p>
+<ul>
+<li><strong>Help-system speed:</strong> every loaded package slows help searches (the book’s author learned this writing with dozens loaded).</li>
+<li><strong>Name conflicts:</strong> two packages may define objects with the same name — you could silently call the wrong <code>fit</code>, with strange and unexpected results. Loading only what you need minimizes the risk.</li>
+</ul>
+</section></section>
+<section>
+<section id="listing-packages" class="title-slide slide level1 center">
+<h1>Listing Packages</h1>
+
+</section>
+<section id="what-is-loaded-what-is-available" class="slide level2">
+<h2>What Is Loaded, What Is Available</h2>
+<p>Three quick diagnostics:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">getOption</span>(<span class="st">"defaultPackages"</span>)   <span class="co"># loaded at startup (omits base, always loaded)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "datasets"  "utils"     "grDevices" "graphics"  "stats"     "methods"  </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>(<span class="fu">.packages</span>())                  <span class="co"># currently loaded (note the outer parentheses)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "stats"     "graphics"  "grDevices" "utils"     "datasets"  "methods"  
+[7] "base"     </code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>(<span class="fu">.packages</span>(<span class="at">all.available=</span><span class="cn">TRUE</span>))  <span class="co"># everything installed in your libraries</span></span>
+<span id="cb5-2"><a href=""></a><span class="fu">library</span>()                        <span class="co"># same idea, shown in a window</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li><code>base</code> is missing from the default list because it implements core language features and is <em>always</em> loaded.</li>
+</ul>
+</section>
+<section id="included-packages-1-infrastructure" class="slide level2">
+<h2>Included Packages (1): Infrastructure</h2>
+<p>R ships with a curated set of packages. The first group implements the language and environment themselves:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Package</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>base</code></td>
+<td>✓</td>
+<td>Core language: arithmetic, I/O, programming support</td>
+</tr>
+<tr class="even">
+<td><code>utils</code></td>
+<td>✓</td>
+<td>Utilities: package management, file I/O, editing</td>
+</tr>
+<tr class="odd">
+<td><code>methods</code></td>
+<td>✓</td>
+<td>Formal (S4) classes and methods</td>
+</tr>
+<tr class="even">
+<td><code>stats</code></td>
+<td>✓</td>
+<td>Statistical tests, distributions, modeling tools</td>
+</tr>
+<tr class="odd">
+<td><code>graphics</code></td>
+<td>✓</td>
+<td>Base graphics functions</td>
+</tr>
+<tr class="even">
+<td><code>grDevices</code></td>
+<td>✓</td>
+<td>Graphics devices for base and grid graphics</td>
+</tr>
+<tr class="odd">
+<td><code>datasets</code></td>
+<td>✓</td>
+<td>Famous example data sets</td>
+</tr>
+<tr class="even">
+<td><code>grid</code></td>
+<td></td>
+<td>Lower-level engine for sophisticated graphics</td>
+</tr>
+<tr class="odd">
+<td><code>compiler</code></td>
+<td></td>
+<td>Byte-code compiler for R</td>
+</tr>
+<tr class="even">
+<td><code>parallel</code></td>
+<td></td>
+<td>Parallel computation, parallel RNG</td>
+</tr>
+<tr class="odd">
+<td><code>tools</code></td>
+<td></td>
+<td>Package-development tools</td>
+</tr>
+<tr class="even">
+<td><code>tcltk</code></td>
+<td></td>
+<td>Tcl/Tk interface for platform-independent UIs</td>
+</tr>
+<tr class="odd">
+<td><code>codetools</code></td>
+<td></td>
+<td>Code-analysis tools</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="included-packages-2-statistics-and-modeling" class="slide level2">
+<h2>Included Packages (2): Statistics and Modeling</h2>
+<p>The second group provides widely used statistical methods — for many analyses you never need anything else:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>MASS</code></td>
+<td>Functions and data from Venables &amp; Ripley’s <em>Modern Applied Statistics with S</em> — a trove of useful statistics</td>
+</tr>
+<tr class="even">
+<td><code>cluster</code></td>
+<td>Clustering algorithms</td>
+</tr>
+<tr class="odd">
+<td><code>class</code></td>
+<td>Classification: nearest neighbors, SOMs, LVQ</td>
+</tr>
+<tr class="even">
+<td><code>nnet</code></td>
+<td>Feed-forward neural networks, multinomial log-linear models</td>
+</tr>
+<tr class="odd">
+<td><code>rpart</code></td>
+<td>Recursive partitioning and regression trees</td>
+</tr>
+<tr class="even">
+<td><code>survival</code></td>
+<td>Survival analysis</td>
+</tr>
+<tr class="odd">
+<td><code>nlme</code></td>
+<td>Linear and nonlinear mixed-effects models</td>
+</tr>
+<tr class="even">
+<td><code>mgcv</code></td>
+<td>Generalized additive (mixed) models</td>
+</tr>
+<tr class="odd">
+<td><code>splines</code></td>
+<td>Regression splines</td>
+</tr>
+<tr class="even">
+<td><code>boot</code></td>
+<td>Bootstrap resampling</td>
+</tr>
+<tr class="odd">
+<td><code>KernSmooth</code></td>
+<td>Kernel smoothing</td>
+</tr>
+<tr class="even">
+<td><code>spatial</code></td>
+<td>Kriging, point-pattern analysis</td>
+</tr>
+<tr class="odd">
+<td><code>foreign</code></td>
+<td>Reading Stata, SAS, SPSS files</td>
+</tr>
+<tr class="even">
+<td><code>lattice</code></td>
+<td>Trellis graphics — prettier than the defaults</td>
+</tr>
+<tr class="odd">
+<td><code>stats4</code></td>
+<td>Statistics as S4 classes/methods</td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="loading-packages" class="title-slide slide level1 center">
+<h1>Loading Packages</h1>
+
+</section>
+<section id="the-library-command" class="slide level2">
+<h2>The <code>library()</code> Command</h2>
+<p>Use a function from an unloaded package and R refuses:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">rpart</span>(Kyphosis <span class="sc">~</span> Age <span class="sc">+</span> Number <span class="sc">+</span> Start, <span class="at">data =</span> kyphosis)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `rpart()`:
+! could not find function "rpart"</code></pre>
+</div>
+</div>
+<p>Load the package first, and all is well:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">library</span>(rpart)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li>A sibling command, <code>require()</code>, takes slightly different arguments (and returns <code>FALSE</code> instead of an error when the package is missing) — see the help files.</li>
+<li>GUIs offer menu-driven loading too — but <strong>always put the <code>library()</code> call in your script anyway</strong>, or the script will fail when run elsewhere.</li>
+</ul>
+</section>
+<section id="loading-via-the-gui-per-platform" class="slide level2">
+<h2>Loading via the GUI, per Platform</h2>
+<ul>
+<li><strong>Windows / Linux GUI:</strong> choose <em>Load package</em> from the <em>Packages</em> menu; a window lists the packages available to load.</li>
+<li><strong>macOS:</strong> fancier — choose <em>Package Manager</em> from the <em>Packages &amp; Data</em> menu. The Package Manager shows which packages are loaded, loads them with a click, and even browses each package’s help file.</li>
+<li>RStudio users: the <em>Packages</em> pane does the same job with checkboxes — and writes the <code>library()</code> call to the console so you can copy it into your script.</li>
+</ul>
+</section></section>
+<section>
+<section id="exploring-package-repositories" class="title-slide slide level1 center">
+<h1>Exploring Package Repositories</h1>
+
+</section>
+<section id="cran-bioconductor-r-forge" class="slide level2">
+<h2>CRAN, Bioconductor, R-Forge</h2>
+<p>Thousands of packages live online; the two biggest sources:</p>
+<ul>
+<li><strong>CRAN</strong> (Comprehensive R Archive Network) — hosted by the R Foundation, mirrored worldwide (pick a nearby mirror: faster for you, kinder to the servers). The book counted 1,698 packages in February 2009; today the count exceeds 20,000. If you know Perl: CRAN is R’s CPAN.</li>
+<li><strong>Bioconductor</strong> — an open-source project for genomic-data analysis tools, built on R, distributed as R packages through its own channel (mostly <em>not</em> on CRAN).</li>
+<li><strong>R-Forge</strong> — collaborative development site for works in progress; interesting but read the disclaimers — many projects there are unfinished.</li>
+</ul>
+<p>R can install from arbitrary repositories, but in practice nearly all projects publish on CRAN (some books even distribute sample code and data there). The modern exception: development versions on <strong>GitHub</strong> — covered shortly.</p>
+</section>
+<section id="finding-packages-on-the-web" class="slide level2">
+<h2>Finding Packages on the Web</h2>
+<p>R’s own GUI installs packages well but <em>searches</em> them poorly. Use the browser:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Repository</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>CRAN</td>
+<td><a href="https://cran.r-project.org/web/packages/" class="uri">https://cran.r-project.org/web/packages/</a> (authoritative list; use your local mirror)</td>
+</tr>
+<tr class="even">
+<td>Bioconductor</td>
+<td><a href="https://www.bioconductor.org/packages/release/BiocViews.html" class="uri">https://www.bioconductor.org/packages/release/BiocViews.html</a></td>
+</tr>
+<tr class="odd">
+<td>R-Forge</td>
+<td><a href="https://r-forge.r-project.org/" class="uri">https://r-forge.r-project.org/</a></td>
+</tr>
+</tbody>
+</table>
+<p>A search engine works too: the book’s tip is to search for <strong>“R package” + the application name</strong>. Its example: searching <em>“R package multivariate additive regression splines”</em> surfaces the <code>mda</code> package with its <code>mars</code> function — though the author later found the <code>earth</code> package a better choice for that algorithm. (Today, sites like <a href="https://r-universe.dev" class="uri">https://r-universe.dev</a> and CRAN Task Views make this search far easier.)</p>
+</section></section>
+<section>
+<section id="installing-packages" class="title-slide slide level1 center">
+<h1>Installing Packages</h1>
+
+</section>
+<section id="windows-and-linux-guis" class="slide level2">
+<h2>Windows and Linux GUIs</h2>
+<p>Installing through the Windows GUI:</p>
+<ol type="1">
+<li><em>(Optional)</em> By default R fetches from the “CRAN” and “CRAN (extra)” categories; pick more via <em>Select repositories</em> on the <em>Packages</em> menu.</li>
+<li>From the <em>Packages</em> menu, choose <em>Install package(s)</em>.</li>
+<li>First install of the session? R asks you to pick a <strong>mirror</strong> — choose one nearby.</li>
+<li>Click the package you want and press OK; R downloads and installs it.</li>
+</ol>
+<p>Permissions matter here exactly as in Chapter 1: an Administrator account installs anywhere; a standard account may need R installed in its own directory, or R run as Administrator, to add packages.</p>
+</section>
+<section id="macos-gui" class="slide level2">
+<h2>macOS GUI</h2>
+<p>The macOS installer interface shows more information but is a bit more confusing:</p>
+<ol type="1">
+<li>From the <em>Packages &amp; Data</em> menu, select <em>Package Installer</em>.</li>
+<li><em>(Optional)</em> A menu at the top-left selects the package category — initially “CRAN (binaries)”.</li>
+<li>Click <strong>Get List</strong> to display available packages.</li>
+<li>The search box filters the list — but only <em>after</em> you’ve clicked Get List.</li>
+<li>Select the packages you want and press <strong>Install Selected</strong>.</li>
+</ol>
+<p>Two cautions from the book: R installs <strong>system-wide by default</strong> (choose an alternative location if you lack permissions), and this interface does <strong>not</strong> install dependencies automatically — loading a package whose dependencies are missing yields an error.</p>
+</section>
+<section id="installing-from-the-r-console" class="slide level2">
+<h2>Installing from the R Console</h2>
+<p>The console route works everywhere — and is the one to put in scripts. The book’s example, installing <code>tree</code> and <code>maptree</code> in one call:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"tree"</span>, <span class="st">"maptree"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>R reports the download of each package and stores them in the default library (the location named by <code>.Library</code>). To uninstall, name the packages <em>and</em> the library they went into:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">remove.packages</span>(<span class="fu">c</span>(<span class="st">"tree"</span>, <span class="st">"maptree"</span>), .Library)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -235,128 +547,210 @@ Yu-You Liou (NTU)
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Two separate steps.</strong> A package must first be <em>installed</em> into a local library on disk (once), and then <em>loaded</em> into each session that uses it. Keeping the two apart saves memory, keeps the help system fast, and avoids name collisions between packages.</p>
+<p>Modern <code>install.packages()</code> resolves and installs <strong>dependencies automatically</strong> — one of the quiet improvements since the book’s edition.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="libraries" class="slide level2">
-<h2>Libraries</h2>
-<p>A <strong>library</strong> is a directory on disk where installed packages live.</p>
+<section id="the-package-management-vocabulary" class="slide level2">
+<h2>The Package-Management Vocabulary</h2>
+<p>The full family of console commands:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>installed.packages</code></td>
+<td>Matrix describing all installed packages</td>
+</tr>
+<tr class="even">
+<td><code>available.packages</code></td>
+<td>All packages available on the repository</td>
+</tr>
+<tr class="odd">
+<td><code>old.packages</code></td>
+<td>Installed packages with newer versions available</td>
+</tr>
+<tr class="even">
+<td><code>new.packages</code></td>
+<td>Available packages not yet installed</td>
+</tr>
+<tr class="odd">
+<td><code>download.packages</code></td>
+<td>Download packages to a local directory</td>
+</tr>
+<tr class="even">
+<td><code>install.packages</code></td>
+<td>Install packages from the repository</td>
+</tr>
+<tr class="odd">
+<td><code>remove.packages</code></td>
+<td>Remove installed packages</td>
+</tr>
+<tr class="even">
+<td><code>update.packages</code></td>
+<td>Update installed packages to latest versions</td>
+</tr>
+<tr class="odd">
+<td><code>setRepositories</code></td>
+<td>Set the list of package repositories</td>
+</tr>
+</tbody>
+</table>
+<p><code>update.packages()</code> at the start of term keeps your toolbox current.</p>
+</section>
+<section id="installing-from-the-system-command-line" class="slide level2">
+<h2>Installing from the System Command Line</h2>
+<p>Downloaded a package file yourself? Install it without launching the R shell, via <code>R CMD INSTALL</code>. The book’s example with <code>aplpack</code> (“Another PLotting PACKage”):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href=""></a><span class="ex">$</span> R CMD INSTALL aplpack_1.1.1.tgz</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A successful run reports:</p>
+<pre><code>* Installing to library '/Library/Frameworks/R.framework/Resources/library'
+* Installing *binary* package 'aplpack' ...
+* DONE (aplpack)</code></pre>
+</section>
+<section id="installing-from-other-repositories-devtools" class="slide level2">
+<h2>Installing from Other Repositories: devtools</h2>
+<p>Not everything lives on CRAN. The <strong>devtools</strong> package installs from git repositories and other URLs — the book’s example is the development version of ggplot2, which Hadley Wickham hosts on GitHub:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="co"># first time only:</span></span>
+<span id="cb13-2"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"devtools"</span>)</span>
+<span id="cb13-3"><a href=""></a></span>
+<span id="cb13-4"><a href=""></a><span class="fu">library</span>(devtools)</span>
+<span id="cb13-5"><a href=""></a><span class="fu">install_github</span>(<span class="st">"tidyverse/ggplot2"</span>)   <span class="co"># modern repo path: owner/repo</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>(The book’s call was <code>install_github("ggplot2")</code>; the function now requires the <code>owner/repo</code> form. The lighter-weight <code>remotes</code> package provides the same <code>install_github()</code> today.)</p>
+</section></section>
+<section>
+<section id="custom-packages" class="title-slide slide level1 center">
+<h1>Custom Packages</h1>
+
+</section>
+<section id="why-build-your-own" class="slide level2">
+<h2>Why Build Your Own?</h2>
+<p>Building a package is the right move when you want to <strong>share code or data</strong> with others — or simply to pack your own work into a reusable, documented form. The book practices what it preaches: its data sets ship as the <code>nutshell</code> package, created exactly this way.</p>
+<p>The easy path has three stops: create the directory skeleton, edit the metadata, build and check.</p>
+</section>
+<section id="creating-a-package-directory-package.skeleton" class="slide level2">
+<h2>Creating a Package Directory: <code>package.skeleton</code></h2>
+<p><code>package.skeleton</code> lays out the required directory structure and can copy a set of R objects into it:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">package.skeleton</span>(<span class="at">name =</span> <span class="st">"anRpackage"</span>, list, <span class="at">environment =</span> .GlobalEnv,</span>
+<span id="cb14-2"><a href=""></a>                 <span class="at">path =</span> <span class="st">"."</span>, <span class="at">force =</span> <span class="cn">FALSE</span>, <span class="at">namespace =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb14-3"><a href=""></a>                 <span class="at">code_files =</span> <span class="fu">character</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>name</code></td>
+<td>Name for the new package</td>
+<td><code>"anRpackage"</code> (the book: possibly the least useful default in all of R)</td>
+</tr>
+<tr class="even">
+<td><code>list</code></td>
+<td>Names of R objects to include</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>environment</code></td>
+<td>Where to evaluate <code>list</code></td>
+<td><code>.GlobalEnv</code></td>
+</tr>
+<tr class="even">
+<td><code>path</code></td>
+<td>Filesystem location</td>
+<td><code>"."</code></td>
+</tr>
+<tr class="odd">
+<td><code>force</code></td>
+<td>Overwrite an existing directory?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>namespace</code></td>
+<td>Add a namespace?</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>code_files</code></td>
+<td>Paths of files containing R code</td>
+<td><code>character()</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="what-the-skeleton-contains" class="slide level2">
+<h2>What the Skeleton Contains</h2>
+<p>The book’s own invocation:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">package.skeleton</span>(<span class="at">name =</span> <span class="st">"nutshell"</span>, <span class="at">path =</span> <span class="st">"~/Documents/book/current/"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>R reports creating directories, a DESCRIPTION file, a Read-and-delete-me, saved functions and data, and help files. The key directories:</p>
 <ul>
-<li>R always has a system-level library; you can add personal libraries on top (useful when you lack admin rights).</li>
-<li><code>.libPaths()</code> shows the libraries R is currently searching.</li>
+<li><strong><code>man/</code></strong> — help files;</li>
+<li><strong><code>R/</code></strong> — R source files;</li>
+<li><strong><code>data/</code></strong> — data files, in any of three forms: R data files (<code>save()</code> output, suffix <code>.rda</code>/<code>.Rdata</code>), comma-separated <code>.csv</code> files, or R source <code>.R</code> files;</li>
+<li><strong><code>DESCRIPTION</code></strong> — the package’s metadata, at the root.</li>
 </ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">.libPaths</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "/Library/Frameworks/R.framework/Versions/4.6/Resources/library"</code></pre>
-</div>
-</div>
-<p>Note the vocabulary: you install a <em>package</em> into a <em>library</em> — despite the name of the <code>library()</code> function.</p>
 </section>
-<section id="listing-packages" class="slide level2">
-<h2>Listing Packages</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">library</span>()                    <span class="co"># what is installed?</span></span>
-<span id="cb3-2"><a href=""></a><span class="fu">installed.packages</span>()[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="fu">c</span>(<span class="st">"Package"</span>, <span class="st">"Version"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="co"># what is loaded right now?</span></span>
-<span id="cb4-2"><a href=""></a>(<span class="fu">.packages</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "stats"     "graphics"  "grDevices" "utils"     "datasets"  "methods"  
-[7] "base"     </code></pre>
-</div>
-</div>
+<section id="the-description-file" class="slide level2">
+<h2>The DESCRIPTION File</h2>
+<p>The generated template — every line meant to be edited:</p>
+<pre><code>Package: nutshell
+Type: Package
+Title: What the package does (short line)
+Version: 1.0
+Date: 2012-03-13
+Author: Who wrote it
+Maintainer: Whom to complain to &lt;yourfault@somewhere.net&gt;
+Description: More about what it does (maybe more than one line)
+License: What license is it under?</code></pre>
+<p>Useful optional fields:</p>
 <ul>
-<li><code>installed.packages()</code> returns a matrix with one row per installed package — name, version, dependencies, license.</li>
-<li>A fresh session automatically loads a small set of base packages.</li>
+<li><strong><code>LazyLoad</code></strong> — if <code>yes</code> (default), data objects load as lightweight <em>promises</em> rather than into memory; full access, (almost) no space.</li>
+<li><strong><code>LazyData</code></strong> — the same idea, specifically for data files.</li>
+<li><strong><code>Depends</code></strong> — requirements on R or other packages, e.g.&nbsp;<code>Depends: R(&gt;= 2.8), nnet</code>.</li>
 </ul>
 </section>
-<section id="loading-packages" class="slide level2">
-<h2>Loading Packages</h2>
-<p>Load an installed package with <code>library()</code> (or <code>require()</code>, which returns <code>FALSE</code> instead of an error when the package is missing):</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">library</span>(lattice)         <span class="co"># now lattice functions are visible</span></span>
-<span id="cb6-2"><a href=""></a><span class="st">"package:lattice"</span> <span class="sc">%in%</span> <span class="fu">search</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
-</div>
-</div>
+<section id="documenting-the-package" class="slide level2">
+<h2>Documenting the Package</h2>
+<p>R automates much of the help-file boilerplate with the <code>prompt</code> family:</p>
 <ul>
-<li>Loading attaches the package to the <strong>search path</strong>, the list of places R looks when resolving a name (Chapter 8).</li>
-<li><code>detach("package:lattice")</code> removes it again.</li>
-<li>On all platforms the command is the same; the GUIs merely offer menu shortcuts for it.</li>
+<li><code>prompt</code> — generic documentation for an object;</li>
+<li><code>promptData</code> — for data files;</li>
+<li><code>promptMethods</code> — for methods of a generic function;</li>
+<li><code>promptClass</code> — for a class.</li>
 </ul>
+<p>Each writes a skeleton <code>.Rd</code> file into <code>man/</code> for you to complete. See their help pages for details. (Most modern developers generate <code>.Rd</code> files from inline comments with the <code>roxygen2</code> package instead.)</p>
 </section>
-<section id="cran" class="slide level2">
-<h2>CRAN</h2>
-<p>The <strong>Comprehensive R Archive Network</strong> is the central public repository:</p>
-<ul>
-<li>Over 20,000 contributed packages, each with documentation and platform-specific builds.</li>
-<li>Every package page lists its dependencies, manuals, and vignettes.</li>
-<li><strong>Task Views</strong> (<a href="https://cran.r-project.org/web/views/" class="uri">https://cran.r-project.org/web/views/</a>) group packages by field — Econometrics, MachineLearning, TimeSeries, Graphics — and are the best way to discover what exists.</li>
-</ul>
-<p>Other repositories you will meet: <strong>Bioconductor</strong> (genomics; Chapter 25) and <strong>GitHub</strong> (development versions).</p>
-</section>
-<section id="installing-packages" class="slide level2">
-<h2>Installing Packages</h2>
-<p>One function does the work, downloading from CRAN and resolving dependencies automatically:</p>
+<section id="building-and-checking" class="slide level2">
+<h2>Building and Checking</h2>
+<p>With all materials in place, finish from the system command line (not the R shell). First verify the package complies with the rules and builds correctly:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"ggplot2"</span>)                     <span class="co"># one package</span></span>
-<span id="cb8-2"><a href=""></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"dplyr"</span>, <span class="st">"lattice"</span>))         <span class="co"># several at once</span></span>
-<span id="cb8-3"><a href=""></a><span class="fu">update.packages</span>()                               <span class="co"># refresh everything</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href=""></a><span class="ex">$</span> R CMD check nutshell</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<ul>
-<li>In RStudio: <em>Tools → Install Packages…</em> is the same call behind a dialog box.</li>
-<li>Install once per machine; <code>library()</code> once per session.</li>
-<li>To install from a non-CRAN repository, pass <code>repos=</code>; for GitHub development versions, the <code>remotes</code> package provides <code>install_github()</code>.</li>
-</ul>
-</section>
-<section id="package-data-and-the-course-convention" class="slide level2">
-<h2>Package Data and the Course Convention</h2>
-<p>Many packages carry example data sets, loaded with <code>data()</code>:</p>
+<p>Then build it:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">data</span>(cars)        <span class="co"># from the datasets package</span></span>
-<span id="cb9-2"><a href=""></a><span class="fu">head</span>(cars, <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  speed dist
-1     4    2
-2     4   10
-3     7    4</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href=""></a><span class="ex">$</span> R CMD build nutshell</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<p>The textbook’s companion packages (<code>nutshell</code>, <code>nutshell.bbdb</code>, <code>nutshell.audioscrobbler</code>) were archived from CRAN, so this course streams their data sets directly from the CRAN GitHub mirror instead:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb11-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/doctorates.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb11-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb11-4"><a href=""></a>doctorates[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  year engineering science education health humanities
-1 2001        5323   20643      6436   1591       5213
-2 2002        5511   20017      6349   1541       5178
-3 2003        5079   19529      6503   1654       5051
-4 2004        5280   20001      6643   1633       5020
-5 2005        5777   20498      6635   1720       5013
-6 2006        6425   21564      6226   1785       4949</code></pre>
-</div>
-</div>
-</section>
-<section id="custom-packages" class="slide level2">
-<h2>Custom Packages</h2>
-<p>Building a package is the natural endpoint once you accumulate functions you reuse:</p>
-<ul>
-<li>A package is a directory with a <code>DESCRIPTION</code> file (metadata), an <code>R/</code> folder (code), <code>man/</code> (help pages), and optionally <code>data/</code>.</li>
-<li><code>package.skeleton()</code> generates the layout from objects in your workspace; modern workflows use the <code>devtools</code> and <code>roxygen2</code> packages.</li>
-<li><code>R CMD build</code> creates the distributable archive; <code>R CMD check</code> runs an extensive quality audit.</li>
-</ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href=""></a><span class="ex">R</span> CMD build mypackage/</span>
-<span id="cb13-2"><a href=""></a><span class="ex">R</span> CMD check mypackage_1.0.0.tar.gz</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Even if you never publish to CRAN, packaging is the cleanest way to share code with teammates — or with your future self.</p>
+<p>Both accept <code>--help</code> for options. The definitive reference for serious package authors is the CRAN manual <em>Writing R Extensions</em>: <a href="https://cran.r-project.org/doc/manuals/R-exts.pdf" class="uri">https://cran.r-project.org/doc/manuals/R-exts.pdf</a>.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

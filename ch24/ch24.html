@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,184 +211,151 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="making-r-fast" class="title-slide slide level1 center">
-<h1><strong>Making R Fast</strong></h1>
+<section id="making-r-faster" class="title-slide slide level1 center">
+<h1><strong>Making R Faster</strong></h1>
 
 </section>
-<section id="measure-before-you-optimize" class="slide level2">
-<h2>Measure Before You Optimize</h2>
-<p>The cardinal rule: never guess where time goes — measure it.</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">system.time</span>({</span>
-<span id="cb1-2"><a href=""></a>  x <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">0</span>)</span>
-<span id="cb1-3"><a href=""></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20000</span>) x <span class="ot">&lt;-</span> <span class="fu">c</span>(x, i)   <span class="co"># the growing-vector sin</span></span>
-<span id="cb1-4"><a href=""></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.277   0.010   0.287 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">system.time</span>({</span>
-<span id="cb3-2"><a href=""></a>  y <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">20000</span>)</span>
-<span id="cb3-3"><a href=""></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20000</span>) y[i] <span class="ot">&lt;-</span> i      <span class="co"># pre-allocated</span></span>
-<span id="cb3-4"><a href=""></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.001   0.000   0.002 </code></pre>
-</div>
-</div>
-<p>Same loop, wildly different cost — because <code>c()</code> re-copies the whole vector every iteration.</p>
+<section id="measure-first-then-optimize" class="slide level2">
+<h2>Measure First, Then Optimize</h2>
+<p>The golden rule: <strong>never optimize blindly</strong>. Find where time and memory actually go, then fix <em>that</em>. R gives you tools for both.</p>
+</section></section>
+<section>
+<section id="measuring-performance" class="title-slide slide level1 center">
+<h1>Measuring Performance</h1>
+
 </section>
-<section id="profiling" class="slide level2">
-<h2>Profiling</h2>
-<p>For whole programs, the profiler attributes time to functions:</p>
+<section id="timing-system.time" class="slide level2">
+<h2>Timing: system.time</h2>
+<p>The simplest measurement — wrap any expression:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>slow_demo <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
-<span id="cb5-2"><a href=""></a>  m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> <span class="dv">50</span>), <span class="at">ncol =</span> <span class="dv">50</span>)</span>
-<span id="cb5-3"><a href=""></a>  out <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">ncol</span>(m))</span>
-<span id="cb5-4"><a href=""></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">ncol</span>(m))) out[j] <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">sort</span>(m[, j]))</span>
-<span id="cb5-5"><a href=""></a>  out</span>
-<span id="cb5-6"><a href=""></a>}</span>
-<span id="cb5-7"><a href=""></a><span class="fu">Rprof</span>(tmp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>())</span>
-<span id="cb5-8"><a href=""></a><span class="fu">invisible</span>(<span class="fu">slow_demo</span>(<span class="dv">20000</span>))</span>
-<span id="cb5-9"><a href=""></a><span class="fu">Rprof</span>(<span class="cn">NULL</span>)</span>
-<span id="cb5-10"><a href=""></a><span class="fu">head</span>(<span class="fu">summaryRprof</span>(tmp)<span class="sc">$</span>by.self, <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">system.time</span>(<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fl">1e6</span>) <span class="fu">sqrt</span>(i))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>              self.time self.pct total.time total.pct
-".doSortWrap"      0.02       50       0.02        50
-"rnorm"            0.02       50       0.02        50</code></pre>
+<pre><code>   user  system elapsed 
+  0.016   0.000   0.016 </code></pre>
+</div>
+</div>
+<p>Three numbers: <strong>user time</strong> (work R itself did), <strong>system time</strong> (work the OS did on R’s behalf), <strong>elapsed time</strong> (wall clock). <code>gcFirst=TRUE</code> (the default) runs garbage collection first for a cleaner reading. (For careful microbenchmarks the modern <code>microbenchmark</code> and <code>bench</code> packages repeat and compare.)</p>
+</section>
+<section id="profiling-rprof-and-summaryrprof" class="slide level2">
+<h2>Profiling: Rprof and summaryRprof</h2>
+<p>To see <em>where</em> the time goes across a whole program, <strong>profile</strong> it:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">Rprof</span>(<span class="st">"Rprof.out"</span>, <span class="at">interval =</span> <span class="fl">0.02</span>, <span class="at">memory.profiling =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-2"><a href=""></a><span class="fu">do.stuff</span>()                       <span class="co"># ... your code ...</span></span>
+<span id="cb3-3"><a href=""></a><span class="fu">Rprof</span>(<span class="cn">NULL</span>)                      <span class="co"># stop profiling</span></span>
+<span id="cb3-4"><a href=""></a><span class="fu">summaryRprof</span>(<span class="st">"Rprof.out"</span>)        <span class="co"># which functions ate the time</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>Rprof</code> samples the call stack every <code>interval</code> seconds and writes to a file; <code>Rprof(NULL)</code> stops it. <code>summaryRprof</code> ranks functions by self- and total time (and, with <code>memory=</code>, by allocation). This is how you find the <em>one</em> line consuming most of the runtime — often a surprise.</p>
+</section>
+<section id="monitoring-memory" class="slide level2">
+<h2>Monitoring Memory</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">gc</span>()                             <span class="co"># garbage-collect AND report usage</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
+Ncells  626460 33.5    1420424 75.9         NA  1420424 75.9
+Vcells 1159014  8.9    8388608 64.0      16384  2013850 15.4</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">object.size</span>(<span class="st">"Hello world!"</span>)      <span class="co"># approximate size of one object</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>120 bytes</code></pre>
 </div>
 </div>
 <ul>
-<li><code>Rprof()</code> samples the call stack; <code>summaryRprof()</code> tabulates it.</li>
-<li><code>Rprof(memory.profiling = TRUE)</code> and <code>tracemem()</code> expose hidden copying.</li>
+<li><strong><code>gc()</code></strong> forces garbage collection <em>and</em> reports memory in use.</li>
+<li><strong><code>object.size(x)</code></strong> estimates an object’s footprint — invaluable when a “small” data frame is secretly huge.</li>
+<li><strong><code>memory.profile()</code></strong> breaks usage down by object type; on Windows, <code>memory.size()</code>/<code>memory.limit()</code> report and cap total usage.</li>
+<li><strong><code>Rprofmem(filename, threshold=)</code></strong> logs large allocations (R must be built with memory profiling).</li>
 </ul>
+</section></section>
+<section>
+<section id="optimizing-your-code" class="title-slide slide level1 center">
+<h1>Optimizing Your Code</h1>
+
 </section>
-<section id="vectorize" class="slide level2">
-<h2>Vectorize</h2>
-<p>The single biggest R speedup: replace element-by-element loops with whole-vector operations, which run in compiled C:</p>
+<section id="use-vector-operations" class="slide level2">
+<h2>Use Vector Operations</h2>
+<p>R’s single biggest speed lever: replace <strong>iterative element-by-element code with whole-vector operations</strong>. The Chapter 8 example, dramatized — growing a vector in a loop versus working on it at once:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">1e6</span>)</span>
-<span id="cb7-2"><a href=""></a><span class="fu">system.time</span>({ s <span class="ot">&lt;-</span> <span class="dv">0</span>; <span class="cf">for</span> (xi <span class="cf">in</span> v) s <span class="ot">&lt;-</span> s <span class="sc">+</span> xi<span class="sc">^</span><span class="dv">2</span> })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>slow <span class="ot">&lt;-</span> <span class="cf">function</span>(n) { v <span class="ot">&lt;-</span> <span class="cn">NA</span>; <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) v[i] <span class="ot">&lt;-</span> i<span class="sc">^</span><span class="dv">2</span>; v }</span>
+<span id="cb8-2"><a href=""></a>fast <span class="ot">&lt;-</span> <span class="cf">function</span>(n) { (<span class="dv">1</span><span class="sc">:</span>n)<span class="sc">^</span><span class="dv">2</span> }</span>
+<span id="cb8-3"><a href=""></a><span class="fu">system.time</span>(<span class="fu">slow</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.022   0.000   0.021 </code></pre>
+<pre><code>elapsed 
+  0.007 </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">system.time</span>(<span class="fu">sum</span>(v<span class="sc">^</span><span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">system.time</span>(<span class="fu">fast</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.002   0.000   0.002 </code></pre>
+<pre><code>elapsed 
+      0 </code></pre>
 </div>
 </div>
+<p>The vectorized version is dramatically faster <em>and</em> clearer. Two reasons: the loop’s body re-dispatches R functions tens of thousands of times, and <strong>growing a vector reallocates it on every step</strong>. Pre-allocating (<code>v &lt;- numeric(n)</code>) helps; vectorizing helps far more.</p>
+</section>
+<section id="transform-problems-to-use-built-in-functions" class="slide level2">
+<h2>Transform Problems to Use Built-in Functions</h2>
+<p>Many loops can be rephrased as calls to functions implemented in C:</p>
 <ul>
-<li><code>rowSums()</code>, <code>colMeans()</code>, <code>cumsum()</code>, <code>pmax()</code>, <code>ifelse()</code>-free logical math (<code>(x &gt; 0) * x</code>) all vectorize common patterns.</li>
-<li>The apply family is <em>clearer</em> than loops but not inherently faster — true vector ops are.</li>
+<li>the <strong>apply family</strong> — <code>sapply</code>, <code>lapply</code>, <code>vapply</code>, <code>mapply</code>, <code>tapply</code> (Chapters 9, 12);</li>
+<li><strong>matrix algebra</strong> — <code>%*%</code>, <code>crossprod</code>, <code>rowSums</code>, <code>colMeans</code> instead of nested loops;</li>
+<li><strong><code>outer</code></strong>, <code>cumsum</code>, <code>diff</code>, <code>tabulate</code>, <code>findInterval</code> for common patterns.</li>
 </ul>
-</section>
-<section id="lookup-performance" class="slide level2">
-<h2>Lookup Performance</h2>
-<p>How you find things matters as data grows:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>n <span class="ot">&lt;-</span> <span class="fl">1e5</span></span>
-<span id="cb11-2"><a href=""></a>named.vec <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">rnorm</span>(n), <span class="fu">paste0</span>(<span class="st">"k"</span>, <span class="dv">1</span><span class="sc">:</span>n))</span>
-<span id="cb11-3"><a href=""></a>e <span class="ot">&lt;-</span> <span class="fu">new.env</span>(<span class="at">hash =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb11-4"><a href=""></a><span class="cf">for</span> (k <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"k50000"</span>)) <span class="fu">assign</span>(k, named.vec[[k]], <span class="at">envir =</span> e)</span>
-<span id="cb11-5"><a href=""></a><span class="fu">system.time</span>(<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>) named.vec[<span class="st">"k50000"</span>])   <span class="co"># name lookup: linear</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span><span class="sc">:</span><span class="fl">1e6</span>, <span class="at">ncol=</span><span class="dv">1000</span>)</span>
+<span id="cb12-2"><a href=""></a><span class="fu">system.time</span>(<span class="fu">apply</span>(m, <span class="dv">2</span>, sum))[<span class="st">"elapsed"</span>]      <span class="co"># readable</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.088   0.001   0.089 </code></pre>
+<pre><code>elapsed 
+  0.005 </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">system.time</span>(<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>) <span class="fu">get</span>(<span class="st">"k50000"</span>, <span class="at">envir =</span> e))  <span class="co"># hash: constant</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">system.time</span>(<span class="fu">colSums</span>(m))[<span class="st">"elapsed"</span>]            <span class="co"># built-in, far faster</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.000   0.000   0.001 </code></pre>
+<pre><code>elapsed 
+  0.001 </code></pre>
 </div>
 </div>
-<ul>
-<li>Name-based vector indexing scans; hashed environments (and the <code>fastmatch</code>/<code>data.table</code> packages) jump straight there.</li>
-<li><code>match()</code> beats repeated <code>%in%</code> in loops; sorted keys enable <code>findInterval()</code>.</li>
-</ul>
+<p>The lesson: a built-in that does the loop <em>inside C</em> beats any R-level loop.</p>
 </section>
-<section id="memory-matters" class="slide level2">
-<h2>Memory Matters</h2>
-<p>R keeps everything in RAM, and copying is the silent killer:</p>
+<section id="lookup-performance-environments-as-hash-tables" class="slide level2">
+<h2>Lookup Performance: Environments as Hash Tables</h2>
+<p>Repeatedly looking values up by name? A <strong>named vector or list</strong> does a linear scan; an <strong>environment</strong> is a hash table with near-constant-time lookup. For thousands of keyed lookups, store the data in an environment:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">gc</span>()[, <span class="fu">c</span>(<span class="st">"used"</span>, <span class="st">"max used"</span>)] <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a>e <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb16-2"><a href=""></a><span class="fu">assign</span>(<span class="st">"BG"</span>, <span class="dv">42</span>, <span class="at">envir=</span>e)        <span class="co"># or e[["BG"]] &lt;- 42</span></span>
+<span id="cb16-3"><a href=""></a><span class="fu">get</span>(<span class="st">"BG"</span>, <span class="at">envir=</span>e)               <span class="co"># O(1) lookup</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>          used max used
-Ncells  736405  1420447
-Vcells 2586977  8387712</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">object.size</span>(<span class="fu">rnorm</span>(<span class="fl">1e6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>8000048 bytes</code></pre>
+<pre><code>[1] 42</code></pre>
 </div>
 </div>
-<ul>
-<li><code>rm()</code> big objects you are done with; <code>gc()</code> reports (and triggers) garbage collection.</li>
-<li>Modify columns rather than whole data frames inside loops; each “small” change of a big object may copy all of it.</li>
-<li>For data bigger than RAM: <code>data.table</code> (in-memory but frugal), <code>ff</code>/<code>bigmemory</code> (disk-backed), databases (Chapter 11), or Hadoop (Chapter 26).</li>
-</ul>
+<p>The book benchmarks this against named-vector lookup and finds environments dramatically faster as the table grows — the trick behind many high-performance R packages.</p>
 </section>
-<section id="the-byte-code-compiler" class="slide level2">
-<h2>The Byte-Code Compiler</h2>
-<p>R compiles functions to byte code; ensure hot functions benefit:</p>
+<section id="the-byte-code-compiler-and-beyond" class="slide level2">
+<h2>The Byte-Code Compiler, and Beyond</h2>
+<p>R ships a <strong>byte-code compiler</strong> (<code>compiler</code> package) that speeds up pure-R functions — and since R 2.14, base and recommended packages are pre-compiled; since R 3.4, functions are JIT-compiled on use:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">library</span>(compiler)</span>
-<span id="cb19-2"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(n) { s <span class="ot">&lt;-</span> <span class="dv">0</span>; <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) s <span class="ot">&lt;-</span> s <span class="sc">+</span> i; s }</span>
-<span id="cb19-3"><a href=""></a>fc <span class="ot">&lt;-</span> <span class="fu">cmpfun</span>(f)</span>
-<span id="cb19-4"><a href=""></a><span class="fu">system.time</span>(<span class="fu">f</span>(<span class="fl">2e6</span>)); <span class="fu">system.time</span>(<span class="fu">fc</span>(<span class="fl">2e6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">library</span>(compiler)</span>
+<span id="cb18-2"><a href=""></a>slow.c <span class="ot">&lt;-</span> <span class="fu">cmpfun</span>(slow)           <span class="co"># compile to byte code</span></span>
+<span id="cb18-3"><a href=""></a><span class="fu">system.time</span>(<span class="fu">slow.c</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.035   0.001   0.034 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.033   0.000   0.033 </code></pre>
+<pre><code>elapsed 
+  0.005 </code></pre>
 </div>
 </div>
-<p>Since R 3.4 the JIT compiles most functions automatically — but the gap shows what the interpreter costs, and why C++ via the <code>Rcpp</code> package remains the heavy artillery for unavoidable loops.</p>
-</section>
-<section id="parallel-computation" class="slide level2">
-<h2>Parallel Computation</h2>
-<p>Many tasks are embarrassingly parallel — independent pieces, no communication:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">library</span>(parallel)</span>
-<span id="cb22-2"><a href=""></a><span class="fu">detectCores</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 8</code></pre>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">system.time</span>(res1 <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(<span class="fu">rnorm</span>(<span class="fl">4e5</span>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.076   0.001   0.077 </code></pre>
+<p><strong>Tip</strong></p>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(<span class="dv">2</span>)</span>
-<span id="cb26-2"><a href=""></a><span class="fu">system.time</span>(res2 <span class="ot">&lt;-</span> <span class="fu">parLapply</span>(cl, <span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(<span class="fu">rnorm</span>(<span class="fl">4e5</span>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.001   0.000   0.048 </code></pre>
+<div class="callout-content">
+<p><strong>The optimization ladder.</strong> (1) Vectorize. (2) Use built-in/C functions and matrix algebra. (3) Pre-allocate; use environments for lookups. (4) Compile hot functions. (5) Only then go parallel (Chapter 26) or rewrite the bottleneck in C++ (<code>Rcpp</code>). Always re-profile after each step — and stop when it’s fast <em>enough</em>.</p>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">stopCluster</span>(cl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<ul>
-<li><code>mclapply()</code> (Unix/macOS forking) is the one-line version; <code>parLapply()</code> works everywhere.</li>
-<li>Simulations, bootstraps, cross-validation folds, and grid searches parallelize perfectly; overhead means small tasks may not.</li>
-</ul>
-</section>
-<section id="an-optimization-checklist" class="slide level2">
-<h2>An Optimization Checklist</h2>
-<ol type="1">
-<li><strong>Measure</strong> (<code>system.time</code>, <code>Rprof</code>) — find the real bottleneck.</li>
-<li><strong>Vectorize</strong> the hot loop; pre-allocate results.</li>
-<li><strong>Avoid copies</strong> — beware growing objects and repeated subsetting of big frames.</li>
-<li><strong>Better algorithms/structures</strong> — hashing, sorting, <code>data.table</code>.</li>
-<li><strong>Parallelize</strong> independent work.</li>
-<li><strong>Drop to C++</strong> (<code>Rcpp</code>) only when all of the above still isn’t enough.</li>
-</ol>
-<p>Readable-but-fast beats clever-but-fragile: optimize the 5% that matters and leave the rest clear.</p>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

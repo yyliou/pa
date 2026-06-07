@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,151 +211,245 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="設計實驗" class="title-slide slide level1 center">
 <h1><strong>設計實驗</strong></h1>
 
 </section>
-<section id="檢定力被遺忘的量" class="slide level2">
-<h2>檢定力：被遺忘的量</h2>
-<p>檢定有兩種失敗方式：拒絕了為真的 <span class="math inline">\(H_0\)</span>（<strong>型一錯誤</strong>，機率 <span class="math inline">\(\alpha\)</span>），或漏掉真實存在的效果（<strong>型二錯誤</strong>，機率 <span class="math inline">\(\beta\)</span>）。</p>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Note</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>檢定力</strong> <span class="math inline">\(= 1 - \beta\)</span>：偵測到真實效果的機率。四個量彼此鎖死——樣本數 <span class="math inline">\(n\)</span>、顯著水準 <span class="math inline">\(\alpha\)</span>、效果量、檢定力。固定其中三個，第四個就被決定。</p>
-</div>
-</div>
-</div>
-<p>檢定力分析回答每個實驗都要面對的規劃問題：<strong>我需要多少觀測值？</strong></p>
+<section id="你需要多少資料" class="slide level2">
+<h2>你需要多少資料？</h2>
+<p>收資料之前，兩個問題決定實驗的命運：</p>
+<ul>
+<li>要多少資料才能得到統計顯著的結果？</li>
+<li>給定你<em>收得到</em>的資料量，偵測得到多強的效果？</li>
+</ul>
+<p>R 的 <code>power.*</code> 家族兩者都能回答。詞彙：<strong>顯著水準</strong> ＝ 型一錯誤機率（偽陽性）；<strong>檢定力（power）</strong> ＝ 1 − 型二錯誤機率（1 − 偽陰性）。每個函式都會計算你留成 <code>NULL</code> 的那個參數。</p>
 </section>
-<section id="power.t.test" class="slide level2">
-<h2>power.t.test()</h2>
-<p>要以 80% 檢定力偵測 5 單位的差異（sd = 10），需要多少樣本？</p>
+<section id="實作範例設計藥物試驗" class="slide level2">
+<h2>實作範例：設計藥物試驗</h2>
+<p>測試抗憂鬱藥，以 HAMD 量表（0–48）度量憂鬱程度。假設標準差 8.9（出自 FDA 資料）、顯著水準 0.05、目標檢定力 0.95。每組 25 名受試者時，偵測得到多大的組間差異？</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">delta =</span> <span class="dv">5</span>, <span class="at">sd =</span> <span class="dv">10</span>, <span class="at">sig.level =</span> <span class="fl">0.05</span>, <span class="at">power =</span> <span class="fl">0.80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">power=</span>.<span class="dv">95</span>, <span class="at">sig.level=</span>.<span class="dv">05</span>, <span class="at">sd=</span><span class="fl">8.9</span>, <span class="at">n=</span><span class="dv">25</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
      Two-sample t test power calculation 
 
-              n = 63.76576
-          delta = 5
-             sd = 10
+              n = 25
+          delta = 9.26214
+             sd = 8.9
       sig.level = 0.05
-          power = 0.8
+          power = 0.95
     alternative = two.sided
 
 NOTE: n is number in *each* group</code></pre>
 </div>
 </div>
-<p><em>每組</em>約 64 人。少給任何一個引數，R 就解出它：</p>
+<p>至少 <strong>9.26</strong> 分的 HAMD 差距。受試者加倍：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">n =</span> <span class="dv">30</span>, <span class="at">delta =</span> <span class="dv">5</span>, <span class="at">sd =</span> <span class="dv">10</span>)<span class="sc">$</span>power</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">power=</span>.<span class="dv">95</span>, <span class="at">sig.level=</span>.<span class="dv">05</span>, <span class="at">sd=</span><span class="fl">8.9</span>, <span class="at">n=</span><span class="dv">50</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.477841</code></pre>
+<pre><code>
+     Two-sample t test power calculation 
+
+              n = 50
+          delta = 6.480487
+             sd = 8.9
+      sig.level = 0.05
+          power = 0.95
+    alternative = two.sided
+
+NOTE: n is number in *each* group</code></pre>
 </div>
 </div>
-<p>每組只有 30 人時，檢定力跌破五成——找到效果的機會跟擲銅板差不多。</p>
+<p><strong>6.48</strong> 分就夠了。這就是實驗設計的實況：在花一毛錢收資料<em>之前</em>，先在樣本數與可偵測效果之間權衡。</p>
+</section></section>
+<section>
+<section id="t-檢定設計" class="title-slide slide level1 center">
+<h1>t 檢定設計</h1>
+
+</section>
+<section id="power.t.test" class="slide level2">
+<h2>power.t.test</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">n =</span> <span class="cn">NULL</span>, <span class="at">delta =</span> <span class="cn">NULL</span>, <span class="at">sd =</span> <span class="dv">1</span>, <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
+<span id="cb5-2"><a href=""></a>             <span class="at">power =</span> <span class="cn">NULL</span>,</span>
+<span id="cb5-3"><a href=""></a>             <span class="at">type =</span> <span class="fu">c</span>(<span class="st">"two.sample"</span>, <span class="st">"one.sample"</span>, <span class="st">"paired"</span>),</span>
+<span id="cb5-4"><a href=""></a>             <span class="at">alternative =</span> <span class="fu">c</span>(<span class="st">"two.sided"</span>, <span class="st">"one.sided"</span>),</span>
+<span id="cb5-5"><a href=""></a>             <span class="at">strict =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>n</code></td>
+<td><em>每組</em>觀測數</td>
+</tr>
+<tr class="even">
+<td><code>delta</code></td>
+<td>真實的平均差</td>
+</tr>
+<tr class="odd">
+<td><code>sd</code></td>
+<td>真實標準差</td>
+</tr>
+<tr class="even">
+<td><code>sig.level</code></td>
+<td>顯著水準（型一錯誤機率）</td>
+</tr>
+<tr class="odd">
+<td><code>power</code></td>
+<td>1 − 型二錯誤機率</td>
+</tr>
+<tr class="even">
+<td><code>type</code></td>
+<td>雙樣本／單樣本／成對</td>
+</tr>
+<tr class="odd">
+<td><code>alternative</code></td>
+<td>雙尾或單尾</td>
+</tr>
+<tr class="even">
+<td><code>strict</code></td>
+<td>雙尾時採嚴格詮釋</td>
+</tr>
+</tbody>
+</table>
+<p><code>n</code>、<code>delta</code>、<code>sd</code>、<code>sig.level</code>、<code>power</code> 五者<strong>給四個</strong>；留 <code>NULL</code> 的第五個就是被計算的對象。</p>
+</section></section>
+<section>
+<section id="比例檢定設計" class="title-slide slide level1 center">
+<h1>比例檢定設計</h1>
+
 </section>
 <section id="power.prop.test" class="slide level2">
-<h2>power.prop.test()</h2>
-<p>比較兩個比例——某改版能把轉換率從 10% 拉到 12% 嗎？</p>
+<h2>power.prop.test</h2>
+<p>供以 <code>prop.test</code> 度量的實驗使用：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">p1 =</span> <span class="fl">0.10</span>, <span class="at">p2 =</span> <span class="fl">0.12</span>, <span class="at">power =</span> <span class="fl">0.80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">n =</span> <span class="cn">NULL</span>, <span class="at">p1 =</span> <span class="cn">NULL</span>, <span class="at">p2 =</span> <span class="cn">NULL</span>, <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
+<span id="cb6-2"><a href=""></a>                <span class="at">power =</span> <span class="cn">NULL</span>,</span>
+<span id="cb6-3"><a href=""></a>                <span class="at">alternative =</span> <span class="fu">c</span>(<span class="st">"two.sided"</span>, <span class="st">"one.sided"</span>),</span>
+<span id="cb6-4"><a href=""></a>                <span class="at">strict =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>p1</code>／<code>p2</code> 是兩組的成功機率；其餘同前。一樣：<code>n</code>、<code>p1</code>、<code>p2</code>、<code>sig.level</code>、<code>power</code> 給四個、算 <code>NULL</code> 的那個。</p>
+</section>
+<section id="棒球的情境數據是不是鬼扯" class="slide level2">
+<h2>棒球的情境數據是不是鬼扯？</h2>
+<p>ESPN 愛閃「兩出局二壘有人時 10 打數 3 安打」這種數據。假設某打者在某情境打 .300、其他情境打 .260——要多少情境打數才能讓 .300 顯著（α ＝ 0.05、檢定力 0.95、單尾）？</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">p1=</span>.<span class="dv">260</span>, <span class="at">p2=</span>.<span class="dv">300</span>, <span class="at">sig.level=</span><span class="fl">0.05</span>,</span>
+<span id="cb7-2"><a href=""></a>                <span class="at">power=</span>.<span class="dv">95</span>, <span class="at">alternative=</span><span class="st">"one.sided"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
      Two-sample comparison of proportions power calculation 
 
-              n = 3840.847
-             p1 = 0.1
-             p2 = 0.12
+              n = 2724.482
+             p1 = 0.26
+             p2 = 0.3
       sig.level = 0.05
-          power = 0.8
-    alternative = two.sided
+          power = 0.95
+    alternative = one.sided
 
 NOTE: n is number in *each* group</code></pre>
 </div>
 </div>
-<p>每組需要數千筆觀測：小基準上的小效果<em>很貴</em>。這一個計算就能避免 A/B 測試最常見的錯誤——訪客太少就急著下結論。</p>
+<p><strong>超過 2,724 個打數</strong>——還是每組。反過來問：n ＝ 10 時能做到什麼？</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">n=</span><span class="dv">10</span>, <span class="at">p1=</span>.<span class="dv">260</span>, <span class="at">p2=</span>.<span class="dv">300</span>, <span class="at">power=</span>.<span class="dv">95</span>,</span>
+<span id="cb9-2"><a href=""></a>                <span class="at">sig.level=</span><span class="cn">NULL</span>, <span class="at">alternative=</span><span class="st">"one.sided"</span>)<span class="sc">$</span>sig.level</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9256439</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">n=</span><span class="dv">10</span>, <span class="at">p1=</span>.<span class="dv">260</span>, <span class="at">p2=</span>.<span class="dv">300</span>, <span class="at">power=</span><span class="cn">NULL</span>,</span>
+<span id="cb11-2"><a href=""></a>                <span class="at">sig.level=</span>.<span class="dv">05</span>, <span class="at">alternative=</span><span class="st">"one.sided"</span>)<span class="sc">$</span>power</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.07393654</code></pre>
+</div>
+</div>
+<p>顯著水準 0.93，或檢定力 0.07。書中判決：多數情境數據是鬼扯——現在你能證明了。</p>
+</section></section>
+<section>
+<section id="anova-檢定設計" class="title-slide slide level1 center">
+<h1>ANOVA 檢定設計</h1>
+
 </section>
 <section id="power.anova.test" class="slide level2">
-<h2>power.anova.test()</h2>
-<p>比較多組平均時：</p>
+<h2>power.anova.test</h2>
+<p>供以 ANOVA 分析的多組設計使用：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">power.anova.test</span>(<span class="at">groups =</span> <span class="dv">4</span>,</span>
-<span id="cb7-2"><a href=""></a>                 <span class="at">between.var =</span> <span class="dv">1</span>, <span class="at">within.var =</span> <span class="dv">9</span>,</span>
-<span id="cb7-3"><a href=""></a>                 <span class="at">power =</span> <span class="fl">0.80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">power.anova.test</span>(<span class="at">groups =</span> <span class="cn">NULL</span>, <span class="at">n =</span> <span class="cn">NULL</span>,</span>
+<span id="cb13-2"><a href=""></a>                 <span class="at">between.var =</span> <span class="cn">NULL</span>, <span class="at">within.var =</span> <span class="cn">NULL</span>,</span>
+<span id="cb13-3"><a href=""></a>                 <span class="at">sig.level =</span> <span class="fl">0.05</span>, <span class="at">power =</span> <span class="cn">NULL</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>groups</code></td>
+<td>組數</td>
+</tr>
+<tr class="even">
+<td><code>n</code></td>
+<td>每組觀測數</td>
+</tr>
+<tr class="odd">
+<td><code>between.var</code>／<code>within.var</code></td>
+<td>組間／組內變異數</td>
+</tr>
+<tr class="even">
+<td><code>sig.level</code>／<code>power</code></td>
+<td>同前</td>
+</tr>
+</tbody>
+</table>
+<p>這裡七個參數要<strong>給六個</strong>；留 <code>NULL</code> 的那個被計算。</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">power.anova.test</span>(<span class="at">groups=</span><span class="dv">4</span>, <span class="at">between.var=</span><span class="dv">1</span>, <span class="at">within.var=</span><span class="dv">3</span>, <span class="at">power=</span>.<span class="dv">80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
      Balanced one-way analysis of variance power calculation 
 
          groups = 4
-              n = 33.70068
+              n = 11.92613
     between.var = 1
-     within.var = 9
+     within.var = 3
       sig.level = 0.05
           power = 0.8
 
 NOTE: n is number in each group</code></pre>
 </div>
 </div>
-<ul>
-<li><code>between.var</code> / <code>within.var</code> 編碼了效果量：各組平均相對於雜訊拉得多開。</li>
-<li>總樣本數固定時，組數越多、每組越少——檢定力越低。</li>
-</ul>
-</section>
-<section id="效果量與檢定力曲線" class="slide level2">
-<h2>效果量與檢定力曲線</h2>
-<p>效果量是你必須<em>猜</em>的輸入——根據前導研究、過往文獻，或「值得在意的最小差異」。在合理範圍內畫出檢定力曲線：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>deltas <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">10</span>, <span class="fl">0.5</span>)</span>
-<span id="cb9-2"><a href=""></a>pw <span class="ot">&lt;-</span> <span class="fu">sapply</span>(deltas, <span class="cf">function</span>(d)</span>
-<span id="cb9-3"><a href=""></a>  <span class="fu">power.t.test</span>(<span class="at">n =</span> <span class="dv">50</span>, <span class="at">delta =</span> d, <span class="at">sd =</span> <span class="dv">10</span>)<span class="sc">$</span>power)</span>
-<span id="cb9-4"><a href=""></a><span class="fu">plot</span>(deltas, pw, <span class="at">type =</span> <span class="st">"l"</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
-<span id="cb9-5"><a href=""></a>     <span class="at">xlab =</span> <span class="st">"True difference"</span>, <span class="at">ylab =</span> <span class="st">"Power (n = 50/group)"</span>)</span>
-<span id="cb9-6"><a href=""></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fl">0.8</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
 </div>
-<img data-src="ch19-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"></section>
-<section id="用模擬算檢定力" class="slide level2">
-<h2>用模擬算檢定力</h2>
-<p>當設計超出現成公式的範圍，就模擬它（第十七章的工具箱）：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">9</span>)</span>
-<span id="cb10-2"><a href=""></a>one_run <span class="ot">&lt;-</span> <span class="cf">function</span>(n, delta) {</span>
-<span id="cb10-3"><a href=""></a>  <span class="fu">t.test</span>(<span class="fu">rnorm</span>(n), <span class="fu">rnorm</span>(n, <span class="at">mean =</span> delta))<span class="sc">$</span>p.value <span class="sc">&lt;</span> <span class="fl">0.05</span></span>
-<span id="cb10-4"><a href=""></a>}</span>
-<span id="cb10-5"><a href=""></a><span class="fu">mean</span>(<span class="fu">replicate</span>(<span class="dv">2000</span>, <span class="fu">one_run</span>(<span class="dv">64</span>, <span class="dv">5</span><span class="sc">/</span><span class="dv">10</span> <span class="sc">*</span> <span class="dv">10</span>)))   <span class="co"># 與 power.t.test 相符</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1</code></pre>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>每個實證專案都該養成的習慣：</strong> 實驗<em>之前</em>先跑檢定力計算。它把一廂情願（「做完看看顯不顯著」）變成設計（「要偵測我們在乎的效果，每組需要 n 筆」）。</p>
 </div>
 </div>
-<p>把 <code>rnorm()</code> 換成你真正的設計——不等組、偏態誤差、群聚資料——同一個迴圈照樣能量出檢定力。</p>
-</section>
-<section id="規劃檢查清單" class="slide level2">
-<h2>規劃檢查清單</h2>
-<ol type="1">
-<li>決定 <span class="math inline">\(\alpha\)</span>（通常 0.05）與目標檢定力（通常 0.80 以上）。</li>
-<li>指明<strong>值得偵測的最小效果</strong>——這是科學判斷，不是統計判斷。</li>
-<li>估計雜訊（標準差或基準比例）。</li>
-<li>用 <code>power.*.test()</code> 或模擬算出 <span class="math inline">\(n\)</span>。</li>
-<li>為流失留餘裕——然後在偷看 p 值<em>之前</em>把資料收完。</li>
-</ol>
-<p>檢定力不足的研究兩頭賠：漏掉真效果，而偶爾「顯著」的發現又會誇大效果。</p>
+</div>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

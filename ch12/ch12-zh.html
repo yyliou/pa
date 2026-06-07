@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,363 +211,1119 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="資料科學的那-80" class="title-slide slide level1 center">
-<h1><strong>資料科學的那 80%</strong></h1>
+<section id="八成時間花在哪裡" class="title-slide slide level1 center">
+<h1><strong>八成時間花在哪裡</strong></h1>
 
 </section>
-<section id="為什麼整備很重要" class="slide level2">
-<h2>為什麼整備很重要</h2>
-<p>真實資料總是凌亂的：分散在多張表、型別錯誤、重複、滿是缺漏。在任何模型或圖表之前，你都得先合併、轉換、清理、取子集、彙總與重塑。本章就是那個工具箱。貫穿本章的例子是舊金山房屋成交資料：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">dim</span>(sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 3281   15</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">names</span>(sanfrancisco.home.sales)[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code> [1] "line"       "county"     "street"     "city"       "zip"       
- [6] "date"       "price"      "bedrooms"   "squarefeet" "lotsize"   </code></pre>
-</div>
-</div>
+<section id="資料分析的不光彩祕密" class="slide level2">
+<h2>資料分析的不光彩祕密</h2>
+<p>書的作者原是生化系學生，受不了沒完沒了的實驗室準備工作而投奔計算機科學——結果踏進資料探勘這行，發現<strong>專案約 80% 的力氣花在尋找、清理與整備資料</strong>，真正的分析不到 5%（剩下的時間在寫報告）。</p>
+<p>「資料是電腦產的，所以很完美，對吧？」實際上，資料幾乎從不以適合分析的形式儲存，連格式正確的資料也藏著驚喜。本章是工具箱：合併、轉換、分箱、取子集、摘要、重塑、清理、排序。</p>
 </section></section>
 <section>
 <section id="合併資料集" class="title-slide slide level1 center">
 <h1>合併資料集</h1>
 
 </section>
-<section id="表格拼接" class="slide level2">
-<h2>表格拼接</h2>
+<section id="paste黏接文字" class="slide level2">
+<h2>paste：黏接文字</h2>
+<p><code>paste</code> 逐元素串接字元向量（其他型別先轉型）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">x =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>))</span>
-<span id="cb5-2"><a href=""></a>b <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">5</span>, <span class="at">x =</span> <span class="fu">c</span>(<span class="dv">40</span>, <span class="dv">50</span>))</span>
-<span id="cb5-3"><a href=""></a><span class="fu">rbind</span>(a, b)                  <span class="co"># 疊加列（欄位需相同）</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"d"</span>, <span class="st">"e"</span>)</span>
+<span id="cb1-2"><a href=""></a>y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"E"</span>)</span>
+<span id="cb1-3"><a href=""></a><span class="fu">paste</span>(x, y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  id  x
-1  1 10
-2  2 20
-3  3 30
-4  4 40
-5  5 50</code></pre>
+<pre><code>[1] "a A" "b B" "c C" "d D" "e E"</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">cbind</span>(a, <span class="at">flag =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>))   <span class="co"># 增加欄（長度需相同）</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">paste</span>(x, y, <span class="at">sep=</span><span class="st">"-"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  id  x  flag
-1  1 10  TRUE
-2  2 20 FALSE
-3  3 30  TRUE</code></pre>
+<pre><code>[1] "a-A" "b-B" "c-C" "d-D" "e-E"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">paste</span>(x, y, <span class="at">sep=</span><span class="st">"-"</span>, <span class="at">collapse=</span><span class="st">"#"</span>)   <span class="co"># collapse：壓成「一個」值</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "a-A#b-B#c-C#d-D#e-E"</code></pre>
 </div>
 </div>
-<p><code>rbind()</code> 依名稱對齊欄位；面對許多檔案時，<code>do.call(rbind, list_of_frames)</code> 能一次疊完整個串列。</p>
 </section>
-<section id="依共同欄位合併" class="slide level2">
-<h2>依共同欄位合併</h2>
-<p><code>merge()</code> 是 R 的關聯式 join：</p>
+<section id="cbind橫向加欄" class="slide level2">
+<h2>cbind：橫向加欄</h2>
+<p><code>cbind</code> 水平合併物件。從第十一章的 NFL 薪資表出發：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>sales <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>), <span class="at">price =</span> <span class="fu">c</span>(<span class="dv">300</span>, <span class="dv">150</span>, <span class="dv">220</span>, <span class="dv">410</span>))</span>
-<span id="cb9-2"><a href=""></a>zips  <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>), <span class="at">zip =</span> <span class="fu">c</span>(<span class="st">"94114"</span>, <span class="st">"94110"</span>, <span class="st">"94117"</span>, <span class="st">"94109"</span>))</span>
-<span id="cb9-3"><a href=""></a><span class="fu">merge</span>(sales, zips)                       <span class="co"># 以共同欄位做 inner join</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>top.<span class="fl">5.</span>salaries <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb7-2"><a href=""></a>  <span class="at">name.last =</span> <span class="fu">c</span>(<span class="st">"Manning"</span>, <span class="st">"Brady"</span>, <span class="st">"Pepper"</span>, <span class="st">"Palmer"</span>, <span class="st">"Manning"</span>),</span>
+<span id="cb7-3"><a href=""></a>  <span class="at">name.first =</span> <span class="fu">c</span>(<span class="st">"Peyton"</span>, <span class="st">"Tom"</span>, <span class="st">"Julius"</span>, <span class="st">"Carson"</span>, <span class="st">"Eli"</span>),</span>
+<span id="cb7-4"><a href=""></a>  <span class="at">team =</span> <span class="fu">c</span>(<span class="st">"Colts"</span>, <span class="st">"Patriots"</span>, <span class="st">"Panthers"</span>, <span class="st">"Bengals"</span>, <span class="st">"Giants"</span>),</span>
+<span id="cb7-5"><a href=""></a>  <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"QB"</span>, <span class="st">"QB"</span>, <span class="st">"DE"</span>, <span class="st">"QB"</span>, <span class="st">"QB"</span>),</span>
+<span id="cb7-6"><a href=""></a>  <span class="at">salary =</span> <span class="fu">c</span>(<span class="dv">18700000</span>, <span class="dv">14626720</span>, <span class="dv">14137500</span>, <span class="dv">13980000</span>, <span class="dv">12916666</span>))</span>
+<span id="cb7-7"><a href=""></a>more.cols <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">year =</span> <span class="fu">rep</span>(<span class="dv">2008</span>, <span class="dv">5</span>), <span class="at">rank =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span>
+<span id="cb7-8"><a href=""></a><span class="fu">cbind</span>(top.<span class="fl">5.</span>salaries, more.cols)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  id price   zip
-1  1   300 94114
-2  2   150 94110
-3  3   220 94117</code></pre>
+<pre><code>  name.last name.first     team position   salary year rank
+1   Manning     Peyton    Colts       QB 18700000 2008    1
+2     Brady        Tom Patriots       QB 14626720 2008    2
+3    Pepper     Julius Panthers       DE 14137500 2008    3
+4    Palmer     Carson  Bengals       QB 13980000 2008    4
+5   Manning        Eli   Giants       QB 12916666 2008    5</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">merge</span>(sales, zips, <span class="at">all.x =</span> <span class="cn">TRUE</span>)         <span class="co"># left join：保留所有 sales</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="rbind縱向加列" class="slide level2">
+<h2>rbind：縱向加列</h2>
+<p><code>rbind</code> 垂直合併——接上第六到第八名的薪資：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>next.three <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb9-2"><a href=""></a>  <span class="at">name.last =</span> <span class="fu">c</span>(<span class="st">"Favre"</span>, <span class="st">"Bailey"</span>, <span class="st">"Harrison"</span>),</span>
+<span id="cb9-3"><a href=""></a>  <span class="at">name.first =</span> <span class="fu">c</span>(<span class="st">"Brett"</span>, <span class="st">"Champ"</span>, <span class="st">"Marvin"</span>),</span>
+<span id="cb9-4"><a href=""></a>  <span class="at">team =</span> <span class="fu">c</span>(<span class="st">"Packers"</span>, <span class="st">"Broncos"</span>, <span class="st">"Colts"</span>),</span>
+<span id="cb9-5"><a href=""></a>  <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"QB"</span>, <span class="st">"CB"</span>, <span class="st">"WR"</span>),</span>
+<span id="cb9-6"><a href=""></a>  <span class="at">salary =</span> <span class="fu">c</span>(<span class="dv">12800000</span>, <span class="dv">12690050</span>, <span class="dv">12000000</span>))</span>
+<span id="cb9-7"><a href=""></a><span class="fu">rbind</span>(top.<span class="fl">5.</span>salaries, next.three)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  id price   zip
-1  1   300 94114
-2  2   150 94110
-3  3   220 94117
-4  4   410  &lt;NA&gt;</code></pre>
+<pre><code>  name.last name.first     team position   salary
+1   Manning     Peyton    Colts       QB 18700000
+2     Brady        Tom Patriots       QB 14626720
+3    Pepper     Julius Panthers       DE 14137500
+4    Palmer     Carson  Bengals       QB 13980000
+5   Manning        Eli   Giants       QB 12916666
+6     Favre      Brett  Packers       QB 12800000
+7    Bailey      Champ  Broncos       CB 12690050
+8  Harrison     Marvin    Colts       WR 12000000</code></pre>
 </div>
 </div>
-<ul>
-<li><code>by=</code>、<code>by.x=</code>、<code>by.y=</code> 控制鍵欄位；<code>all=TRUE</code> 是 full outer join。</li>
-<li>合併後務必檢查列數——鍵意外重複會讓列數倍增。</li>
-</ul>
+</section>
+<section id="延伸範例抓股價並黏起來" class="slide level2">
+<h2>延伸範例：抓股價並黏起來</h2>
+<p>書中把道瓊 30 檔成分股的報價合成一個資料框。<code>get.quotes</code> 用 <code>paste</code> 組出 Yahoo! Finance 的 CSV 網址（格式是作者試誤摸出來的）、用 <code>read.csv</code> 抓檔、再 <code>cbind</code> 上股票代碼欄：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>get.quotes <span class="ot">&lt;-</span> <span class="cf">function</span>(ticker, <span class="at">from=</span>(<span class="fu">Sys.Date</span>()<span class="sc">-</span><span class="dv">365</span>), <span class="at">to=</span>(<span class="fu">Sys.Date</span>()),</span>
+<span id="cb11-2"><a href=""></a>                       <span class="at">interval=</span><span class="st">"d"</span>) {</span>
+<span id="cb11-3"><a href=""></a>  base <span class="ot">&lt;-</span> <span class="st">"http://ichart.finance.yahoo.com/table.csv?"</span></span>
+<span id="cb11-4"><a href=""></a>  symbol <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"s="</span>, ticker, <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-5"><a href=""></a>  from.month <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"&amp;a="</span>,                      <span class="co"># 月份從 00 編到 11！</span></span>
+<span id="cb11-6"><a href=""></a>    <span class="fu">formatC</span>(<span class="fu">as.integer</span>(<span class="fu">format</span>(from,<span class="st">"%m"</span>))<span class="sc">-</span><span class="dv">1</span>, <span class="at">width=</span><span class="dv">2</span>, <span class="at">flag=</span><span class="st">"0"</span>), <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-7"><a href=""></a>  from.day  <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"&amp;b="</span>, <span class="fu">format</span>(from,<span class="st">"%d"</span>), <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-8"><a href=""></a>  from.year <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"&amp;c="</span>, <span class="fu">format</span>(from,<span class="st">"%Y"</span>), <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-9"><a href=""></a>  to.month  <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"&amp;d="</span>,</span>
+<span id="cb11-10"><a href=""></a>    <span class="fu">formatC</span>(<span class="fu">as.integer</span>(<span class="fu">format</span>(to,<span class="st">"%m"</span>))<span class="sc">-</span><span class="dv">1</span>, <span class="at">width=</span><span class="dv">2</span>, <span class="at">flag=</span><span class="st">"0"</span>), <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-11"><a href=""></a>  to.day    <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"&amp;e="</span>, <span class="fu">format</span>(to,<span class="st">"%d"</span>), <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-12"><a href=""></a>  to.year   <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"&amp;f="</span>, <span class="fu">format</span>(to,<span class="st">"%Y"</span>), <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-13"><a href=""></a>  inter     <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"&amp;g="</span>, interval, <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-14"><a href=""></a>  url <span class="ot">&lt;-</span> <span class="fu">paste</span>(base, symbol, from.month, from.day, from.year,</span>
+<span id="cb11-15"><a href=""></a>               to.month, to.day, to.year, inter, <span class="st">"&amp;ignore=.csv"</span>, <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb11-16"><a href=""></a>  tmp <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(url)</span>
+<span id="cb11-17"><a href=""></a>  <span class="fu">cbind</span>(<span class="at">symbol=</span>ticker, tmp)</span>
+<span id="cb11-18"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="再把各檔股票綁在一起" class="slide level2">
+<h2>……再把各檔股票綁在一起</h2>
+<p><code>get.multiple.quotes</code> 走訪代碼清單，一路 <code>rbind</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>get.multiple.quotes <span class="ot">&lt;-</span> <span class="cf">function</span>(tkrs, <span class="at">from=</span>(<span class="fu">Sys.Date</span>()<span class="sc">-</span><span class="dv">365</span>),</span>
+<span id="cb12-2"><a href=""></a>                                <span class="at">to=</span>(<span class="fu">Sys.Date</span>()), <span class="at">interval=</span><span class="st">"d"</span>) {</span>
+<span id="cb12-3"><a href=""></a>  tmp <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb12-4"><a href=""></a>  <span class="cf">for</span> (tkr <span class="cf">in</span> tkrs) {</span>
+<span id="cb12-5"><a href=""></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(tmp)) tmp <span class="ot">&lt;-</span> <span class="fu">get.quotes</span>(tkr, from, to, interval)</span>
+<span id="cb12-6"><a href=""></a>    <span class="cf">else</span> tmp <span class="ot">&lt;-</span> <span class="fu">rbind</span>(tmp, <span class="fu">get.quotes</span>(tkr, from, to, interval))</span>
+<span id="cb12-7"><a href=""></a>  }</span>
+<span id="cb12-8"><a href=""></a>  tmp</span>
+<span id="cb12-9"><a href=""></a>}</span>
+<span id="cb12-10"><a href=""></a>dow.tickers <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"MMM"</span>,<span class="st">"AA"</span>,<span class="st">"AXP"</span>,<span class="st">"T"</span>,<span class="st">"BAC"</span>,<span class="st">"BA"</span>,<span class="st">"CAT"</span>,<span class="st">"CVX"</span>,<span class="st">"CSCO"</span>,</span>
+<span id="cb12-11"><a href=""></a>  <span class="st">"KO"</span>,<span class="st">"DD"</span>,<span class="st">"XOM"</span>,<span class="st">"GE"</span>,<span class="st">"HPQ"</span>,<span class="st">"HD"</span>,<span class="st">"INTC"</span>,<span class="st">"IBM"</span>,<span class="st">"JNJ"</span>,<span class="st">"JPM"</span>,<span class="st">"KFT"</span>,</span>
+<span id="cb12-12"><a href=""></a>  <span class="st">"MCD"</span>,<span class="st">"MRK"</span>,<span class="st">"MSFT"</span>,<span class="st">"PFE"</span>,<span class="st">"PG"</span>,<span class="st">"TRV"</span>,<span class="st">"UTX"</span>,<span class="st">"VZ"</span>,<span class="st">"WMT"</span>,<span class="st">"DIS"</span>)</span>
+<span id="cb12-13"><a href=""></a>dow30 <span class="ot">&lt;-</span> <span class="fu">get.multiple.quotes</span>(dow.tickers)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Warning</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Yahoo! 已關閉這個 API</strong>——網址不再有效（今日請用 <code>quantmod</code>）。但<em>模式</em>——用 <code>paste</code> 組網址、用 <code>rbind</code> 累積——仍是日常功夫。為了讓本章後續範例能跑，下一張投影片徒手重建書中的五檔小樣本。</p>
+</div>
+</div>
+</div>
+</section>
+<section id="重建-my.quotes" class="slide level2">
+<h2>重建 my.quotes</h2>
+<p>書中的五檔股票、三個月樣本，直接輸入：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a>my.quotes <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-2"><a href=""></a>  <span class="at">symbol =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"GE"</span>,<span class="st">"GOOG"</span>,<span class="st">"AAPL"</span>,<span class="st">"AXP"</span>,<span class="st">"GS"</span>), <span class="at">each=</span><span class="dv">3</span>),</span>
+<span id="cb13-3"><a href=""></a>  <span class="at">Date =</span> <span class="fu">rep</span>(<span class="fu">as.Date</span>(<span class="fu">c</span>(<span class="st">"2009-03-02"</span>,<span class="st">"2009-02-02"</span>,<span class="st">"2009-01-02"</span>)), <span class="dv">5</span>),</span>
+<span id="cb13-4"><a href=""></a>  <span class="at">Open  =</span> <span class="fu">c</span>(<span class="fl">8.29</span>,<span class="fl">12.03</span>,<span class="fl">16.51</span>, <span class="fl">333.33</span>,<span class="fl">334.29</span>,<span class="fl">308.60</span>, <span class="fl">88.12</span>,<span class="fl">89.10</span>,<span class="fl">85.88</span>,</span>
+<span id="cb13-5"><a href=""></a>            <span class="fl">11.68</span>,<span class="fl">16.35</span>,<span class="fl">18.57</span>, <span class="fl">87.86</span>,<span class="fl">78.78</span>,<span class="fl">84.02</span>),</span>
+<span id="cb13-6"><a href=""></a>  <span class="at">High  =</span> <span class="fu">c</span>(<span class="fl">11.35</span>,<span class="fl">12.90</span>,<span class="fl">17.24</span>, <span class="fl">359.16</span>,<span class="fl">381.00</span>,<span class="fl">352.33</span>, <span class="fl">109.98</span>,<span class="fl">103.00</span>,<span class="fl">97.17</span>,</span>
+<span id="cb13-7"><a href=""></a>            <span class="fl">15.24</span>,<span class="fl">18.27</span>,<span class="fl">21.38</span>, <span class="fl">115.65</span>,<span class="fl">98.66</span>,<span class="fl">92.20</span>),</span>
+<span id="cb13-8"><a href=""></a>  <span class="at">Low   =</span> <span class="fu">c</span>(<span class="fl">5.87</span>,<span class="fl">8.40</span>,<span class="fl">11.87</span>, <span class="fl">289.45</span>,<span class="fl">329.55</span>,<span class="fl">282.75</span>, <span class="fl">82.33</span>,<span class="fl">86.51</span>,<span class="fl">78.20</span>,</span>
+<span id="cb13-9"><a href=""></a>            <span class="fl">9.71</span>,<span class="fl">11.44</span>,<span class="fl">14.72</span>, <span class="fl">72.78</span>,<span class="fl">78.57</span>,<span class="fl">59.13</span>),</span>
+<span id="cb13-10"><a href=""></a>  <span class="at">Close =</span> <span class="fu">c</span>(<span class="fl">10.11</span>,<span class="fl">8.51</span>,<span class="fl">12.13</span>, <span class="fl">348.06</span>,<span class="fl">337.99</span>,<span class="fl">338.53</span>, <span class="fl">105.12</span>,<span class="fl">89.31</span>,<span class="fl">90.13</span>,</span>
+<span id="cb13-11"><a href=""></a>            <span class="fl">13.63</span>,<span class="fl">12.06</span>,<span class="fl">16.73</span>, <span class="fl">106.02</span>,<span class="fl">91.08</span>,<span class="fl">80.73</span>),</span>
+<span id="cb13-12"><a href=""></a>  <span class="at">Volume =</span> <span class="fu">c</span>(<span class="dv">277426300</span>,<span class="dv">194928800</span>,<span class="dv">117846700</span>, <span class="dv">5346800</span>,<span class="dv">6158100</span>,<span class="dv">5727600</span>,</span>
+<span id="cb13-13"><a href=""></a>             <span class="dv">25963400</span>,<span class="dv">27394900</span>,<span class="dv">33487900</span>, <span class="dv">31136400</span>,<span class="dv">24297100</span>,<span class="dv">19110000</span>,</span>
+<span id="cb13-14"><a href=""></a>             <span class="dv">30196400</span>,<span class="dv">28301500</span>,<span class="dv">22764300</span>),</span>
+<span id="cb13-15"><a href=""></a>  <span class="at">Adj.Close =</span> <span class="fu">c</span>(<span class="fl">10.11</span>,<span class="fl">8.51</span>,<span class="fl">11.78</span>, <span class="fl">348.06</span>,<span class="fl">337.99</span>,<span class="fl">338.53</span>, <span class="fl">105.12</span>,<span class="fl">89.31</span>,<span class="fl">90.13</span>,</span>
+<span id="cb13-16"><a href=""></a>                <span class="fl">13.45</span>,<span class="fl">11.90</span>,<span class="fl">16.51</span>, <span class="fl">106.02</span>,<span class="fl">91.08</span>,<span class="fl">80.29</span>))</span>
+<span id="cb13-17"><a href=""></a><span class="fu">head</span>(my.quotes, <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  symbol       Date   Open   High    Low  Close    Volume Adj.Close
+1     GE 2009-03-02   8.29  11.35   5.87  10.11 277426300     10.11
+2     GE 2009-02-02  12.03  12.90   8.40   8.51 194928800      8.51
+3     GE 2009-01-02  16.51  17.24  11.87  12.13 117846700     11.78
+4   GOOG 2009-03-02 333.33 359.16 289.45 348.06   5346800    348.06
+5   GOOG 2009-02-02 334.29 381.00 329.55 337.99   6158100    337.99
+6   GOOG 2009-01-02 308.60 352.33 282.75 338.53   5727600    338.53</code></pre>
+</div>
+</div>
+</section>
+<section id="merge以共同欄位連結" class="slide level2">
+<h2>merge：以共同欄位連結</h2>
+<p>棒球員年齡在 <code>Master</code> 表、打擊數據在 <code>Batting</code> 表，兩邊都有 <code>playerID</code>。想看「附姓名與年齡的打擊數據」，就<strong>merge</strong>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>batting <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM Batting"</span>)</span>
+<span id="cb15-2"><a href=""></a>master  <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM Master"</span>)</span>
+<span id="cb15-3"><a href=""></a><span class="fu">intersect</span>(<span class="fu">names</span>(batting), <span class="fu">names</span>(master))</span>
+<span id="cb15-4"><a href=""></a><span class="do">## [1] "playerID"</span></span>
+<span id="cb15-5"><a href=""></a>batting.w.names <span class="ot">&lt;-</span> <span class="fu">merge</span>(batting, master)   <span class="co"># 以 playerID 連結</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>預設情況下 <code>merge</code> 以<strong>所有同名欄位</strong>為鍵——這裡只有一個，所以什麼都不必多寫。</p>
+</section>
+<section id="merge引數與-join-語意" class="slide level2">
+<h2>merge：引數與 JOIN 語意</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">merge</span>(x, y, <span class="at">by =</span>, <span class="at">by.x =</span>, <span class="at">by.y =</span>, <span class="at">all =</span>, <span class="at">all.x =</span>, <span class="at">all.y =</span>,</span>
+<span id="cb16-2"><a href=""></a>      <span class="at">sort =</span>, <span class="at">suffixes =</span>, <span class="at">incomparables =</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x</code>、<code>y</code></td>
+<td>兩個資料框</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>by</code>／<code>by.x</code>、<code>by.y</code></td>
+<td>鍵欄位（共同／各邊指定）</td>
+<td>同名欄位</td>
+</tr>
+<tr class="odd">
+<td><code>all</code></td>
+<td>兩邊未配對的列也保留（OUTER JOIN）</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>all.x</code>／<code>all.y</code></td>
+<td>保留 x／y 未配對的列（LEFT／RIGHT OUTER）</td>
+<td><code>all</code></td>
+</tr>
+<tr class="odd">
+<td><code>sort</code></td>
+<td>結果依鍵排序？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>suffixes</code></td>
+<td>非鍵同名欄位的改名後綴</td>
+<td><code>c(".x",".y")</code></td>
+</tr>
+<tr class="odd">
+<td><code>incomparables</code></td>
+<td>永不配對的值</td>
+<td><code>NULL</code></td>
+</tr>
+</tbody>
+</table>
+<p>用 SQL 的話說：預設是 NATURAL JOIN；指定鍵就是 INNER JOIN；<code>all=TRUE</code> 是 FULL OUTER JOIN——完全沒有同名欄位時，回傳完整的<strong>笛卡兒積</strong>。</p>
 </section></section>
 <section>
 <section id="轉換" class="title-slide slide level1 center">
 <h1>轉換</h1>
 
 </section>
-<section id="建立與修改欄位" class="slide level2">
-<h2>建立與修改欄位</h2>
+<section id="重新指派變數" class="slide level2">
+<h2>重新指派變數</h2>
+<p>用指派運算子就地修正變數。匯入的日期常以文字到貨——轉成真正的 <code>Date</code> 物件；衍生欄位也用同一套記法加入：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a>sales<span class="sc">$</span>price.per.k <span class="ot">&lt;-</span> sales<span class="sc">$</span>price <span class="sc">/</span> <span class="dv">1000</span></span>
-<span id="cb13-2"><a href=""></a>sales <span class="ot">&lt;-</span> <span class="fu">transform</span>(sales, <span class="at">log.price =</span> <span class="fu">log</span>(price))</span>
-<span id="cb13-3"><a href=""></a>sales</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>my.quotes<span class="sc">$</span>Date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(my.quotes<span class="sc">$</span>Date)   <span class="co"># 此處本來就是 Date；書中的</span></span>
+<span id="cb17-2"><a href=""></a><span class="fu">class</span>(my.quotes<span class="sc">$</span>Date)                        <span class="co"># dow30 需要 factor -&gt; Date</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  id price price.per.k log.price
-1  1   300        0.30  5.703782
-2  2   150        0.15  5.010635
-3  3   220        0.22  5.393628
-4  4   410        0.41  6.016157</code></pre>
+<pre><code>[1] "Date"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>my.quotes<span class="sc">$</span>mid <span class="ot">&lt;-</span> (my.quotes<span class="sc">$</span>High <span class="sc">+</span> my.quotes<span class="sc">$</span>Low) <span class="sc">/</span> <span class="dv">2</span></span>
+<span id="cb19-2"><a href=""></a><span class="fu">names</span>(my.quotes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "symbol"    "Date"      "Open"      "High"      "Low"       "Close"    
+[7] "Volume"    "Adj.Close" "mid"      </code></pre>
 </div>
 </div>
-<p><code>transform()</code> 在資料框內部求值運算式，省去一再重複的 <code>sales$</code> 前綴。</p>
 </section>
-<section id="apply-家族處理資料" class="slide level2">
-<h2>apply 家族處理資料</h2>
+<section id="transform-函式" class="slide level2">
+<h2>transform 函式</h2>
+<p><code>transform(data, ...)</code> 把一組運算式套用在資料框<em>內部</em>——不必寫 <code>data$</code> 前綴——回傳修改後的資料框：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>nums <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">a =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">b =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>))</span>
-<span id="cb15-2"><a href=""></a><span class="fu">sapply</span>(nums, mean)             <span class="co"># 每欄一個摘要</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a>my.quotes.transformed <span class="ot">&lt;-</span> <span class="fu">transform</span>(my.quotes, <span class="at">Date =</span> <span class="fu">as.Date</span>(Date),</span>
+<span id="cb21-2"><a href=""></a>                                   <span class="at">mid =</span> (High <span class="sc">+</span> Low) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb21-3"><a href=""></a><span class="fu">names</span>(my.quotes.transformed)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  a   b 
-2.5 5.0 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">mapply</span>(<span class="cf">function</span>(x, y) x <span class="sc">*</span> y, nums<span class="sc">$</span>a, nums<span class="sc">$</span>b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1]  2  8 18 32</code></pre>
+<pre><code>[1] "symbol"    "Date"      "Open"      "High"      "Low"       "Close"    
+[7] "Volume"    "Adj.Close" "mid"      </code></pre>
 </div>
 </div>
-<ul>
-<li><code>lapply()</code> 回傳串列；<code>sapply()</code> 在可行時簡化成向量。</li>
-<li>矩陣的逐列運算用 <code>apply(m, 1, f)</code>。</li>
-</ul>
 </section>
-<section id="資料分組binning" class="slide level2">
-<h2>資料分組（binning）</h2>
-<p><code>cut()</code> 把連續值變成類別：</p>
+<section id="apply沿陣列維度套用函式" class="slide level2">
+<h2>apply：沿陣列維度套用函式</h2>
+<p><code>apply(X, MARGIN, FUN, ...)</code> 沿指定維度套用 <code>FUN</code>（額外引數轉傳給 <code>FUN</code>）。用 <code>max</code> 示範，結果一眼看得出來源：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>price <span class="ot">&lt;-</span> sanfrancisco.home.sales<span class="sc">$</span>price</span>
-<span id="cb19-2"><a href=""></a>bins <span class="ot">&lt;-</span> <span class="fu">cut</span>(price, <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">5e5</span>, <span class="fl">1e6</span>, <span class="fl">2e6</span>, <span class="cn">Inf</span>),</span>
-<span id="cb19-3"><a href=""></a>            <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"&lt;500K"</span>, <span class="st">"500K-1M"</span>, <span class="st">"1M-2M"</span>, <span class="st">"&gt;2M"</span>))</span>
-<span id="cb19-4"><a href=""></a><span class="fu">table</span>(bins)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span></span>
+<span id="cb23-2"><a href=""></a><span class="fu">dim</span>(x) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">4</span>)</span>
+<span id="cb23-3"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bins
-  &lt;500K 500K-1M   1M-2M     &gt;2M 
-    486    1932     697     166 </code></pre>
+<pre><code>     [,1] [,2] [,3] [,4]
+[1,]    1    6   11   16
+[2,]    2    7   12   17
+[3,]    3    8   13   18
+[4,]    4    9   14   19
+[5,]    5   10   15   20</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">apply</span>(<span class="at">X=</span>x, <span class="at">MARGIN=</span><span class="dv">1</span>, <span class="at">FUN=</span>max)   <span class="co"># 逐列</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 16 17 18 19 20</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">apply</span>(<span class="at">X=</span>x, <span class="at">MARGIN=</span><span class="dv">2</span>, <span class="at">FUN=</span>max)   <span class="co"># 逐欄</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  5 10 15 20</code></pre>
 </div>
 </div>
-<p>lattice 的 <code>shingle()</code> 製作<em>互相重疊</em>的分組；<code>tabulate()</code> 與 <code>table()</code> 負責計數。</p>
+</section>
+<section id="三維的-apply" class="slide level2">
+<h2>三維的 apply</h2>
+<p><code>MARGIN</code> 可指定多個維度。換用 <code>paste</code>，<em>親眼看</em>哪些元素被分到一組：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">27</span></span>
+<span id="cb29-2"><a href=""></a><span class="fu">dim</span>(x) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">3</span>, <span class="dv">3</span>)</span>
+<span id="cb29-3"><a href=""></a><span class="fu">apply</span>(<span class="at">X=</span>x, <span class="at">MARGIN=</span><span class="dv">1</span>, <span class="at">FUN=</span>paste, <span class="at">collapse=</span><span class="st">","</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1,4,7,10,13,16,19,22,25" "2,5,8,11,14,17,20,23,26"
+[3] "3,6,9,12,15,18,21,24,27"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">apply</span>(<span class="at">X=</span>x, <span class="at">MARGIN=</span><span class="dv">3</span>, <span class="at">FUN=</span>paste, <span class="at">collapse=</span><span class="st">","</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1,2,3,4,5,6,7,8,9"          "10,11,12,13,14,15,16,17,18"
+[3] "19,20,21,22,23,24,25,26,27"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a><span class="fu">apply</span>(<span class="at">X=</span>x, <span class="at">MARGIN=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">FUN=</span>paste, <span class="at">collapse=</span><span class="st">","</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1]      [,2]      [,3]     
+[1,] "1,10,19" "4,13,22" "7,16,25"
+[2,] "2,11,20" "5,14,23" "8,17,26"
+[3,] "3,12,21" "6,15,24" "9,18,27"</code></pre>
+</div>
+</div>
+<p>最後一個呼叫的意思：對每組 (i, j)，計算 <code>x[i, j, 1], x[i, j, 2], x[i, j, 3]</code> 的 <code>FUN</code>。</p>
+</section>
+<section id="lapply-與-sapply串列向量資料框" class="slide level2">
+<h2>lapply 與 sapply：串列、向量、資料框</h2>
+<p><code>lapply(X, FUN, ...)</code> 對每個元素套用 <code>FUN</code>、回傳<strong>串列</strong>——資料框就是欄位的串列：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span>
+<span id="cb35-2"><a href=""></a><span class="fu">lapply</span>(x, <span class="cf">function</span>(x) <span class="dv">2</span><span class="sc">^</span>x)[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+[1] 2
+
+[[2]]
+[1] 4</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a>d <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="at">y=</span><span class="dv">6</span><span class="sc">:</span><span class="dv">10</span>)</span>
+<span id="cb37-2"><a href=""></a><span class="fu">lapply</span>(d, <span class="at">FUN=</span>max)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$x
+[1] 5
+
+$y
+[1] 10</code></pre>
+</div>
+</div>
+<p>想要向量或矩陣？<code>sapply</code> 能簡化就簡化：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">sapply</span>(d, <span class="at">FUN=</span><span class="cf">function</span>(x) <span class="dv">2</span><span class="sc">^</span>x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      x    y
+[1,]  2   64
+[2,]  4  128
+[3,]  8  256
+[4,] 16  512
+[5,] 32 1024</code></pre>
+</div>
+</div>
+</section>
+<section id="mapply多變量版本" class="slide level2">
+<h2>mapply：多變量版本</h2>
+<p><code>mapply(FUN, ..., MoreArgs=, SIMPLIFY=, USE.NAMES=)</code> 把 <code>FUN</code> 套用在各向量的第一個元素、再第二個、依此類推：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href=""></a><span class="fu">mapply</span>(paste, <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), <span class="fu">c</span>(<span class="st">"a"</span>,<span class="st">"b"</span>,<span class="st">"c"</span>,<span class="st">"d"</span>,<span class="st">"e"</span>),</span>
+<span id="cb41-2"><a href=""></a>       <span class="fu">c</span>(<span class="st">"A"</span>,<span class="st">"B"</span>,<span class="st">"C"</span>,<span class="st">"D"</span>,<span class="st">"E"</span>), <span class="at">MoreArgs=</span><span class="fu">list</span>(<span class="at">sep=</span><span class="st">"-"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1-a-A" "2-b-B" "3-c-C" "4-d-D" "5-e-E"</code></pre>
+</div>
+</div>
+<p>引數：<code>...</code> 放向量；<code>MoreArgs</code>——給 <code>FUN</code> 的固定額外引數串列；<code>SIMPLIFY</code>——簡化結果（預設 <code>TRUE</code>）；<code>USE.NAMES</code>——用第一個向量替結果命名。</p>
+</section>
+<section id="plyr-套件" class="slide level2">
+<h2>plyr 套件</h2>
+<p>被 apply 動物園搞糊塗了——名字亂、引數亂、回傳亂？<strong>plyr</strong> 套件提供 12 個命名有邏輯的函式：輸入型別（陣列 <code>a</code>／資料框 <code>d</code>／串列 <code>l</code>）×輸出型別（<code>a</code>／<code>d</code>／<code>l</code>／<code>_</code> 丟棄）：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>輸入 ↓ 輸出 →</th>
+<th>陣列</th>
+<th>資料框</th>
+<th>串列</th>
+<th>丟棄</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>陣列</td>
+<td><code>aaply</code></td>
+<td><code>adply</code></td>
+<td><code>alply</code></td>
+<td><code>a_ply</code></td>
+</tr>
+<tr class="even">
+<td>資料框</td>
+<td><code>daply</code></td>
+<td><code>ddply</code></td>
+<td><code>dlply</code></td>
+<td><code>d_ply</code></td>
+</tr>
+<tr class="odd">
+<td>串列</td>
+<td><code>laply</code></td>
+<td><code>ldply</code></td>
+<td><code>llply</code></td>
+<td><code>l_ply</code></td>
+</tr>
+</tbody>
+</table>
+<p>共同引數：<code>.data</code>、<code>.fun</code>、<code>.progress</code>（進度條）、<code>.parallel</code>（透過 foreach）、<code>...</code> 轉傳 <code>.fun</code>；陣列另有 <code>.margins</code>；資料框另有 <code>.variables</code>（分組依據）與 <code>.drop</code>。</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href=""></a><span class="fu">library</span>(plyr)</span>
+<span id="cb43-2"><a href=""></a><span class="fu">llply</span>(<span class="at">.data=</span>d, <span class="at">.fun=</span><span class="cf">function</span>(x) <span class="dv">2</span><span class="sc">^</span>x)<span class="sc">$</span>x   <span class="co"># ＝ lapply</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  2  4  8 16 32</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href=""></a><span class="fu">aaply</span>(<span class="at">.data=</span>d, <span class="at">.margins=</span><span class="dv">2</span>, <span class="at">.fun=</span>max)     <span class="co"># 附標籤的結果</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> x  y 
+ 5 10 </code></pre>
+</div>
+</div>
+<p>（plyr 沒有 <code>tapply</code> 的對應。現代備註：plyr 的想法後來長成 <code>dplyr</code> 與 <code>purrr</code>。）</p>
 </section></section>
 <section>
-<section id="清理資料" class="title-slide slide level1 center">
-<h1>清理資料</h1>
+<section id="資料分箱" class="title-slide slide level1 center">
+<h1>資料分箱</h1>
 
 </section>
-<section id="找出並移除重複" class="slide level2">
-<h2>找出並移除重複</h2>
+<section id="shingle-與-equal.count" class="slide level2">
+<h2>Shingle 與 equal.count</h2>
+<p>分箱依某變數的值把觀測分組——例如把逐日資料按月摘要。<strong>Shingle</strong>（第七章）表示可重疊的區間，lattice 用它對數值變數做條件分組：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"a"</span>, <span class="st">"c"</span>, <span class="st">"b"</span>)</span>
-<span id="cb21-2"><a href=""></a><span class="fu">duplicated</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE FALSE  TRUE FALSE  TRUE</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">unique</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "a" "b" "c"</code></pre>
-</div>
-</div>
-<p>對資料框而言，<code>duplicated(df)</code> 標記重複的<em>列</em>——每次合併或從可能重複餵資料的系統匯入後都該跑一次。</p>
-</section>
-<section id="排序" class="slide level2">
-<h2>排序</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">sort</span>(<span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 2 3</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a>o <span class="ot">&lt;-</span> <span class="fu">order</span>(sales<span class="sc">$</span>price, <span class="at">decreasing =</span> <span class="cn">TRUE</span>)   <span class="co"># 排序索引</span></span>
-<span id="cb27-2"><a href=""></a>sales[o, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  id price price.per.k log.price
-4  4   410        0.41  6.016157
-1  1   300        0.30  5.703782
-3  3   220        0.22  5.393628
-2  2   150        0.15  5.010635</code></pre>
-</div>
-</div>
-<div class="callout callout-tip callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Tip</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>向量用 <code>sort()</code>，資料框用 <code>order()</code>。</strong> <code>order()</code> 回傳排序所需的排列，因此能重排整列——還能用額外鍵打破平手：<code>order(zip, -price)</code>。</p>
-</div>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href=""></a><span class="fu">shingle</span>(x, <span class="at">intervals=</span><span class="fu">sort</span>(<span class="fu">unique</span>(x)))   <span class="co"># intervals：向量或兩欄矩陣</span></span>
+<span id="cb47-2"><a href=""></a><span class="fu">equal.count</span>(x, ...)                     <span class="co"># 各箱觀測數相等</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="缺失值" class="slide level2">
-<h2>缺失值</h2>
+<section id="cut連續變離散" class="slide level2">
+<h2>cut：連續變離散</h2>
+<p><code>cut</code> 把數值向量切成<strong>因子</strong>，每個水準對應一段區間（另有 Date 版本）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="cn">NA</span>, <span class="dv">5</span>, <span class="dv">9</span>)</span>
-<span id="cb29-2"><a href=""></a><span class="fu">is.na</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a><span class="fu">cut</span>(x, breaks, <span class="at">labels =</span> <span class="cn">NULL</span>, <span class="at">include.lowest =</span> <span class="cn">FALSE</span>, <span class="at">right =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb48-2"><a href=""></a>    <span class="at">dig.lab =</span> <span class="dv">3</span>, <span class="at">ordered_result =</span> <span class="cn">FALSE</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>breaks</code></td>
+<td>箱數（一個整數）或切點（向量）</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>labels</code></td>
+<td>水準標籤</td>
+<td><code>NULL</code></td>
+</tr>
+<tr class="odd">
+<td><code>include.lowest</code></td>
+<td>邊界值算進端點箱？</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>right</code></td>
+<td>區間右閉左開？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td><code>dig.lab</code></td>
+<td>自動標籤的位數</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td><code>ordered_result</code></td>
+<td>回傳有序因子？</td>
+<td><code>FALSE</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="cut-實戰打擊率" class="slide level2">
+<h2>cut 實戰：打擊率</h2>
+<p>統計各打擊率區間的球員數——書中的 <code>batting.2008</code> 資料集，按課程慣例抓取：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb49-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda"</span>,</span>
+<span id="cb49-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb49-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb49-5"><a href=""></a>batting.<span class="fl">2008.</span>AB <span class="ot">&lt;-</span> <span class="fu">transform</span>(batting<span class="fl">.2008</span>, <span class="at">AVG =</span> H<span class="sc">/</span>AB)</span>
+<span id="cb49-6"><a href=""></a>batting.<span class="fl">2008.</span>over100AB <span class="ot">&lt;-</span> <span class="fu">subset</span>(batting.<span class="fl">2008.</span>AB, <span class="at">subset=</span>(AB <span class="sc">&gt;</span> <span class="dv">100</span>))</span>
+<span id="cb49-7"><a href=""></a>battingavg.<span class="fl">2008.</span>bins <span class="ot">&lt;-</span> <span class="fu">cut</span>(batting.<span class="fl">2008.</span>over100AB<span class="sc">$</span>AVG, <span class="at">breaks=</span><span class="dv">10</span>)</span>
+<span id="cb49-8"><a href=""></a><span class="fu">table</span>(battingavg.<span class="fl">2008.</span>bins)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE  TRUE FALSE FALSE</code></pre>
+<pre><code>battingavg.2008.bins
+(0.137,0.163] (0.163,0.189] (0.189,0.215]  (0.215,0.24]  (0.24,0.266] 
+            4             6            24            67           121 
+(0.266,0.292] (0.292,0.318] (0.318,0.344]  (0.344,0.37]  (0.37,0.396] 
+          132            70            11             5             2 </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">mean</span>(x); <span class="fu">mean</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="make.groups合併並標注來源" class="slide level2">
+<h2>make.groups：合併並標注來源</h2>
+<p><code>make.groups</code>（lattice）把多個相似物件疊成一個資料框，逐列標注出處：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href=""></a><span class="fu">library</span>(lattice)</span>
+<span id="cb51-2"><a href=""></a>hat.sizes <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from=</span><span class="fl">6.25</span>, <span class="at">to=</span><span class="fl">7.75</span>, <span class="at">by=</span>.<span class="dv">25</span>)</span>
+<span id="cb51-3"><a href=""></a>pants.sizes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">30</span>, <span class="dv">31</span>, <span class="dv">32</span>, <span class="dv">33</span>, <span class="dv">34</span>, <span class="dv">36</span>, <span class="dv">38</span>, <span class="dv">40</span>)</span>
+<span id="cb51-4"><a href=""></a>shoe.sizes <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from=</span><span class="dv">7</span>, <span class="at">to=</span><span class="dv">12</span>)</span>
+<span id="cb51-5"><a href=""></a><span class="fu">head</span>(<span class="fu">make.groups</span>(hat.sizes, pants.sizes, shoe.sizes), <span class="dv">9</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] NA</code></pre>
+<pre><code>              data       which
+hat.sizes1    6.25   hat.sizes
+hat.sizes2    6.50   hat.sizes
+hat.sizes3    6.75   hat.sizes
+hat.sizes4    7.00   hat.sizes
+hat.sizes5    7.25   hat.sizes
+hat.sizes6    7.50   hat.sizes
+hat.sizes7    7.75   hat.sizes
+pants.sizes1 30.00 pants.sizes
+pants.sizes2 31.00 pants.sizes</code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 5.333333</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">complete.cases</span>(<span class="fu">data.frame</span>(<span class="at">a =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="cn">NA</span>), <span class="at">b =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1]  TRUE FALSE</code></pre>
-</div>
-</div>
-<ul>
-<li><code>na.omit(df)</code> 丟掉不完整的列；記得記錄你丟了幾筆。</li>
-<li>要刻意決定：刪除、補值，或為缺漏建模——唯一錯誤的選擇是默不作聲。</li>
-</ul>
 </section></section>
 <section>
-<section id="子集與抽樣" class="title-slide slide level1 center">
-<h1>子集與抽樣</h1>
+<section id="子集" class="title-slide slide level1 center">
+<h1>子集</h1>
 
 </section>
-<section id="取子集" class="slide level2">
-<h2>取子集</h2>
+<section id="中括號記法" class="slide level2">
+<h2>中括號記法</h2>
+<p>資料太多——有不相干的列，或乾脆超出記憶體？切吧。邏輯運算式當列索引、名稱向量挑欄位：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a>expensive <span class="ot">&lt;-</span> <span class="fu">subset</span>(sales, price <span class="sc">&gt;</span> <span class="dv">200</span>, <span class="at">select =</span> <span class="fu">c</span>(id, price))</span>
-<span id="cb36-2"><a href=""></a>expensive</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href=""></a>batting.<span class="fl">2008.</span>short <span class="ot">&lt;-</span> batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>yearID<span class="sc">==</span><span class="dv">2008</span>,</span>
+<span id="cb53-2"><a href=""></a>                       <span class="fu">c</span>(<span class="st">"nameFirst"</span>, <span class="st">"nameLast"</span>, <span class="st">"AB"</span>, <span class="st">"H"</span>, <span class="st">"BB"</span>)]</span>
+<span id="cb53-3"><a href=""></a><span class="fu">head</span>(batting.<span class="fl">2008.</span>short, <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  id price
-1  1   300
-3  3   220
-4  4   410</code></pre>
+<pre><code>  nameFirst nameLast  AB   H BB
+1     Bobby    Abreu 609 180 73
+2    Moises     Alou  49  17  2
+3    Garret Anderson 557 163 29
+4    Marlon Anderson 138  29  9</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a><span class="co"># 中括號等價寫法：</span></span>
-<span id="cb38-2"><a href=""></a>sales[sales<span class="sc">$</span>price <span class="sc">&gt;</span> <span class="dv">200</span>, <span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"price"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="subset-函式" class="slide level2">
+<h2>subset 函式</h2>
+<p><code>subset(x, subset, select, drop=FALSE)</code> 做不了中括號做不到的事——但更好讀，因為欄名在裡面可以<em>裸寫</em>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href=""></a>batting.<span class="fl">2008.</span>short <span class="ot">&lt;-</span> <span class="fu">subset</span>(batting<span class="fl">.2008</span>, yearID<span class="sc">==</span><span class="dv">2008</span>,</span>
+<span id="cb55-2"><a href=""></a>                             <span class="fu">c</span>(<span class="st">"nameFirst"</span>, <span class="st">"nameLast"</span>, <span class="st">"AB"</span>, <span class="st">"H"</span>, <span class="st">"BB"</span>))</span>
+<span id="cb55-3"><a href=""></a><span class="fu">head</span>(batting.<span class="fl">2008.</span>short, <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  id price
-1  1   300
-3  3   220
-4  4   410</code></pre>
+<pre><code>  nameFirst nameLast  AB   H BB
+1     Bobby    Abreu 609 180 73
+2    Moises     Alou  49  17  2
+3    Garret Anderson 557 163 29
+4    Marlon Anderson 138  29  9</code></pre>
 </div>
 </div>
-<p><code>subset()</code> 讀起來順；中括號利於程式化。兩者都要會。</p>
+<p>引數：<code>subset</code>——選列的邏輯運算式；<code>select</code>——選欄的運算式；<code>drop</code>——轉傳給 <code>[</code>。</p>
 </section>
 <section id="隨機抽樣" class="slide level2">
 <h2>隨機抽樣</h2>
+<p><code>sample(x, size, replace=FALSE, prob=NULL)</code> 抽取<em>向量元素</em>的隨機樣本。反直覺的是：用在資料框上抽的是<strong>欄位</strong>（資料框是欄位的串列！）——所以改抽<em>列號</em>：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">42</span>)                       <span class="co"># 可重現性！</span></span>
-<span id="cb40-2"><a href=""></a><span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">4</span>)                    <span class="co"># 不放回抽樣</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a>batting<span class="fl">.2008</span>[<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(batting<span class="fl">.2008</span>), <span class="dv">5</span>), <span class="dv">9</span><span class="sc">:</span><span class="dv">14</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1]  1  5 10  8</code></pre>
+<pre><code>     playerID yearID stint teamID lgID   G
+659 sizemgr01   2008     1    CLE   AL 157
+341 rowanaa01   2008     1    SFN   NL 152
+826 ramirha01   2008     1    FLO   NL 153
+497 tallebr01   2008     1    TOR   AL  51
+232 macdomi01   2008     1    CHA   AL  16</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">nrow</span>(sanfrancisco.home.sales), <span class="dv">5</span>)</span>
-<span id="cb42-2"><a href=""></a>sanfrancisco.home.sales[idx, <span class="fu">c</span>(<span class="st">"city"</span>, <span class="st">"price"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>更複雜的隨機子集也是同一招——隨機抽三支球隊的全部數據：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href=""></a>batting<span class="fl">.2008</span><span class="sc">$</span>teamID <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(batting<span class="fl">.2008</span><span class="sc">$</span>teamID)</span>
+<span id="cb59-2"><a href=""></a>batting.<span class="fl">2008.3</span>teams <span class="ot">&lt;-</span> batting<span class="fl">.2008</span>[<span class="fu">is.element</span>(batting<span class="fl">.2008</span><span class="sc">$</span>teamID,</span>
+<span id="cb59-3"><a href=""></a>                         <span class="fu">sample</span>(<span class="fu">levels</span>(batting<span class="fl">.2008</span><span class="sc">$</span>teamID), <span class="dv">3</span>)), ]</span>
+<span id="cb59-4"><a href=""></a><span class="fu">summary</span>(batting.<span class="fl">2008.3</span>teams<span class="sc">$</span>teamID)[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>              city  price
-1098 San Francisco 600000
-1252 San Francisco 570000
-3218 San Francisco 639000
-634  San Francisco 975000
-2097 San Francisco 925500</code></pre>
+<pre><code>ARI ATL BAL BOS CHA CHN CIN CLE COL DET 
+  0   0   0   0   0   0   0   0   0   0 </code></pre>
 </div>
 </div>
-<p>抽樣是訓練／測試切分（第二十一、二十二章）的基礎——而 <code>set.seed()</code> 讓結果可以重現給閱卷者看。</p>
+<p>分層、群集、最大熵等進階抽樣方法，見 <code>sampling</code> 套件。</p>
 </section></section>
 <section>
-<section id="彙總資料" class="title-slide slide level1 center">
-<h1>彙總資料</h1>
+<section id="摘要函式" class="title-slide slide level1 center">
+<h1>摘要函式</h1>
 
 </section>
-<section id="tapply-與-aggregate" class="slide level2">
-<h2>tapply 與 aggregate</h2>
-<p>分組摘要一行搞定：</p>
+<section id="tapply" class="slide level2">
+<h2>tapply</h2>
+<p><code>tapply(X, INDEX, FUN=, ..., simplify=)</code> 在因子串列 <code>INDEX</code> 定義的分組內摘要向量 <code>X</code>。各隊全壘打總數：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a><span class="fu">tapply</span>(sanfrancisco.home.sales<span class="sc">$</span>price,</span>
-<span id="cb44-2"><a href=""></a>       sanfrancisco.home.sales<span class="sc">$</span>bedrooms, median, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href=""></a><span class="fu">tapply</span>(<span class="at">X=</span>batting<span class="fl">.2008</span><span class="sc">$</span>HR, <span class="at">INDEX=</span><span class="fu">list</span>(batting<span class="fl">.2008</span><span class="sc">$</span>teamID), <span class="at">FUN=</span>sum)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>      0       1       2       3       4       5 
- 750000  559000  760000  875000  987500 1020000 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">aggregate</span>(price <span class="sc">~</span> bedrooms, <span class="at">data =</span> sanfrancisco.home.sales,</span>
-<span id="cb46-2"><a href=""></a>          <span class="at">FUN =</span> median)[<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  bedrooms   price
-1        0  750000
-2        1  559000
-3        2  760000
-4        3  875000
-5        4  987500
-6        5 1020000</code></pre>
+<pre><code>ARI ATL BAL BOS CHA CHN CIN CLE COL DET FLO HOU KCA LAA LAN MIL MIN NYA NYN OAK 
+159 130 172 173 235 184 187 171 160 200 208 167 120 159 137 198 111 180 172 125 
+PHI PIT SDN SEA SFN SLN TBA TEX TOR WAS 
+214 153 154 124  94 174 180 194 126 117 </code></pre>
 </div>
 </div>
-<ul>
-<li><code>tapply(values, groups, f)</code> 回傳陣列；<code>aggregate(formula, data, f)</code> 回傳整齊的資料框。</li>
-<li><code>by()</code> 是對整個資料框區塊的 <code>tapply</code>。</li>
-</ul>
+<p>引數：<code>X</code>——對象；<code>INDEX</code>——因子串列，各與 <code>X</code> 等長；<code>FUN</code>；<code>...</code> 轉傳 <code>FUN</code>；<code>simplify</code>——<code>FUN</code> 回傳純量時給陣列（預設），否則串列。</p>
 </section>
-<section id="rowsum-與計數" class="slide level2">
-<h2>rowsum 與計數</h2>
+<section id="tapply更豐富的摘要更多維度" class="slide level2">
+<h2>tapply：更豐富的摘要、更多維度</h2>
+<p><code>FUN</code> 可以回傳多個值——各聯盟打擊率的 <code>fivenum</code>（最小值、下樞紐、中位數、上樞紐、最大值）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a><span class="fu">rowsum</span>(sales<span class="sc">$</span>price, <span class="at">group =</span> <span class="fu">c</span>(<span class="st">"g1"</span>, <span class="st">"g1"</span>, <span class="st">"g2"</span>, <span class="st">"g2"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href=""></a><span class="fu">tapply</span>(<span class="at">X=</span>(batting<span class="fl">.2008</span><span class="sc">$</span>H<span class="sc">/</span>batting<span class="fl">.2008</span><span class="sc">$</span>AB),</span>
+<span id="cb63-2"><a href=""></a>       <span class="at">INDEX=</span><span class="fu">list</span>(batting<span class="fl">.2008</span><span class="sc">$</span>lgID), <span class="at">FUN=</span>fivenum)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   [,1]
-g1  450
-g2  630</code></pre>
+<pre><code>$AL
+[1] 0.0000000 0.1758242 0.2487923 0.2825485 1.0000000
+
+$NL
+[1] 0.0000000 0.0952381 0.2172524 0.2679739 1.0000000</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a><span class="fu">table</span>(sanfrancisco.home.sales<span class="sc">$</span>bedrooms)[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>INDEX</code> 也能放多個因子——聯盟×打擊慣用手的平均全壘打：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href=""></a><span class="fu">tapply</span>(<span class="at">X=</span>(batting<span class="fl">.2008</span><span class="sc">$</span>HR),</span>
+<span id="cb65-2"><a href=""></a>       <span class="at">INDEX=</span><span class="fu">list</span>(batting<span class="fl">.2008</span><span class="sc">$</span>lgID, batting<span class="fl">.2008</span><span class="sc">$</span>bats), <span class="at">FUN=</span>mean)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          B        L        R
+AL 4.254902 4.564516 2.980198
+NL 4.104478 3.981395 3.203905</code></pre>
+</div>
+</div>
+</section>
+<section id="by資料框版的-tapply" class="slide level2">
+<h2>by：資料框版的 tapply</h2>
+<p><code>by</code> 是 <code>tapply</code> 的資料框手足（<code>INDICES</code> 取代 <code>INDEX</code>）——逐組計算整欄平均：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href=""></a><span class="fu">by</span>(batting<span class="fl">.2008</span>[, <span class="fu">c</span>(<span class="st">"H"</span>, <span class="st">"2B"</span>, <span class="st">"3B"</span>, <span class="st">"HR"</span>)],</span>
+<span id="cb67-2"><a href=""></a>   <span class="at">INDICES=</span><span class="fu">list</span>(batting<span class="fl">.2008</span><span class="sc">$</span>lgID, batting<span class="fl">.2008</span><span class="sc">$</span>bats), <span class="at">FUN=</span>colMeans)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>: AL
+: B
+        H        2B        3B        HR 
+52.058824 10.647059  1.058824  4.254902 
+------------------------------------------------------------ 
+: NL
+: B
+        H        2B        3B        HR 
+53.761194 10.641791  1.477612  4.104478 
+------------------------------------------------------------ 
+: AL
+: L
+        H        2B        3B        HR 
+39.924731  8.053763  1.016129  4.564516 
+------------------------------------------------------------ 
+: NL
+: L
+         H         2B         3B         HR 
+32.2511628  6.5813953  0.7813953  3.9813953 
+------------------------------------------------------------ 
+: AL
+: R
+         H         2B         3B         HR 
+26.7821782  5.5544554  0.4084158  2.9801980 
+------------------------------------------------------------ 
+: NL
+: R
+         H         2B         3B         HR 
+27.1908894  5.6420824  0.4577007  3.2039046 </code></pre>
+</div>
+</div>
+</section>
+<section id="aggregate" class="slide level2">
+<h2>aggregate</h2>
+<p><code>aggregate(x, by, FUN, ...)</code> 一次摘要多個欄位（時間序列版改收 <code>nfrequency</code>、<code>ndeltat</code>、<code>ts.eps</code>）。各隊合計：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href=""></a><span class="fu">aggregate</span>(<span class="at">x=</span>batting<span class="fl">.2008</span>[, <span class="fu">c</span>(<span class="st">"AB"</span>, <span class="st">"H"</span>, <span class="st">"BB"</span>, <span class="st">"2B"</span>, <span class="st">"3B"</span>, <span class="st">"HR"</span>)],</span>
+<span id="cb69-2"><a href=""></a>          <span class="at">by=</span><span class="fu">list</span>(batting<span class="fl">.2008</span><span class="sc">$</span>teamID), <span class="at">FUN=</span>sum)[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Group.1   AB    H  BB  2B 3B  HR
+1     ARI 5409 1355 587 318 47 159
+2     ATL 5604 1514 618 316 33 130
+3     BAL 5559 1486 533 322 30 172
+4     BOS 5596 1565 646 353 33 173
+5     CHA 5553 1458 540 296 13 235
+6     CHN 5588 1552 636 329 21 184
+7     CIN 5465 1351 560 269 24 187
+8     CLE 5543 1455 560 339 22 171</code></pre>
+</div>
+</div>
+<p>引數：<code>x</code>；<code>by</code>——與 <code>x</code> 等長的分組元素串列；<code>FUN</code>——純量摘要函式（時間序列預設 <code>sum</code>）；<code>...</code> 轉傳 <code>FUN</code>。</p>
+</section>
+<section id="rowsum" class="slide level2">
+<h2>rowsum</h2>
+<p>只想按組求和？<code>rowsum(x, group, reorder=TRUE)</code> 是直達車：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href=""></a><span class="fu">rowsum</span>(batting<span class="fl">.2008</span>[, <span class="fu">c</span>(<span class="st">"AB"</span>, <span class="st">"H"</span>, <span class="st">"BB"</span>, <span class="st">"2B"</span>, <span class="st">"3B"</span>, <span class="st">"HR"</span>)],</span>
+<span id="cb71-2"><a href=""></a>       <span class="at">group=</span>batting<span class="fl">.2008</span><span class="sc">$</span>teamID)[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      AB    H  BB  2B 3B  HR
+ARI 5409 1355 587 318 47 159
+ATL 5604 1514 618 316 33 130
+BAL 5559 1486 533 322 30 172
+BOS 5596 1565 646 353 33 173
+CHA 5553 1458 540 296 13 235
+CHN 5588 1552 636 329 21 184
+CIN 5465 1351 560 269 24 187
+CLE 5543 1455 560 339 22 171</code></pre>
+</div>
+</div>
+</section>
+<section id="計數tabulate-與-table" class="slide level2">
+<h2>計數：tabulate 與 table</h2>
+<p><code>tabulate</code> 統計各整數值出現的次數（不附標籤——自己加）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href=""></a>HR.cnts <span class="ot">&lt;-</span> <span class="fu">tabulate</span>(batting<span class="fl">.2008</span><span class="sc">$</span>HR)</span>
+<span id="cb73-2"><a href=""></a><span class="fu">names</span>(HR.cnts) <span class="ot">&lt;-</span> <span class="dv">0</span><span class="sc">:</span>(<span class="fu">length</span>(HR.cnts) <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb73-3"><a href=""></a>HR.cnts[<span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> 0  1  2  3  4  5  6  7  8  9 10 11 
+92 63 45 20 15 26 23 21 22 15 15 18 </code></pre>
+</div>
+</div>
+<p><strong>類別</strong>值用 <code>table</code>，回傳計數的 table 物件（SAS 使用者：相當於 <code>PROC FREQ</code>）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href=""></a><span class="fu">table</span>(batting<span class="fl">.2008</span><span class="sc">$</span>bats)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-  0   1   2   3   4   5   6   7 
-910 216 543 373 176  42  12   6 </code></pre>
+  B   L   R 
+118 401 865 </code></pre>
 </div>
 </div>
-<p>給 <code>table()</code> 兩個引數就是交叉表——通往第十八章列聯表檢定的大門。</p>
+<p><code>table</code> 的引數：<code>...</code>——因子（或可轉型者）；<code>exclude</code>——剔除的水準；<code>useNA</code>——<code>"no"</code>／<code>"ifany"</code>／<code>"always"</code>；<code>dnn</code>——維度名稱；<code>deparse.level</code>——自動命名方式。</p>
+</section>
+<section id="多維表與-xtabs" class="slide level2">
+<h2>多維表與 xtabs</h2>
+<p>因子越多、維度越多——打擊手×投球手（再加 <code>lgID</code> 就是第三維）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href=""></a><span class="fu">table</span>(batting<span class="fl">.2008</span>[, <span class="fu">c</span>(<span class="st">"bats"</span>, <span class="st">"throws"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    throws
+bats   L   R
+   B  10 108
+   L 240 161
+   R  25 840</code></pre>
+</div>
+</div>
+<p><code>xtabs</code> 用<strong>公式</strong>建同樣的列聯表——常常省下不少打字：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href=""></a><span class="fu">xtabs</span>(<span class="sc">~</span>bats<span class="sc">+</span>lgID, batting<span class="fl">.2008</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    lgID
+bats  AL  NL
+   B  51  67
+   L 186 215
+   R 404 461</code></pre>
+</div>
+</div>
+<p>數值變數也能入列：先 <code>cut</code>、再 <code>table</code>——正是前面打擊率分箱的做法。</p>
 </section></section>
 <section>
 <section id="重塑資料" class="title-slide slide level1 center">
 <h1>重塑資料</h1>
 
 </section>
-<section id="寬與長" class="slide level2">
-<h2>寬與長</h2>
-<p>同一份資料可以排成<strong>寬格式</strong>（一個測量一欄）或<strong>長格式</strong>（一筆測量一列）。建模與 <code>ggplot2</code> 通常偏好長格式。</p>
+<section id="窄與寬以及-t" class="slide level2">
+<h2>窄與寬，以及 t</h2>
+<p>資料倉儲常一列存一個<em>事實</em>（「窄」格式）；分析可能需要一個概念一欄（「寬」格式）——反之亦然。最簡單的重塑工具是轉置 <code>t</code>（向量被當成單欄矩陣，轉出單列矩陣）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href=""></a>wide <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">q1 =</span> <span class="fu">c</span>(<span class="dv">90</span>, <span class="dv">70</span>), <span class="at">q2 =</span> <span class="fu">c</span>(<span class="dv">85</span>, <span class="dv">95</span>))</span>
-<span id="cb52-2"><a href=""></a>long <span class="ot">&lt;-</span> <span class="fu">reshape</span>(wide, <span class="at">direction =</span> <span class="st">"long"</span>,</span>
-<span id="cb52-3"><a href=""></a>                <span class="at">varying =</span> <span class="fu">c</span>(<span class="st">"q1"</span>, <span class="st">"q2"</span>), <span class="at">v.names =</span> <span class="st">"score"</span>,</span>
-<span id="cb52-4"><a href=""></a>                <span class="at">timevar =</span> <span class="st">"quiz"</span>, <span class="at">times =</span> <span class="fu">c</span>(<span class="st">"q1"</span>, <span class="st">"q2"</span>))</span>
-<span id="cb52-5"><a href=""></a>long</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">nrow=</span><span class="dv">5</span>)</span>
+<span id="cb81-2"><a href=""></a><span class="fu">t</span>(m)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>     id quiz score
-1.q1  1   q1    90
-2.q1  2   q1    70
-1.q2  1   q2    85
-2.q2  2   q2    95</code></pre>
+<pre><code>     [,1] [,2] [,3] [,4] [,5]
+[1,]    1    2    3    4    5
+[2,]    6    7    8    9   10</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href=""></a><span class="fu">t</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+[1,]    1    2    3    4    5    6    7    8    9    10</code></pre>
 </div>
 </div>
 </section>
-<section id="stack-與現代工具" class="slide level2">
-<h2>stack 與現代工具</h2>
+<section id="stack-與-unstack" class="slide level2">
+<h2>stack 與 unstack</h2>
+<p>以窄版報價表（代碼、日期、收盤）操作：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href=""></a><span class="fu">stack</span>(wide, <span class="at">select =</span> <span class="fu">c</span>(q1, q2))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href=""></a>my.quotes.narrow <span class="ot">&lt;-</span> my.quotes[, <span class="fu">c</span>(<span class="st">"symbol"</span>, <span class="st">"Date"</span>, <span class="st">"Close"</span>)]</span>
+<span id="cb85-2"><a href=""></a>unstacked <span class="ot">&lt;-</span> <span class="fu">unstack</span>(my.quotes.narrow, <span class="at">form=</span>Close<span class="sc">~</span>symbol)</span>
+<span id="cb85-3"><a href=""></a>unstacked</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  values ind
-1     90  q1
-2     70  q1
-3     85  q2
-4     95  q2</code></pre>
+<pre><code>    AAPL   AXP    GE   GOOG     GS
+1 105.12 13.63 10.11 348.06 106.02
+2  89.31 12.06  8.51 337.99  91.08
+3  90.13 16.73 12.13 338.53  80.73</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href=""></a><span class="fu">stack</span>(unstacked)[<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  values  ind
+1 105.12 AAPL
+2  89.31 AAPL
+3  90.13 AAPL
+4  13.63  AXP
+5  12.06  AXP
+6  16.73  AXP</code></pre>
 </div>
 </div>
+<p><code>form</code> 公式裡，右側是攤開依據的變數、左側是值。順序保留；Date 欄<strong>消失</strong>——<code>unstack</code> 適合「只有兩個變數重要」的資料。</p>
+</section>
+<section id="reshape長變寬" class="slide level2">
+<h2>reshape：長變寬</h2>
+<p><code>reshape</code> 是強大（卻出名地一體兩面）的工具。列＝日期、欄＝股票：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb89"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href=""></a>my.quotes.wide <span class="ot">&lt;-</span> <span class="fu">reshape</span>(my.quotes.narrow, <span class="at">idvar=</span><span class="st">"Date"</span>,</span>
+<span id="cb89-2"><a href=""></a>                          <span class="at">timevar=</span><span class="st">"symbol"</span>, <span class="at">direction=</span><span class="st">"wide"</span>)</span>
+<span id="cb89-3"><a href=""></a>my.quotes.wide</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        Date Close.GE Close.GOOG Close.AAPL Close.AXP Close.GS
+1 2009-03-02    10.11     348.06     105.12     13.63   106.02
+2 2009-02-02     8.51     337.99      89.31     12.06    91.08
+3 2009-01-02    12.13     338.53      90.13     16.73    80.73</code></pre>
+</div>
+</div>
+<p>參數會跟著結果存進屬性（<code>attributes(my.quotes.wide)$reshapeWide</code> 記著 <code>idvar</code>、<code>timevar</code>、<code>varying</code>……）——所以<strong>不帶引數</strong>呼叫 <code>reshape(my.quotes.wide)</code> 就能逆轉操作。</p>
+</section>
+<section id="reshape各種變化" class="slide level2">
+<h2>reshape：各種變化</h2>
+<p>角色互換——列＝股票、欄＝日期；或一次攜帶<strong>多個</strong>值欄位：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb91"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href=""></a><span class="fu">reshape</span>(my.quotes.narrow, <span class="at">idvar=</span><span class="st">"symbol"</span>, <span class="at">timevar=</span><span class="st">"Date"</span>,</span>
+<span id="cb91-2"><a href=""></a>        <span class="at">direction=</span><span class="st">"wide"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   symbol Close.2009-03-02 Close.2009-02-02 Close.2009-01-02
+1      GE            10.11             8.51            12.13
+4    GOOG           348.06           337.99           338.53
+7    AAPL           105.12            89.31            90.13
+10    AXP            13.63            12.06            16.73
+13     GS           106.02            91.08            80.73</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href=""></a>my.quotes.oc <span class="ot">&lt;-</span> my.quotes[, <span class="fu">c</span>(<span class="st">"symbol"</span>, <span class="st">"Date"</span>, <span class="st">"Close"</span>, <span class="st">"Open"</span>)]</span>
+<span id="cb93-2"><a href=""></a><span class="fu">reshape</span>(my.quotes.oc, <span class="at">timevar=</span><span class="st">"Date"</span>, <span class="at">idvar=</span><span class="st">"symbol"</span>,</span>
+<span id="cb93-3"><a href=""></a>        <span class="at">direction=</span><span class="st">"wide"</span>)[, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   symbol Close.2009-03-02 Open.2009-03-02 Close.2009-02-02 Open.2009-02-02
+1      GE            10.11            8.29             8.51           12.03
+4    GOOG           348.06          333.33           337.99          334.29
+7    AAPL           105.12           88.12            89.31           89.10
+10    AXP            13.63           11.68            12.06           16.35
+13     GS           106.02           87.86            91.08           78.78</code></pre>
+</div>
+</div>
+</section>
+<section id="reshape引數" class="slide level2">
+<h2>reshape：引數</h2>
+<p>一個函式、兩種身分——<code>direction="wide"</code> 需要 <code>idvar</code> ＋ <code>timevar</code>；<code>direction="long"</code> 需要 <code>varying</code>：</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data</code></td>
+<td>要重塑的資料框</td>
+</tr>
+<tr class="even">
+<td><code>varying</code></td>
+<td>寬格式中將攤成長格式各列的變數</td>
+</tr>
+<tr class="odd">
+<td><code>v.names</code></td>
+<td>長格式中將變成寬格式欄位的變數</td>
+</tr>
+<tr class="even">
+<td><code>timevar</code>／<code>idvar</code></td>
+<td>長格式中識別觀測／群體的變數（預設 <code>"time"</code>／<code>"id"</code>）</td>
+</tr>
+<tr class="odd">
+<td><code>ids</code>／<code>times</code></td>
+<td>新 id／time 變數的值</td>
+</tr>
+<tr class="even">
+<td><code>drop</code></td>
+<td>排除的變數</td>
+</tr>
+<tr class="odd">
+<td><code>direction</code></td>
+<td><code>"wide"</code> 或 <code>"long"</code></td>
+</tr>
+<tr class="even">
+<td><code>new.row.names</code></td>
+<td>以 id×time 產生列名？</td>
+</tr>
+<tr class="odd">
+<td><code>sep</code>／<code>split</code></td>
+<td>寬欄名如何編碼「變數×時間」（sep 預設 <code>"."</code>）</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reshape-套件melt-與-cast" class="slide level2">
+<h2>reshape 套件：melt 與 cast</h2>
+<p>Hadley Wickham 的 <strong>reshape</strong> 套件（不是那個函式！）用一個直覺模型取代上述一切：先把表格<strong>melt（熔化）</strong>成交易式紀錄，再把紀錄<strong>cast（澆鑄）</strong>成任何形狀：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb95"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href=""></a><span class="fu">library</span>(reshape)</span>
+<span id="cb95-2"><a href=""></a>my.molten.quotes <span class="ot">&lt;-</span> <span class="fu">melt</span>(my.quotes[, <span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>], <span class="at">id.vars=</span><span class="fu">c</span>(<span class="st">"symbol"</span>, <span class="st">"Date"</span>))</span>
+<span id="cb95-3"><a href=""></a><span class="fu">head</span>(my.molten.quotes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  symbol       Date variable  value
+1     GE 2009-03-02     Open   8.29
+2     GE 2009-02-02     Open  12.03
+3     GE 2009-01-02     Open  16.51
+4   GOOG 2009-03-02     Open 333.33
+5   GOOG 2009-02-02     Open 334.29
+6   GOOG 2009-01-02     Open 308.60</code></pre>
+</div>
+</div>
+<p>（書中的呼叫省略了 <code>id.vars</code>——它從 CSV 匯入的 <code>Date</code> 是<em>因子</em>，<code>melt</code> 會自動認作 id。我們的是真正的 <code>Date</code> 類別，否則會被當成測量值熔掉，所以明確指名 id。）</p>
+</section>
+<section id="cast一鍋熔湯三種形狀" class="slide level2">
+<h2>cast：一鍋熔湯、三種形狀</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb97"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href=""></a><span class="fu">cast</span>(<span class="at">data=</span>my.molten.quotes, variable<span class="sc">~</span>Date, <span class="at">subset=</span>(symbol<span class="sc">==</span><span class="st">'GE'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   variable   2009-01-02   2009-02-02   2009-03-02
+1      Open        16.51        12.03         8.29
+2      High        17.24        12.90        11.35
+3       Low        11.87         8.40         5.87
+4     Close        12.13         8.51        10.11
+5    Volume 117846700.00 194928800.00 277426300.00
+6 Adj.Close        11.78         8.51        10.11</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb99"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href=""></a><span class="fu">cast</span>(<span class="at">data=</span>my.molten.quotes, symbol<span class="sc">~</span>Date, <span class="at">subset=</span>(variable<span class="sc">==</span><span class="st">'Adj.Close'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  symbol 2009-01-02 2009-02-02 2009-03-02
+1   AAPL      90.13      89.31     105.12
+2    AXP      16.51      11.90      13.45
+3     GE      11.78       8.51      10.11
+4   GOOG     338.53     337.99     348.06
+5     GS      80.29      91.08     106.02</code></pre>
+</div>
+</div>
+<p>公式裡放 <code>|</code> 會回傳表格的<strong>串列</strong>——<code>cast(my.molten.quotes, Date~variable|symbol)</code> 給每檔股票一張報價表。</p>
+</section>
+<section id="melt-與-cast引數" class="slide level2">
+<h2>melt 與 cast：引數</h2>
+<p><code>melt.data.frame(data, id.vars, measure.vars, variable_name, na.rm, ...)</code>——<code>id.vars</code> 識別觀測、<code>measure.vars</code> 是測量值（未指定時：因子／字元欄當 id、其餘當測量）；<code>variable_name</code> 預設 <code>"variable"</code>。另有陣列與串列方法（<code>melt.array</code> 收 <code>varnames</code>；<code>melt.list</code> 遞迴熔化）。</p>
+<p><code>cast(data, formula, fun.aggregate=NULL, ..., margins, subset, fill, add.missing, value)</code>：</p>
 <ul>
-<li>Base R：簡單情況用 <code>stack()</code>/<code>unstack()</code>，一般情況用 <code>reshape()</code>。</li>
-<li>現代實務上，<code>tidyr</code> 套件（<code>pivot_longer()</code>、<code>pivot_wider()</code>）以更易讀的方式表達同樣的操作；進入 tidyverse 世界時就會遇到它。</li>
+<li><code>formula</code>——<code>x_1 + x_2 ~ y_1 ~ ... | list_var</code>，<code>...</code> 表示「其餘所有變數」、<code>.</code> 表示「沒有變數」（預設 <code>...~variable</code>）；</li>
+<li><code>fun.aggregate</code>——一格多值時的聚合方式；<code>margins</code>——計算邊際；<code>subset</code>——篩選熔化資料；<code>fill</code>／<code>add.missing</code>——處理缺席組合；<code>value</code>——值欄位名稱。</li>
 </ul>
+<p>（現代備註：reshape 衍生出 <code>reshape2</code>，如今由 <code>tidyr</code> 的 <code>pivot_longer</code>／<code>pivot_wider</code> 接班——melt/cast 的思想一脈相承。）</p>
+</section></section>
+<section>
+<section id="資料清理" class="title-slide slide level1 center">
+<h1>資料清理</h1>
+
+</section>
+<section id="清理的意義" class="slide level2">
+<h2>清理的意義</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>驚喜是常態。</strong> 作者的信用資料戰爭故事：有效的 FICO 信用分數介於 340–840，但資料裡滿是 997／998／999——那是「資料不足」之類的特殊代碼，不是超神信用。醫院紀錄：同名病人被誤併成一筆；同一病人看兩位醫生變成兩筆。清理<strong>不是改變資料的意義</strong>——而是辨識收集、處理、儲存過程造成的問題，修掉它們、別讓它們汙染分析。</p>
+</div>
+</div>
+</div>
+</section>
+<section id="找出並移除重複" class="slide level2">
+<h2>找出並移除重複</h2>
+<p>假設 GE 不小心在代碼清單出現兩次。<code>duplicated</code> 標記重複了前面列的列；拿它來過濾，或讓 <code>unique</code> 一步到位：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb101"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href=""></a>my.quotes<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">rbind</span>(my.quotes, my.quotes[my.quotes<span class="sc">$</span>symbol <span class="sc">==</span> <span class="st">"GE"</span>, ])</span>
+<span id="cb101-2"><a href=""></a><span class="fu">duplicated</span>(my.quotes<span class="fl">.2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+[13] FALSE FALSE FALSE  TRUE  TRUE  TRUE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb103"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href=""></a>my.quotes.unique <span class="ot">&lt;-</span> my.quotes<span class="fl">.2</span>[<span class="sc">!</span><span class="fu">duplicated</span>(my.quotes<span class="fl">.2</span>), ]</span>
+<span id="cb103-2"><a href=""></a>my.quotes.unique <span class="ot">&lt;-</span> <span class="fu">unique</span>(my.quotes<span class="fl">.2</span>)        <span class="co"># 結果相同</span></span>
+<span id="cb103-3"><a href=""></a><span class="fu">nrow</span>(my.quotes.unique)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 15</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="排序" class="title-slide slide level1 center">
+<h1>排序</h1>
+
+</section>
+<section id="sort" class="slide level2">
+<h2>sort</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb105"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb105-1"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">7</span>, <span class="dv">2</span>, <span class="dv">7</span>, <span class="dv">1</span>)</span>
+<span id="cb105-2"><a href=""></a><span class="fu">sort</span>(w)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 4 5 7 7</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb107"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href=""></a><span class="fu">sort</span>(w, <span class="at">decreasing=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7 7 5 4 2 1</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb109"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb109-1"><a href=""></a><span class="fu">length</span>(w) <span class="ot">&lt;-</span> <span class="dv">7</span>                      <span class="co"># 製造一個 NA</span></span>
+<span id="cb109-2"><a href=""></a><span class="fu">sort</span>(w)                             <span class="co"># na.last=NA：NA 被丟掉</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 4 5 7 7</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb111"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb111-1"><a href=""></a><span class="fu">sort</span>(w, <span class="at">na.last=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  1  2  4  5  7  7 NA</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb113"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb113-1"><a href=""></a><span class="fu">sort</span>(w, <span class="at">na.last=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NA  1  2  4  5  7  7</code></pre>
+</div>
+</div>
+</section>
+<section id="order排序資料框" class="slide level2">
+<h2>order：排序資料框</h2>
+<p><code>sort</code> 排向量；資料框要靠<strong>列索引的排列</strong>，由 <code>order(..., na.last=, decreasing=)</code> 產生——它依序按各引數向量排序、以下一個向量打破平手：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb115"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb115-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">11</span>, <span class="dv">12</span>, <span class="dv">13</span>, <span class="dv">15</span>, <span class="dv">14</span>)</span>
+<span id="cb115-2"><a href=""></a><span class="fu">order</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 3 5 4</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb117"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href=""></a>v[<span class="fu">order</span>(v)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 11 12 13 14 15</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb119"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb119-1"><a href=""></a>u <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"pig"</span>, <span class="st">"cow"</span>, <span class="st">"duck"</span>, <span class="st">"horse"</span>, <span class="st">"rat"</span>)</span>
+<span id="cb119-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(v, u)</span>
+<span id="cb119-3"><a href=""></a>w[<span class="fu">order</span>(w<span class="sc">$</span>v), ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   v     u
+1 11   pig
+2 12   cow
+3 13  duck
+5 14   rat
+4 15 horse</code></pre>
+</div>
+</div>
+</section>
+<section id="按一欄或多欄排序" class="slide level2">
+<h2>按一欄或多欄排序</h2>
+<p>報價表按收盤價排；再按代碼排、收盤價打破平手：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb121"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href=""></a>my.quotes[<span class="fu">order</span>(my.quotes<span class="sc">$</span>Close), ][<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   symbol       Date  Open  High   Low Close
+2      GE 2009-02-02 12.03 12.90  8.40  8.51
+1      GE 2009-03-02  8.29 11.35  5.87 10.11
+11    AXP 2009-02-02 16.35 18.27 11.44 12.06
+3      GE 2009-01-02 16.51 17.24 11.87 12.13
+10    AXP 2009-03-02 11.68 15.24  9.71 13.63</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb123"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb123-1"><a href=""></a>my.quotes[<span class="fu">order</span>(my.quotes<span class="sc">$</span>symbol, my.quotes<span class="sc">$</span>Close), ][<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   symbol       Date  Open   High   Low  Close
+8    AAPL 2009-02-02 89.10 103.00 86.51  89.31
+9    AAPL 2009-01-02 85.88  97.17 78.20  90.13
+7    AAPL 2009-03-02 88.12 109.98 82.33 105.12
+11    AXP 2009-02-02 16.35  18.27 11.44  12.06
+10    AXP 2009-03-02 11.68  15.24  9.71  13.63
+12    AXP 2009-01-02 18.57  21.38 14.72  16.73</code></pre>
+</div>
+</div>
+</section>
+<section id="按全部欄位排序do.call" class="slide level2">
+<h2>按全部欄位排序：do.call</h2>
+<p>整個資料框排序藏著陷阱：<code>order(my.quotes)</code> 把資料框當<em>一條長向量</em>。<code>order</code> 想要的是一串向量——用 <code>do.call</code> 把資料框的欄位攤成引數送進去：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb125"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb125-1"><a href=""></a><span class="fu">do.call</span>(order, my.quotes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]  9  8  7 12 11 10  3  2  1  6  5  4 15 14 13</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb127"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb127-1"><a href=""></a>my.quotes[<span class="fu">do.call</span>(order, my.quotes), ][<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   symbol       Date  Open   High   Low  Close
+9    AAPL 2009-01-02 85.88  97.17 78.20  90.13
+8    AAPL 2009-02-02 89.10 103.00 86.51  89.31
+7    AAPL 2009-03-02 88.12 109.98 82.33 105.12
+12    AXP 2009-01-02 18.57  21.38 14.72  16.73
+11    AXP 2009-02-02 16.35  18.27 11.44  12.06
+10    AXP 2009-03-02 11.68  15.24  9.71  13.63</code></pre>
+</div>
+</div>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

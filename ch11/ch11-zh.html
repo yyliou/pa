@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,39 +211,384 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="資料進資料出" class="title-slide slide level1 center">
-<h1><strong>資料進，資料出</strong></h1>
+<section id="資料的進與出" class="title-slide slide level1 center">
+<h1><strong>資料的進與出</strong></h1>
 
 </section>
-<section id="在-r-內輸入資料" class="slide level2">
-<h2>在 R 內輸入資料</h2>
-<p>小型資料集用第二部分學過的建構函式就夠了：</p>
+<section id="本章地圖" class="slide level2">
+<h2>本章地圖</h2>
+<p>分析需要資料。本章涵蓋整條管線：</p>
+<ul>
+<li>在 R 內<strong>輸入</strong>資料（指令、資料編輯器）；</li>
+<li><strong>儲存與載入</strong> R 物件；</li>
+<li><strong>匯入</strong>外部檔案——分隔文字、定寬文字、其他軟體的格式；</li>
+<li><strong>匯出</strong>資料成文字檔；</li>
+<li><strong>資料庫</strong>——RODBC 與 DBI。</li>
+</ul>
+</section></section>
+<section>
+<section id="在-r-內輸入資料" class="title-slide slide level1 center">
+<h1>在 R 內輸入資料</h1>
+
+</section>
+<section id="用-r-指令輸入" class="slide level2">
+<h2>用 R 指令輸入</h2>
+<p>觀測值不多時，主控台就夠用：<code>c</code> 建向量、<code>data.frame</code> 組裝。書中範例——2008 年 NFL 五大高薪：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>salary <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">18700000</span>, <span class="dv">14626720</span>, <span class="dv">14137500</span>)</span>
-<span id="cb1-2"><a href=""></a>position <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"QB"</span>, <span class="st">"QB"</span>, <span class="st">"DE"</span>)</span>
-<span id="cb1-3"><a href=""></a>top.contracts <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(position, salary)</span>
-<span id="cb1-4"><a href=""></a>top.contracts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>salary <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">18700000</span>, <span class="dv">14626720</span>, <span class="dv">14137500</span>, <span class="dv">13980000</span>, <span class="dv">12916666</span>)</span>
+<span id="cb1-2"><a href=""></a>position <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"QB"</span>, <span class="st">"QB"</span>, <span class="st">"DE"</span>, <span class="st">"QB"</span>, <span class="st">"QB"</span>)</span>
+<span id="cb1-3"><a href=""></a>team <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Colts"</span>, <span class="st">"Patriots"</span>, <span class="st">"Panthers"</span>, <span class="st">"Bengals"</span>, <span class="st">"Giants"</span>)</span>
+<span id="cb1-4"><a href=""></a>name.last <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Manning"</span>, <span class="st">"Brady"</span>, <span class="st">"Pepper"</span>, <span class="st">"Palmer"</span>, <span class="st">"Manning"</span>)</span>
+<span id="cb1-5"><a href=""></a>name.first <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Peyton"</span>, <span class="st">"Tom"</span>, <span class="st">"Julius"</span>, <span class="st">"Carson"</span>, <span class="st">"Eli"</span>)</span>
+<span id="cb1-6"><a href=""></a>top.<span class="fl">5.</span>salaries <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(name.last, name.first, team, position, salary)</span>
+<span id="cb1-7"><a href=""></a>top.<span class="fl">5.</span>salaries</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  position   salary
-1       QB 18700000
-2       QB 14626720
-3       DE 14137500</code></pre>
+<pre><code>  name.last name.first     team position   salary
+1   Manning     Peyton    Colts       QB 18700000
+2     Brady        Tom Patriots       QB 14626720
+3    Pepper     Julius Panthers       DE 14137500
+4    Palmer     Carson  Bengals       QB 13980000
+5   Manning        Eli   Giants       QB 12916666</code></pre>
+</div>
+</div>
+</section>
+<section id="資料編輯器edit-與-fix" class="slide level2">
+<h2>資料編輯器：edit 與 fix</h2>
+<p>一句一句輸入，超過幾列就嫌煩。R 的<strong>資料編輯器</strong>提供 GUI 來編輯表格物件：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>top.<span class="fl">5.</span>salaries <span class="ot">&lt;-</span> <span class="fu">edit</span>(top.<span class="fl">5.</span>salaries)   <span class="co"># 必須指派，否則編輯全失！</span></span>
+<span id="cb3-2"><a href=""></a><span class="fu">fix</span>(top.<span class="fl">5.</span>salaries)                      <span class="co"># edit ＋ 指派回去，一步完成</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li><code>edit</code> 開啟編輯器並<em>回傳</em>編輯後的物件——忘了指派，心血就蒸發。<code>fix</code> 替你呼叫 <code>edit</code> 並指派回原符號。</li>
+<li>為資料框與矩陣設計；用在向量、函式、串列上會退回文字編輯器。</li>
+<li>各平台風味：<strong>Windows</strong>——點儲存格編輯、點欄名改名或改型別、在空格輸入即可擴增表格（也可從 <em>Edit → Data Editor</em> 進入）。<strong>macOS</strong>——工具列按鈕增刪列與欄；欄的型別與名稱<em>不能</em>改。<strong>Linux（X11）</strong>——類似 Windows，另有 Copy／Paste／Quit 按鈕。</li>
+</ul>
+</section>
+<section id="編輯器-vs.-試算表" class="slide level2">
+<h2>編輯器 vs.&nbsp;試算表</h2>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Warning</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>檢視可以，正式輸入免談。</strong> 書中的三個理由：R 資料編輯器<strong>沒有復原／重做</strong>；<strong>沒有儲存按鈕</strong>（得關閉、存檔、重開——彆扭又容易出錯）；而試算表或桌面資料庫有<strong>輸入表單</strong>，輸入複雜紀錄友善得多。大量資料請在別處輸入，再匯進 R。</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="儲存與載入-r-物件" class="title-slide slide level1 center">
+<h1>儲存與載入 R 物件</h1>
+
+</section>
+<section id="save-與-load" class="slide level2">
+<h2>save 與 load</h2>
+<p>最簡單的持久化：<code>save</code> 把物件寫進檔案，<code>load</code> 取回——</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>target <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">"top.5.salaries.RData"</span>)</span>
+<span id="cb4-2"><a href=""></a><span class="fu">save</span>(top.<span class="fl">5.</span>salaries, <span class="at">file =</span> target)</span>
+<span id="cb4-3"><a href=""></a><span class="fu">rm</span>(top.<span class="fl">5.</span>salaries)</span>
+<span id="cb4-4"><a href=""></a><span class="fu">load</span>(target)</span>
+<span id="cb4-5"><a href=""></a>top.<span class="fl">5.</span>salaries[<span class="dv">1</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  name.last name.first  team position   salary
+1   Manning     Peyton Colts       QB 18700000</code></pre>
 </div>
 </div>
 <ul>
-<li><code>rbind()</code> 增加列；<code>cbind()</code> 增加欄。</li>
-<li><code>scan()</code> 可互動式逐筆輸入——快速實驗很方便。</li>
+<li>檔案路徑一律用<strong>正斜線</strong>——連 Windows 也是（<code>"C:/Documents and Settings/..."</code>）。</li>
+<li><code>file</code> 引數<strong>必須具名</strong>（書的作者十次有九次忘記）。</li>
+<li>存出的檔案<strong>跨平台通用</strong>：macOS 寫的，Windows、Linux 都能載入。</li>
+<li>想存多個物件就並列列出；想存<em>全部</em>用 <code>save.image()</code>——退出 R 時的「要儲存工作空間嗎？」做的正是這件事。</li>
 </ul>
 </section>
-<section id="編輯-gui" class="slide level2">
-<h2>編輯 GUI</h2>
-<p>R 內建一個陽春的試算表式編輯器：</p>
+<section id="save-完整簽名" class="slide level2">
+<h2>save 完整簽名</h2>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>top.contracts <span class="ot">&lt;-</span> <span class="fu">edit</span>(top.contracts)  <span class="co"># edit 回傳「新的」物件</span></span>
-<span id="cb3-2"><a href=""></a><span class="fu">fix</span>(top.contracts)                    <span class="co"># fix 會自己把結果存回去</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">save</span>(..., <span class="at">list =</span>, <span class="at">file =</span>, <span class="at">ascii =</span>, <span class="at">version =</span>, <span class="at">envir =</span>,</span>
+<span id="cb6-2"><a href=""></a>     <span class="at">compress =</span>, <span class="at">eval.promises =</span>, <span class="at">precheck =</span> )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>...</code>／<code>list</code></td>
+<td>要存的物件：以符號列出／以字元向量指定</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>file</code></td>
+<td>檔名或連線</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>ascii</code></td>
+<td>存成可讀文字而非二進位？</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>version</code></td>
+<td>檔案格式版本（R 1.4.0 起為 2）</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td><code>envir</code></td>
+<td>去哪個環境找物件</td>
+<td>呼叫端環境</td>
+</tr>
+<tr class="even">
+<td><code>compress</code></td>
+<td>gzip 壓縮？</td>
+<td>二進位時 <code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td><code>eval.promises</code></td>
+<td>存檔前強制求值 promise？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>precheck</code></td>
+<td>寫入前確認物件存在？</td>
+<td><code>TRUE</code></td>
+</tr>
+</tbody>
+</table>
+<p>預設值處處合理：壓縮的二進位格式，不會誤毀你的物件。</p>
+</section></section>
+<section>
+<section id="匯入外部檔案" class="title-slide slide level1 center">
+<h1>匯入外部檔案</h1>
+
+</section>
+<section id="文字資料檔的解剖" class="slide level2">
+<h2>文字資料檔的解剖</h2>
+<p>多數資料文字檔長相類似：一行一筆<strong>觀測</strong>，每行放該筆觀測的各<strong>變數</strong>——以<strong>分隔字元（delimiter）</strong>隔開，或靠行內的固定位置區分。分隔檔範例 <code>top.5.salaries.csv</code>：</p>
+<pre><code>name.last,name.first,team,position,salary
+"Manning","Peyton","Colts","QB",18700000
+"Brady","Tom","Patriots","QB",14626720
+...</code></pre>
+<p>讀出三個特徵：第一列是<strong>欄名</strong>；文字欄位包著<strong>引號</strong>；欄位之間以<strong>逗號</strong>分隔。</p>
+</section>
+<section id="read.table" class="slide level2">
+<h2>read.table</h2>
+<p>主力匯入函式，回傳資料框——一列一觀測、一欄一變數。針對上面的檔案：有標題列、逗號分隔、雙引號包字串：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>top.<span class="fl">5.</span>salaries <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"top.5.salaries.csv"</span>,</span>
+<span id="cb8-2"><a href=""></a>                             <span class="at">header=</span><span class="cn">TRUE</span>, <span class="at">sep=</span><span class="st">","</span>, <span class="at">quote=</span><span class="st">"</span><span class="sc">\"</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>top.<span class="fl">5.</span>salaries</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  name.last name.first     team position   salary
+1   Manning     Peyton    Colts       QB 18700000
+2     Brady        Tom Patriots       QB 14626720
+3    Pepper     Julius Panthers       DE 14137500
+4    Palmer     Carson  Bengals       QB 13980000
+5   Manning        Eli   Giants       QB 12916666</code></pre>
+</div>
+</div>
+</section>
+<section id="read.table-引數一" class="slide level2">
+<h2>read.table 引數（一）</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>file</code></td>
+<td>檔名、連線或 <strong>URL</strong>（唯一必填）</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>header</code></td>
+<td>第一列是變數名？</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>sep</code></td>
+<td>欄位分隔字元（<code>""</code> ＝任何空白）</td>
+<td><code>""</code></td>
+</tr>
+<tr class="even">
+<td><code>quote</code></td>
+<td>文字的引號字元</td>
+<td><code>"</code> 與 <code>'</code></td>
+</tr>
+<tr class="odd">
+<td><code>dec</code></td>
+<td>小數點字元</td>
+<td><code>.</code></td>
+</tr>
+<tr class="even">
+<td><code>row.names</code>／<code>col.names</code></td>
+<td>列名／欄名</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>as.is</code></td>
+<td>逐欄指定：不要轉因子</td>
+<td><code>!stringsAsFactors</code></td>
+</tr>
+<tr class="even">
+<td><code>na.strings</code></td>
+<td>視為 <code>NA</code> 的字串</td>
+<td><code>"NA"</code></td>
+</tr>
+<tr class="odd">
+<td><code>colClasses</code></td>
+<td>各欄指定的類別</td>
+<td><code>NA</code></td>
+</tr>
+<tr class="even">
+<td><code>nrows</code></td>
+<td>讀入的列數</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="read.table-引數二" class="slide level2">
+<h2>read.table 引數（二）</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>skip</code></td>
+<td>開讀前跳過的列數</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><code>check.names</code></td>
+<td>檢查欄名是合法符號？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td><code>fill</code></td>
+<td>短列補空欄？</td>
+<td><code>!blank.lines.skip</code></td>
+</tr>
+<tr class="even">
+<td><code>strip.white</code></td>
+<td>修掉字元欄前後空白？</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>blank.lines.skip</code></td>
+<td>忽略空白列？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>comment.char</code></td>
+<td>註解列起始字元</td>
+<td><code>"#"</code></td>
+</tr>
+<tr class="odd">
+<td><code>allowEscapes</code></td>
+<td>解讀 <code>\n</code> 等跳脫？</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>flush</code></td>
+<td>欄位讀齊後跳過該行其餘？</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>stringsAsFactors</code></td>
+<td>文字轉因子？</td>
+<td>R 4.0 起 <code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>encoding</code></td>
+<td>來源檔編碼</td>
+<td><code>"unknown"</code></td>
+</tr>
+</tbody>
+</table>
+<p>幾乎每次都要面對的兩個：<strong><code>sep</code></strong> 與 <strong><code>header</code></strong>。</p>
+</section>
+<section id="便利家族" class="slide level2">
+<h2>便利家族</h2>
+<p>包裝函式預設好常見組合：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>函式</th>
+<th>header</th>
+<th>sep</th>
+<th>dec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>read.table</code></td>
+<td><code>FALSE</code></td>
+<td>空白</td>
+<td><code>.</code></td>
+</tr>
+<tr class="even">
+<td><code>read.csv</code></td>
+<td><code>TRUE</code></td>
+<td><code>,</code></td>
+<td><code>.</code></td>
+</tr>
+<tr class="odd">
+<td><code>read.csv2</code></td>
+<td><code>TRUE</code></td>
+<td><code>;</code></td>
+<td><code>,</code></td>
+</tr>
+<tr class="even">
+<td><code>read.delim</code></td>
+<td><code>TRUE</code></td>
+<td>tab</td>
+<td><code>.</code></td>
+</tr>
+<tr class="odd">
+<td><code>read.delim2</code></td>
+<td><code>TRUE</code></td>
+<td>tab</td>
+<td><code>,</code></td>
+</tr>
+</tbody>
+</table>
+<p>實務上 <code>read.csv</code> 與 <code>read.delim</code> 不加選項就能應付多數檔案（<code>2</code> 系列服務歐洲的逗號小數慣例）。</p>
+</section>
+<section id="從-url-讀取" class="slide level2">
+<h2>從 URL 讀取</h2>
+<p><code>file</code> 接受 URL，網路資料直接載入。書中從 Yahoo! Finance 一口氣抓了十年的 S&amp;P 500 月線：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>sp500 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">paste</span>(<span class="st">"http://ichart.finance.yahoo.com/table.csv?"</span>,</span>
+<span id="cb11-2"><a href=""></a>  <span class="st">"s=%5EGSPC&amp;a=03&amp;b=1&amp;c=1999&amp;d=03&amp;e=1&amp;f=2009&amp;g=m&amp;ignore=.csv"</span>, <span class="at">sep=</span><span class="st">""</span>))</span>
+<span id="cb11-3"><a href=""></a>sp500[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span>
+<span id="cb11-4"><a href=""></a><span class="do">##         Date   Open   High    Low  Close      Volume Adj.Close</span></span>
+<span id="cb11-5"><a href=""></a><span class="do">## 1 2009-04-01 793.59 813.62 783.32 811.08 12068280000    811.08</span></span>
+<span id="cb11-6"><a href=""></a><span class="do">## 2 2009-03-02 729.57 832.98 666.79 797.87  7633306300    797.87</span></span>
+<span id="cb11-7"><a href=""></a><span class="do">## ...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="callout callout-warning callout-titled callout-style-default">
 <div class="callout-body">
@@ -254,163 +599,448 @@
 <p><strong>Warning</strong></p>
 </div>
 <div class="callout-content">
-<p><strong><code>edit()</code> 不會就地修改。</strong> 忘記把它的結果指派回去是經典的資料遺失時刻；<code>fix()</code> 的存在正是為了避免這件事。</p>
+<p><strong>API 已死。</strong> Yahoo! 多年前就關閉了這個服務——此網址已無回應。但<em>技巧</em>（任何接受檔名之處都可放 URL）完全有效；今日的金融資料請改用 <code>quantmod</code> 或 <code>tidyquant</code> 套件。</p>
 </div>
 </div>
 </div>
+</section>
+<section id="匯入實務訣竅" class="slide level2">
+<h2>匯入實務訣竅</h2>
 <ul>
-<li>編輯器外觀依平台而異（Windows 表格、macOS 表單、X11 視窗），但函式完全相同。</li>
-<li>真正的資料輸入用試算表軟體更舒服——編輯器最適合快速檢視與修一兩個儲存格。</li>
+<li><strong>先用小樣本測試。</strong> 載入 15 分鐘才發現分隔符指定錯，很傷；實驗階段加上 <code>nrows=20</code>。</li>
+<li><strong>從 Excel 來：</strong> 匯出 CSV 或 tab 分隔的 TXT，行尾盡量用 Unix 式（<code>\n</code>）而非 MS-DOS 式（<code>\n\r</code>）。CSV 在 Windows 點兩下就開進 Excel，很方便——但文字含逗號就必須加引號、引號內的引號還得跳脫；tab 在文字中較罕見，TXT 檔較少出意外。</li>
+<li><strong>從資料庫來：</strong> 用 GUI 工具查詢再匯出，勝過脆弱的命令列腳本；書中點名 Toad for Data Analysts、MySQL Query Browser、Oracle SQL Developer（今日：DBeaver 與各家現行工具）。</li>
 </ul>
 </section>
-<section id="儲存物件" class="slide level2">
-<h2>儲存物件</h2>
-<p><code>save()</code> 把任意一組 R 物件寫成可攜的二進位檔；<code>load()</code> 連名稱一起還原：</p>
+<section id="定寬檔案read.fwf" class="slide level2">
+<h2>定寬檔案：read.fwf</h2>
+<p>當變數由位置而非分隔符決定時：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>tmp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".RData"</span>)</span>
-<span id="cb4-2"><a href=""></a><span class="fu">save</span>(top.contracts, <span class="at">file =</span> tmp)       <span class="co"># `file =` 必須具名</span></span>
-<span id="cb4-3"><a href=""></a><span class="fu">rm</span>(top.contracts)</span>
-<span id="cb4-4"><a href=""></a><span class="fu">load</span>(tmp)</span>
-<span id="cb4-5"><a href=""></a>top.contracts[<span class="dv">1</span>, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  position   salary
-1       QB 18700000</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">read.fwf</span>(file, widths, <span class="at">header =</span> , <span class="at">sep =</span> , <span class="at">skip =</span> ,</span>
+<span id="cb12-2"><a href=""></a>         row.names, col.names, <span class="at">n =</span> , <span class="at">buffersize =</span> , ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>file</code></td>
+<td>檔名或連線（必填）</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>widths</code></td>
+<td>各欄寬度的整數向量——一筆紀錄跨多行時改用向量的<em>串列</em>（必填）</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>header</code></td>
+<td>第一行是欄名（以 <code>sep</code> 分隔）？</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>sep</code></td>
+<td>標題列欄名的分隔字元</td>
+<td>tab</td>
+</tr>
+<tr class="odd">
+<td><code>skip</code>／<code>n</code></td>
+<td>跳過的行數／讀入的紀錄數</td>
+<td>0／<code>-1</code></td>
+</tr>
+<tr class="even">
+<td><code>row.names</code>／<code>col.names</code></td>
+<td>列名／欄名</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>buffersize</code></td>
+<td>每批讀入的行數（效能旋鈕）</td>
+<td>2000</td>
+</tr>
+</tbody>
+</table>
+<p><code>read.fwf</code> 也接受 <code>read.table</code> 的引數，如 <code>as.is</code>、<code>na.strings</code>、<code>colClasses</code>、<code>strip.white</code>。</p>
+</section>
+<section id="大型定寬檔先預處理" class="slide level2">
+<h2>大型定寬檔：先預處理</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>CDC 死亡檔案的警世故事。</strong> 美國 CDC 以定寬格式公布每一筆死亡紀錄——2006 年的檔案 1.1 GB。理論上一個巨大的 <code>read.fwf</code> 呼叫（書中列出全部 43 個寬度與欄名）就能載入子集；實際上慢得要命：R 解析文字不快，而單字元的類別代碼在記憶體中從 1 位元組膨脹成 4 位元組整數。書中的對策：用腳本語言預處理——它的 Perl 腳本逐行 <code>unpack</code>、輸出精簡的 CSV，再用 <code>read.csv</code> 收尾。（作者習慣在 Excel 裡擬好寬度／欄名清單，用公式生成程式碼。）現代對策：<code>readr::read_fwf</code> 或 <code>data.table::fread</code>，快上一大截。</p>
 </div>
 </div>
+</div>
+</section>
+<section id="逐行讀取readlines" class="slide level2">
+<h2>逐行讀取：readLines</h2>
+<p>觀測跨多行、或格式讓 <code>read.table</code> 無能為力時，往下一層。<code>readLines</code> 一行回傳一個字元值——也能讀互動輸入：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">readLines</span>(<span class="at">con =</span> <span class="fu">stdin</span>(), <span class="at">n =</span> <span class="sc">-</span><span class="dv">1</span>L, <span class="at">ok =</span> <span class="cn">TRUE</span>, <span class="at">warn =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-2"><a href=""></a>          <span class="at">encoding =</span> <span class="st">"unknown"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>con</code></td>
+<td>檔案、URL 或連線</td>
+<td><code>stdin()</code></td>
+</tr>
+<tr class="even">
+<td><code>n</code></td>
+<td>讀入行數（負值＝全部）</td>
+<td><code>-1L</code></td>
+</tr>
+<tr class="odd">
+<td><code>ok</code></td>
+<td>行數不足 <code>n</code> 也不報錯？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>warn</code></td>
+<td>檔尾缺換行時警告？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td><code>encoding</code></td>
+<td>輸入編碼</td>
+<td><code>"unknown"</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="低階結構化讀取scan" class="slide level2">
+<h2>低階結構化讀取：scan</h2>
+<p><code>scan</code> 透過 <code>what</code> 把內容讀進<em>指定的結構</em>——單一型別，或型別串列（得到欄位串列）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">scan</span>(<span class="at">file =</span> <span class="st">""</span>, <span class="at">what =</span> <span class="fu">double</span>(<span class="dv">0</span>), <span class="at">nmax =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">n =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">sep =</span> <span class="st">""</span>,</span>
+<span id="cb14-2"><a href=""></a>     <span class="at">quote =</span> , <span class="at">dec =</span> <span class="st">"."</span>, <span class="at">skip =</span> <span class="dv">0</span>, <span class="at">nlines =</span> <span class="dv">0</span>, <span class="at">na.strings =</span> <span class="st">"NA"</span>,</span>
+<span id="cb14-3"><a href=""></a>     <span class="at">flush =</span> <span class="cn">FALSE</span>, <span class="at">fill =</span> <span class="cn">FALSE</span>, <span class="at">strip.white =</span> <span class="cn">FALSE</span>, <span class="at">quiet =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb14-4"><a href=""></a>     <span class="at">blank.lines.skip =</span> <span class="cn">TRUE</span>, <span class="at">multi.line =</span> <span class="cn">TRUE</span>, <span class="at">comment.char =</span> <span class="st">""</span>,</span>
+<span id="cb14-5"><a href=""></a>     <span class="at">allowEscapes =</span> <span class="cn">FALSE</span>, <span class="at">encoding =</span> <span class="st">"unknown"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>重點：<code>what</code>——目標型別（<code>logical</code>、<code>integer</code>、<code>numeric</code>、<code>complex</code>、<code>character</code>、<code>raw</code>，或串列）；<code>nmax</code>／<code>n</code>——讀幾個值或幾筆紀錄；<code>multi.line</code>——<code>what</code> 是串列時允許紀錄跨行；<code>flush</code>——讀完該行所需欄位後丟棄其餘（可在行尾寫註解）；<code>quiet</code>——關掉「Read n items」訊息。其餘與 <code>read.table</code> 對應。</p>
+</section>
+<section id="其他軟體的檔案" class="slide level2">
+<h2>其他軟體的檔案</h2>
+<p><code>foreign</code> 套件（與同伴）直接讀取其他系統的原生檔：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>格式</th>
+<th>讀取</th>
+<th>寫出</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ARFF（Weka）</td>
+<td><code>read.arff</code></td>
+<td><code>write.arff</code></td>
+</tr>
+<tr class="even">
+<td>DBF</td>
+<td><code>read.dbf</code></td>
+<td><code>write.dbf</code></td>
+</tr>
+<tr class="odd">
+<td>Stata</td>
+<td><code>read.dta</code></td>
+<td><code>write.dta</code></td>
+</tr>
+<tr class="even">
+<td>Epi Info</td>
+<td><code>read.epiinfo</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>Minitab</td>
+<td><code>read.mtp</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Octave</td>
+<td><code>read.octave</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>S3 二進位／<code>data.dump</code></td>
+<td><code>read.S</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>SPSS</td>
+<td><code>read.spss</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>SAS 永久資料集</td>
+<td><code>read.ssd</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Systat</td>
+<td><code>read.systat</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>SAS XPORT</td>
+<td><code>read.xport</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>（現代替代：SPSS／Stata／SAS 用 <code>haven</code>，Excel 用 <code>readxl</code>。）</p>
+</section></section>
+<section>
+<section id="匯出資料" class="title-slide slide level1 center">
+<h1>匯出資料</h1>
+
+</section>
+<section id="write.table-與親戚" class="slide level2">
+<h2>write.table 與親戚</h2>
+<p>匯出是反向旅程——<code>write.table</code>，以及為試算表預設好的 <code>write.csv</code>／<code>write.csv2</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">write.table</span>(x, <span class="at">file =</span> <span class="st">""</span>, <span class="at">append =</span> <span class="cn">FALSE</span>, <span class="at">quote =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">" "</span>,</span>
+<span id="cb15-2"><a href=""></a>            <span class="at">eol =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">na =</span> <span class="st">"NA"</span>, <span class="at">dec =</span> <span class="st">"."</span>, <span class="at">row.names =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb15-3"><a href=""></a>            <span class="at">col.names =</span> <span class="cn">TRUE</span>, <span class="at">qmethod =</span> <span class="fu">c</span>(<span class="st">"escape"</span>, <span class="st">"double"</span>))</span>
+<span id="cb15-4"><a href=""></a><span class="fu">write.csv</span>(top.<span class="fl">5.</span>salaries, <span class="at">file =</span> <span class="st">"salaries.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x</code>／<code>file</code></td>
+<td>要匯出的物件／檔名或連線</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>append</code></td>
+<td>附加而非覆寫？</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>quote</code></td>
+<td>字元欄加引號（或以數值向量指定哪些欄）？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="even">
+<td><code>sep</code>／<code>eol</code></td>
+<td>欄位分隔／行尾字元</td>
+<td><code>" "</code>／<code>"\n"</code></td>
+</tr>
+<tr class="odd">
+<td><code>na</code>／<code>dec</code></td>
+<td><code>NA</code> 的寫法／小數字元</td>
+<td><code>"NA"</code>／<code>"."</code></td>
+</tr>
+<tr class="even">
+<td><code>row.names</code>／<code>col.names</code></td>
+<td>是否輸出（或另行指定）？</td>
+<td><code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td><code>qmethod</code></td>
+<td>內嵌引號用 <code>\</code> 跳脫或加倍</td>
+<td><code>"escape"</code></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="從資料庫匯入" class="title-slide slide level1 center">
+<h1>從資料庫匯入</h1>
+
+</section>
+<section id="策略先匯出再匯入或直接連線" class="slide level2">
+<h2>策略：先匯出再匯入，或直接連線</h2>
+<p>大型組織把資料放在關聯式資料庫。進 R 有兩條路：</p>
 <ul>
-<li>檔案跨平台通用；預設開啟壓縮。</li>
-<li><code>save.image()</code> 快照整個工作空間（離開時的「Save workspace?」就是它）。</li>
-<li><code>saveRDS()</code>/<code>readRDS()</code> 儲存<em>單一</em>物件且不含名稱——程式化使用往往更乾淨。</li>
+<li><strong>匯出成文字、再匯入。</strong> 對很大的擷取（1 GB 以上），書中經驗是文字檔載入<em>比</em>資料庫連線快——一次性撈取的最佳解。</li>
+<li><strong>直接連線。</strong> 當 R 要產出例行報表或重複分析時更好：免去每次手動匯出。</li>
 </ul>
-</section>
-<section id="從網路載入課程慣例" class="slide level2">
-<h2>從網路載入：課程慣例</h2>
-<p><code>download.file()</code> 把任何 URL 上的檔案抓到磁碟（二進位檔要用 <code>mode = "wb"</code>）；接著用 <code>load()</code> 還原。本課程所有資料集正是這樣載入的：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb6-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/top.bacon.searching.cities.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb6-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb6-4"><a href=""></a>top.bacon.searching.cities</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>            city rank
-1        Seattle  100
-2     Washington   96
-3        Chicago   94
-4       New York   93
-5       Portland   93
-6       St Louis   92
-7         Denver   90
-8         Boston   90
-9    Minneapolis   89
-10        Austin   87
-11  Philadelphia   85
-12 San Francisco   84
-13       Atlanta   82
-14   Los Angeles   80
-15    Richardson   80</code></pre>
-</div>
-</div>
-<p>課本的 <code>library(nutshell); data(...)</code> 一律以這三行模式取代。</p>
-</section>
-<section id="匯入文字檔" class="slide level2">
-<h2>匯入文字檔</h2>
-<p><code>read.table()</code> 家族把分隔文字剖析成資料框：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>df  <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"file.txt"</span>, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>)</span>
-<span id="cb8-2"><a href=""></a>csv <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"file.csv"</span>)             <span class="co"># 逗號分隔</span></span>
-<span id="cb8-3"><a href=""></a>eu  <span class="ot">&lt;-</span> <span class="fu">read.csv2</span>(<span class="st">"file.csv"</span>)            <span class="co"># ; 分隔、, 小數點</span></span>
-<span id="cb8-4"><a href=""></a>fwf <span class="ot">&lt;-</span> <span class="fu">read.fwf</span>(<span class="st">"file.dat"</span>, <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">4</span>, <span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>值得背起來的引數：<code>header</code>、<code>sep</code>、<code>na.strings</code>、<code>stringsAsFactors</code>、<code>skip</code>、<code>colClasses</code>（大檔案的速度利器）。</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="co"># readLines 顯示原始文字行——剖析前一定先看檔案長相</span></span>
-<span id="cb9-2"><a href=""></a><span class="fu">readLines</span>(<span class="fu">textConnection</span>(<span class="st">"a,b</span><span class="sc">\n</span><span class="st">1,2</span><span class="sc">\n</span><span class="st">3,4"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "a,b" "1,2" "3,4"</code></pre>
-</div>
-</div>
-</section>
-<section id="其他軟體與試算表" class="slide level2">
-<h2>其他軟體與試算表</h2>
+<p>兩套連線框架：</p>
 <ul>
-<li><code>foreign</code> 套件可讀傳統統計軟體格式：SAS（<code>read.xport</code>）、SPSS（<code>read.spss</code>）、Stata（<code>read.dta</code>）等。</li>
-<li>Excel 檔：<code>readxl</code> 套件（<code>read_excel("book.xlsx")</code>）不需安裝 Excel；<code>openxlsx</code> 還能寫出。</li>
-<li>土法煉鋼依然有效：先把工作表匯出成 CSV，再 <code>read.csv()</code>。</li>
+<li><strong>RODBC</strong>——透過 ODBC（跨程式的標準介面）取數；</li>
+<li><strong>DBI</strong>——統一的資料庫抽象層，使用原生或 JDBC 驅動，每種資料庫一個附加套件。</li>
 </ul>
+<p>怎麼選：Windows／Linux 上 ODBC 驅動好找（macOS 歷來較難；JDBC 各平台都有）；原生驅動可能更快、更能發揮產品特性；不是每個套件都支援每個平台；DBI 以 S4 打造，有助寫出更好的程式。</p>
+</section>
+<section id="貫穿範例sqlite" class="slide level2">
+<h2>貫穿範例：SQLite</h2>
+<p><strong>SQLite</strong> 用一個 C 函式庫把整個資料庫裝進單一檔案——零安裝、零設定，最適合練習。書中把 <em>Baseball Databank</em> 資料庫做成 <code>nutshell</code> 套件裡的 <code>bb.db</code>，取用方式：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">library</span>(readxl)</span>
-<span id="cb11-2"><a href=""></a>roster <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"stu/roster.xlsx"</span>, <span class="at">sheet =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">system.file</span>(<span class="st">"extdata"</span>, <span class="st">"bb.db"</span>, <span class="at">package =</span> <span class="st">"nutshell"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>課程備註。</strong> <code>nutshell</code> 已下架 CRAN，請從 GitHub 鏡像抓同一個檔案、存在本機重複使用：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">download.file</span>(<span class="fu">paste0</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/"</span>,</span>
+<span id="cb17-2"><a href=""></a>                     <span class="st">"master/inst/extdata/bb.db"</span>), <span class="st">"bb.db"</span>, <span class="at">mode =</span> <span class="st">"wb"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>以下資料庫程式碼皆以未執行形式呈現——安裝相關套件（ODBC 還需設定驅動）後即可自行執行。</p>
+</div>
+</div>
 </div>
 </section>
-<section id="匯出資料" class="slide level2">
-<h2>匯出資料</h2>
-<p>每個匯入函式都有鏡像：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">write.csv</span>(top.contracts, <span class="st">"contracts.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-2"><a href=""></a><span class="fu">write.table</span>(top.contracts, <span class="st">"contracts.txt"</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>)</span>
-<span id="cb12-3"><a href=""></a><span class="fu">saveRDS</span>(top.contracts, <span class="st">"contracts.rds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<ul>
-<li><code>row.names = FALSE</code> 可避免那個讓試算表使用者一頭霧水的多餘首欄。</li>
-<li>與其他語言交換資料，CSV 仍是通用語；R 對 R，請用 <code>.rds</code>。</li>
-</ul>
-</section>
-<section id="從資料庫匯入" class="slide level2">
-<h2>從資料庫匯入</h2>
-<p>三種策略，整合度遞增：</p>
+<section id="rodbc-安裝設定" class="slide level2">
+<h2>RODBC 安裝設定</h2>
+<p>三個一次性步驟：</p>
 <ol type="1">
-<li><strong>先匯出再匯入</strong>：在資料庫工具中把查詢結果倒成 CSV，再 <code>read.csv()</code>。粗糙但可靠。</li>
-<li><strong>RODBC</strong>：透過 ODBC 驅動程式連線——幾乎所有有驅動程式的資料庫都行。</li>
-<li><strong>DBI</strong>：R 原生的資料庫介面，依引擎搭配後端套件（<code>RSQLite</code>、<code>RPostgres</code>、<code>RMariaDB</code>……）。</li>
+<li><strong>裝套件：</strong> <code>install.packages("RODBC")</code>；以 <code>library(RODBC)</code> 確認。</li>
+<li><strong>裝 ODBC 驅動</strong>（若尚未安裝）。各家廠商與第三方（MySQL、Oracle、PostgreSQL、Microsoft、Data Direct、Easysoft、Actual Technologies、OpenLink、Christian Werner 的 SQLite ODBC……）為主要平台提供驅動。</li>
+<li><strong>設定 DSN</strong>（database source name）。書中示範 SQLite ODBC：macOS 上自行編譯（<code>configure; make; sudo make install</code>），再到 ODBC Administrator 註冊驅動並建立名為 <code>bbdb</code> 的 DSN（關鍵字 <code>Database</code> ＝ <code>bb.db</code> 的路徑）；Windows 上跑安裝程式，再到 ODBC 資料來源管理員新增 User／System DSN、瀏覽選取檔案。</li>
 </ol>
-</section>
-<section id="rodbc-速覽" class="slide level2">
-<h2>RODBC 速覽</h2>
+<p>測試成果：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">library</span>(RODBC)</span>
-<span id="cb13-2"><a href=""></a>ch <span class="ot">&lt;-</span> <span class="fu">odbcConnect</span>(<span class="st">"dsn_name"</span>, <span class="at">uid =</span> <span class="st">"user"</span>, <span class="at">pwd =</span> <span class="st">"pass"</span>)</span>
-<span id="cb13-3"><a href=""></a>df <span class="ot">&lt;-</span> <span class="fu">sqlQuery</span>(ch, <span class="st">"SELECT player, yards FROM kicks WHERE good = 1"</span>)</span>
-<span id="cb13-4"><a href=""></a><span class="fu">sqlTables</span>(ch)              <span class="co"># 列出資料表</span></span>
-<span id="cb13-5"><a href=""></a><span class="fu">close</span>(ch)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>bbdb <span class="ot">&lt;-</span> <span class="fu">odbcConnect</span>(<span class="st">"bbdb"</span>)</span>
+<span id="cb18-2"><a href=""></a><span class="fu">odbcGetInfo</span>(bbdb)    <span class="co"># DBMS 名稱／版本、驅動、路徑……</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</section>
+<section id="rodbc開啟通道四處看看" class="slide level2">
+<h2>RODBC：開啟通道、四處看看</h2>
+<p><code>odbcConnect(dsn, uid="", pwd="", ...)</code> 回傳 <code>RODBC</code> 物件——稱為<strong>通道（channel）</strong>。探索工具：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">library</span>(RODBC)</span>
+<span id="cb19-2"><a href=""></a>bbdb <span class="ot">&lt;-</span> <span class="fu">odbcConnect</span>(<span class="st">"bbdb"</span>)</span>
+<span id="cb19-3"><a href=""></a><span class="fu">sqlTables</span>(bbdb)               <span class="co"># 可讀資料表的資料框：Allstar、</span></span>
+<span id="cb19-4"><a href=""></a>                              <span class="co">#   Batting、Master、Teams、Salaries……</span></span>
+<span id="cb19-5"><a href=""></a><span class="fu">sqlColumns</span>(bbdb, <span class="st">"Allstar"</span>)   <span class="co"># 欄名、型別、大小、可否為空</span></span>
+<span id="cb19-6"><a href=""></a><span class="co"># sqlPrimaryKeys(bbdb, ...)   # 資料表的主鍵</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="rodbc取資料" class="slide level2">
+<h2>RODBC：取資料</h2>
+<p><code>sqlFetch(channel, sqtable, ..., colnames=, rownames=)</code> 把整張表拉成資料框；之後就是普通的 R：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>teams <span class="ot">&lt;-</span> <span class="fu">sqlFetch</span>(bbdb, <span class="st">"Teams"</span>)</span>
+<span id="cb20-2"><a href=""></a><span class="fu">dim</span>(teams)</span>
+<span id="cb20-3"><a href=""></a><span class="do">## [1] 2595   48</span></span>
+<span id="cb20-4"><a href=""></a><span class="fu">subset</span>(teams, <span class="at">subset=</span>(teams<span class="sc">$</span>yearID<span class="sc">==</span><span class="dv">2008</span> <span class="sc">&amp;</span> teams<span class="sc">$</span>lgID<span class="sc">==</span><span class="st">"AL"</span>),</span>
+<span id="cb20-5"><a href=""></a>       <span class="at">select=</span><span class="fu">c</span>(<span class="st">"teamID"</span>, <span class="st">"W"</span>, <span class="st">"L"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>任意 SQL——SELECT 之外，INSERT／UPDATE／DELETE 與 CREATE／DROP／ALTER 也行——走 <code>sqlQuery</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">sqlQuery</span>(bbdb,</span>
+<span id="cb21-2"><a href=""></a>  <span class="st">"SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>（寫回去：<code>sqlSave</code> 把資料框存成表、<code>sqlUpdate</code> 更新表。）</p>
+</section>
+<section id="rodbc分批結果與收尾" class="slide level2">
+<h2>RODBC：分批結果與收尾</h2>
+<p>結果太大就分批取：呼叫 <code>sqlQuery</code>／<code>sqlFetch</code> 時設 <code>max=n</code>，餘下用 <code>sqlGetResults</code>（或 <code>sqlFetchMore</code>）。<code>sqlQuery</code>／<code>sqlGetResults</code> 的重點引數：<code>errors</code>（出錯時停止或回 −1，預設 <code>TRUE</code>）；<code>max</code>（0＝不設上限）；<code>rows_at_time</code>（驅動每次抓取的批量——現代驅動可試 1024）；<code>as.is</code>、<code>stringsAsFactors</code>（因子轉換）；<code>buffsize</code>、<code>believeNRows</code>（效能）；<code>nullstring</code>、<code>na.strings</code>、<code>dec</code>（值的對應）。</p>
 <ul>
-<li><code>sqlFetch(ch, "tbl")</code> 抓整張表；<code>sqlSave()</code> 把資料框寫回去。</li>
-<li>ODBC 的設定發生在 R <em>之外</em>（驅動程式＋資料來源名稱），實務上那才是主要工作量。</li>
+<li>還有一組低階表親——<code>odbcQuery</code>、<code>odbcTables</code>、<code>odbcColumns</code>、<code>odbcPrimaryKeys</code> 回傳 C 風格的整數狀態碼，<code>odbcFetchResults</code> 回傳串列，<code>odbcGetErrMsg</code> 取錯誤訊息——控制更細、便利更少。</li>
+<li>用完了？<code>odbcClose(bbdb)</code>——或 <code>odbcCloseAll()</code>——同時釋放本地與資料庫端的資源。</li>
 </ul>
 </section>
-<section id="dbi-速覽" class="slide level2">
-<h2>DBI 速覽</h2>
+<section id="dbi驅動與連線" class="slide level2">
+<h2>DBI：驅動與連線</h2>
+<p><strong>DBI</strong> 是框架：核心套件加上每種資料庫一個驅動套件——<code>RMySQL</code>、<code>RSQLite</code>、<code>ROracle</code>、<code>RPostgreSQL</code>、<code>RJDBC</code>（任何有 JDBC 的）。全部以 S4 打造。以 SQLite 為例：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">library</span>(DBI)</span>
-<span id="cb14-2"><a href=""></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">":memory:"</span>)   <span class="co"># 用完即丟的資料庫</span></span>
-<span id="cb14-3"><a href=""></a><span class="fu">dbWriteTable</span>(con, <span class="st">"contracts"</span>, top.contracts)</span>
-<span id="cb14-4"><a href=""></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT position, MAX(salary) AS top FROM contracts GROUP BY position"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  position      top
-1       DE 14137500
-2       QB 18700000</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"RSQLite"</span>)</span>
+<span id="cb22-2"><a href=""></a><span class="fu">library</span>(RSQLite)          <span class="co"># 連 DBI 一起載入</span></span>
+<span id="cb22-3"><a href=""></a>drv <span class="ot">&lt;-</span> <span class="fu">dbDriver</span>(<span class="st">"SQLite"</span>)</span>
+<span id="cb22-4"><a href=""></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(drv, <span class="at">dbname =</span> <span class="st">"bb.db"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">dbDisconnect</span>(con)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<ul>
-<li>一套泛用 API——<code>dbConnect</code>、<code>dbGetQuery</code>、<code>dbWriteTable</code>、<code>dbDisconnect</code>——背後是可互換的引擎。</li>
-<li>預備敘述（prepared statements）與分批擷取（<code>dbSendQuery</code> + <code>dbFetch</code>）能處理塞不進記憶體的結果集。</li>
-</ul>
+<p>可以跳過明確的驅動物件（<code>dbConnect("SQLite", ...)</code>），但留著它可以查詢開啟中的連線、日後釋放資源。連線引數（<code>dbname</code>、帳號……）依資料庫而異——請讀該驅動的說明。</p>
 </section>
-<section id="更大的管線" class="slide level2">
-<h2>更大的管線</h2>
+<section id="dbi檢視連線" class="slide level2">
+<h2>DBI：檢視連線</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">class</span>(con)                 <span class="co"># "SQLiteConnection"——有意義的 S4 類別</span></span>
+<span id="cb23-2"><a href=""></a><span class="fu">dbListConnections</span>(drv)     <span class="co"># 隸屬某驅動的連線</span></span>
+<span id="cb23-3"><a href=""></a><span class="fu">dbGetInfo</span>(con)             <span class="co"># 主機、使用者、dbname、伺服器版本……</span></span>
+<span id="cb23-4"><a href=""></a><span class="fu">dbListTables</span>(con)          <span class="co"># "Allstar" "Batting" ... "Teams" ...</span></span>
+<span id="cb23-5"><a href=""></a><span class="fu">dbListFields</span>(con, <span class="st">"Allstar"</span>)</span>
+<span id="cb23-6"><a href=""></a><span class="do">## [1] "playerID" "yearID"   "lgID"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="dbi查詢" class="slide level2">
+<h2>DBI：查詢</h2>
+<p><code>dbGetQuery(con, sql)</code> 執行敘述、回傳資料框：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a>wlrecords<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con,</span>
+<span id="cb24-2"><a href=""></a>  <span class="st">"SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'"</span>)</span>
+<span id="cb24-3"><a href=""></a>batting<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con,</span>
+<span id="cb24-4"><a href=""></a>  <span class="fu">paste</span>(<span class="st">"SELECT m.nameLast, m.nameFirst, m.weight, m.height, "</span>,</span>
+<span id="cb24-5"><a href=""></a>        <span class="st">"m.bats, m.throws, m.debut, m.birthYear, b.* "</span>,</span>
+<span id="cb24-6"><a href=""></a>        <span class="st">"from Master m inner join Batting b "</span>,</span>
+<span id="cb24-7"><a href=""></a>        <span class="st">"on m.playerID=b.playerID where b.yearID=2008"</span>))</span>
+<span id="cb24-8"><a href=""></a><span class="fu">dim</span>(batting<span class="fl">.2008</span>)</span>
+<span id="cb24-9"><a href=""></a><span class="do">## [1] 1384   31</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>這份連結後的資料集全書反覆登場（也以 <code>batting.2008</code> 之名收錄在 <code>nutshell</code> 裡）。</p>
+</section>
+<section id="dbi送查詢取結果錯誤整張表" class="slide level2">
+<h2>DBI：送查詢／取結果、錯誤、整張表</h2>
+<p>分開送出與取回，控制更細：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a>res <span class="ot">&lt;-</span> <span class="fu">dbSendQuery</span>(con,</span>
+<span id="cb25-2"><a href=""></a>  <span class="st">"SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'"</span>)</span>
+<span id="cb25-3"><a href=""></a>wlrecords<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">fetch</span>(res)       <span class="co"># n ＝最多取幾列；省略或 -1 ＝全部</span></span>
+<span id="cb25-4"><a href=""></a><span class="fu">dbClearResult</span>(res)                 <span class="co"># 丟棄未取完的結果</span></span>
+<span id="cb25-5"><a href=""></a><span class="fu">dbGetException</span>(con)                <span class="co"># 最近的錯誤代碼＋訊息</span></span>
+<span id="cb25-6"><a href=""></a>batters <span class="ot">&lt;-</span> <span class="fu">dbReadTable</span>(con, <span class="st">"Batting"</span>)   <span class="co"># 一整張表</span></span>
+<span id="cb25-7"><a href=""></a><span class="co"># dbWriteTable／dbExistsTable／dbRemoveTable：寫入、檢查、刪除</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>收尾與開場對稱：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">dbDisconnect</span>(con)</span>
+<span id="cb26-2"><a href=""></a><span class="fu">dbUnloadDriver</span>(drv)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="tsdbi-與-hadoop" class="slide level2">
+<h2>TSDBI 與 Hadoop</h2>
+<p>收尾的兩個指引：</p>
 <ul>
-<li><strong>TSDBI</strong> 提供時間序列專用的資料庫介面。</li>
-<li>存放在 <strong>Hadoop</strong>／分散式儲存的資料是第二十六章的主題——常見模式是先在叢集上化簡，再把摘要拉進 R。</li>
-<li>經驗法則：把吃重的過濾與合併推給資料庫（<code>WHERE</code>、<code>GROUP BY</code>），只把分析真正需要的部分帶進 R。</li>
+<li><strong>TSDBI</strong>——<em>專為時間序列</em>設計的資料庫介面，按資料庫分套件：<code>TSMySQL</code>、<code>TSSQLite</code>、<code>TSFame</code>、<code>TSPostgreSQL</code>，以及任何 ODBC 資料庫適用的 <code>TSODBC</code>。</li>
+<li><strong>Hadoop</strong>——書中年代的大數據平台；其第二十六章介紹操作 HDFS 與 HBase 的 R 套件。（今日的版圖偏向以 <code>sparklyr</code> 連 Spark，或透過 DBI 對話的雲端資料倉儲。）</li>
 </ul>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,147 +211,352 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="where-names-live" class="title-slide slide level1 center">
 <h1><strong>Where Names Live</strong></h1>
 
 </section>
-<section id="symbols-and-bindings" class="slide level2">
-<h2>Symbols and Bindings</h2>
-<p>Defining a variable really means <strong>binding a symbol to a value inside an environment</strong>:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>            <span class="co"># bind symbol `x` to 1 in the current environment</span></span>
-<span id="cb1-2"><a href=""></a>y <span class="ot">&lt;-</span> <span class="fu">quote</span>(x <span class="sc">+</span> <span class="dv">1</span>) <span class="co"># an unevaluated expression mentioning `x`</span></span>
-<span id="cb1-3"><a href=""></a><span class="fu">eval</span>(y)           <span class="co"># evaluate it: `x` is looked up NOW</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">100</span></span>
-<span id="cb3-2"><a href=""></a><span class="fu">eval</span>(y)           <span class="co"># same expression, new answer</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 101</code></pre>
-</div>
-</div>
-<p>An expression is data until evaluated; the value of its symbols is decided at evaluation time, in some environment.</p>
+<section id="environments-finally-defined" class="slide level2">
+<h2>Environments, Finally Defined</h2>
+<p>We have danced around environments since Chapter 3; time to define them. An <strong>environment</strong> is an R object containing:</p>
+<ul>
+<li>the set of <strong>symbols</strong> available in a given context,</li>
+<li>the <strong>objects</strong> associated with those symbols (together: the <strong>frame</strong>), and</li>
+<li>a pointer to a <strong>parent environment</strong>.</li>
+</ul>
+<p>Every evaluation context has an environment. To resolve a symbol, R searches the current environment first, then <strong>recursively searches parent environments</strong> until it finds a match.</p>
+</section></section>
+<section>
+<section id="symbols" class="title-slide slide level1 center">
+<h1>Symbols</h1>
+
 </section>
-<section id="delayed-evaluation-and-promises" class="slide level2">
-<h2>Delayed Evaluation and Promises</h2>
-<p>Evaluation can be postponed deliberately:</p>
+<section id="resolution-happens-at-construction-time" class="slide level2">
+<h2>Resolution Happens at Construction Time</h2>
+<p>Defining a variable assigns a symbol to a value <em>in an environment</em>. When an object is built from symbols, R resolves them <strong>at construction time</strong>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">delayedAssign</span>(<span class="st">"lazy"</span>, {<span class="fu">message</span>(<span class="st">"computing now!"</span>); <span class="dv">42</span>})</span>
-<span id="cb5-2"><a href=""></a><span class="co"># nothing printed yet ...</span></span>
-<span id="cb5-3"><a href=""></a>lazy             <span class="co"># first touch forces the promise</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb1-2"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(x, y, z)</span>
+<span id="cb1-3"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 42</code></pre>
+<pre><code>[1] 1 2 3</code></pre>
 </div>
-</div>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Note</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>Promises.</strong> A promise packages an expression plus the environment to evaluate it in, and computes its value only when first needed. R passes <em>all</em> function arguments as promises — that is “lazy evaluation,” and it is why an unused argument can contain an error without crashing the call.</p>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">10</span>      <span class="co"># v was already built; changing x changes nothing</span></span>
+<span id="cb3-2"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 3</code></pre>
 </div>
 </div>
 </section>
-<section id="what-is-an-environment" class="slide level2">
-<h2>What Is an Environment?</h2>
-<p>An <strong>environment</strong> is a set of symbol-to-value bindings plus a pointer to a <strong>parent environment</strong>. Lookup walks the chain: current environment first, then parent, then grandparent, until <code>emptyenv()</code>.</p>
+<section id="delaying-evaluation-quote-and-eval" class="slide level2">
+<h2>Delaying Evaluation: quote and eval</h2>
+<p>You can postpone symbol resolution by quoting the expression and evaluating it later — each <code>eval</code> resolves symbols <em>as of now</em>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>e <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
-<span id="cb7-2"><a href=""></a><span class="fu">assign</span>(<span class="st">"z"</span>, <span class="dv">99</span>, <span class="at">envir =</span> e)</span>
-<span id="cb7-3"><a href=""></a><span class="fu">get</span>(<span class="st">"z"</span>, <span class="at">envir =</span> e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb5-2"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">quote</span>(<span class="fu">c</span>(x, y, z))</span>
+<span id="cb5-3"><a href=""></a><span class="fu">eval</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 99</code></pre>
+<pre><code>[1] 1 2 3</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">exists</span>(<span class="st">"z"</span>, <span class="at">envir =</span> e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb7-2"><a href=""></a><span class="fu">eval</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
+<pre><code>[1] 5 2 3</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">ls</span>(<span class="at">envir =</span> e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="promises-delayedassign" class="slide level2">
+<h2>Promises: delayedAssign</h2>
+<p>A <strong>promise</strong> delays evaluation until the variable is <em>first used</em>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb9-2"><a href=""></a><span class="fu">delayedAssign</span>(<span class="st">"v"</span>, <span class="fu">c</span>(x, y, z))</span>
+<span id="cb9-3"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb9-4"><a href=""></a>v          <span class="co"># evaluated now — with the current x</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "z"</code></pre>
+<pre><code>[1] 5 2 3</code></pre>
 </div>
 </div>
-<p>Other tools: <code>rm(..., envir=)</code> removes bindings; <code>environmentName()</code> labels well-known environments.</p>
+<p>Packages use promises to expose objects without loading them into memory. Two caveats: you cannot test whether an object <em>is</em> a promise, nor recover the environment where one was created.</p>
+</section></section>
+<section>
+<section id="working-with-environments" class="title-slide slide level1 center">
+<h1>Working with Environments</h1>
+
+</section>
+<section id="the-environment-toolbox" class="slide level2">
+<h2>The Environment Toolbox</h2>
+<p>Environments are objects (internally, hash tables of symbol mappings — an efficiency trick exploited in Chapter 24). The vocabulary:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>assign</code> / <code>get</code> / <code>exists</code></td>
+<td>bind, fetch, or test a name in an environment</td>
+</tr>
+<tr class="even">
+<td><code>objects</code></td>
+<td>all names defined in an environment</td>
+</tr>
+<tr class="odd">
+<td><code>remove</code> (<code>rm</code>)</td>
+<td>drop objects from an environment</td>
+</tr>
+<tr class="even">
+<td><code>search</code></td>
+<td>names of attached packages — the chain of parent environments</td>
+</tr>
+<tr class="odd">
+<td><code>searchpaths</code></td>
+<td>paths of attached packages</td>
+</tr>
+<tr class="even">
+<td><code>attach</code> / <code>detach</code></td>
+<td>add/remove a list, data frame, or data file to/from the search path</td>
+</tr>
+<tr class="odd">
+<td><code>emptyenv</code></td>
+<td>the empty environment — every chain ends here</td>
+</tr>
+<tr class="even">
+<td><code>parent.env</code></td>
+<td>the parent of an environment</td>
+</tr>
+<tr class="odd">
+<td><code>baseenv</code></td>
+<td>the environment of the base package</td>
+</tr>
+<tr class="even">
+<td><code>globalenv</code> / <code>.GlobalEnv</code></td>
+<td>the user’s workspace</td>
+</tr>
+<tr class="odd">
+<td><code>environment</code></td>
+<td>a function’s environment (no argument: the current one)</td>
+</tr>
+<tr class="even">
+<td><code>new.env</code></td>
+<td>a fresh environment object</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="objects-and-rm" class="slide level2">
+<h2>objects and rm</h2>
+<p>The two everyday calls — what’s here, and clean it up:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())      <span class="co"># start with a clean slate</span></span>
+<span id="cb11-2"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb11-3"><a href=""></a><span class="fu">objects</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "x" "y" "z"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">rm</span>(x)</span>
+<span id="cb13-2"><a href=""></a><span class="fu">objects</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "y" "z"</code></pre>
+</div>
+</div>
 </section>
 <section id="the-global-environment" class="slide level2">
 <h2>The Global Environment</h2>
-<p>Each session starts in the <strong>global environment</strong> — your workspace:</p>
+<p>Each session gets a fresh environment for your objects: the <strong>global environment</strong>. Surprisingly, it is not the root of the tree — it is the <em>last</em> environment in the search path’s chain. Walking the parents from <code>.GlobalEnv</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">environment</span>()             <span class="co"># where am I?</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>e <span class="ot">&lt;-</span> .GlobalEnv</span>
+<span id="cb15-2"><a href=""></a><span class="cf">while</span> (<span class="fu">environmentName</span>(e) <span class="sc">!=</span> <span class="fu">environmentName</span>(<span class="fu">emptyenv</span>())) {</span>
+<span id="cb15-3"><a href=""></a>  <span class="fu">print</span>(<span class="fu">environmentName</span>(<span class="fu">parent.env</span>(e))); e <span class="ot">&lt;-</span> <span class="fu">parent.env</span>(e)</span>
+<span id="cb15-4"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;environment: R_GlobalEnv&gt;</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">ls</span>()[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]                 <span class="co"># what have I defined?</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "e"    "lazy" "x"    "y"    NA    </code></pre>
-</div>
-</div>
-<p>The chain above the global environment consists of the attached packages — exactly the <strong>search path</strong>:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">search</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] ".GlobalEnv"        "package:stats"     "package:graphics" 
-[4] "package:grDevices" "package:utils"     "package:datasets" 
-[7] "package:methods"   "Autoloads"         "package:base"     </code></pre>
+<pre><code>[1] "package:stats"
+[1] "package:graphics"
+[1] "package:grDevices"
+[1] "package:utils"
+[1] "package:datasets"
+[1] "package:methods"
+[1] "Autoloads"
+[1] "base"
+[1] "R_EmptyEnv"</code></pre>
 </div>
 </div>
-<p>This is why loading a package makes its functions visible: it inserts an environment into the lookup chain.</p>
+<p>Attached packages line up as parents, ending at <code>base</code> and finally the <strong>empty environment</strong> — the one environment with no parent, to which all chains lead.</p>
+</section></section>
+<section>
+<section id="environments-and-functions" class="title-slide slide level1 center">
+<h1>Environments and Functions</h1>
+
 </section>
-<section id="environments-and-functions" class="slide level2">
-<h2>Environments and Functions</h2>
-<p>Calling a function creates a <em>fresh</em> environment for its local variables, whose parent is the environment where the function was <strong>defined</strong> (not where it was called):</p>
+<section id="a-function-call-creates-an-environment" class="slide level2">
+<h2>A Function Call Creates an Environment</h2>
+<p>Calling a function creates a new environment; the arguments are bound to symbols there. (In language lingo: R is <strong>lexically scoped</strong>.)</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>make_counter <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb19-2"><a href=""></a>  count <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb19-3"><a href=""></a>  <span class="cf">function</span>() {</span>
-<span id="cb19-4"><a href=""></a>    count <span class="ot">&lt;&lt;-</span> count <span class="sc">+</span> <span class="dv">1</span>   <span class="co"># write to the enclosing environment</span></span>
-<span id="cb19-5"><a href=""></a>    count</span>
-<span id="cb19-6"><a href=""></a>  }</span>
-<span id="cb19-7"><a href=""></a>}</span>
-<span id="cb19-8"><a href=""></a>tick <span class="ot">&lt;-</span> <span class="fu">make_counter</span>()</span>
-<span id="cb19-9"><a href=""></a><span class="fu">tick</span>(); <span class="fu">tick</span>(); <span class="fu">tick</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>env.demo <span class="ot">&lt;-</span> <span class="cf">function</span>(a, b, c, d) { <span class="fu">print</span>(<span class="fu">objects</span>()) }</span>
+<span id="cb17-2"><a href=""></a><span class="fu">env.demo</span>(<span class="dv">1</span>, <span class="st">"truck"</span>, <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), pi)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 3</code></pre>
+<pre><code>[1] "a" "b" "c" "d"</code></pre>
 </div>
 </div>
-<p>The inner function <em>remembers</em> <code>count</code> between calls — a <strong>closure</strong>. This lexical scoping rule is the heart of R’s function semantics.</p>
+<p>Only the arguments appear — everything else lives in parent environments. And note carefully: a function’s parent environment is <strong>where it was created</strong>, not where it is called. For functions you define at the console the two coincide; for functions from packages they differ.</p>
 </section>
-<section id="global-vs.-lexical-assignment" class="slide level2">
-<h2>Global vs.&nbsp;Lexical Assignment</h2>
+<section id="the-call-stack" class="slide level2">
+<h2>The Call Stack</h2>
+<p>R also maintains a <strong>stack</strong> of calling environments (a stack: add and remove only at the top — push and pop, like cafeteria trays). Each call pushes an environment; each return pops one.</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>sys.call</code></td>
+<td>the current function call, as a language object</td>
+</tr>
+<tr class="even">
+<td><code>sys.frame</code></td>
+<td>the calling environment</td>
+</tr>
+<tr class="odd">
+<td><code>sys.nframe</code></td>
+<td>number of the current frame (0 at the console)</td>
+</tr>
+<tr class="even">
+<td><code>sys.function</code></td>
+<td>the function being evaluated</td>
+</tr>
+<tr class="odd">
+<td><code>sys.parent</code></td>
+<td>number of the parent frame</td>
+</tr>
+<tr class="even">
+<td><code>sys.calls</code> / <code>sys.frames</code> / <code>sys.parents</code></td>
+<td>calls, environments, parents for the whole stack</td>
+</tr>
+<tr class="odd">
+<td><code>sys.on.exit</code></td>
+<td>the <code>on.exit</code> expression of the current frame</td>
+</tr>
+<tr class="even">
+<td><code>sys.status</code></td>
+<td><code>sys.calls</code> + <code>sys.parents</code> + <code>sys.frames</code> in one list</td>
+</tr>
+<tr class="odd">
+<td><code>parent.frame</code></td>
+<td><code>sys.frame(sys.parent(n))</code> — the parent frame</td>
+</tr>
+</tbody>
+</table>
+<p>Why care? A package function sometimes needs a symbol’s meaning <strong>in the calling context</strong>. Modeling functions do exactly this: a formula contains symbol names but no data, and when you omit the <code>data</code> argument, the function hunts for the variables in the calling environment.</p>
+</section>
+<section id="evaluating-in-another-environment-eval" class="slide level2">
+<h2>Evaluating in Another Environment: eval</h2>
+<p><code>eval</code> evaluates an expression in an arbitrary environment:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="st">"global"</span></span>
-<span id="cb23-2"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>() { v <span class="ot">&lt;-</span> <span class="st">"local"</span>; v }</span>
-<span id="cb23-3"><a href=""></a>g <span class="ot">&lt;-</span> <span class="cf">function</span>() { v <span class="ot">&lt;&lt;-</span> <span class="st">"overwritten"</span>; v }</span>
-<span id="cb23-4"><a href=""></a><span class="fu">f</span>(); v          <span class="co"># local assignment leaves global alone</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">eval</span>(expr, <span class="at">envir =</span> <span class="fu">parent.frame</span>(),</span>
+<span id="cb19-2"><a href=""></a>     <span class="at">enclos =</span> <span class="cf">if</span> (<span class="fu">is.list</span>(envir) <span class="sc">||</span> <span class="fu">is.pairlist</span>(envir))</span>
+<span id="cb19-3"><a href=""></a>                <span class="fu">parent.frame</span>() <span class="cf">else</span> <span class="fu">baseenv</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The book’s example: a timing wrapper that records the start time, evaluates its argument <strong>in the caller’s frame</strong>, and prints the elapsed time:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>timethis <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
+<span id="cb20-2"><a href=""></a>  start.time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb20-3"><a href=""></a>  <span class="fu">eval</span>(..., <span class="fu">sys.frame</span>(<span class="fu">sys.parent</span>(<span class="fu">sys.parent</span>())))</span>
+<span id="cb20-4"><a href=""></a>  end.time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb20-5"><a href=""></a>  <span class="fu">print</span>(end.time <span class="sc">-</span> start.time)</span>
+<span id="cb20-6"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-timing-demo" class="slide level2">
+<h2>The Timing Demo</h2>
+<p>Time an inefficient function that grows a vector element by element (console transcript):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a>create.vector.of.ones <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
+<span id="cb21-2"><a href=""></a>  return.vector <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb21-3"><a href=""></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb21-4"><a href=""></a>    return.vector[i] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb21-5"><a href=""></a>  }</span>
+<span id="cb21-6"><a href=""></a>  return.vector</span>
+<span id="cb21-7"><a href=""></a>}</span>
+<span id="cb21-8"><a href=""></a><span class="fu">timethis</span>(returned.vector <span class="ot">&lt;-</span> <span class="fu">create.vector.of.ones</span>(<span class="dv">10000</span>))</span>
+<span id="cb21-9"><a href=""></a><span class="do">## Time difference of 1.485959 secs</span></span>
+<span id="cb21-10"><a href=""></a><span class="fu">length</span>(returned.vector)</span>
+<span id="cb21-11"><a href=""></a><span class="do">## [1] 10000</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The timing is nice; the <em>point</em> is the last line — the assignment happened <strong>in the calling environment</strong>, so <code>returned.vector</code> exists there afterward. (Aside: pre-allocating with <code>length(return.vector) &lt;- n</code> before the loop cuts the time from ~1.5 s to ~0.04 s — a preview of Chapter 24.)</p>
+</section>
+<section id="shorthands-evalq-eval.parent-local" class="slide level2">
+<h2>Shorthands: evalq, eval.parent, local</h2>
+<p>Three convenient wrappers around <code>eval</code>:</p>
+<ul>
+<li><code>evalq(expr, ...)</code> ≡ <code>eval(quote(expr), ...)</code> — quote for me;</li>
+<li><code>eval.parent(expr, n)</code> ≡ <code>eval(expr, parent.frame(n))</code> — evaluate in the caller;</li>
+<li><code>local(expr)</code> ≡ <code>eval(quote(expr), envir=new.env())</code> — evaluate in a fresh environment.</li>
+</ul>
+<p><code>eval.parent</code> shortens the timing function nicely:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a>timethis.b <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
+<span id="cb22-2"><a href=""></a>  start.time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb22-3"><a href=""></a>  <span class="fu">eval.parent</span>(...)</span>
+<span id="cb22-4"><a href=""></a>  end.time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb22-5"><a href=""></a>  <span class="fu">print</span>(end.time <span class="sc">-</span> start.time)</span>
+<span id="cb22-6"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="data-as-environment-with-and-within" class="slide level2">
+<h2>Data as Environment: with and within</h2>
+<p>Treating a data frame or list as an environment lets you use its element names like symbols:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>example.list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">2</span>, <span class="at">c=</span><span class="dv">3</span>)</span>
+<span id="cb23-2"><a href=""></a>a <span class="sc">+</span> b <span class="sc">+</span> c                          <span class="co"># not in the workspace...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error:
+! object 'a' not found</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">with</span>(example.list, a <span class="sc">+</span> b <span class="sc">+</span> c)      <span class="co"># ...but with() finds them</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "local"</code></pre>
+<pre><code>[1] 6</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">within</span>(example.list, d <span class="ot">&lt;-</span> a <span class="sc">+</span> b <span class="sc">+</span> c)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "global"</code></pre>
+<pre><code>$a
+[1] 1
+
+$b
+[1] 2
+
+$c
+[1] 3
+
+$d
+[1] 6</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">g</span>(); v          <span class="co"># &lt;&lt;- climbed up and replaced it</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "overwritten"</code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "overwritten"</code></pre>
+<p><code>with(data, expr)</code> evaluates and returns the <strong>result</strong>; <code>within(data, expr)</code> modifies and returns the <strong>data</strong>.</p>
+</section>
+<section id="attach-and-detach" class="slide level2">
+<h2>attach and detach</h2>
+<p><code>attach</code> adds the objects of a “database” — a list, data frame, or saved data file — to the search path; <code>detach</code> removes them:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">attach</span>(what, <span class="at">pos =</span> <span class="dv">2</span>, <span class="at">name =</span> <span class="fu">deparse</span>(<span class="fu">substitute</span>(what)),</span>
+<span id="cb29-2"><a href=""></a>       <span class="at">warn.conflicts =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb29-3"><a href=""></a><span class="fu">detach</span>(name, <span class="at">pos =</span> <span class="dv">2</span>, <span class="at">unload =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
+<p><code>pos</code> is the search-path position, <code>name</code> labels the attached database (used again by <code>detach</code>), <code>warn.conflicts</code> warns about masked names, and <code>unload</code> controls namespace unloading.</p>
 <div class="callout callout-warning callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -361,45 +566,110 @@ Yu-You Liou (NTU)
 <p><strong>Warning</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Use <code>&lt;&lt;-</code> sparingly.</strong> Functions that silently modify state outside themselves are hard to test and debug. Closures (previous slide) are the disciplined use case.</p>
+<p><strong>Use attach sparingly.</strong> With several data frames sharing column names, it becomes genuinely hard to tell which object a name refers to. Prefer <code>transform</code> to change columns and <code>with</code> to evaluate expressions against a data frame.</p>
 </div>
 </div>
 </div>
+</section></section>
+<section>
+<section id="exceptions" class="title-slide slide level1 center">
+<h1>Exceptions</h1>
+
 </section>
-<section id="working-with-the-call-stack" class="slide level2">
-<h2>Working with the Call Stack</h2>
-<p>The environment where a function was <em>called</em> is reachable too — essential for functions that interpret expressions in their caller’s context:</p>
+<section id="errors-and-warnings" class="slide level2">
+<h2>Errors and Warnings</h2>
+<p>Invalid expressions produce <strong>errors</strong>; questionable ones produce <strong>warnings</strong>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a>whodunit <span class="ot">&lt;-</span> <span class="cf">function</span>() <span class="fu">sys.function</span>(<span class="sc">-</span><span class="dv">1</span>)   <span class="co"># who called me?</span></span>
-<span id="cb29-2"><a href=""></a>show_caller_x <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb29-3"><a href=""></a>  <span class="fu">eval</span>(<span class="fu">quote</span>(x), <span class="at">envir =</span> <span class="fu">parent.frame</span>())</span>
-<span id="cb29-4"><a href=""></a>}</span>
-<span id="cb29-5"><a href=""></a>x <span class="ot">&lt;-</span> <span class="st">"caller's x"</span></span>
-<span id="cb29-6"><a href=""></a><span class="fu">show_caller_x</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "caller's x"</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a><span class="dv">12</span> <span class="sc">/</span> <span class="st">"hat"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `12 / "hat"`:
+! non-numeric argument to binary operator</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="cf">if</span> (<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>)) <span class="cn">TRUE</span> <span class="cf">else</span> <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `if (c(TRUE, FALSE)) ...`:
+! the condition has length &gt; 1</code></pre>
 </div>
 </div>
-<ul>
-<li><code>sys.call()</code> — the current call; <code>match.call()</code> — with argument names filled in.</li>
-<li><code>parent.frame()</code> — the calling environment. Functions like <code>lm()</code> use exactly this trick to evaluate formulas against your data.</li>
-</ul>
+<p>(The second was merely a warning in the book’s era; modern R promotes it to an error.) Why discuss exceptions in the environments chapter? Because when an exception occurs, the interpreter may abandon the current function and <strong>signal the exception in the calling environment</strong> — exception handling and environments are intertwined.</p>
 </section>
-<section id="environments-in-packages" class="slide level2">
-<h2>Environments in Packages</h2>
-<ul>
-<li>Each loaded package contributes an environment to the search path; lookup explains shadowing — a name in your workspace hides one in a package.</li>
-<li>Disambiguate explicitly with the <code>::</code> operator:</li>
-</ul>
+<section id="signaling-stop-warning-message" class="slide level2">
+<h2>Signaling: stop, warning, message</h2>
+<p>Three levels of telling the user something, from fatal to informative:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a>stats<span class="sc">::</span><span class="fu">sd</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a>doWork <span class="ot">&lt;-</span> <span class="cf">function</span>(filename) {</span>
+<span id="cb34-2"><a href=""></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(filename)) <span class="fu">read.delim</span>(filename)</span>
+<span id="cb34-3"><a href=""></a>  <span class="cf">else</span> <span class="fu">stop</span>(<span class="st">"Could not open the file: "</span>, filename)</span>
+<span id="cb34-4"><a href=""></a>}</span>
+<span id="cb34-5"><a href=""></a><span class="fu">doWork</span>(<span class="st">"file that doesn't exist"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `doWork()`:
+! Could not open the file: file that doesn't exist</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a>doNoWork <span class="ot">&lt;-</span> <span class="cf">function</span>(filename) {</span>
+<span id="cb36-2"><a href=""></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(filename)) <span class="st">"la la la"</span></span>
+<span id="cb36-3"><a href=""></a>  <span class="cf">else</span> <span class="fu">warning</span>(<span class="st">"File does not exist: "</span>, filename)</span>
+<span id="cb36-4"><a href=""></a>}</span>
+<span id="cb36-5"><a href=""></a><span class="fu">doNoWork</span>(<span class="st">"another file that doesn't exist"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in doNoWork("another file that doesn't exist"): File does not exist:
+another file that doesn't exist</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a>doNothing <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb38-2"><a href=""></a>  <span class="fu">message</span>(<span class="st">"This function does nothing."</span>)</span>
+<span id="cb38-3"><a href=""></a>}</span>
+<span id="cb38-4"><a href=""></a><span class="fu">doNothing</span>(<span class="st">"another input value"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>This function does nothing.</code></pre>
+</div>
+</div>
+<p>In your own programs: <code>stop</code> on errors that invalidate the work; <code>warning</code> for problems the caller should know about; <code>message</code> for chatter.</p>
+</section>
+<section id="catching-try" class="slide level2">
+<h2>Catching: try</h2>
+<p>Suppose <code>foo</code> calls <code>bar</code>, <code>bar</code> sometimes fails (can’t open a file, say), and <code>foo</code> wants to <em>survive</em> and try something else. The simple tool is <code>try</code>, which hides most of the machinery:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a>res <span class="ot">&lt;-</span> <span class="fu">try</span>({x <span class="ot">&lt;-</span> <span class="dv">1</span>}, <span class="at">silent=</span><span class="cn">TRUE</span>)</span>
+<span id="cb40-2"><a href=""></a>res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1.290994</code></pre>
+<pre><code>[1] 1</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>res <span class="ot">&lt;-</span> <span class="fu">try</span>({<span class="fu">open</span>(<span class="st">"file that doesn't exist"</span>)}, <span class="at">silent=</span><span class="cn">TRUE</span>)</span>
+<span id="cb42-2"><a href=""></a>res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Error in UseMethod(\"open\") : \n  no applicable method for 'open' applied to an object of class \"character\"\n"
+attr(,"class")
+[1] "try-error"
+attr(,"condition")
+&lt;simpleError in UseMethod("open"): no applicable method for 'open' applied to an object of class "character"&gt;</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a><span class="fu">class</span>(res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "try-error"</code></pre>
 </div>
 </div>
-<ul>
-<li>Packages use <strong>namespaces</strong> so their internal helpers stay invisible, and <em>promises</em> (via lazy data loading) so big data sets cost nothing until touched.</li>
-</ul>
+<p><code>try(expr, silent)</code> evaluates <code>expr</code>; on failure it returns an object of class <code>"try-error"</code> (and prints the message unless <code>silent=TRUE</code>).</p>
+</section>
+<section id="catching-trycatch" class="slide level2">
+<h2>Catching: tryCatch</h2>
+<p>The capable tool is <code>tryCatch</code>, taking an expression, a set of <strong>handlers</strong>, and a final expression:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">tryCatch</span>(expression, handler1, handler2, ..., <span class="at">finally=</span>finalexpr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Evaluation order: R evaluates <code>expression</code>; if a <strong>condition</strong> (error or warning) arises, R picks the handler whose argument matches the condition’s class; afterward <code>finally</code> is evaluated — with the handlers no longer active. A taste:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href=""></a><span class="fu">tryCatch</span>({</span>
+<span id="cb47-2"><a href=""></a>  <span class="fu">log</span>(<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb47-3"><a href=""></a>}, <span class="at">warning =</span> <span class="cf">function</span>(w) <span class="st">"caught a warning"</span>,</span>
+<span id="cb47-4"><a href=""></a>   <span class="at">finally =</span> <span class="fu">message</span>(<span class="st">"done either way"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "caught a warning"</code></pre>
+</div>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

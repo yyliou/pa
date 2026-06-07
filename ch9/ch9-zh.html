@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,217 +211,391 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="打造自己的工具" class="title-slide slide level1 center">
-<h1><strong>打造自己的工具</strong></h1>
+<section id="主力工人" class="title-slide slide level1 center">
+<h1><strong>主力工人</strong></h1>
 
 </section>
 <section id="function-關鍵字" class="slide level2">
 <h2>function 關鍵字</h2>
-<p><code>function</code> 關鍵字建立函式物件；指派給名稱與否都可以：</p>
+<p>函式評估輸入引數、回傳輸出值。定義語法是</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>square <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x <span class="sc">^</span> <span class="dv">2</span></span>
-<span id="cb1-2"><a href=""></a><span class="fu">square</span>(<span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="cf">function</span>(arguments) body</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>其中 <em>arguments</em> 是一組在主體內可用的符號名稱（可附預設值），<em>body</em> 是一個 R 運算式。大括號是慣例、不是必須——單一運算式可省略，以下兩種寫法等價：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) x <span class="sc">+</span> y</span>
+<span id="cb2-2"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) { x <span class="sc">+</span> y }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section></section>
+<section>
+<section id="引數" class="title-slide slide level1 center">
+<h1>引數</h1>
+
+</section>
+<section id="預設值讓引數變成可選" class="slide level2">
+<h2>預設值讓引數變成可選</h2>
+<p>給引數預設值，呼叫者就可以省略它；省略<em>必要</em>引數，錯誤要等函式真正<strong>用到</strong>它才出現：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) { x <span class="sc">+</span> y }</span>
+<span id="cb3-2"><a href=""></a><span class="fu">f</span>(<span class="dv">1</span>, <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 144</code></pre>
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>g <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">y =</span> <span class="dv">10</span>) { x <span class="sc">+</span> y }</span>
+<span id="cb5-2"><a href=""></a><span class="fu">g</span>(<span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 11</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">g</span>(<span class="dv">1</span>, <span class="dv">2</span>)     <span class="co"># 覆寫預設值</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">f</span>(<span class="dv">1</span>)        <span class="co"># 少了 y：等 `+` 需要它時才報錯</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `f()`:
+! argument "y" is missing, with no default</code></pre>
 </div>
 </div>
-<p>多個運算式的主體需要大括號；函式的值是最後求值的那個運算式：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>zscore <span class="ot">&lt;-</span> <span class="cf">function</span>(v) {</span>
-<span id="cb3-2"><a href=""></a>  m <span class="ot">&lt;-</span> <span class="fu">mean</span>(v)</span>
-<span id="cb3-3"><a href=""></a>  s <span class="ot">&lt;-</span> <span class="fu">sd</span>(v)</span>
-<span id="cb3-4"><a href=""></a>  (v <span class="sc">-</span> m) <span class="sc">/</span> s</span>
-<span id="cb3-5"><a href=""></a>}</span>
-<span id="cb3-6"><a href=""></a><span class="fu">round</span>(<span class="fu">zscore</span>(<span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>)), <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] -1.16 -0.39  0.39  1.16</code></pre>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>一個從不碰未初始化引數的函式可以正常執行。你甚至能自行偵測引數是否缺席——例如檢查 <code>as.list(match.call())</code> 裡對應項是否為 <code>NULL</code>——但實務上，<strong>把預設值寫進簽名</strong>：函式才清楚易讀。</p>
+</div>
 </div>
 </div>
 </section>
-<section id="引數與預設值" class="slide level2">
-<h2>引數與預設值</h2>
+<section id="可變長度引數列" class="slide level2">
+<h2>可變長度引數列：…</h2>
+<p>刪節號 <code>...</code> 的意思是「其餘所有引數」。兩大用途。其一，<strong>把多餘引數轉傳</strong>給另一個函式——這裡 <code>x</code> 之後的一切都流進 <code>summary</code>：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>trim_mean <span class="ot">&lt;-</span> <span class="cf">function</span>(v, <span class="at">trim =</span> <span class="fl">0.1</span>, <span class="at">digits =</span> <span class="dv">2</span>) {</span>
-<span id="cb5-2"><a href=""></a>  <span class="fu">round</span>(<span class="fu">mean</span>(v, <span class="at">trim =</span> trim), digits)</span>
-<span id="cb5-3"><a href=""></a>}</span>
-<span id="cb5-4"><a href=""></a><span class="fu">trim_mean</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">100</span>))            <span class="co"># 使用預設值</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">sqrt</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>))</span>
+<span id="cb11-2"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) { <span class="fu">print</span>(x); <span class="fu">summary</span>(...) }</span>
+<span id="cb11-3"><a href=""></a><span class="fu">f</span>(<span class="st">"Here is the summary for v."</span>, v, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 26.5</code></pre>
+<pre><code>[1] "Here is the summary for v."</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">trim_mean</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">100</span>), <span class="at">trim =</span> <span class="fl">0.25</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 2.5</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    1.0     5.1     7.1     6.7     8.7    10.0 </code></pre>
 </div>
 </div>
-<ul>
-<li>引數比對順序：先精確名稱、再部分名稱、最後位置。</li>
-<li>沒有預設值又沒被提供的引數，<strong>只有主體真的用到它時</strong>才會報錯——又是惰性求值。</li>
-<li>預設值可以引用其他引數：<code>function(x, n = length(x))</code>。</li>
-</ul>
+<p>（回想第七章：<code>...</code> 是特殊物件型別，<em>只能</em>在函式主體內操作。）</p>
 </section>
-<section id="點點點引數" class="slide level2">
-<h2>點點點引數</h2>
-<p>省略號 <code>...</code> 吸收所有多出來的引數，並可原樣轉交：</p>
+<section id="讀取-裡的引數" class="slide level2">
+<h2>讀取 … 裡的引數</h2>
+<p>其二，你可以自己<strong>消化</strong>這些可變引數：把 <code>...</code> 轉成串列。一個把所有引數加總的函式：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>loud_plot_summary <span class="ot">&lt;-</span> <span class="cf">function</span>(v, ...) {</span>
-<span id="cb9-2"><a href=""></a>  <span class="fu">cat</span>(<span class="st">"n ="</span>, <span class="fu">length</span>(v), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb9-3"><a href=""></a>  <span class="fu">summary</span>(v, ...)</span>
-<span id="cb9-4"><a href=""></a>}</span>
-<span id="cb9-5"><a href=""></a><span class="fu">loud_plot_summary</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">9</span>, <span class="cn">NA</span>), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>addemup <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
+<span id="cb14-2"><a href=""></a>  args <span class="ot">&lt;-</span> <span class="fu">list</span>(...)</span>
+<span id="cb14-3"><a href=""></a>  <span class="cf">for</span> (a <span class="cf">in</span> args) x <span class="ot">&lt;-</span> x <span class="sc">+</span> a</span>
+<span id="cb14-4"><a href=""></a>  x</span>
+<span id="cb14-5"><a href=""></a>}</span>
+<span id="cb14-6"><a href=""></a><span class="fu">addemup</span>(<span class="dv">1</span>, <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>n = 4 </code></pre>
+<pre><code>[1] 2</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">addemup</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.     NAs 
-      1       3       5       5       7       9       1 </code></pre>
+<pre><code>[1] 15</code></pre>
 </div>
 </div>
-<p>包裝函式（wrapper）正是靠這一招，把選項一路傳給 <code>plot()</code>、<code>mean()</code> 等函式，而不必逐一列舉。</p>
+<p>個別項目也能直接用 <code>..1</code>、<code>..2</code>……到 <code>..9</code> 取得。具名引數在主體內就是有效的符號（作用域：第八章）。</p>
 </section>
 <section id="回傳值" class="slide level2">
 <h2>回傳值</h2>
+<p>明確的 <code>return</code> 跟其他語言一樣可用——但 R 本來就回傳<strong>最後評估的運算式</strong>，所以 <code>return</code> 常被省略：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>sign_word <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb12-2"><a href=""></a>  <span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="st">"positive"</span>)     <span class="co"># 明確的提早回傳</span></span>
-<span id="cb12-3"><a href=""></a>  <span class="cf">if</span> (x <span class="sc">&lt;</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="st">"negative"</span>)</span>
-<span id="cb12-4"><a href=""></a>  <span class="st">"zero"</span>                            <span class="co"># 隱含：最後的值</span></span>
-<span id="cb12-5"><a href=""></a>}</span>
-<span id="cb12-6"><a href=""></a><span class="fu">sign_word</span>(<span class="sc">-</span><span class="dv">3</span>); <span class="fu">sign_word</span>(<span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x) { <span class="fu">return</span>(x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">3</span>) }</span>
+<span id="cb18-2"><a href=""></a><span class="fu">f</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "negative"</code></pre>
+<pre><code>[1] 12</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x) { x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">3</span> }</span>
+<span id="cb20-2"><a href=""></a><span class="fu">f</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "zero"</code></pre>
+<pre><code>[1] 12</code></pre>
 </div>
 </div>
-<ul>
-<li><code>return()</code> 立即離開函式——適合寫前置防衛判斷。</li>
-<li>否則最後求值的運算式就是回傳值；道地的 R 寫法仰賴這一點。</li>
-<li><code>invisible(x)</code> 回傳值但不在主控台列印——<code>assign()</code> 與繪圖函式就是這麼做的。</li>
-</ul>
-</section>
-<section id="函式作為引數" class="slide level2">
-<h2>函式作為引數</h2>
-<p>高階函式以函式為輸入。<code>sapply</code>/<code>lapply</code> 家族把函式套用到向量或串列上：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, sqrt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1.000000 1.414214 1.732051 2.000000 2.236068</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">lapply</span>(<span class="fu">list</span>(<span class="at">a =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">b =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">6</span>), mean)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>$a
-[1] 2
+<p>當明確寫出能讓程式更乾淨時（例如提早退出）再用它。</p>
+</section></section>
+<section>
+<section id="函式作為引數" class="title-slide slide level1 center">
+<h1>函式作為引數</h1>
 
-$b
-[1] 5</code></pre>
-</div>
-</div>
-<p><code>apply()</code> 沿矩陣的邊作用（1 = 列，2 = 欄）：</p>
+</section>
+<section id="高階函式sapply" class="slide level2">
+<h2>高階函式：sapply</h2>
+<p>許多 R 函式接受<em>其他函式</em>當引數（例如建模函式接受「如何處理缺失值」的函式）。經典範例是 <code>sapply</code>：把函式套用到向量的每個元素：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="at">nrow =</span> <span class="dv">2</span>)</span>
-<span id="cb19-2"><a href=""></a><span class="fu">apply</span>(m, <span class="dv">1</span>, sum)     <span class="co"># 列總和</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">7</span></span>
+<span id="cb22-2"><a href=""></a><span class="fu">sapply</span>(a, sqrt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1]  9 12</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">apply</span>(m, <span class="dv">2</span>, max)     <span class="co"># 欄最大值</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2 4 6</code></pre>
+<pre><code>[1] 1.000000 1.414214 1.732051 2.000000 2.236068 2.449490 2.645751</code></pre>
 </div>
 </div>
-<p><code>mapply()</code> 則把多個向量並行送進同一個函式。</p>
+<p>玩具範例——<code>sqrt(1:7)</code> 也辦得到——但許多有用的函式不接受多元素向量，<code>sapply</code> 能優雅地擴充它們。（整個摘要家族的親戚：第十二章。）</p>
 </section>
 <section id="匿名函式" class="slide level2">
 <h2>匿名函式</h2>
-<p>只用一次的輔助函式，不必命名：</p>
+<p>函式是物件，所以不一定需要名字。沒被命名就直接傳遞的函式叫<strong>匿名函式</strong>。最小示範——把引數函式套用在數字 3 上：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="cf">function</span>(i) i <span class="sc">*</span> (i <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a>apply.to.three <span class="ot">&lt;-</span> <span class="cf">function</span>(f) { <span class="fu">f</span>(<span class="dv">3</span>) }</span>
+<span id="cb24-2"><a href=""></a><span class="fu">apply.to.three</span>(<span class="cf">function</span>(x) { x <span class="sc">*</span> <span class="dv">7</span> })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1]  1  3  6 10 15</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="co"># 定義完當場套用</span></span>
-<span id="cb25-2"><a href=""></a>(<span class="cf">function</span>(x) x <span class="sc">^</span> x)(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 27</code></pre>
+<pre><code>[1] 21</code></pre>
 </div>
 </div>
-<p>R 4.1 起有更精簡的反斜線縮寫：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, \(i) i <span class="sc">^</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1]  1  4  9 16 25</code></pre>
-</div>
-</div>
-<p>匿名函式讓一次性的邏輯留在使用它的地方。</p>
+<p>直譯器怎麼讀：<code>f</code> 繫結到匿名的 <code>function(x) {x * 7}</code>；評估 <code>f(3)</code> 時 <code>x</code> 繫結到 3；主體回傳 <code>3 * 7 = 21</code>。</p>
 </section>
-<section id="函式的性質" class="slide level2">
-<h2>函式的性質</h2>
-<p>函式物件可以拆解成三部分：</p>
+<section id="匿名函式配-sapply" class="slide level2">
+<h2>匿名函式配 sapply</h2>
+<p>日常用法：把一次性函式傳給 apply 家族：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">args</span>(trim_mean)        <span class="co"># 可讀的簽名</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span>
+<span id="cb26-2"><a href=""></a><span class="fu">sapply</span>(a, <span class="cf">function</span>(x) { x <span class="sc">+</span> <span class="dv">1</span> })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>function (v, trim = 0.1, digits = 2) 
+<pre><code>[1] 2 3 4 5 6</code></pre>
+</div>
+</div>
+<p>這個家族是<strong>控制結構的真正替代品</strong>。用迴圈逐元素平方 vs.&nbsp;用 apply：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span></span>
+<span id="cb28-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb28-3"><a href=""></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(v)) { w[i] <span class="ot">&lt;-</span> v[i]<span class="sc">^</span><span class="dv">2</span> }</span>
+<span id="cb28-4"><a href=""></a>w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]   1   4   9  16  25  36  49  64  81 100 121 144 169 196 225 256 289 324 361
+[20] 400</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">sapply</span>(v, <span class="cf">function</span>(i) { i<span class="sc">^</span><span class="dv">2</span> })</span>
+<span id="cb30-2"><a href=""></a>w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]   1   4   9  16  25  36  49  64  81 100 121 144 169 196 225 256 289 324 361
+[20] 400</code></pre>
+</div>
+</div>
+<p>第二版直接道出意圖——把這個函式套到每個元素——而且還更快（第二十四章）。</p>
+</section>
+<section id="直接套用匿名函式" class="slide level2">
+<h2>直接套用匿名函式</h2>
+<p>匿名函式可以定義完當場呼叫——但函式物件<strong>必須包在小括號裡</strong>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a>(<span class="cf">function</span>(x) { x <span class="sc">+</span> <span class="dv">1</span> })(<span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
+</div>
+</div>
+<p>為什麼？函式呼叫 <code>f(arguments)</code> 的結合力極強。不加括號的 <code>function(x) {x+1}(1)</code> 會默默定義出一個<em>主體</em>為 <code>{x+1}(1)</code> 的函式——而且不報錯，因為主體尚未被評估。是合法的 R，但幾乎肯定不是你想寫的。</p>
+</section></section>
+<section>
+<section id="函式的性質" class="title-slide slide level1 center">
+<h1>函式的性質</h1>
+
+</section>
+<section id="args-與-formals" class="slide level2">
+<h2>args 與 formals</h2>
+<p>想看函式接受哪些引數，<code>args</code> 回傳一個主體為 <code>NULL</code> 的函式物件：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">args</span>(sin)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x) 
 NULL</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">formals</span>(trim_mean)     <span class="co"># 引數與預設值（串列形式）</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a><span class="fu">args</span>(args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>$v
+<pre><code>function (name) 
+NULL</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a><span class="fu">args</span>(lm)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (formula, data, subset, weights, na.action, method = "qr", 
+    model = TRUE, x = FALSE, y = FALSE, qr = TRUE, singular.ok = TRUE, 
+    contrasts = NULL, offset, ...) 
+NULL</code></pre>
+</div>
+</div>
+<p>想用程式<em>操作</em>引數列，用 <code>formals</code>：它回傳一個 <strong>pairlist</strong>——每個引數一對，沒有預設值的對應 <code>NULL</code>。（<code>formals</code> 只適用於 closure，不適用於內建函式。）</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">y=</span><span class="dv">1</span>, <span class="at">z=</span><span class="dv">2</span>) { x <span class="sc">+</span> y <span class="sc">+</span> z }</span>
+<span id="cb40-2"><a href=""></a>f.formals <span class="ot">&lt;-</span> <span class="fu">formals</span>(f)</span>
+<span id="cb40-3"><a href=""></a>f.formals</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$x
 
 
-$trim
-[1] 0.1
+$y
+[1] 1
 
-$digits
+$z
 [1] 2</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a><span class="fu">body</span>(zscore)           <span class="co"># 程式碼</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>f.formals<span class="sc">$</span>y</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>{
-    m &lt;- mean(v)
-    s &lt;- sd(v)
-    (v - m)/s
+<pre><code>[1] 1</code></pre>
+</div>
+</div>
+</section>
+<section id="修改引數formals--與-alist" class="slide level2">
+<h2>修改引數：formals&lt;- 與 alist</h2>
+<p><code>formals</code> 也能放在指派的<strong>左邊</strong>——就地修改預設值：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a>f.formals<span class="sc">$</span>y <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb44-2"><a href=""></a><span class="fu">formals</span>(f) <span class="ot">&lt;-</span> f.formals</span>
+<span id="cb44-3"><a href=""></a><span class="fu">args</span>(f)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y = 3, z = 2) 
+NULL</code></pre>
+</div>
+</div>
+<p>便利函式 <code>alist</code> 用「定義函式的語法」建構引數列（注意：沒有預設值的引數仍要寫等號）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">formals</span>(f) <span class="ot">&lt;-</span> <span class="fu">alist</span>(<span class="at">x=</span>, <span class="at">y=</span><span class="dv">100</span>, <span class="at">z=</span><span class="dv">200</span>)</span>
+<span id="cb46-2"><a href=""></a>f</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y = 100, z = 200) 
+{
+    x + y + z
 }</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a><span class="fu">environment</span>(zscore)    <span class="co"># 定義它的環境</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>&lt;environment: R_GlobalEnv&gt;</code></pre>
 </div>
-</div>
-<p>這些零件甚至可以用程式<em>修改</em>——<code>body(f) &lt;- ...</code>——偶爾有用，而且在聚會上永遠很炫。</p>
 </section>
-<section id="引數驗證" class="slide level2">
-<h2>引數驗證</h2>
-<p>健壯的函式會及早檢查輸入，並給出有用的錯誤訊息：</p>
+<section id="body" class="slide level2">
+<h2>body</h2>
+<p>主體同樣可讀可寫——它的型別是 <code>expression</code>，所以要指派 expression：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a>safe_log <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb37-2"><a href=""></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(x), <span class="fu">all</span>(x <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
-<span id="cb37-3"><a href=""></a>  <span class="fu">log</span>(x)</span>
-<span id="cb37-4"><a href=""></a>}</span>
-<span id="cb37-5"><a href=""></a><span class="fu">safe_log</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a><span class="fu">body</span>(f)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.000000 2.302585</code></pre>
+<pre><code>{
+    x + y + z
+}</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">safe_log</span>(<span class="sc">-</span><span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a><span class="fu">body</span>(f) <span class="ot">&lt;-</span> <span class="fu">expression</span>({x <span class="sc">*</span> y <span class="sc">*</span> z})</span>
+<span id="cb50-2"><a href=""></a>f</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y = 100, z = 200) 
+{
+    x * y * z
+}</code></pre>
+</div>
+</div>
+<p>函式徹頭徹尾是資料：引數和主體都能被普通的 R 程式碼檢視與改寫。</p>
+</section></section>
+<section>
+<section id="引數順序與具名引數" class="title-slide slide level1 center">
+<h1>引數順序與具名引數</h1>
+
+</section>
+<section id="提供引數的三種方式" class="slide level2">
+<h2>提供引數的三種方式</h2>
+<p>函式內部以定義時的名稱存取引數：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href=""></a>addTheLog <span class="ot">&lt;-</span> <span class="cf">function</span>(first, second) { first <span class="sc">+</span> <span class="fu">log</span>(second) }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>呼叫者有三種指定方式，按優先序比對：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href=""></a><span class="fu">addTheLog</span>(<span class="at">second=</span><span class="fu">exp</span>(<span class="dv">4</span>), <span class="at">first=</span><span class="dv">1</span>)   <span class="co"># 1. 完整名稱（最先比對）</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href=""></a><span class="fu">addTheLog</span>(<span class="at">s=</span><span class="fu">exp</span>(<span class="dv">4</span>), <span class="at">f=</span><span class="dv">1</span>)            <span class="co"># 2. 部分相符的名稱</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a><span class="fu">addTheLog</span>(<span class="dv">1</span>, <span class="fu">exp</span>(<span class="dv">4</span>))                <span class="co"># 3. 位置順序</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+</div>
+<p>一個限制：呼叫泛型函式時，攜帶分派物件的那個引數不能指名——其他引數照樣可以。</p>
+</section>
+<section id="用完整名稱部分比對會咬人" class="slide level2">
+<h2>用完整名稱；部分比對會咬人</h2>
+<p>完整名稱多打幾個字，換來可讀性與零歧義。部分比對被<strong>列為不建議</strong>其來有自：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">arg1=</span><span class="dv">10</span>, <span class="at">arg2=</span><span class="dv">20</span>) {</span>
+<span id="cb59-2"><a href=""></a>  <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"arg1:"</span>, arg1))</span>
+<span id="cb59-3"><a href=""></a>  <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"arg2:"</span>, arg2))</span>
+<span id="cb59-4"><a href=""></a>}</span>
+<span id="cb59-5"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>)            <span class="co"># 歧義：報錯</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
-<pre><code>Error in `safe_log()`:
-! all(x &gt; 0) is not TRUE</code></pre>
+<pre><code>Error in `f()`:
+! argument 1 matches multiple formal arguments</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>, <span class="at">arg2=</span><span class="dv">2</span>)    <span class="co"># 現在 "arg" 只能指 arg1……</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "arg1: 1"
+[1] "arg2: 2"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>, <span class="at">arg1=</span><span class="dv">2</span>)    <span class="co"># ……轉眼它又變成指 arg2！</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "arg1: 2"
+[1] "arg2: 1"</code></pre>
 </div>
 </div>
+<p>同一個前綴，因為其他引數的有無而落在不同引數上——無聲臭蟲的配方。</p>
+</section></section>
+<section>
+<section id="副作用" class="title-slide slide level1 center">
+<h1>副作用</h1>
+
+</section>
+<section id="回傳值之外" class="slide level2">
+<h2>回傳值之外</h2>
+<p>每個函式都回傳值；有些<em>還</em>會改動其他環境的變數、繪圖、讀寫檔案、存取網路。這些額外行為叫<strong>副作用（side effects）</strong>。</p>
+<p>最關鍵的副作用運算子是 <code>&lt;&lt;-</code>。<code>var &lt;&lt;- value</code> 會先在目前環境找 <code>var</code>，再到父環境、一路遞迴向上；若到達全域環境仍沒找到，指派就發生<strong>在全域環境</strong>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href=""></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())</span>
+<span id="cb65-2"><a href=""></a>doesnt.assign.x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) { x <span class="ot">&lt;-</span> i }</span>
+<span id="cb65-3"><a href=""></a><span class="fu">doesnt.assign.x</span>(<span class="dv">4</span>)</span>
+<span id="cb65-4"><a href=""></a>x                                   <span class="co"># &lt;- 留在局部：找不到</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error:
+! object 'x' not found</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href=""></a>assigns.x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) { x <span class="ot">&lt;&lt;-</span> i }</span>
+<span id="cb67-2"><a href=""></a><span class="fu">assigns.x</span>(<span class="dv">4</span>)</span>
+<span id="cb67-3"><a href=""></a>x                                   <span class="co"># &lt;&lt;- 逃到了全域環境</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4</code></pre>
+</div>
+</div>
+</section>
+<section id="輸入輸出與繪圖" class="slide level2">
+<h2>輸入輸出與繪圖</h2>
+<p>另外兩個副作用家族補完全貌：</p>
 <ul>
-<li><code>stop("message")</code> 拋出錯誤；<code>warning()</code> 發出警告但繼續執行。</li>
-<li><code>missing(arg)</code> 檢查呼叫者是否提供了某個引數。</li>
-<li><code>match.arg()</code> 對照固定選項集合驗證引數。</li>
+<li><strong>輸入／輸出。</strong> 從檔案或網路載入資料、把資料存檔——這些都是「回傳物件」之外的行為。完整討論在第十一章。</li>
+<li><strong>繪圖。</strong> 繪圖函式可能回傳物件，但重點是畫出來的圖——在螢幕上或檔案裡。第十三、十四章詳述。</li>
 </ul>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>設計習慣：</strong> 讓大多數函式保持<em>純粹</em>（無副作用），把副作用集中在少數命名清楚的地方。純函式更容易測試、重用與平行化。</p>
+</div>
+</div>
+</div>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

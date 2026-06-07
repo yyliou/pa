@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,296 +211,594 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="向資料提出是非題" class="title-slide slide level1 center">
-<h1><strong>向資料提出是非題</strong></h1>
+<section id="假設受審" class="title-slide slide level1 center">
+<h1><strong>假設受審</strong></h1>
 
 </section>
-<section id="檢定的邏輯" class="slide level2">
-<h2>檢定的邏輯</h2>
-<p>每個古典檢定都遵循同一套劇本：設定<strong>虛無假設</strong> <span class="math inline">\(H_0\)</span>，計算一個在 <span class="math inline">\(H_0\)</span> 下分布已知（第十七章）的統計量，回報 <strong>p 值</strong>——若 <span class="math inline">\(H_0\)</span> 為真，出現至少這麼極端結果的機率。</p>
-<div class="callout callout-note callout-titled callout-style-default">
+<section id="本章的形狀" class="slide level2">
+<h2>本章的形狀</h2>
+<p>「新藥贏過安慰劑嗎？」「改版賣得更多嗎？」「這個策略勝過指數嗎？」——立假設、設計實驗、收資料、做檢定。兩大半場：</p>
+<ul>
+<li><strong>連續資料</strong>——常態理論檢定，以及無母數對應版本；</li>
+<li><strong>離散資料</strong>——比例、二項試驗、列聯表。</li>
+</ul>
+<div class="callout callout-warning callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<p><strong>Note</strong></p>
+<p><strong>Warning</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>怎麼讀 p 值。</strong> p 很小（慣例上 <span class="math inline">\(&lt; 0.05\)</span>）代表資料在 <span class="math inline">\(H_0\)</span> 下很令人意外，因此拒絕它。p 很大永遠不能<em>證明</em> <span class="math inline">\(H_0\)</span>，只能說資料與它相容。</p>
+<p><strong>書中的免責聲明在此同樣適用：</strong> 本講義提醒你<em>何時</em>、<em>如何</em>在 R 裡跑各個檢定——但取代不了一門正規的統計課：公式從哪來、何時可安全使用。</p>
 </div>
 </div>
 </div>
-<p>以下每個檢定都回傳 <code>htest</code> 類別的物件——同樣的結構，同一套閱讀技巧。</p>
-</section>
-<section id="單樣本-t-檢定" class="slide level2">
-<h2>單樣本 t 檢定</h2>
-<p>某型輪胎的失效時間平均值是否異於基準？</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a>spd <span class="ot">&lt;-</span> tires.sus<span class="sc">$</span>Time_To_Failure[tires.sus<span class="sc">$</span>Tire_Type <span class="sc">==</span> <span class="st">"E"</span>]</span>
-<span id="cb1-5"><a href=""></a><span class="fu">t.test</span>(spd, <span class="at">mu =</span> <span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="co"># 本章用到的資料集</span></span>
+<span id="cb1-2"><a href=""></a><span class="cf">for</span> (d <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"tires.sus"</span>, <span class="st">"field.goals"</span>, <span class="st">"SPECint2006"</span>,</span>
+<span id="cb1-3"><a href=""></a>            <span class="st">"mort06.smpl"</span>, <span class="st">"births2006.smpl"</span>)) {</span>
+<span id="cb1-4"><a href=""></a>  temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb1-5"><a href=""></a>  <span class="fu">download.file</span>(<span class="fu">paste0</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/"</span>,</span>
+<span id="cb1-6"><a href=""></a>                       <span class="st">"master/data/"</span>, d, <span class="st">".rda"</span>), temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-7"><a href=""></a>  <span class="fu">load</span>(temp, <span class="at">envir =</span> <span class="fu">globalenv</span>())</span>
+<span id="cb1-8"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section></section>
+<section>
+<section id="連續資料常態理論檢定" class="title-slide slide level1 center">
+<h1>連續資料：常態理論檢定</h1>
+
+</section>
+<section id="t.test單樣本對假設平均" class="slide level2">
+<h2>t.test：單樣本對假設平均</h2>
+<p><code>t.test(x, y=NULL, alternative=c("two.sided","less","greater"), mu=0, paired=FALSE, var.equal=FALSE, conf.level=0.95)</code>——<code>y=NULL</code> 時把單一向量與 <code>mu</code> 比較；<code>var.equal</code> 在合併變異數與 Welch 法之間選擇。假設 H 型輪胎「應該」撐 9 小時：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>times.to.failure.h <span class="ot">&lt;-</span> <span class="fu">subset</span>(tires.sus,</span>
+<span id="cb2-2"><a href=""></a>  Tire_Type<span class="sc">==</span><span class="st">"H"</span> <span class="sc">&amp;</span> Speed_At_Failure_km_h<span class="sc">==</span><span class="dv">160</span>)<span class="sc">$</span>Time_To_Failure</span>
+<span id="cb2-3"><a href=""></a><span class="fu">mean</span>(times.to.failure.h)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10.182</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">t.test</span>(times.to.failure.h, <span class="at">mu=</span><span class="dv">9</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     One Sample t-test
 
-data:  spd
-t = -30.475, df = 14, p-value = 3.359e-14
-alternative hypothesis: true mean is not equal to 8
+data:  times.to.failure.h
+t = 0.75694, df = 9, p-value = 0.4684
+alternative hypothesis: true mean is not equal to 9
 95 percent confidence interval:
- 3.772004 4.327996
+  6.649536 13.714464
 sample estimates:
 mean of x 
-     4.05 </code></pre>
+   10.182 </code></pre>
 </div>
 </div>
-<p>輸出打包了統計量、自由度、p 值、信賴區間與樣本平均——可用 <code>$p.value</code>、<code>$conf.int</code> 取出。</p>
+<p>解讀：統計量 <code>t</code>、自由度、<strong>p 值 0.4684</strong>——對立假設（「真實平均 ≠ 9」）<em>不</em>成立；證據不足以說平均偏離 9。報表以 95% 信賴區間與樣本平均收尾。</p>
 </section>
-<section id="雙樣本與成對-t-檢定" class="slide level2">
-<h2>雙樣本與成對 t 檢定</h2>
+<section id="t.test雙樣本" class="slide level2">
+<h2>t.test：雙樣本</h2>
+<p>三種輪胎共享速度等級 S——理應壽命相同。先比 E 與 D、再比 E 與 B：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>b <span class="ot">&lt;-</span> tires.sus<span class="sc">$</span>Time_To_Failure[tires.sus<span class="sc">$</span>Tire_Type <span class="sc">==</span> <span class="st">"B"</span>]</span>
-<span id="cb3-2"><a href=""></a>d <span class="ot">&lt;-</span> tires.sus<span class="sc">$</span>Time_To_Failure[tires.sus<span class="sc">$</span>Tire_Type <span class="sc">==</span> <span class="st">"D"</span>]</span>
-<span id="cb3-3"><a href=""></a><span class="fu">t.test</span>(b, d)                      <span class="co"># 預設為 Welch 雙樣本</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>times.to.failure.e <span class="ot">&lt;-</span> <span class="fu">subset</span>(tires.sus,</span>
+<span id="cb6-2"><a href=""></a>  Tire_Type<span class="sc">==</span><span class="st">"E"</span> <span class="sc">&amp;</span> Speed_At_Failure_km_h<span class="sc">==</span><span class="dv">180</span>)<span class="sc">$</span>Time_To_Failure</span>
+<span id="cb6-3"><a href=""></a>times.to.failure.d <span class="ot">&lt;-</span> <span class="fu">subset</span>(tires.sus,</span>
+<span id="cb6-4"><a href=""></a>  Tire_Type<span class="sc">==</span><span class="st">"D"</span> <span class="sc">&amp;</span> Speed_At_Failure_km_h<span class="sc">==</span><span class="dv">180</span>)<span class="sc">$</span>Time_To_Failure</span>
+<span id="cb6-5"><a href=""></a>times.to.failure.b <span class="ot">&lt;-</span> <span class="fu">subset</span>(tires.sus,</span>
+<span id="cb6-6"><a href=""></a>  Tire_Type<span class="sc">==</span><span class="st">"B"</span> <span class="sc">&amp;</span> Speed_At_Failure_km_h<span class="sc">==</span><span class="dv">180</span>)<span class="sc">$</span>Time_To_Failure</span>
+<span id="cb6-7"><a href=""></a><span class="fu">t.test</span>(times.to.failure.e, times.to.failure.d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Welch Two Sample t-test
 
-data:  b and d
-t = -1.3553, df = 16.258, p-value = 0.1938
+data:  times.to.failure.e and times.to.failure.d
+t = -2.5042, df = 8.961, p-value = 0.03373
 alternative hypothesis: true difference in means is not equal to 0
 95 percent confidence interval:
- -0.7680672  0.1685067
+ -0.82222528 -0.04148901
 sample estimates:
 mean of x mean of y 
- 4.453077  4.752857 </code></pre>
+ 4.321000  4.752857 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">t.test</span>(times.to.failure.e, times.to.failure.b)<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.1639728</code></pre>
 </div>
 </div>
+<p>E 對 D：95% 下顯著（p = 0.034）。E 對 B：不顯著（p = 0.164）——注意 R 從不替你<em>說</em>「顯著」，p 值要自己讀。</p>
+</section>
+<section id="t.test公式介面" class="slide level2">
+<h2>t.test：公式介面</h2>
+<p>資料在資料框、組別在因子時：<code>t.test(formula, data, subset, na.action)</code>。球評老說戶外踢球更難——成功射門的距離有差嗎？</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>before <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">198</span>, <span class="dv">201</span>, <span class="dv">210</span>, <span class="dv">185</span>, <span class="dv">192</span>)</span>
-<span id="cb5-2"><a href=""></a>after  <span class="ot">&lt;-</span> before <span class="sc">-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">7</span>, <span class="dv">2</span>, <span class="dv">9</span>, <span class="dv">1</span>)</span>
-<span id="cb5-3"><a href=""></a><span class="fu">t.test</span>(before, after, <span class="at">paired =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>good <span class="ot">&lt;-</span> <span class="fu">transform</span>(</span>
+<span id="cb10-2"><a href=""></a>  field.goals[field.goals<span class="sc">$</span>play.type<span class="sc">==</span><span class="st">"FG good"</span>, <span class="fu">c</span>(<span class="st">"yards"</span>,<span class="st">"stadium.type"</span>)],</span>
+<span id="cb10-3"><a href=""></a>  <span class="at">outside=</span>(stadium.type<span class="sc">==</span><span class="st">"Out"</span>))</span>
+<span id="cb10-4"><a href=""></a>bad <span class="ot">&lt;-</span> <span class="fu">transform</span>(</span>
+<span id="cb10-5"><a href=""></a>  field.goals[field.goals<span class="sc">$</span>play.type<span class="sc">==</span><span class="st">"FG no"</span>, <span class="fu">c</span>(<span class="st">"yards"</span>,<span class="st">"stadium.type"</span>)],</span>
+<span id="cb10-6"><a href=""></a>  <span class="at">outside=</span>(stadium.type<span class="sc">==</span><span class="st">"Out"</span>))</span>
+<span id="cb10-7"><a href=""></a><span class="fu">t.test</span>(yards<span class="sc">~</span>outside, <span class="at">data=</span>good)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Welch Two Sample t-test
+
+data:  yards by outside
+t = 1.1259, df = 319.43, p-value = 0.261
+alternative hypothesis: true difference in means between group FALSE and group TRUE is not equal to 0
+95 percent confidence interval:
+ -0.6851121  2.5185711
+sample estimates:
+mean in group FALSE  mean in group TRUE 
+           35.31707            34.40034 </code></pre>
+</div>
+</div>
+<p>室內平均長約一碼——不顯著（p = 0.26）。失手的（<code>data=bad</code>）：p = 0.23。整體嘗試：p = 0.12。球評們依舊拿不出證據。</p>
+</section>
+<section id="成對資料" class="slide level2">
+<h2>成對資料</h2>
+<p>每個受試者兩筆觀測（前／後）就用<strong>成對 t 檢定</strong>：<code>paired=TRUE</code>。SPEC 的 CPU 基準測試替每台機器報告<em>基準</em>與<em>最佳化</em>兩個成績——按機器成對。單晶片雙核心系統：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">t.test</span>(<span class="fu">subset</span>(SPECint2006, Num.Chips<span class="sc">==</span><span class="dv">1</span> <span class="sc">&amp;</span> Num.Cores<span class="sc">==</span><span class="dv">2</span>)<span class="sc">$</span>Baseline,</span>
+<span id="cb12-2"><a href=""></a>       <span class="fu">subset</span>(SPECint2006, Num.Chips<span class="sc">==</span><span class="dv">1</span> <span class="sc">&amp;</span> Num.Cores<span class="sc">==</span><span class="dv">2</span>)<span class="sc">$</span>Result,</span>
+<span id="cb12-3"><a href=""></a>       <span class="at">paired=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Paired t-test
 
-data:  before and after
-t = 2.8642, df = 4, p-value = 0.04574
+data:  subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Baseline and subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Result
+t = -21.804, df = 111, p-value &lt; 2.2e-16
 alternative hypothesis: true mean difference is not equal to 0
 95 percent confidence interval:
- 0.1347441 8.6652559
+ -1.957837 -1.631627
 sample estimates:
 mean difference 
-            4.4 </code></pre>
+      -1.794732 </code></pre>
 </div>
 </div>
-<p>配對消除了個體間差異——測量天然成對時，務必說出來。</p>
+<p>壓倒性顯著——不意外：調校有用，而且交最佳化成績是自願的（調不好的多半就不交了）。</p>
 </section>
-<section id="比較變異數與多組平均" class="slide level2">
-<h2>比較變異數與多組平均</h2>
+<section id="比較變異數var.test-與-bartlett.test" class="slide level2">
+<h2>比較變異數：var.test 與 bartlett.test</h2>
+<ul>
+<li><strong><code>var.test(x, y, ratio=1, alternative=, conf.level=)</code></strong>（或公式形式）對兩個常態母體的變異數做 <strong>F 檢定</strong>。</li>
+<li><strong><code>bartlett.test(x, g)</code></strong>（或公式）檢驗各組變異數是否同質。</li>
+</ul>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">var.test</span>(b, d)                    <span class="co"># 變異數相等的 F 檢定</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>field.goals.inout <span class="ot">&lt;-</span> <span class="fu">transform</span>(field.goals, <span class="at">outside=</span>(stadium.type<span class="sc">==</span><span class="st">"Out"</span>))</span>
+<span id="cb14-2"><a href=""></a><span class="fu">var.test</span>(yards<span class="sc">~</span>outside, <span class="at">data=</span>field.goals.inout)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     F test to compare two variances
 
-data:  b and d
-F = 1.9514, num df = 12, denom df = 6, p-value = 0.4237
+data:  yards by outside
+F = 1.2432, num df = 252, denom df = 728, p-value = 0.03098
 alternative hypothesis: true ratio of variances is not equal to 1
 95 percent confidence interval:
- 0.3636523 7.2755648
+ 1.019968 1.530612
 sample estimates:
 ratio of variances 
-          1.951447 </code></pre>
+          1.243157 </code></pre>
 </div>
-</div>
-<p>超過兩組時，單因子<strong>變異數分析（ANOVA）</strong>推廣了 t 檢定：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">aov</span>(Time_To_Failure <span class="sc">~</span> Tire_Type, <span class="at">data =</span> tires.sus)</span>
-<span id="cb9-2"><a href=""></a><span class="fu">summary</span>(fit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">bartlett.test</span>(yards<span class="sc">~</span>outside, <span class="at">data=</span>field.goals.inout)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>            Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-Tire_Type    5  279.1   55.83   12.75 1.88e-08 ***
-Residuals   60  262.7    4.38                     
+<pre><code>
+    Bartlett test of homogeneity of variances
+
+data:  yards by outside
+Bartlett's K-squared = 4.5808, df = 1, p-value = 0.03233</code></pre>
+</div>
+</div>
+<p>兩個 p 值都約 0.03：室內外的變異數差異<em>顯著</em>——平均沒差，散布有差。</p>
+</section>
+<section id="anova比較多組平均" class="slide level2">
+<h2>ANOVA：比較多組平均</h2>
+<p><strong>變異數分析</strong>比較多組的平均（名字來自方法、不是結果！）。快速工具是 <code>aov(formula, data, projections=, qr=, contrasts=)</code>。2006 年美國死亡年齡按死因（<code>mort06.smpl</code>，作者從 CDC 檔案重編碼）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">aov</span>(age<span class="sc">~</span>Cause, <span class="at">data=</span>mort06.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+   aov(formula = age ~ Cause, data = mort06.smpl)
+
+Terms:
+                   Cause Residuals
+Sum of Squares  15727886  72067515
+Deg. of Freedom        9    243034
+
+Residual standard error: 17.22012
+Estimated effects may be unbalanced
+29 observations deleted due to missingness</code></pre>
+</div>
+</div>
+<p><code>model.tables(aov(...))</code> 印出各水準效果（意外事故比總平均少 21.4 歲、他殺少 40.1、阿茲海默多 13.8……）。更微妙的例子——孕期增重按出生月份：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>births2006.cln <span class="ot">&lt;-</span> births2006.smpl[births2006.smpl<span class="sc">$</span>WTGAIN<span class="sc">&lt;</span><span class="dv">99</span> <span class="sc">&amp;</span></span>
+<span id="cb20-2"><a href=""></a>                                  <span class="sc">!</span><span class="fu">is.na</span>(births2006.smpl<span class="sc">$</span>WTGAIN),]</span>
+<span id="cb20-3"><a href=""></a><span class="fu">aov</span>(WTGAIN<span class="sc">~</span>DOB_MM, births2006.cln)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+   aov(formula = WTGAIN ~ DOB_MM, data = births2006.cln)
+
+Terms:
+                  DOB_MM Residuals
+Sum of Squares     14777  73385301
+Deg. of Freedom        1    351465
+
+Residual standard error: 14.44986
+Estimated effects may be unbalanced</code></pre>
+</div>
+</div>
+</section>
+<section id="anovalmoneway.test-與同伴" class="slide level2">
+<h2>anova(lm(…))、oneway.test 與同伴</h2>
+<p>通常更好的路：先 <code>lm</code> 配適、再用 <code>anova</code> 取表——F 統計量與 p 值都在（大模型用 <code>update</code> 修改更省事；第二十章）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a>mort06.smpl.lm <span class="ot">&lt;-</span> <span class="fu">lm</span>(age<span class="sc">~</span>Cause, <span class="at">data=</span>mort06.smpl)</span>
+<span id="cb22-2"><a href=""></a><span class="fu">anova</span>(mort06.smpl.lm)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Variance Table
+
+Response: age
+              Df   Sum Sq Mean Sq F value    Pr(&gt;F)    
+Cause          9 15727886 1747543  5893.3 &lt; 2.2e-16 ***
+Residuals 243034 72067515     297                      
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
-<p>p 值小代表<em>某些</em>平均不同；接著用 <code>TukeyHSD(fit)</code> 找出是<em>哪幾對</em>。</p>
+<ul>
+<li>變異數不等？<code>oneway.test(formula, data, var.equal=FALSE)</code>——Welch 思想的推廣。</li>
+<li><code>aov</code> 的其他配件：<code>proj</code>（投影）、<code>TukeyHSD</code>（成對水準差的信賴區間）、<code>se.contrast</code>（對比的標準誤）。</li>
+</ul>
 </section>
-<section id="常態性與分布檢定" class="slide level2">
-<h2>常態性與分布檢定</h2>
+<section id="成對-t-檢定" class="slide level2">
+<h2>成對 t 檢定</h2>
+<p>想知道<em>哪些</em>組不同、不只<em>有沒有</em>不同：<code>pairwise.t.test(x, g, p.adjust.method=, pool.sd=, paired=, alternative=)</code> 跑所有配對並校正多重檢定（預設 Holm 法）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">3</span>); z <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">100</span>)</span>
-<span id="cb11-2"><a href=""></a><span class="fu">shapiro.test</span>(z)                       <span class="co"># H0：資料為常態</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">pairwise.t.test</span>(tires.sus<span class="sc">$</span>Time_To_Failure, tires.sus<span class="sc">$</span>Tire_Type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pairwise comparisons using t tests with pooled SD 
+
+data:  tires.sus$Time_To_Failure and tires.sus$Tire_Type 
+
+  B       C      D       E       H     
+C 0.2219  -      -       -       -     
+D 1.0000  0.5650 -       -       -     
+E 1.0000  0.0769 1.0000  -       -     
+H 2.4e-07 0.0029 2.6e-05 1.9e-08 -     
+L 0.1147  1.0000 0.4408  0.0291  0.0019
+
+P value adjustment method: holm </code></pre>
+</div>
+</div>
+<p>C–L、D–L、D–E 無顯著差異；B–H、C–H、E–L 等則非常顯著……</p>
+</section>
+<section id="檢驗常態性shapiro.test" class="slide level2">
+<h2>檢驗常態性：shapiro.test</h2>
+<p>射門距離常態嗎？先用眼睛、再用 <strong>Shapiro-Wilk 檢定</strong>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfcol=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">ps=</span><span class="fl">6.5</span>)</span>
+<span id="cb26-2"><a href=""></a><span class="fu">hist</span>(field.goals<span class="sc">$</span>yards, <span class="at">breaks=</span><span class="dv">25</span>)</span>
+<span id="cb26-3"><a href=""></a><span class="fu">qqnorm</span>(field.goals<span class="sc">$</span>yards, <span class="at">pch=</span><span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfcol=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb27-2"><a href=""></a><span class="fu">shapiro.test</span>(field.goals<span class="sc">$</span>yards)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Shapiro-Wilk normality test
 
-data:  z
-W = 0.97928, p-value = 0.1167</code></pre>
+data:  field.goals$yards
+W = 0.97275, p-value = 1.309e-12</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">ks.test</span>(z, <span class="st">"pnorm"</span>)                   <span class="co"># 對照任何具名分布</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<img data-src="ch18-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>鐘形有了、Q-Q 也大致直線——但 p ≈ 10⁻¹²：很可能<em>不</em>常態。眼睛會騙人；檢定給數字。</p>
+</section>
+<section id="任意分布ks.test" class="slide level2">
+<h2>任意分布：ks.test</h2>
+<p><strong>Kolmogorov-Smirnov 檢定</strong>把向量與<em>任何</em>分布比較（<code>y</code> ＝資料向量、分布名稱或函數），或比較兩個向量：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">ks.test</span>(field.goals<span class="sc">$</span>yards, pnorm)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in ks.test.default(field.goals$yards, pnorm): ties should not be
+present for the one-sample Kolmogorov-Smirnov test</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Asymptotic one-sample Kolmogorov-Smirnov test
 
-data:  z
-D = 0.066739, p-value = 0.7646
+data:  field.goals$yards
+D = 1, p-value &lt; 2.2e-16
+alternative hypothesis: two-sided</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">ks.test</span>(<span class="fu">jitter</span>(<span class="fu">subset</span>(SPECint2006, Num.Chips<span class="sc">==</span><span class="dv">1</span><span class="sc">&amp;</span>Num.Cores<span class="sc">==</span><span class="dv">2</span>)<span class="sc">$</span>Baseline),</span>
+<span id="cb32-2"><a href=""></a>        <span class="fu">jitter</span>(<span class="fu">subset</span>(SPECint2006, Num.Chips<span class="sc">==</span><span class="dv">1</span><span class="sc">&amp;</span>Num.Cores<span class="sc">==</span><span class="dv">2</span>)<span class="sc">$</span>Result))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Asymptotic two-sample Kolmogorov-Smirnov test
+
+data:  jitter(subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Baseline) and jitter(subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Result)
+D = 0.20536, p-value = 0.01777
 alternative hypothesis: two-sided</code></pre>
 </div>
 </div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">qqnorm</span>(z); <span class="fu">qqline</span>(z)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch18-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:55.0%"><p>Q–Q 圖是視覺搭檔：點貼著直線支持常態——還能看出偏離發生在<em>哪裡</em>。</p>
+<p>「有同值」的警告本身就是線索——真常態的值幾乎不會撞值。（第二個檢定加 <code>jitter</code> 把警告壓掉。）基準與最佳化成績：不太可能來自同一分布（p = 0.012）。</p>
 </section>
-<section id="無母數檢定" class="slide level2">
-<h2>無母數檢定</h2>
-<p>常態性可疑或資料是等級時，換上不依賴分布的對應檢定：</p>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th style="text-align: left;">母數</th>
-<th style="text-align: left;">無母數</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">單／雙樣本 t</td>
-<td style="text-align: left;"><code>wilcox.test()</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">單因子 ANOVA</td>
-<td style="text-align: left;"><code>kruskal.test()</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">成對 t</td>
-<td style="text-align: left;"><code>wilcox.test(..., paired = TRUE)</code></td>
-</tr>
-</tbody>
-</table>
+<section id="相關檢定cor.test" class="slide level2">
+<h2>相關檢定：cor.test</h2>
+<p>第十六章的 <code>cor</code> 給數字；<code>cor.test(x, y, alternative=, method=, exact=, conf.level=)</code>（或公式形式）給<strong>顯著性</strong>：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">wilcox.test</span>(b, d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">cor.test</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>), <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>,<span class="dv">10</span>,<span class="dv">11</span>,<span class="dv">14</span>))<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2.989378e-08</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a><span class="fu">cor.test</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>), <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">8</span>,<span class="dv">1</span>,<span class="dv">7</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>))<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.2671036</code></pre>
+</div>
+</div>
+<p>把第十三章「毒物與肺癌」的關係送審：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb38-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda"</span>,</span>
+<span id="cb38-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb38-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb38-5"><a href=""></a><span class="fu">with</span>(toxins.and.cancer, <span class="fu">cor.test</span>(air_on_site<span class="sc">/</span>Surface_Area,</span>
+<span id="cb38-6"><a href=""></a>                                 deaths_lung<span class="sc">/</span>Population))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's product-moment correlation
+
+data:  air_on_site/Surface_Area and deaths_lung/Population
+t = 3.4108, df = 39, p-value = 0.00152
+alternative hypothesis: true correlation is not equal to 0
+95 percent confidence interval:
+ 0.2013723 0.6858402
+sample estimates:
+      cor 
+0.4793273 </code></pre>
+</div>
+</div>
+<p>顯著的正相關（p = 0.0015）——但別跳到因果：工業州可能同時在收入、醫療、吸菸率，甚至死因填寫習慣上不同。</p>
+</section></section>
+<section>
+<section id="連續資料無母數檢定" class="title-slide slide level1 center">
+<h1>連續資料：無母數檢定</h1>
+
+</section>
+<section id="wilcox.test" class="slide level2">
+<h2>wilcox.test</h2>
+<p>常態性可疑時，<strong>等級式</strong>檢定用一點檢定力換取穩健。Wilcoxon 檢定是 t 檢定的對應：統計量數遍所有配對中 y[j] &lt; x[i] 的次數（分布相同時約一半）——沒有「單樣本對假設平均」的版本：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">wilcox.test</span>(times.to.failure.e, times.to.failure.d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Wilcoxon rank sum exact test
 
-data:  b and d
-W = 27, p-value = 0.1505
+data:  times.to.failure.e and times.to.failure.d
+W = 14.5, p-value = 0.04576
 alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">kruskal.test</span>(Time_To_Failure <span class="sc">~</span> Tire_Type, <span class="at">data =</span> tires.sus)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a><span class="fu">wilcox.test</span>(yards<span class="sc">~</span>outside, <span class="at">data=</span>good)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Wilcoxon rank sum test with continuity correction
+
+data:  yards by outside
+W = 62045, p-value = 0.393
+alternative hypothesis: true location shift is not equal to 0</code></pre>
+</div>
+</div>
+<p>對照 t 檢定的結果：E 對 D 在這裡<em>差一點點</em>不顯著（p = 0.0505）。有同值時改用常態近似（所以有警告）。</p>
+</section>
+<section id="kruskal.test-與-fligner.test" class="slide level2">
+<h2>kruskal.test 與 fligner.test</h2>
+<ul>
+<li><strong>Kruskal-Wallis 等級和檢定</strong>——無母數版 ANOVA：<code>kruskal.test(formula, data)</code>；</li>
+<li><strong>Fligner-Killeen（中位數）檢定</strong>——無母數的變異數比較：<code>fligner.test(formula, data)</code>。</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a><span class="fu">kruskal.test</span>(age<span class="sc">~</span>Cause, <span class="at">data=</span>mort06.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Kruskal-Wallis rank sum test
 
-data:  Time_To_Failure by Tire_Type
-Kruskal-Wallis chi-squared = 40.11, df = 5, p-value = 1.419e-07</code></pre>
+data:  age by Cause
+Kruskal-Wallis chi-squared = 34868, df = 9, p-value &lt; 2.2e-16</code></pre>
 </div>
-</div>
-<p>用一點檢定力換來大量穩健性。</p>
-</section>
-<section id="比例與二項檢定" class="slide level2">
-<h2>比例與二項檢定</h2>
-<p>射門員 974 次嘗試成功 787 次。真實成功率是 80% 嗎？</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">prop.test</span>(<span class="dv">787</span>, <span class="dv">974</span>, <span class="at">p =</span> <span class="fl">0.80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">fligner.test</span>(age<span class="sc">~</span>Cause, <span class="at">data=</span>mort06.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-    1-sample proportions test with continuity correction
+    Fligner-Killeen test of homogeneity of variances
 
-data:  787 out of 974, null probability 0.8
-X-squared = 0.34195, df = 1, p-value = 0.5587
-alternative hypothesis: true p is not equal to 0.8
-95 percent confidence interval:
- 0.7815455 0.8320008
-sample estimates:
-        p 
-0.8080082 </code></pre>
+data:  age by Cause
+Fligner-Killeen:med chi-squared = 15788, df = 9, p-value &lt; 2.2e-16</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">binom.test</span>(<span class="dv">787</span>, <span class="dv">974</span>, <span class="at">p =</span> <span class="fl">0.80</span>)     <span class="co"># 精確版本</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li>尺度參數的差異：<strong><code>ansari.test(x, y, ...)</code></strong>（Ansari-Bradley）與 <strong><code>mood.test(x, y, ...)</code></strong>（Mood）——皆有公式版。</li>
+</ul>
+</section></section>
+<section>
+<section id="離散資料" class="title-slide slide level1 center">
+<h1>離散資料</h1>
+
+</section>
+<section id="prop.test比較比例" class="slide level2">
+<h2>prop.test：比較比例</h2>
+<p><code>prop.test(x, n, p=NULL, alternative=, conf.level=, correct=)</code> 檢驗各組成功比例是否相同（或等於給定值）。射門<em>成功率</em>室內外一樣嗎？先建成功／失敗表（剔除 8 次中止與 24 次被攔阻）、轉置、送檢：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a>field.goals.goodbad <span class="ot">&lt;-</span> field.goals[field.goals<span class="sc">$</span>play.type<span class="sc">==</span><span class="st">"FG good"</span> <span class="sc">|</span></span>
+<span id="cb48-2"><a href=""></a>                                   field.goals<span class="sc">$</span>play.type<span class="sc">==</span><span class="st">"FG no"</span>, ]</span>
+<span id="cb48-3"><a href=""></a>field.goals.table <span class="ot">&lt;-</span> <span class="fu">table</span>(field.goals.goodbad<span class="sc">$</span>play.type,</span>
+<span id="cb48-4"><a href=""></a>                           field.goals.goodbad<span class="sc">$</span>stadium.type)</span>
+<span id="cb48-5"><a href=""></a>field.goals.table.t <span class="ot">&lt;-</span> <span class="fu">t</span>(field.goals.table[<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>,])</span>
+<span id="cb48-6"><a href=""></a>field.goals.table.t</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      
+       FG good FG no
+  Both      53    14
+  In       152    24
+  Out      582   125</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a><span class="fu">prop.test</span>(field.goals.table.t)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    3-sample test for equality of proportions without continuity correction
+
+data:  field.goals.table.t
+X-squared = 2.3298, df = 2, p-value = 0.312
+alternative hypothesis: two.sided
+sample estimates:
+   prop 1    prop 2    prop 3 
+0.7910448 0.8636364 0.8231966 </code></pre>
+</div>
+</div>
+<p>p = 0.31：Both／In／Out 三組成功率無顯著差異。</p>
+</section>
+<section id="binom.test白努利試驗" class="slide level2">
+<h2>binom.test：白努利試驗</h2>
+<p>一串只有兩種結果的相同試驗（丟硬幣）服從<strong>二項</strong>分布。<code>binom.test(x, n, p=0.5, alternative=, conf.level=)</code> 檢驗觀測到的成功次數。David Ortiz 2008 年打擊率 .264（416 打數 110 安）——若他「真實」是 .300 打者，打出 .264 以下的機率多大？</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href=""></a><span class="fu">binom.test</span>(<span class="at">x=</span><span class="dv">110</span>, <span class="at">n=</span><span class="dv">416</span>, <span class="at">p=</span><span class="fl">0.3</span>, <span class="at">alternative=</span><span class="st">"less"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Exact binomial test
 
-data:  787 and 974
-number of successes = 787, number of trials = 974, p-value = 0.5482
-alternative hypothesis: true probability of success is not equal to 0.8
+data:  110 and 416
+number of successes = 110, number of trials = 416, p-value = 0.06174
+alternative hypothesis: true probability of success is less than 0.3
 95 percent confidence interval:
- 0.7818429 0.8322959
+ 0.0000000 0.3023771
 sample estimates:
 probability of success 
-             0.8080082 </code></pre>
+             0.2644231 </code></pre>
 </div>
 </div>
-<p>給 <code>prop.test()</code> 兩組計數就是比較兩個比例——一行完成 A/B 測試。</p>
+<p>p = 0.062：約 6%。注意：這個 p 值是「至少偏到這麼遠（往指定方向）」的機率——<code>alternative</code> 要讀仔細。</p>
 </section>
-<section id="表格資料卡方與夥伴" class="slide level2">
-<h2>表格資料：卡方與夥伴</h2>
-<p>兩個類別變數有關聯嗎？</p>
+<section id="fisher.test精確的獨立性檢定" class="slide level2">
+<h2>fisher.test：精確的獨立性檢定</h2>
+<p>列聯表的假設是兩變數<strong>獨立</strong>。小表用 <strong>Fisher 精確檢定</strong>最好。引數：<code>x</code>（矩陣或因子）、<code>y</code>（<code>x</code> 為因子時的因子）、<code>workspace</code>、<code>hybrid</code>（&gt;2×2 時用近似）、<code>or</code>（假設的勝算比）、<code>alternative</code>、<code>conf.int</code>／<code>conf.level</code>、<code>simulate.p.value</code>／<code>B</code>（蒙地卡羅）。2006 年 7 月的生產方式×性別：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a>tbl <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">45</span>, <span class="dv">15</span>, <span class="dv">30</span>, <span class="dv">40</span>), <span class="at">nrow =</span> <span class="dv">2</span>,</span>
-<span id="cb24-2"><a href=""></a>              <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="at">group =</span> <span class="fu">c</span>(<span class="st">"treat"</span>, <span class="st">"control"</span>),</span>
-<span id="cb24-3"><a href=""></a>                              <span class="at">outcome =</span> <span class="fu">c</span>(<span class="st">"yes"</span>, <span class="st">"no"</span>)))</span>
-<span id="cb24-4"><a href=""></a>tbl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href=""></a>births.july<span class="fl">.2006</span> <span class="ot">&lt;-</span> births2006.smpl[births2006.smpl<span class="sc">$</span>DMETH_REC<span class="sc">!=</span><span class="st">"Unknown"</span> <span class="sc">&amp;</span></span>
+<span id="cb54-2"><a href=""></a>                                    births2006.smpl<span class="sc">$</span>DOB_MM<span class="sc">==</span><span class="dv">7</span>, ]</span>
+<span id="cb54-3"><a href=""></a>method.and.sex <span class="ot">&lt;-</span> <span class="fu">table</span>(births.july<span class="fl">.2006</span><span class="sc">$</span>SEX,</span>
+<span id="cb54-4"><a href=""></a>  <span class="fu">as.factor</span>(<span class="fu">as.character</span>(births.july<span class="fl">.2006</span><span class="sc">$</span>DMETH_REC)))</span>
+<span id="cb54-5"><a href=""></a>method.and.sex</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>         outcome
-group     yes no
-  treat    45 30
-  control  15 40</code></pre>
+<pre><code>   
+    C-section Vaginal
+  F      5326   12622
+  M      6067   13045</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">chisq.test</span>(tbl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-    Pearson's Chi-squared test with Yates' continuity correction
-
-data:  tbl
-X-squared = 12.39, df = 1, p-value = 0.0004316</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">fisher.test</span>(tbl)        <span class="co"># 精確檢定；小格子也安全</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href=""></a><span class="fu">fisher.test</span>(method.and.sex)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
     Fisher's Exact Test for Count Data
 
-data:  tbl
-p-value = 0.0003306
+data:  method.and.sex
+p-value = 1.604e-05
 alternative hypothesis: true odds ratio is not equal to 1
 95 percent confidence interval:
- 1.776695 9.160997
+ 0.8678345 0.9485129
 sample estimates:
 odds ratio 
-  3.954904 </code></pre>
+ 0.9072866 </code></pre>
+</div>
+</div>
+<p>p 值極小：拒絕獨立——剖腹產率因性別而異（各性別中佔 46.7% 對 49.2%……更精確地說，勝算比 ≈ 0.91）。</p>
+</section>
+<section id="雙胞胎的-fisher.testchisq.test" class="slide level2">
+<h2>雙胞胎的 fisher.test；chisq.test</h2>
+<p>只看雙胞胎，劇情反轉：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href=""></a>twins<span class="fl">.2006</span> <span class="ot">&lt;-</span> births2006.smpl[births2006.smpl<span class="sc">$</span>DPLURAL<span class="sc">==</span><span class="st">"2 Twin"</span> <span class="sc">&amp;</span></span>
+<span id="cb58-2"><a href=""></a>                              births2006.smpl<span class="sc">$</span>DMETH_REC <span class="sc">!=</span> <span class="st">"Unknown"</span>,]</span>
+<span id="cb58-3"><a href=""></a>method.and.sex.twins <span class="ot">&lt;-</span> <span class="fu">table</span>(twins<span class="fl">.2006</span><span class="sc">$</span>SEX,</span>
+<span id="cb58-4"><a href=""></a>  <span class="fu">as.factor</span>(<span class="fu">as.character</span>(twins<span class="fl">.2006</span><span class="sc">$</span>DMETH_REC)))</span>
+<span id="cb58-5"><a href=""></a><span class="fu">fisher.test</span>(method.and.sex.twins)<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.6699808</code></pre>
+</div>
+</div>
+<p>p = 0.67：獨立是合理的。Fisher 檢定在大表上很昂貴——主力替代品是<strong>卡方檢定</strong>：把樣本與假設的機率比較（<code>chisq.test(x, y=, correct=, p=, rescale.p=, simulate.p.value=, B=)</code>）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href=""></a><span class="fu">chisq.test</span>(method.and.sex.twins)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's Chi-squared test with Yates' continuity correction
+
+data:  method.and.sex.twins
+X-squared = 0.17451, df = 1, p-value = 0.6761</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href=""></a><span class="fu">chisq.test</span>(twins<span class="fl">.2006</span><span class="sc">$</span>DMETH_REC, twins<span class="fl">.2006</span><span class="sc">$</span>SEX)<span class="sc">$</span>p.value   <span class="co"># 直接給因子也行</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.676137</code></pre>
+</div>
+</div>
+</section>
+<section id="chisq.test適合度與高維表" class="slide level2">
+<h2>chisq.test：適合度與高維表</h2>
+<p>按星期幾的出生數——若每天等可能（預設的 <code>p</code>），週末的短缺可能是巧合嗎？</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href=""></a>births2006.byday <span class="ot">&lt;-</span> <span class="fu">table</span>(births2006.smpl<span class="sc">$</span>DOB_WK)</span>
+<span id="cb64-2"><a href=""></a>births2006.byday</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    1     2     3     4     5     6     7 
+40274 62757 69775 70290 70164 68380 45683 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href=""></a><span class="fu">chisq.test</span>(births2006.byday)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Chi-squared test for given probabilities
+
+data:  births2006.byday
+X-squared = 15873, df = 6, p-value &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>斷然不是巧合（當然，樣本這麼大，<em>什麼</em>都顯著）。多維表也行——星期×月份：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href=""></a><span class="fu">chisq.test</span>(<span class="fu">table</span>(births2006.smpl<span class="sc">$</span>DOB_WK, births2006.smpl<span class="sc">$</span>DOB_MM))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's Chi-squared test
+
+data:  table(births2006.smpl$DOB_WK, births2006.smpl$DOB_MM)
+X-squared = 4729.6, df = 66, p-value &lt; 2.2e-16</code></pre>
 </div>
 </div>
 <ul>
-<li>經驗法則：期望次數低於 5 → 改用 <code>fisher.test()</code>。</li>
-<li><code>mcnemar.test()</code> 處理成對的類別資料（同一群受試者的前後比較）。</li>
+<li>三方交互作用：<strong><code>mantelhaen.test(x, y, z, ...)</code></strong>（Cochran-Mantel-Haenszel）。</li>
+<li>二維表的對稱性：<strong><code>mcnemar.test(x, y, correct=)</code></strong>。</li>
 </ul>
 </section>
-<section id="選擇檢定的地圖" class="slide level2">
-<h2>選擇檢定的地圖</h2>
-<ol type="1">
-<li><strong>單一數值樣本</strong>對照基準：<code>t.test(x, mu=)</code>；非常態 → <code>wilcox.test</code>。</li>
-<li><strong>兩個數值樣本</strong>：獨立 → <code>t.test(x, y)</code>；成對 → <code>paired=TRUE</code>；非常態 → <code>wilcox.test</code>。</li>
-<li><strong>三組以上</strong>：<code>aov()</code> → <code>TukeyHSD()</code>；非常態 → <code>kruskal.test</code>。</li>
-<li><strong>比例</strong>：<code>prop.test</code> / <code>binom.test</code>。</li>
-<li><strong>兩個類別變數</strong>：<code>chisq.test</code> / <code>fisher.test</code>。</li>
-</ol>
-<p>在相信 p 值<em>之前</em>先檢查假設（常態、等變異、獨立）——並記住統計顯著不等於實務重要。</p>
+<section id="friedman.test" class="slide level2">
+<h2>friedman.test</h2>
+<p><strong>Friedman 等級和檢定</strong>是雙因子 ANOVA 的無母數對應——<code>friedman.test(y, groups, blocks)</code>，或公式／表格形式：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href=""></a><span class="fu">friedman.test</span>(method.and.sex.twins)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Friedman rank sum test
+
+data:  method.and.sex.twins
+Friedman chi-squared = 2, df = 1, p-value = 0.1573</code></pre>
+</div>
+</div>
+<p>與卡方的判決一致：兩個分布很可能獨立。</p>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

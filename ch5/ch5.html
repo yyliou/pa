@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,16 +211,16 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="how-r-thinks" class="title-slide slide level1 center">
 <h1><strong>How R Thinks</strong></h1>
 
 </section>
-<section id="the-big-picture" class="slide level2">
-<h2>The Big Picture</h2>
-<p>Chapter 3 showed you R phrase by phrase; this chapter is the grammar lesson. Four ideas organize everything that follows in Part II:</p>
+<section id="the-grammar-lesson" class="slide level2">
+<h2>The Grammar Lesson</h2>
+<p>Learning a computer language is much like learning a spoken one (only simpler). A tourist can survive on memorized phrases; Chapter 3 gave you those phrases. But to <em>speak</em> fluently you need grammar — verb conjugation, sentence structure. This chapter is R’s grammar lesson, built on four ideas:</p>
 <ul>
 <li>programs are built from <strong>expressions</strong>;</li>
 <li>expressions operate on <strong>objects</strong>;</li>
@@ -231,95 +231,166 @@ Yu-You Liou (NTU)
 </section>
 <section id="expressions" class="slide level2">
 <h2>Expressions</h2>
-<p>An R program is a sequence of expressions, each evaluated to produce a value:</p>
+<p>R code is a series of <strong>expressions</strong>: assignments, conditionals, arithmetic, and more — each evaluated to produce a value:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">3</span> <span class="sc">*</span> <span class="dv">7</span>          <span class="co"># an assignment expression</span></span>
-<span id="cb1-2"><a href=""></a><span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">20</span>) <span class="st">"big"</span> <span class="cf">else</span> <span class="st">"small"</span>   <span class="co"># even control flow returns a value</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb1-2"><a href=""></a><span class="cf">if</span> (<span class="dv">1</span> <span class="sc">&gt;</span> <span class="dv">2</span>) <span class="st">"yes"</span> <span class="cf">else</span> <span class="st">"no"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "big"</code></pre>
+<pre><code>[1] "no"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="dv">127</span> <span class="sc">%%</span> <span class="dv">10</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7</code></pre>
 </div>
 </div>
-<ul>
-<li>Separate expressions with newlines or semicolons.</li>
-<li>Group several expressions into one with braces <code>{ }</code>; the block’s value is its last expression.</li>
-<li>Because everything returns a value, expressions compose: you can nest an <code>if</code> inside a function call inside an assignment.</li>
-</ul>
+<p>Expressions are composed of objects and functions, and may be separated by newlines <strong>or semicolons</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="st">"this expression will be printed"</span>; <span class="dv">7</span> <span class="sc">+</span> <span class="dv">13</span>; <span class="fu">exp</span>(<span class="dv">0</span><span class="sc">+</span><span class="dv">1</span>i<span class="sc">*</span>pi)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "this expression will be printed"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 20</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -1+1.224647e-16i</code></pre>
+</div>
+</div>
 </section>
 <section id="objects" class="slide level2">
 <h2>Objects</h2>
-<p>Every value an expression touches is an <strong>object</strong>: vectors, lists, functions, models, environments.</p>
+<p>All R code manipulates <strong>objects</strong> — “things” represented by the computer. Numeric vectors, character vectors, lists, and functions are all objects:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">6</span>, <span class="dv">7</span>)</span>
-<span id="cb3-2"><a href=""></a><span class="fu">class</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)                       <span class="co"># a numeric vector (five elements)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "numeric"</code></pre>
+<pre><code>[1] 1 2 3 4 5</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">attributes</span>(<span class="fu">matrix</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="st">"This is an object too"</span>               <span class="co"># a character vector (one element)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>$dim
-[1] 2 3</code></pre>
+<pre><code>[1] "This is an object too"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), <span class="st">"This is an object too"</span>, <span class="st">"this whole thing is a list"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+[1] 1 2 3 4 5
+
+[[2]]
+[1] "This is an object too"
+
+[[3]]
+[1] "this whole thing is a list"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="cf">function</span>(x, y) { x <span class="sc">+</span> y }               <span class="co"># a function is an object as well</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y) 
+{
+    x + y
+}</code></pre>
 </div>
 </div>
-<p>Objects carry <strong>attributes</strong> — metadata such as dimensions, names, or class — that change how generic functions treat them. A matrix is literally a vector wearing a <code>dim</code> attribute.</p>
 </section>
 <section id="symbols" class="slide level2">
 <h2>Symbols</h2>
-<p>A variable name is itself an object: a <strong>symbol</strong> bound to a value within some environment.</p>
+<p>Formally, variable names in R are <strong>symbols</strong>. Assigning a value to a name binds the symbol to the object <em>in the current environment</em> — and, a touch tautologically, an environment is the set of symbols defined in a given context:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>fortune <span class="ot">&lt;-</span> <span class="st">"When in doubt, make a data frame."</span></span>
-<span id="cb7-2"><a href=""></a>fortune</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "When in doubt, make a data frame."</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>     <span class="co"># binds symbol "x" to object 1 in the current environment</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<ul>
-<li>Evaluating the symbol <code>fortune</code> looks up what it is bound to.</li>
-<li>The binding lives in an <strong>environment</strong> (Chapter 8); the same name can be bound to different values in different environments.</li>
-<li>This is why R can treat code as data: <code>quote(x + y)</code> returns the unevaluated expression, symbols and all.</li>
-</ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">quote</span>(x <span class="sc">+</span> y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>x + y</code></pre>
-</div>
-</div>
+<p>Chapter 8 treats symbols and environments in full; for now, just remember that a name and the thing it names are different objects.</p>
+</section></section>
+<section>
+<section id="functions" class="title-slide slide level1 center">
+<h1>Functions</h1>
+
 </section>
-<section id="functions" class="slide level2">
-<h2>Functions</h2>
-<p>A function is an object that accepts <strong>arguments</strong> and returns a <strong>value</strong>:</p>
+<section id="all-work-is-done-by-functions" class="slide level2">
+<h2>All Work Is Done by Functions</h2>
+<p>A <strong>function</strong> takes input objects (its <strong>arguments</strong>) and returns an output object. Every statement — setting variables, doing arithmetic, looping — can be written as a function call. The book’s demonstration starts with a humble vector:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) {</span>
-<span id="cb11-2"><a href=""></a>  x <span class="sc">+</span> <span class="dv">2</span> <span class="sc">*</span> y</span>
-<span id="cb11-3"><a href=""></a>}</span>
-<span id="cb11-4"><a href=""></a><span class="fu">f</span>(<span class="dv">1</span>, <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>animals <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"cow"</span>, <span class="st">"chicken"</span>, <span class="st">"pig"</span>, <span class="st">"tuba"</span>)</span>
+<span id="cb18-2"><a href=""></a>animals[<span class="dv">4</span>] <span class="ot">&lt;-</span> <span class="st">"duck"</span>     <span class="co"># the normal way to fix element 4</span></span>
+<span id="cb18-3"><a href=""></a>animals</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 21</code></pre>
+<pre><code>[1] "cow"     "chicken" "pig"     "duck"   </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">f</span>(<span class="at">y =</span> <span class="dv">1</span>, <span class="at">x =</span> <span class="dv">10</span>)        <span class="co"># arguments may be named</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>That bracket assignment is <em>parsed into</em> a call to the function <code>[&lt;-</code>. This is the equivalent expression:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>animals <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"cow"</span>, <span class="st">"chicken"</span>, <span class="st">"pig"</span>, <span class="st">"tuba"</span>)</span>
+<span id="cb20-2"><a href=""></a><span class="st">`</span><span class="at">[&lt;-</span><span class="st">`</span>(animals, <span class="dv">4</span>, <span class="st">"duck"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 12</code></pre>
+<pre><code>[1] "cow"     "chicken" "pig"     "duck"   </code></pre>
 </div>
 </div>
-<ul>
-<li>Functions can be assigned to variables, stored in lists, passed to other functions, and returned as results — the trait that makes R a <em>functional</em> language.</li>
-<li>Default values make arguments optional: <code>function(x, base = 10)</code>.</li>
-</ul>
+<p>(One subtle difference: written this way the result isn’t auto-printed — but the effect is the same.)</p>
+</section>
+<section id="why-care-that-everything-is-a-function-call" class="slide level2">
+<h2>Why Care That Everything Is a Function Call?</h2>
+<p>In practice you would never write <code>`[&lt;-`(animals, 4, "duck")</code> — bracket notation is far easier to read. But knowing the function is there means you can <strong>inspect its code</strong>, <strong>read its help page</strong>, or <strong>write methods with the same name</strong> for your own classes (Chapter 10). More pretty-vs-functional pairs:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a>apples <span class="ot">&lt;-</span> <span class="dv">3</span>            <span class="co"># pretty assignment</span></span>
+<span id="cb22-2"><a href=""></a><span class="st">`</span><span class="at">&lt;-</span><span class="st">`</span>(oranges, <span class="dv">4</span>)       <span class="co"># functional form of assignment</span></span>
+<span id="cb22-3"><a href=""></a>apples <span class="sc">+</span> oranges       <span class="co"># pretty arithmetic</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="st">`</span><span class="at">+</span><span class="st">`</span>(apples, oranges)   <span class="co"># functional form</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="cf">if</span> (apples <span class="sc">&gt;</span> oranges) <span class="st">"apples are better"</span> <span class="cf">else</span> <span class="st">"oranges are better"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "oranges are better"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="st">`</span><span class="at">if</span><span class="st">`</span>(apples <span class="sc">&gt;</span> oranges, <span class="st">"apples are better"</span>, <span class="st">"oranges are better"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "oranges are better"</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"apple"</span>,<span class="st">"orange"</span>,<span class="st">"banana"</span>,<span class="st">"pear"</span>)</span>
+<span id="cb30-2"><a href=""></a>x[<span class="dv">2</span>]                   <span class="co"># pretty vector reference</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "orange"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="st">`</span><span class="at">[</span><span class="st">`</span>(x, <span class="dv">2</span>)              <span class="co"># functional form</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "orange"</code></pre>
+</div>
+</div>
 </section>
 <section id="objects-are-copied-in-assignment" class="slide level2">
 <h2>Objects Are Copied in Assignment</h2>
-<p>R behaves as though assignment and argument-passing <strong>copy</strong> objects, rather than sharing references:</p>
+<p>In assignment statements, most objects are <strong>immutable</strong>: R copies the object, not merely a reference to it. (Immutability is a virtue — it prevents whole categories of errors, e.g., in multithreaded programs.)</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
-<span id="cb15-2"><a href=""></a>double_it <span class="ot">&lt;-</span> <span class="cf">function</span>(z) { z <span class="ot">&lt;-</span> z <span class="sc">*</span> <span class="dv">2</span>; z }</span>
-<span id="cb15-3"><a href=""></a><span class="fu">double_it</span>(w)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a>u <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">1</span>)</span>
+<span id="cb34-2"><a href=""></a>v <span class="ot">&lt;-</span> u</span>
+<span id="cb34-3"><a href=""></a>u[[<span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="st">"hat"</span></span>
+<span id="cb34-4"><a href=""></a>u</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 2 4 6</code></pre>
+<pre><code>[[1]]
+[1] "hat"</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>w                       <span class="co"># untouched</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a>v          <span class="co"># v still holds the original</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 2 3</code></pre>
+<pre><code>[[1]]
+[1] 1</code></pre>
 </div>
 </div>
+<p>This holds for vectors, lists, and most other primitive objects.</p>
+</section>
+<section id="copying-applies-to-function-calls-too" class="slide level2">
+<h2>Copying Applies to Function Calls Too</h2>
+<p>Arguments are copied as well. This function sets the <code>i</code>th element of <code>x</code> to 4 — and accomplishes nothing visible:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, i) { x[i] <span class="ot">=</span> <span class="dv">4</span> }</span>
+<span id="cb38-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>, <span class="dv">13</span>)</span>
+<span id="cb38-3"><a href=""></a><span class="fu">f</span>(w, <span class="dv">1</span>)</span>
+<span id="cb38-4"><a href=""></a>w          <span class="co"># untouched: w was copied into x</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10 11 12 13</code></pre>
+</div>
+</div>
+<p>Technically, the interpreter copies the object bound to <code>w</code> and binds the symbol <code>x</code> to the copy; the modification happens only inside the function’s context. (Mutable objects and pass-by-reference become possible with environments — Chapter 8.)</p>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -329,97 +400,333 @@ Yu-You Liou (NTU)
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Call by value.</strong> A function cannot accidentally modify your data; it works on its own copy. (Internally R delays the physical copy until something is actually modified, so this is cheaper than it sounds.)</p>
+<p><strong>Semantics vs.&nbsp;performance.</strong> R <em>behaves as if</em> every assignment copies, but often modifies objects <strong>in place</strong> — e.g., <code>v &lt;- 1:100; v[50] &lt;- 27</code> alters the vector without copying it. Identical meaning, much better speed. Details live in the <em>R Internals</em> guide.</p>
 </div>
 </div>
 </div>
 </section>
-<section id="everything-is-an-object" class="slide level2">
-<h2>Everything Is an Object</h2>
-<p>Beyond data, the language’s own machinery is made of objects:</p>
+<section id="everything-in-r-is-an-object" class="slide level2">
+<h2>Everything in R Is an Object</h2>
+<p>Not just data: <strong>functions, symbols, even expressions</strong> are objects. A function name is really a symbol pointing at a function object (a relationship itself stored in an environment object). The same symbol can hold a number one moment and a function the next:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">class</span>(mean)             <span class="co"># functions are objects</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb40-2"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "function"</code></pre>
+<pre><code>[1] 1</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">class</span>(<span class="fu">quote</span>(x <span class="sc">+</span> y))     <span class="co"># unevaluated code is an object</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a><span class="fu">x</span>(<span class="dv">2</span>)                     <span class="co"># x is not (yet) a function</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `x()`:
+! could not find function "x"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) i<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb44-2"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "call"</code></pre>
+<pre><code>function (i) 
+i^2</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">formals</span>(double_it)      <span class="co"># a function's argument list, as data</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">x</span>(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>$z</code></pre>
+<pre><code>[1] 4</code></pre>
 </div>
 </div>
-<p>A function name is just a symbol pointing at a function object — which is why you can do <code>apply(m, 1, mean)</code>: you are passing the function itself.</p>
+<p>You can even write R code that constructs new functions — in principle, a function that rewrites its own definition.</p>
+</section></section>
+<section>
+<section id="special-values" class="title-slide slide level1 center">
+<h1>Special Values</h1>
+
 </section>
-<section id="special-values" class="slide level2">
-<h2>Special Values</h2>
-<p>A few special constants appear throughout real data work:</p>
+<section id="na-missing-values" class="slide level2">
+<h2>NA: Missing Values</h2>
+<p><code>NA</code> (“not available”) represents <strong>missing values</strong> — common in loaded text data, and substituted for database <code>NULL</code>s. Expanding a structure beyond its defined values fills the new cells with <code>NA</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="cn">NA</span> <span class="sc">+</span> <span class="dv">1</span>                  <span class="co"># NA: missing value, infects calculations</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
+<span id="cb48-2"><a href=""></a><span class="fu">length</span>(v) <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb48-3"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] NA</code></pre>
+<pre><code>[1]  1  2  3 NA</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="dv">1</span> <span class="sc">/</span> <span class="dv">0</span>                   <span class="co"># Inf</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="inf--inf-and-nan" class="slide level2">
+<h2>Inf, -Inf, and NaN</h2>
+<p>Numbers too big to represent become <strong>infinity</strong>, signed accordingly — also the result of dividing by zero:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a><span class="dv">2</span> <span class="sc">^</span> <span class="dv">1024</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] Inf</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="sc">-</span><span class="dv">1</span> <span class="sc">/</span> <span class="dv">0</span>                  <span class="co"># -Inf</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href=""></a><span class="sc">-</span> <span class="dv">2</span> <span class="sc">^</span> <span class="dv">1024</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] -Inf</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="dv">0</span> <span class="sc">/</span> <span class="dv">0</span>                   <span class="co"># NaN: not a number</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href=""></a><span class="dv">1</span> <span class="sc">/</span> <span class="dv">0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] Inf</code></pre>
+</div>
+</div>
+<p>Computations that make no sense yield <strong><code>NaN</code></strong> (“not a number”):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href=""></a><span class="cn">Inf</span> <span class="sc">-</span> <span class="cn">Inf</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] NaN</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a><span class="fu">is.null</span>(<span class="cn">NULL</span>)           <span class="co"># NULL: the empty object</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href=""></a><span class="dv">0</span> <span class="sc">/</span> <span class="dv">0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NaN</code></pre>
+</div>
+</div>
+</section>
+<section id="null" class="slide level2">
+<h2>NULL</h2>
+<p>The symbol <code>NULL</code> always points to one special object: the <strong>null object</strong>.</p>
+<ul>
+<li>Often used as a function argument meaning “no value supplied”; some functions also return it.</li>
+<li><code>NULL</code> is <strong>not</strong> the same as <code>NA</code>, <code>Inf</code>, <code>-Inf</code>, or <code>NaN</code> — it is not a value at all, but the absence of one.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href=""></a><span class="fu">is.null</span>(<span class="cn">NULL</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
-<ul>
-<li><code>NA</code> means “unknown”; most summary functions offer <code>na.rm=TRUE</code> to skip missing values.</li>
-<li><code>NULL</code> means “nothing at all” — assigning <code>x$col &lt;- NULL</code> deletes a component.</li>
-</ul>
+</section></section>
+<section>
+<section id="coercion" class="title-slide slide level1 center">
+<h1>Coercion</h1>
+
 </section>
-<section id="coercion" class="slide level2">
-<h2>Coercion</h2>
-<p>When types do not match, R converts — <strong>coerces</strong> — values according to fixed rules, moving toward the more general type:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="cn">TRUE</span>)           <span class="co"># logical -&gt; numeric</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 2 1</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="st">"three"</span>)        <span class="co"># numeric -&gt; character</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "1"     "2"     "three"</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">as.numeric</span>(<span class="st">"3.14"</span>)      <span class="co"># explicit coercion</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 3.14</code></pre>
-</div>
-</div>
+<section id="automatic-type-conversion" class="slide level2">
+<h2>Automatic Type Conversion</h2>
+<p>Call a function with the “wrong” type and R tries to <strong>coerce</strong> the value so the call still works. Two mechanisms operate automatically:</p>
 <ul>
-<li>Implicit coercion follows the hierarchy logical → integer → numeric → character.</li>
-<li>The <code>as.*</code> family (<code>as.numeric</code>, <code>as.character</code>, <code>as.factor</code>, …) coerces on demand; <code>I()</code> (AsIs) suppresses unwanted conversion, e.g., when building data frames.</li>
-</ul>
-</section>
-<section id="the-r-interpreter" class="slide level2">
-<h2>The R Interpreter</h2>
-<p>R is an <strong>interpreted</strong> language: expressions are parsed and evaluated on the fly, with no separate compile step.</p>
-<ul>
-<li>That is what makes the console possible — and what makes R slower than compiled languages for tight loops (Chapter 24 shows the cures, including the built-in byte-code compiler).</li>
-<li>Parsing turns text into expression objects; evaluation walks those objects. You can do both yourself:</li>
+<li><strong>formal objects:</strong> generic functions lacking an exact method look for a coercion method to a type that has one (creating such methods: Chapter 10);</li>
+<li><strong>built-in types:</strong> R converts from more specific to more general types on its own:</li>
 </ul>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href=""></a>ex <span class="ot">&lt;-</span> <span class="fu">parse</span>(<span class="at">text =</span> <span class="st">"7 * 6"</span>)[[<span class="dv">1</span>]]</span>
-<span id="cb41-2"><a href=""></a><span class="fu">eval</span>(ex)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span>
+<span id="cb62-2"><a href=""></a><span class="fu">typeof</span>(x); <span class="fu">class</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 42</code></pre>
+<pre><code>[1] "double"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "numeric"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href=""></a>x[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="st">"hat"</span>          <span class="co"># one character value forces the whole vector over</span></span>
+<span id="cb65-2"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1"   "hat" "3"   "4"   "5"  </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href=""></a><span class="fu">typeof</span>(x); <span class="fu">class</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "character"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "character"</code></pre>
 </div>
 </div>
-<p>This “code is data” property powers R’s formula notation, <code>quote()</code>, and much of its metaprogramming.</p>
+</section>
+<section id="the-coercion-rules" class="slide level2">
+<h2>The Coercion Rules</h2>
+<ul>
+<li>Logical values become numbers: <code>TRUE</code> → 1, <code>FALSE</code> → 0.</li>
+<li>Values convert to the <strong>simplest type that can represent all the information</strong>.</li>
+<li>The ordering is roughly: logical &lt; integer &lt; numeric &lt; complex &lt; character &lt; list.</li>
+<li><code>raw</code> objects are not converted to other types.</li>
+<li>Object <strong>attributes are dropped</strong> during coercion.</li>
+<li>To inhibit coercion when passing arguments, wrap the value in <code>I()</code> (the <code>AsIs</code> function) — see <code>?AsIs</code>.</li>
+</ul>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Why so permissive?</strong> Strongly typed languages (Java) raise exceptions instead of converting. John Chambers, S’s designer, recalled that early S “made as many cases work as possible,” but the later, formal conclusion was that converting richer types to simpler ones <em>in all situations</em> breeds confusing, untrustworthy results. In daily practice — numeric vectors of one type — coercion rarely bites.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="the-r-interpreter" class="title-slide slide level1 center">
+<h1>The R Interpreter</h1>
+
+</section>
+<section id="parse-substitute-evaluate" class="slide level2">
+<h2>Parse, Substitute, Evaluate</h2>
+<p>R is an <strong>interpreted</strong> language: the interpreter executes your expressions directly, with no compile step (unlike C, C++, Java; like LISP, Perl, JavaScript). For each expression, the interpreter:</p>
+<ol type="1">
+<li><strong>parses</strong> it, translating syntactic sugar into functional form;</li>
+<li><strong>substitutes</strong> objects for symbols where appropriate;</li>
+<li><strong>evaluates</strong> it, returning an object — recursively for complex expressions.</li>
+</ol>
+<p>Example: typing <code>x &lt;- 1</code> becomes the call <code>`&lt;-`(x, 1)</code>, which binds 1 to <code>x</code> in the current environment and returns 1.</p>
+</section>
+<section id="walking-through-a-conditional" class="slide level2">
+<h2>Walking Through a Conditional</h2>
+<p>With <code>x</code> bound to 1, consider:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb70-2"><a href=""></a><span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "apple"</code></pre>
+</div>
+</div>
+<p>The interpreter parses the line as an if-then-else structure, evaluates the <strong>condition</strong> <code>(x &gt; 1)</code> first — false — and therefore <em>never evaluates</em> <code>"orange"</code>; it evaluates the expression after <code>else</code> and returns <code>"apple"</code>. In special cases like this, <strong>not all arguments are evaluated</strong> — which is why <code>if</code> cannot be an ordinary function. And whatever an expression returns at the console gets handed to <code>print</code>.</p>
+</section>
+<section id="internal-and-.primitive" class="slide level2">
+<h2>.Internal and .Primitive</h2>
+<p>Some functionality lives inside the R system itself:</p>
+<ul>
+<li>Many functions call internal system code via <strong><code>.Internal</code></strong> — e.g., the graphics workhorse:</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href=""></a>plot.xy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (xy, type, pch = par("pch"), lty = par("lty"), col = par("col"), 
+    bg = NA, cex = 1, lwd = par("lwd"), ...) 
+{
+    if (is.null(type)) 
+        type &lt;- "p"
+    type &lt;- as.character(type)
+    if (length(type) != 1L || !nzchar(type) || is.na(type)) 
+        stop(gettextf("invalid plot type"))
+    if (nchar(type) &gt; 1L) 
+        warning(gettextf("plot type '%s' will be truncated to first character", 
+            type))
+    t &lt;- substr(type, 1L, 1L)
+    if (!isTRUE(t %in% c("l", "o", "b", "c", "s", "S", "h", "p", 
+        "n"))) 
+        stop(gettextf("invalid plot type '%s'", t))
+    invisible(.External.graphics(C_plotXY, xy, t, pch, lty, col, 
+        bg, cex, lwd, ...))
+}
+&lt;bytecode: 0xa2825c6d0&gt;
+&lt;environment: namespace:graphics&gt;</code></pre>
+</div>
+</div>
+<ul>
+<li>Where even <code>.Internal</code>’s calling overhead is too high, functions are implemented entirely internally via <strong><code>.Primitive</code></strong> — reserved for a few performance-critical basics:</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href=""></a><span class="st">`</span><span class="at">&lt;-</span><span class="st">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>.Primitive("&lt;-")</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="seeing-how-r-works" class="title-slide slide level1 center">
+<h1>Seeing How R Works</h1>
+
+</section>
+<section id="quote-parsing-without-evaluating" class="slide level2">
+<h2>quote: Parsing Without Evaluating</h2>
+<p>Because R expressions are R objects, you can parse — or partially evaluate — expressions and inspect the result. The <code>quote()</code> function parses its argument but does <em>not</em> evaluate it, returning a <strong>language object</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href=""></a><span class="fu">typeof</span>(<span class="fu">quote</span>(<span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "language"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href=""></a><span class="fu">quote</span>(<span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span>)   <span class="co"># the print method isn't very informative...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>if (x &gt; 1) "orange" else "apple"</code></pre>
+</div>
+</div>
+</section>
+<section id="the-parse-tree" class="slide level2">
+<h2>The Parse Tree</h2>
+<p>…but convert the language object <strong>to a list</strong> and the structure appears — this is the expression’s parse tree:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href=""></a><span class="fu">as</span>(<span class="fu">quote</span>(<span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span>), <span class="st">"list"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+`if`
+
+[[2]]
+x &gt; 1
+
+[[3]]
+[1] "orange"
+
+[[4]]
+[1] "apple"</code></pre>
+</div>
+</div>
+<p>Apply <code>typeof</code> to every element to label the tree (here using <code>lapply</code> — and thanks to coercion, the <code>as</code> is optional):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href=""></a><span class="fu">lapply</span>(<span class="fu">as</span>(<span class="fu">quote</span>(<span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span>), <span class="st">"list"</span>), typeof)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+[1] "symbol"
+
+[[2]]
+[1] "language"
+
+[[3]]
+[1] "character"
+
+[[4]]
+[1] "character"</code></pre>
+</div>
+</div>
+<p>Observations: the <code>else</code> keyword vanishes in parsing; the first element is a <strong>symbol</strong> referring to the <code>if</code> function — so even special syntax becomes <em>function name first, arguments after</em>, exactly like any call. For constants, the list has a single item: <code>as.list(quote(1))</code>.</p>
+</section>
+<section id="sugar-exposed-and-deparse" class="slide level2">
+<h2>Sugar Exposed, and deparse</h2>
+<p>The bracket lookup <code>x[2]</code> and its functional twin parse to the <em>identical</em> tree:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href=""></a><span class="fu">as.list</span>(<span class="fu">quote</span>(x[<span class="dv">2</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+`[`
+
+[[2]]
+x
+
+[[3]]
+[1] 2</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href=""></a><span class="fu">as.list</span>(<span class="fu">quote</span>(<span class="st">`</span><span class="at">[</span><span class="st">`</span>(x, <span class="dv">2</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+`[`
+
+[[2]]
+x
+
+[[3]]
+[1] 2</code></pre>
+</div>
+</div>
+<p>The translation is irreversible — both collapse to one tree — but <code>deparse</code> turns a parse tree back into properly formatted R code, choosing the pretty syntax:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href=""></a><span class="fu">deparse</span>(<span class="fu">quote</span>(x[<span class="dv">2</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "x[2]"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href=""></a><span class="fu">deparse</span>(<span class="fu">quote</span>(<span class="st">`</span><span class="at">[</span><span class="st">`</span>(x, <span class="dv">2</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "x[2]"</code></pre>
+</div>
+</div>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Tools to carry through the book:</strong> <code>quote</code>, <code>substitute</code>, <code>typeof</code>, <code>class</code>, and <code>methods</code> let you watch the interpreter parse and dispatch. When R surprises you, these are your microscope.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

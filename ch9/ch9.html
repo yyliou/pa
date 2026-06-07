@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,210 +211,384 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="building-your-own-tools" class="title-slide slide level1 center">
-<h1><strong>Building Your Own Tools</strong></h1>
+<section id="the-workhorses" class="title-slide slide level1 center">
+<h1><strong>The Workhorses</strong></h1>
 
 </section>
 <section id="the-function-keyword" class="slide level2">
 <h2>The Function Keyword</h2>
-<p>The <code>function</code> keyword creates a function object; assigning it to a name is optional:</p>
+<p>Functions evaluate input arguments and return an output value. The definition syntax is</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>square <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x <span class="sc">^</span> <span class="dv">2</span></span>
-<span id="cb1-2"><a href=""></a><span class="fu">square</span>(<span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="cf">function</span>(arguments) body</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>where <em>arguments</em> is a set of symbol names (optionally with default values) available inside the body, and <em>body</em> is an R expression. Braces are customary but optional for a single expression — these two are equivalent:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) x <span class="sc">+</span> y</span>
+<span id="cb2-2"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) { x <span class="sc">+</span> y }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section></section>
+<section>
+<section id="arguments" class="title-slide slide level1 center">
+<h1>Arguments</h1>
+
+</section>
+<section id="defaults-make-arguments-optional" class="slide level2">
+<h2>Defaults Make Arguments Optional</h2>
+<p>Give an argument a default value and callers may omit it; omit a <em>required</em> argument and the error arrives only when the function tries to <strong>use</strong> it:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) { x <span class="sc">+</span> y }</span>
+<span id="cb3-2"><a href=""></a><span class="fu">f</span>(<span class="dv">1</span>, <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 144</code></pre>
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>g <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">y =</span> <span class="dv">10</span>) { x <span class="sc">+</span> y }</span>
+<span id="cb5-2"><a href=""></a><span class="fu">g</span>(<span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 11</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">g</span>(<span class="dv">1</span>, <span class="dv">2</span>)     <span class="co"># overriding the default</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">f</span>(<span class="dv">1</span>)        <span class="co"># missing y: error when `+` needs it</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `f()`:
+! argument "y" is missing, with no default</code></pre>
 </div>
 </div>
-<p>A multi-expression body needs braces; the function’s value is the last expression evaluated:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>zscore <span class="ot">&lt;-</span> <span class="cf">function</span>(v) {</span>
-<span id="cb3-2"><a href=""></a>  m <span class="ot">&lt;-</span> <span class="fu">mean</span>(v)</span>
-<span id="cb3-3"><a href=""></a>  s <span class="ot">&lt;-</span> <span class="fu">sd</span>(v)</span>
-<span id="cb3-4"><a href=""></a>  (v <span class="sc">-</span> m) <span class="sc">/</span> s</span>
-<span id="cb3-5"><a href=""></a>}</span>
-<span id="cb3-6"><a href=""></a><span class="fu">round</span>(<span class="fu">zscore</span>(<span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>)), <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] -1.16 -0.39  0.39  1.16</code></pre>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>A function that simply never touches an uninitialized argument runs fine. You can even detect missing arguments yourself — e.g., inspecting <code>as.list(match.call())</code> for a <code>NULL</code> entry — but in practice, <strong>put defaults in the signature</strong>: it keeps functions clear and readable.</p>
+</div>
 </div>
 </div>
 </section>
-<section id="arguments-and-defaults" class="slide level2">
-<h2>Arguments and Defaults</h2>
+<section id="variable-length-argument-lists" class="slide level2">
+<h2>Variable-Length Argument Lists: …</h2>
+<p>The ellipsis <code>...</code> means “all the other arguments.” Two main uses. First, <strong>passing extras through</strong> to another function — here everything after <code>x</code> flows into <code>summary</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>trim_mean <span class="ot">&lt;-</span> <span class="cf">function</span>(v, <span class="at">trim =</span> <span class="fl">0.1</span>, <span class="at">digits =</span> <span class="dv">2</span>) {</span>
-<span id="cb5-2"><a href=""></a>  <span class="fu">round</span>(<span class="fu">mean</span>(v, <span class="at">trim =</span> trim), digits)</span>
-<span id="cb5-3"><a href=""></a>}</span>
-<span id="cb5-4"><a href=""></a><span class="fu">trim_mean</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">100</span>))            <span class="co"># defaults used</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">sqrt</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>))</span>
+<span id="cb11-2"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) { <span class="fu">print</span>(x); <span class="fu">summary</span>(...) }</span>
+<span id="cb11-3"><a href=""></a><span class="fu">f</span>(<span class="st">"Here is the summary for v."</span>, v, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 26.5</code></pre>
+<pre><code>[1] "Here is the summary for v."</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">trim_mean</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">100</span>), <span class="at">trim =</span> <span class="fl">0.25</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 2.5</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    1.0     5.1     7.1     6.7     8.7    10.0 </code></pre>
 </div>
 </div>
-<ul>
-<li>Arguments match first by exact name, then by partial name, then by position.</li>
-<li>An argument with no default and no supplied value triggers an error <strong>only if the body actually uses it</strong> — lazy evaluation again.</li>
-<li>Defaults may reference other arguments: <code>function(x, n = length(x))</code>.</li>
-</ul>
+<p>(Recall from Chapter 7 that <code>...</code> is a special object type, manipulable <em>only</em> inside a function body.)</p>
 </section>
-<section id="the-argument" class="slide level2">
-<h2>The … Argument</h2>
-<p>The ellipsis <code>...</code> absorbs any extra arguments and can forward them onward:</p>
+<section id="reading-the-arguments-in" class="slide level2">
+<h2>Reading the Arguments in …</h2>
+<p>Second, you can <strong>consume</strong> the variable arguments yourself, by converting <code>...</code> to a list. A function that sums all its arguments:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>loud_plot_summary <span class="ot">&lt;-</span> <span class="cf">function</span>(v, ...) {</span>
-<span id="cb9-2"><a href=""></a>  <span class="fu">cat</span>(<span class="st">"n ="</span>, <span class="fu">length</span>(v), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb9-3"><a href=""></a>  <span class="fu">summary</span>(v, ...)</span>
-<span id="cb9-4"><a href=""></a>}</span>
-<span id="cb9-5"><a href=""></a><span class="fu">loud_plot_summary</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">9</span>, <span class="cn">NA</span>), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>addemup <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
+<span id="cb14-2"><a href=""></a>  args <span class="ot">&lt;-</span> <span class="fu">list</span>(...)</span>
+<span id="cb14-3"><a href=""></a>  <span class="cf">for</span> (a <span class="cf">in</span> args) x <span class="ot">&lt;-</span> x <span class="sc">+</span> a</span>
+<span id="cb14-4"><a href=""></a>  x</span>
+<span id="cb14-5"><a href=""></a>}</span>
+<span id="cb14-6"><a href=""></a><span class="fu">addemup</span>(<span class="dv">1</span>, <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>n = 4 </code></pre>
+<pre><code>[1] 2</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">addemup</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.     NAs 
-      1       3       5       5       7       9       1 </code></pre>
+<pre><code>[1] 15</code></pre>
 </div>
 </div>
-<p>This is how wrapper functions pass options through to <code>plot()</code>, <code>mean()</code>, and friends without naming every possibility.</p>
+<p>Individual items are also reachable directly as <code>..1</code>, <code>..2</code>, … up to <code>..9</code>. And named arguments remain valid symbols inside the body (scoping: Chapter 8).</p>
 </section>
 <section id="return-values" class="slide level2">
 <h2>Return Values</h2>
+<p>An explicit <code>return</code> works as in other languages — but R simply returns the <strong>last evaluated expression</strong>, so <code>return</code> is commonly omitted:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>sign_word <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb12-2"><a href=""></a>  <span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="st">"positive"</span>)     <span class="co"># explicit, early return</span></span>
-<span id="cb12-3"><a href=""></a>  <span class="cf">if</span> (x <span class="sc">&lt;</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="st">"negative"</span>)</span>
-<span id="cb12-4"><a href=""></a>  <span class="st">"zero"</span>                            <span class="co"># implicit: last value</span></span>
-<span id="cb12-5"><a href=""></a>}</span>
-<span id="cb12-6"><a href=""></a><span class="fu">sign_word</span>(<span class="sc">-</span><span class="dv">3</span>); <span class="fu">sign_word</span>(<span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x) { <span class="fu">return</span>(x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">3</span>) }</span>
+<span id="cb18-2"><a href=""></a><span class="fu">f</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "negative"</code></pre>
+<pre><code>[1] 12</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x) { x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">3</span> }</span>
+<span id="cb20-2"><a href=""></a><span class="fu">f</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "zero"</code></pre>
+<pre><code>[1] 12</code></pre>
 </div>
 </div>
-<ul>
-<li><code>return()</code> exits immediately — useful for guard clauses.</li>
-<li>Otherwise the last evaluated expression is the value; idiomatic R leans on this.</li>
-<li><code>invisible(x)</code> returns a value without printing it at the console — what <code>assign()</code> and plotting functions do.</li>
-</ul>
-</section>
-<section id="functions-as-arguments" class="slide level2">
-<h2>Functions as Arguments</h2>
-<p>Higher-order functions take functions as inputs. The <code>sapply</code>/<code>lapply</code> family applies a function over a vector or list:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, sqrt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1.000000 1.414214 1.732051 2.000000 2.236068</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">lapply</span>(<span class="fu">list</span>(<span class="at">a =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">b =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">6</span>), mean)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>$a
-[1] 2
+<p>Use the explicit form when it makes the code cleaner — e.g., early exits.</p>
+</section></section>
+<section>
+<section id="functions-as-arguments" class="title-slide slide level1 center">
+<h1>Functions as Arguments</h1>
 
-$b
-[1] 5</code></pre>
-</div>
-</div>
-<p><code>apply()</code> works over matrix margins (1 = rows, 2 = columns):</p>
+</section>
+<section id="higher-order-functions-sapply" class="slide level2">
+<h2>Higher-Order Functions: sapply</h2>
+<p>Many R functions accept <em>other functions</em> as arguments (modeling functions, for instance, take a function describing how to treat missing values). The classic example is <code>sapply</code>, which applies a function to every element of a vector:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="at">nrow =</span> <span class="dv">2</span>)</span>
-<span id="cb19-2"><a href=""></a><span class="fu">apply</span>(m, <span class="dv">1</span>, sum)     <span class="co"># row sums</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">7</span></span>
+<span id="cb22-2"><a href=""></a><span class="fu">sapply</span>(a, sqrt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1]  9 12</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">apply</span>(m, <span class="dv">2</span>, max)     <span class="co"># column maxima</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2 4 6</code></pre>
+<pre><code>[1] 1.000000 1.414214 1.732051 2.000000 2.236068 2.449490 2.645751</code></pre>
 </div>
 </div>
-<p><code>mapply()</code> zips several vectors through one function in parallel.</p>
+<p>A toy example — <code>sqrt(1:7)</code> does the same — but many useful functions don’t accept multi-element vectors, and <code>sapply</code> extends them gracefully. (The whole family of summarizing relatives: Chapter 12.)</p>
 </section>
 <section id="anonymous-functions" class="slide level2">
 <h2>Anonymous Functions</h2>
-<p>When a helper is needed exactly once, skip the name:</p>
+<p>Functions are objects, so they don’t need names. A function passed without ever being named is <strong>anonymous</strong>. A minimal demonstration — a function that applies its argument to the number 3:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="cf">function</span>(i) i <span class="sc">*</span> (i <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a>apply.to.three <span class="ot">&lt;-</span> <span class="cf">function</span>(f) { <span class="fu">f</span>(<span class="dv">3</span>) }</span>
+<span id="cb24-2"><a href=""></a><span class="fu">apply.to.three</span>(<span class="cf">function</span>(x) { x <span class="sc">*</span> <span class="dv">7</span> })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1]  1  3  6 10 15</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="co"># applied directly at the point of definition</span></span>
-<span id="cb25-2"><a href=""></a>(<span class="cf">function</span>(x) x <span class="sc">^</span> x)(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 27</code></pre>
+<pre><code>[1] 21</code></pre>
 </div>
 </div>
-<p>Since R 4.1 there is a compact backslash shorthand:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, \(i) i <span class="sc">^</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1]  1  4  9 16 25</code></pre>
-</div>
-</div>
-<p>Anonymous functions keep one-off logic exactly where it is used.</p>
+<p>How the interpreter reads it: <code>f</code> is bound to the anonymous <code>function(x) {x * 7}</code>; evaluating <code>f(3)</code> binds <code>x</code> to 3; the body returns <code>3 * 7 = 21</code>.</p>
 </section>
-<section id="properties-of-functions" class="slide level2">
-<h2>Properties of Functions</h2>
-<p>A function object dissects into three parts:</p>
+<section id="anonymous-functions-with-sapply" class="slide level2">
+<h2>Anonymous Functions with sapply</h2>
+<p>The everyday use: passing one-off functions to apply-style functions:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">args</span>(trim_mean)        <span class="co"># human-readable signature</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span>
+<span id="cb26-2"><a href=""></a><span class="fu">sapply</span>(a, <span class="cf">function</span>(x) { x <span class="sc">+</span> <span class="dv">1</span> })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>function (v, trim = 0.1, digits = 2) 
+<pre><code>[1] 2 3 4 5 6</code></pre>
+</div>
+</div>
+<p>This family is a real <strong>alternative to control structures</strong>. Squaring each element with a loop versus an apply:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span></span>
+<span id="cb28-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb28-3"><a href=""></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(v)) { w[i] <span class="ot">&lt;-</span> v[i]<span class="sc">^</span><span class="dv">2</span> }</span>
+<span id="cb28-4"><a href=""></a>w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]   1   4   9  16  25  36  49  64  81 100 121 144 169 196 225 256 289 324 361
+[20] 400</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">sapply</span>(v, <span class="cf">function</span>(i) { i<span class="sc">^</span><span class="dv">2</span> })</span>
+<span id="cb30-2"><a href=""></a>w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]   1   4   9  16  25  36  49  64  81 100 121 144 169 196 225 256 289 324 361
+[20] 400</code></pre>
+</div>
+</div>
+<p>The second version states its intent — apply this function to each element — and is faster, too (Chapter 24).</p>
+</section>
+<section id="applying-anonymous-functions-directly" class="slide level2">
+<h2>Applying Anonymous Functions Directly</h2>
+<p>You can define an anonymous function and call it on the spot — but the function object <strong>must be wrapped in parentheses</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a>(<span class="cf">function</span>(x) { x <span class="sc">+</span> <span class="dv">1</span> })(<span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
+</div>
+</div>
+<p>Why? Function calls <code>f(arguments)</code> bind very tightly. Without the parentheses, <code>function(x) {x+1}(1)</code> quietly defines a function whose <em>body</em> is <code>{x+1}(1)</code> — no error appears, because the body isn’t evaluated yet. Valid R, almost certainly not what you meant.</p>
+</section></section>
+<section>
+<section id="properties-of-functions" class="title-slide slide level1 center">
+<h1>Properties of Functions</h1>
+
+</section>
+<section id="args-and-formals" class="slide level2">
+<h2>args and formals</h2>
+<p>To see what arguments a function accepts, <code>args</code> returns a function object with a <code>NULL</code> body:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">args</span>(sin)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x) 
 NULL</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">formals</span>(trim_mean)     <span class="co"># arguments + defaults, as a list</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a><span class="fu">args</span>(args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>$v
+<pre><code>function (name) 
+NULL</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a><span class="fu">args</span>(lm)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (formula, data, subset, weights, na.action, method = "qr", 
+    model = TRUE, x = FALSE, y = FALSE, qr = TRUE, singular.ok = TRUE, 
+    contrasts = NULL, offset, ...) 
+NULL</code></pre>
+</div>
+</div>
+<p>To <em>manipulate</em> the argument list from code, use <code>formals</code>, which returns a <strong>pairlist</strong> — one pair per argument, value <code>NULL</code> where no default exists. (<code>formals</code> works only on closures, not built-ins.)</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">y=</span><span class="dv">1</span>, <span class="at">z=</span><span class="dv">2</span>) { x <span class="sc">+</span> y <span class="sc">+</span> z }</span>
+<span id="cb40-2"><a href=""></a>f.formals <span class="ot">&lt;-</span> <span class="fu">formals</span>(f)</span>
+<span id="cb40-3"><a href=""></a>f.formals</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$x
 
 
-$trim
-[1] 0.1
+$y
+[1] 1
 
-$digits
+$z
 [1] 2</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a><span class="fu">body</span>(zscore)           <span class="co"># the code</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>f.formals<span class="sc">$</span>y</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>{
-    m &lt;- mean(v)
-    s &lt;- sd(v)
-    (v - m)/s
+<pre><code>[1] 1</code></pre>
+</div>
+</div>
+</section>
+<section id="changing-arguments-formals--and-alist" class="slide level2">
+<h2>Changing Arguments: formals&lt;- and alist</h2>
+<p><code>formals</code> also works on the <strong>left-hand side</strong> of an assignment — change a default in place:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a>f.formals<span class="sc">$</span>y <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb44-2"><a href=""></a><span class="fu">formals</span>(f) <span class="ot">&lt;-</span> f.formals</span>
+<span id="cb44-3"><a href=""></a><span class="fu">args</span>(f)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y = 3, z = 2) 
+NULL</code></pre>
+</div>
+</div>
+<p>The convenience function <code>alist</code> builds an argument list using definition syntax (note: an argument with no default still needs its equals sign):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">formals</span>(f) <span class="ot">&lt;-</span> <span class="fu">alist</span>(<span class="at">x=</span>, <span class="at">y=</span><span class="dv">100</span>, <span class="at">z=</span><span class="dv">200</span>)</span>
+<span id="cb46-2"><a href=""></a>f</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y = 100, z = 200) 
+{
+    x + y + z
 }</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a><span class="fu">environment</span>(zscore)    <span class="co"># where it was defined</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>&lt;environment: R_GlobalEnv&gt;</code></pre>
 </div>
-</div>
-<p>You can even <em>modify</em> these pieces programmatically — <code>body(f) &lt;- ...</code> — which is occasionally useful and always impressive at parties.</p>
 </section>
-<section id="argument-verification" class="slide level2">
-<h2>Argument Verification</h2>
-<p>Robust functions check their inputs early and fail informatively:</p>
+<section id="body" class="slide level2">
+<h2>body</h2>
+<p>The body, too, is readable and writable — its type is <code>expression</code>, so assign expressions:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a>safe_log <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb37-2"><a href=""></a>  <span class="fu">stopifnot</span>(<span class="fu">is.numeric</span>(x), <span class="fu">all</span>(x <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
-<span id="cb37-3"><a href=""></a>  <span class="fu">log</span>(x)</span>
-<span id="cb37-4"><a href=""></a>}</span>
-<span id="cb37-5"><a href=""></a><span class="fu">safe_log</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a><span class="fu">body</span>(f)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.000000 2.302585</code></pre>
+<pre><code>{
+    x + y + z
+}</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">safe_log</span>(<span class="sc">-</span><span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a><span class="fu">body</span>(f) <span class="ot">&lt;-</span> <span class="fu">expression</span>({x <span class="sc">*</span> y <span class="sc">*</span> z})</span>
+<span id="cb50-2"><a href=""></a>f</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y = 100, z = 200) 
+{
+    x * y * z
+}</code></pre>
+</div>
+</div>
+<p>Functions are data, all the way down: arguments and body alike can be inspected and rewritten by ordinary R code.</p>
+</section></section>
+<section>
+<section id="argument-order-and-named-arguments" class="title-slide slide level1 center">
+<h1>Argument Order and Named Arguments</h1>
+
+</section>
+<section id="three-ways-to-supply-arguments" class="slide level2">
+<h2>Three Ways to Supply Arguments</h2>
+<p>Inside a function, arguments are accessed by the names from the definition:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href=""></a>addTheLog <span class="ot">&lt;-</span> <span class="cf">function</span>(first, second) { first <span class="sc">+</span> <span class="fu">log</span>(second) }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Callers may specify arguments three ways, matched in priority order:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href=""></a><span class="fu">addTheLog</span>(<span class="at">second=</span><span class="fu">exp</span>(<span class="dv">4</span>), <span class="at">first=</span><span class="dv">1</span>)   <span class="co"># 1. exact names (matched first)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href=""></a><span class="fu">addTheLog</span>(<span class="at">s=</span><span class="fu">exp</span>(<span class="dv">4</span>), <span class="at">f=</span><span class="dv">1</span>)            <span class="co"># 2. partially matching names</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a><span class="fu">addTheLog</span>(<span class="dv">1</span>, <span class="fu">exp</span>(<span class="dv">4</span>))                <span class="co"># 3. positional order</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+</div>
+<p>One restriction: with generic functions you cannot name the argument carrying the dispatching object — other arguments can still be named.</p>
+</section>
+<section id="prefer-exact-names-partial-matching-bites" class="slide level2">
+<h2>Prefer Exact Names; Partial Matching Bites</h2>
+<p>Exact names cost keystrokes but buy readability and remove ambiguity. Partial matching is <strong>deprecated</strong> for good reason:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">arg1=</span><span class="dv">10</span>, <span class="at">arg2=</span><span class="dv">20</span>) {</span>
+<span id="cb59-2"><a href=""></a>  <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"arg1:"</span>, arg1))</span>
+<span id="cb59-3"><a href=""></a>  <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"arg2:"</span>, arg2))</span>
+<span id="cb59-4"><a href=""></a>}</span>
+<span id="cb59-5"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>)            <span class="co"># ambiguous: error</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
-<pre><code>Error in `safe_log()`:
-! all(x &gt; 0) is not TRUE</code></pre>
+<pre><code>Error in `f()`:
+! argument 1 matches multiple formal arguments</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>, <span class="at">arg2=</span><span class="dv">2</span>)    <span class="co"># now "arg" can only mean arg1...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "arg1: 1"
+[1] "arg2: 2"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>, <span class="at">arg1=</span><span class="dv">2</span>)    <span class="co"># ...or suddenly it means arg2!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "arg1: 2"
+[1] "arg2: 1"</code></pre>
 </div>
 </div>
+<p>The same prefix lands on different arguments depending on what else is supplied — a recipe for silent bugs.</p>
+</section></section>
+<section>
+<section id="side-effects" class="title-slide slide level1 center">
+<h1>Side Effects</h1>
+
+</section>
+<section id="beyond-the-return-value" class="slide level2">
+<h2>Beyond the Return Value</h2>
+<p>Every function returns a value; some <em>also</em> change variables in other environments, draw graphics, read or write files, or talk to the network. These extra actions are <strong>side effects</strong>.</p>
+<p>The key side-effecting operator is <code>&lt;&lt;-</code>. The statement <code>var &lt;&lt;- value</code> searches the current environment for <code>var</code>, then the parent, recursively upward; if the global environment is reached without a match, the assignment happens <strong>there</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href=""></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())</span>
+<span id="cb65-2"><a href=""></a>doesnt.assign.x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) { x <span class="ot">&lt;-</span> i }</span>
+<span id="cb65-3"><a href=""></a><span class="fu">doesnt.assign.x</span>(<span class="dv">4</span>)</span>
+<span id="cb65-4"><a href=""></a>x                                   <span class="co"># &lt;- stayed local: not found</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error:
+! object 'x' not found</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href=""></a>assigns.x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) { x <span class="ot">&lt;&lt;-</span> i }</span>
+<span id="cb67-2"><a href=""></a><span class="fu">assigns.x</span>(<span class="dv">4</span>)</span>
+<span id="cb67-3"><a href=""></a>x                                   <span class="co"># &lt;&lt;- escaped to the global environment</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4</code></pre>
+</div>
+</div>
+</section>
+<section id="io-and-graphics" class="slide level2">
+<h2>I/O and Graphics</h2>
+<p>Two more families of side effects round out the picture:</p>
 <ul>
-<li><code>stop("message")</code> raises an error; <code>warning()</code> raises a warning but continues.</li>
-<li><code>missing(arg)</code> tests whether the caller supplied an argument.</li>
-<li><code>match.arg()</code> validates an argument against a fixed set of choices.</li>
+<li><strong>Input/output.</strong> Loading data from files or the Internet, saving data to disk — actions beyond returning an object. The full treatment is Chapter 11.</li>
+<li><strong>Graphics.</strong> Plotting functions may return objects, but their point is the drawing — on screen or to a file. Chapters 13 and 14 cover them.</li>
 </ul>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Design habit:</strong> keep most functions <em>pure</em> (no side effects) and concentrate the side effects in a few clearly named places. Pure functions are easier to test, reuse, and parallelize.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,16 +211,16 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="r-for-genomics" class="title-slide slide level1 center">
-<h1><strong>R for Genomics</strong></h1>
+<section id="r-for-bioinformatics" class="title-slide slide level1 center">
+<h1><strong>R for Bioinformatics</strong></h1>
 
 </section>
-<section id="what-is-bioconductor" class="slide level2">
-<h2>What Is Bioconductor?</h2>
-<p><strong>Bioconductor</strong> is a separate ecosystem of R packages for the analysis of high-throughput biological data — gene expression, sequencing, flow cytometry, and more. It has its own repository, release cycle, and installation route.</p>
+<section id="what-bioconductor-is" class="slide level2">
+<h2>What Bioconductor Is</h2>
+<p>Most of this book is field-agnostic; this chapter is the exception, focused on <strong>bioinformatics</strong>. <strong>Bioconductor</strong> is an open-source project of R packages for analyzing high-throughput genomic data — microarrays, next-generation sequencing, and more. It has its own release cycle, its own repository (separate from CRAN), and shared data structures that let its hundreds of packages interoperate.</p>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -230,83 +230,145 @@ Yu-You Liou (NTU)
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>A parallel CRAN.</strong> Bioconductor packages are not installed with <code>install.packages()</code> from CRAN. They share specialized data structures so tools interoperate, and they are versioned together for reproducibility.</p>
-</div>
-</div>
-</div>
-<p>This chapter is a conceptual tour; the code is shown for reference and does not run without the (large) Bioconductor packages installed.</p>
-</section>
-<section id="installation" class="slide level2">
-<h2>Installation</h2>
-<p>The modern entry point is the <code>BiocManager</code> package:</p>
+<p><strong>Installation differs from CRAN.</strong> Bioconductor packages install through its own installer — historically <code>biocLite</code>, today <code>BiocManager</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"BiocManager"</span>)        <span class="co"># once, from CRAN</span></span>
-<span id="cb1-2"><a href=""></a>BiocManager<span class="sc">::</span><span class="fu">install</span>()                 <span class="co"># core infrastructure</span></span>
-<span id="cb1-3"><a href=""></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="fu">c</span>(<span class="st">"Biobase"</span>,      <span class="co"># base classes</span></span>
-<span id="cb1-4"><a href=""></a>                       <span class="st">"affy"</span>,         <span class="co"># microarray preprocessing</span></span>
-<span id="cb1-5"><a href=""></a>                       <span class="st">"limma"</span>,        <span class="co"># differential expression</span></span>
-<span id="cb1-6"><a href=""></a>                       <span class="st">"GEOquery"</span>))    <span class="co"># download public data</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"BiocManager"</span>)</span>
+<span id="cb1-2"><a href=""></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="fu">c</span>(<span class="st">"affy"</span>, <span class="st">"GEOquery"</span>, <span class="st">"limma"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>BiocManager::version()</code> reports the Bioconductor release; <code>BiocManager::valid()</code> checks that your installed packages are mutually compatible.</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="a-worked-example" class="title-slide slide level1 center">
+<h1>A Worked Example</h1>
+
 </section>
-<section id="core-data-structures" class="slide level2">
-<h2>Core Data Structures</h2>
-<p>Bioconductor’s power comes from shared S4 classes (Chapter 10) that bundle related data together:</p>
-<ul>
-<li><strong><code>ExpressionSet</code> / <code>eSet</code></strong> — an assay matrix (genes × samples) plus <strong>phenotype data</strong> (sample annotations) and <strong>feature data</strong> (gene annotations) in one object;</li>
-<li><strong><code>SummarizedExperiment</code></strong> — the modern successor, the standard container for sequencing assays;</li>
-<li><strong><code>GRanges</code></strong> — genomic intervals (chromosome, start, end, strand) with metadata.</li>
-</ul>
-<p>Keeping measurements and their annotations in a single object is what prevents the classic bioinformatics error: sample labels drifting out of sync with sample data.</p>
-</section>
-<section id="a-typical-workflow" class="slide level2">
-<h2>A Typical Workflow</h2>
+<section id="loading-raw-expression-data" class="slide level2">
+<h2>Loading Raw Expression Data</h2>
+<p>The example analyzes a breast-cancer microarray study (GEO accession GSE2034, Affymetrix HG-U133A platform). Raw Affymetrix data lives in <strong><code>.CEL</code></strong> files, read in a batch with <code>ReadAffy</code> from the <code>affy</code> package:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(Biobase); <span class="fu">library</span>(GEOquery)</span>
-<span id="cb2-2"><a href=""></a><span class="co"># 1. Download a public expression study from GEO</span></span>
-<span id="cb2-3"><a href=""></a>gse <span class="ot">&lt;-</span> <span class="fu">getGEO</span>(<span class="st">"GSE2034"</span>)[[<span class="dv">1</span>]]</span>
-<span id="cb2-4"><a href=""></a></span>
-<span id="cb2-5"><a href=""></a><span class="co"># 2. Inspect the bundled object</span></span>
-<span id="cb2-6"><a href=""></a><span class="fu">exprs</span>(gse)[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]      <span class="co"># the expression matrix</span></span>
-<span id="cb2-7"><a href=""></a><span class="fu">pData</span>(gse)[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]      <span class="co"># phenotype (sample) data</span></span>
-<span id="cb2-8"><a href=""></a><span class="fu">fData</span>(gse)[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]      <span class="co"># feature (gene) data</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(affy)</span>
+<span id="cb2-2"><a href=""></a>GSE2034 <span class="ot">&lt;-</span> <span class="fu">ReadAffy</span>()                          <span class="co"># reads all .CEL in the working dir</span></span>
+<span id="cb2-3"><a href=""></a><span class="co"># or name them explicitly:</span></span>
+<span id="cb2-4"><a href=""></a>GSE2034.smpl <span class="ot">&lt;-</span> <span class="fu">ReadAffy</span>(<span class="at">filenames=</span><span class="fu">paste0</span>(<span class="st">"GSM"</span>, <span class="dv">36777</span><span class="sc">:</span><span class="dv">36800</span>, <span class="st">".CEL"</span>))</span>
+<span id="cb2-5"><a href=""></a>GSE2034                                         <span class="co"># an AffyBatch object</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>exprs()</code>, <code>pData()</code>, and <code>fData()</code> are the three accessor verbs you use constantly — assay values, sample annotations, and gene annotations, respectively.</p>
+<p><code>ReadAffy</code> returns an <strong><code>AffyBatch</code></strong> — unprocessed probe-level intensities plus the chip-definition (<code>cdf</code>) that maps probes to the 22,283 probe sets on HG-U133A.</p>
 </section>
-<section id="differential-expression-with-limma" class="slide level2">
-<h2>Differential Expression with limma</h2>
-<p>The signature analysis: which genes differ between two conditions?</p>
+<section id="from-raw-data-to-expression" class="slide level2">
+<h2>From Raw Data to Expression</h2>
+<p>Raw intensities must be <strong>quality-checked, background-corrected, normalized, summarized by probe set, and log-transformed</strong> before analysis:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">library</span>(limma)</span>
-<span id="cb3-2"><a href=""></a>group  <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">pData</span>(gse)<span class="sc">$</span>status)         <span class="co"># e.g. tumor vs. normal</span></span>
-<span id="cb3-3"><a href=""></a>design <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> group)</span>
-<span id="cb3-4"><a href=""></a>fit    <span class="ot">&lt;-</span> <span class="fu">lmFit</span>(<span class="fu">exprs</span>(gse), design)         <span class="co"># a linear model PER GENE</span></span>
-<span id="cb3-5"><a href=""></a>fit    <span class="ot">&lt;-</span> <span class="fu">eBayes</span>(fit)                       <span class="co"># borrow strength across genes</span></span>
-<span id="cb3-6"><a href=""></a><span class="fu">topTable</span>(fit, <span class="at">coef =</span> <span class="dv">2</span>, <span class="at">number =</span> <span class="dv">10</span>)        <span class="co"># top differential genes</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">library</span>(simpleaffy)</span>
+<span id="cb3-2"><a href=""></a><span class="fu">qc</span>(GSE2034)                          <span class="co"># quality-control report</span></span>
+<span id="cb3-3"><a href=""></a></span>
+<span id="cb3-4"><a href=""></a><span class="co"># normalize + summarize in one step (several methods available):</span></span>
+<span id="cb3-5"><a href=""></a>eset <span class="ot">&lt;-</span> <span class="fu">rma</span>(GSE2034)                 <span class="co"># robust multi-array average -&gt; ExpressionSet</span></span>
+<span id="cb3-6"><a href=""></a><span class="co"># or: vsnrma(GSE2034), expresso(GSE2034, ...)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>limma</code> fits the regression of Chapter 20 to <em>every gene at once</em>, then uses an empirical-Bayes step to stabilize variance estimates across thousands of genes — essential when samples are few.</p>
+<p><code>rma</code> (and relatives <code>vsnrma</code>, <code>expresso</code>) collapse the AffyBatch into an <strong><code>ExpressionSet</code></strong> — the central Bioconductor container.</p>
 </section>
-<section id="the-course-connection" class="slide level2">
-<h2>The Course Connection</h2>
-<p>The companion <code>nutshell</code> package includes a microarray data set used in the book’s Bioconductor example; we load it the course way, no Bioconductor required:</p>
+<section id="loading-preprocessed-data-from-geo" class="slide level2">
+<h2>Loading Preprocessed Data from GEO</h2>
+<p>Often the processed expression set is already public — <code>GEOquery::getGEO</code> downloads it directly:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb4-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/GSE2034.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb4-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb4-4"><a href=""></a><span class="co"># GSE2034: breast-cancer expression measurements used to illustrate</span></span>
-<span id="cb4-5"><a href=""></a><span class="co"># the analysis pipeline described above.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">library</span>(GEOquery)</span>
+<span id="cb4-2"><a href=""></a>GSE2034.geo <span class="ot">&lt;-</span> <span class="fu">getGEO</span>(<span class="st">"GSE2034"</span>)     <span class="co"># a list of ExpressionSet objects</span></span>
+<span id="cb4-3"><a href=""></a><span class="fu">class</span>(GSE2034.geo[[<span class="dv">1</span>]])</span>
+<span id="cb4-4"><a href=""></a><span class="do">## [1] "ExpressionSet"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>This lets us discuss the <em>shape</em> of genomic data — a wide matrix of genes against samples — without installing the full Bioconductor stack.</p>
+<p>No <code>.CEL</code> files needed — the analysis can start from a single download.</p>
+</section></section>
+<section>
+<section id="the-expressionset" class="title-slide slide level1 center">
+<h1>The ExpressionSet</h1>
+
 </section>
-<section id="why-it-matters-beyond-biology" class="slide level2">
-<h2>Why It Matters Beyond Biology</h2>
-<p>Even outside genomics, Bioconductor teaches transferable lessons:</p>
-<ul>
-<li><strong>Bundle data with its metadata</strong> in one object — applicable to any analysis where labels can desync.</li>
-<li><strong>Borrow strength across many parallel models</strong> (the empirical-Bayes idea) — useful wherever you fit thousands of small models.</li>
-<li><strong>Reproducibility through coordinated versioning</strong> — a discipline the wider R world increasingly adopts.</li>
-</ul>
-<p>For genuine bioinformatics work, the Bioconductor website’s workflows and vignettes are the definitive, continually updated reference.</p>
+<section id="anatomy-of-the-central-data-structure" class="slide level2">
+<h2>Anatomy of the Central Data Structure</h2>
+<p>An <strong><code>ExpressionSet</code></strong> bundles everything one experiment needs, with accessor functions:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Component</th>
+<th>Accessor</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Expression matrix</td>
+<td><code>exprs()</code></td>
+<td>genes (rows) × samples (columns)</td>
+</tr>
+<tr class="even">
+<td>Phenotype data</td>
+<td><code>pData()</code> / <code>phenoData()</code></td>
+<td>per-<em>sample</em> metadata (treatment, outcome…)</td>
+</tr>
+<tr class="odd">
+<td>Feature data</td>
+<td><code>fData()</code> / <code>featureData()</code></td>
+<td>per-<em>gene</em> annotation</td>
+</tr>
+<tr class="even">
+<td>Experiment info</td>
+<td><code>experimentData()</code></td>
+<td>study-level description</td>
+</tr>
+<tr class="odd">
+<td>Annotation</td>
+<td><code>annotation()</code></td>
+<td>the platform, e.g.&nbsp;<code>"GPL96"</code></td>
+</tr>
+</tbody>
+</table>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">dim</span>(<span class="fu">exprs</span>(eset))            <span class="co"># genes x samples</span></span>
+<span id="cb5-2"><a href=""></a><span class="fu">head</span>(<span class="fu">pData</span>(eset))           <span class="co"># sample metadata</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="matching-phenotype-data" class="slide level2">
+<h2>Matching Phenotype Data</h2>
+<p>Real studies need clinical/phenotype data joined to the expression matrix. Replace or merge the <code>pData</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="co"># build phenotype data and attach it</span></span>
+<span id="cb6-2"><a href=""></a><span class="fu">pData</span>(eset) <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"AnnotatedDataFrame"</span>, <span class="at">data=</span>clinical.df)</span>
+<span id="cb6-3"><a href=""></a><span class="co"># or merge GEO phenotype with your own:</span></span>
+<span id="cb6-4"><a href=""></a>merged <span class="ot">&lt;-</span> <span class="fu">merge</span>(<span class="fu">pData</span>(GSE2034.geo[[<span class="dv">1</span>]]), my.clinical, <span class="at">by=</span><span class="st">"sample"</span>)</span>
+<span id="cb6-5"><a href=""></a><span class="fu">pData</span>(GSE2034.geo[[<span class="dv">1</span>]]) <span class="ot">&lt;-</span> merged</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Aligning samples between the two sources is the fiddly part — the book spends real effort getting the row order to match.</p>
+</section>
+<section id="downstream-differential-expression" class="slide level2">
+<h2>Downstream: Differential Expression</h2>
+<p>Once you have an <code>ExpressionSet</code> with matched phenotypes, the standard next step is finding <strong>differentially expressed genes</strong> — package <code>limma</code> (linear models for microarrays):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">library</span>(limma)</span>
+<span id="cb7-2"><a href=""></a>design <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> <span class="fu">pData</span>(eset)<span class="sc">$</span>outcome)</span>
+<span id="cb7-3"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">lmFit</span>(eset, design)           <span class="co"># fit a linear model per gene</span></span>
+<span id="cb7-4"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">eBayes</span>(fit)                   <span class="co"># empirical-Bayes moderation</span></span>
+<span id="cb7-5"><a href=""></a><span class="fu">topTable</span>(fit, <span class="at">number=</span><span class="dv">20</span>)             <span class="co"># top differentially expressed genes</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Why a separate ecosystem?</strong> Genomic data is huge, structured (genes × samples × annotation), and method-rich. Bioconductor’s shared <code>ExpressionSet</code> (and successors like <code>SummarizedExperiment</code>) let dozens of packages — normalization, testing, annotation, visualization — plug together. The R you learned transfers directly; only the data structures and the installer are special.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

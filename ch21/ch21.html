@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,111 +211,138 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="predicting-categories" class="title-slide slide level1 center">
 <h1><strong>Predicting Categories</strong></h1>
 
 </section>
-<section id="the-spam-problem" class="slide level2">
-<h2>The Spam Problem</h2>
-<p>Classification predicts a <strong>category</strong> rather than a number. Our running example: 4,601 emails, 57 numeric features, one label — spam or not:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/spambase.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">dim</span>(spambase)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 4601   58</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">table</span>(spambase<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-   0    1 
-2788 1813 </code></pre>
-</div>
-</div>
-<p>Split into training and test sets — the only honest way to measure a classifier:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
-<span id="cb5-2"><a href=""></a>idx   <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">nrow</span>(spambase), <span class="dv">3000</span>)</span>
-<span id="cb5-3"><a href=""></a>train <span class="ot">&lt;-</span> spambase[idx, ]</span>
-<span id="cb5-4"><a href=""></a>test  <span class="ot">&lt;-</span> spambase[<span class="sc">-</span>idx, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<section id="regressions-categorical-cousin" class="slide level2">
+<h2>Regression’s Categorical Cousin</h2>
+<p>A <strong>classification model</strong> predicts a <em>categorical</em> response — spam or not, disease or healthy, which of several classes. The toolkit parallels Chapter 20, but the response is a factor. The chapter’s running example is <strong>Spambase</strong>: 4,601 emails with 57 numeric features, each labeled spam or not.</p>
+<p>We move from linear methods (logistic regression, discriminant analysis) to trees and ensembles (bagging, boosting, random forests) to neural networks and SVMs.</p>
+</section></section>
+<section>
+<section id="linear-classification-models" class="title-slide slide level1 center">
+<h1>Linear Classification Models</h1>
+
 </section>
 <section id="logistic-regression" class="slide level2">
 <h2>Logistic Regression</h2>
-<p>Model the <em>probability</em> of spam through the logit link:</p>
-<p><span class="math display">\[\log \frac{p}{1-p} = c_0 + c_1 x_1 + \cdots + c_n x_n\]</span></p>
+<p>The workhorse for a <strong>binary</strong> response: a <code>glm</code> with <code>family=binomial</code>, modeling the log-odds of the outcome:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>spam.glm <span class="ot">&lt;-</span> <span class="fu">glm</span>(is_spam <span class="sc">~</span> word_freq_free <span class="sc">+</span> word_freq_money <span class="sc">+</span></span>
-<span id="cb6-2"><a href=""></a>                  capital_run_length_total <span class="sc">+</span> char_freq_exclamation,</span>
-<span id="cb6-3"><a href=""></a>                <span class="at">family =</span> binomial, <span class="at">data =</span> train)</span>
-<span id="cb6-4"><a href=""></a><span class="fu">coef</span>(<span class="fu">summary</span>(spam.glm))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>                             Estimate   Std. Error    z value      Pr(&gt;|z|)
-(Intercept)              -1.759095227 0.0659533885 -26.671795 1.000164e-156
-word_freq_free            1.293936372 0.1163358590  11.122421  9.758760e-29
-word_freq_money           3.461685530 0.3511920670   9.856958  6.395761e-23
-capital_run_length_total  0.001213516 0.0001225411   9.902937  4.042276e-23
-char_freq_exclamation     2.265879949 0.1610712761  14.067561  6.010716e-45</code></pre>
-</div>
-</div>
-<p>Positive coefficients raise the spam odds; <code>exp(coef)</code> gives odds ratios.</p>
-</section>
-<section id="from-probabilities-to-decisions" class="slide level2">
-<h2>From Probabilities to Decisions</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>p.hat <span class="ot">&lt;-</span> <span class="fu">predict</span>(spam.glm, <span class="at">newdata =</span> test, <span class="at">type =</span> <span class="st">"response"</span>)</span>
-<span id="cb8-2"><a href=""></a>pred  <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(p.hat <span class="sc">&gt;</span> <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
-<span id="cb8-3"><a href=""></a>tab   <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">actual =</span> test<span class="sc">$</span>is_spam, <span class="at">predicted =</span> pred)</span>
-<span id="cb8-4"><a href=""></a>tab</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      predicted
-actual   0   1
-     0 899  60
-     1 240 402</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">sum</span>(<span class="fu">diag</span>(tab)) <span class="sc">/</span> <span class="fu">sum</span>(tab)        <span class="co"># accuracy</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.8126171</code></pre>
-</div>
-</div>
-<p>The <strong>confusion matrix</strong> separates false positives (good mail flagged) from false negatives (spam passed) — in most applications the two errors cost differently, so choose the cutoff accordingly.</p>
-</section>
-<section id="linear-discriminant-analysis" class="slide level2">
-<h2>Linear Discriminant Analysis</h2>
-<p>LDA models each class as a Gaussian and draws the optimal linear boundary:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">library</span>(MASS)</span>
-<span id="cb12-2"><a href=""></a>spam.lda <span class="ot">&lt;-</span> <span class="fu">lda</span>(is_spam <span class="sc">~</span> word_freq_free <span class="sc">+</span> word_freq_money <span class="sc">+</span></span>
-<span id="cb12-3"><a href=""></a>                  capital_run_length_total <span class="sc">+</span> char_freq_exclamation,</span>
-<span id="cb12-4"><a href=""></a>                <span class="at">data =</span> train)</span>
-<span id="cb12-5"><a href=""></a><span class="fu">mean</span>(<span class="fu">predict</span>(spam.lda, test)<span class="sc">$</span>class <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.7576515</code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>spam.model <span class="ot">&lt;-</span> <span class="fu">glm</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase, <span class="at">family=</span><span class="fu">binomial</span>(<span class="at">link=</span><span class="st">"logit"</span>))</span>
+<span id="cb1-2"><a href=""></a><span class="fu">summary</span>(spam.model)</span>
+<span id="cb1-3"><a href=""></a><span class="fu">predict</span>(spam.model, newdata, <span class="at">type=</span><span class="st">"response"</span>)   <span class="co"># predicted probabilities</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <ul>
-<li>Stable when classes are well-separated and roughly Gaussian; <code>qda()</code> allows curved boundaries.</li>
-<li>Log-linear models (<code>loglin()</code>/<code>glm</code> with <code>poisson</code>) play the analogous role for pure contingency-table data.</li>
+<li><code>summary</code> reports coefficients, z-values, p-values, plus <strong>null and residual deviance</strong> and <strong>AIC</strong> (not R²).</li>
+<li><code>type="response"</code> returns probabilities; threshold them (e.g., at 0.5) to get class labels.</li>
+<li>“Number of Fisher Scoring iterations” reports how quickly the IRLS fit converged.</li>
+<li>Multi-class extension: <code>nnet::multinom</code> (multinomial log-linear model), or ordered outcomes via <code>MASS::polr</code>.</li>
 </ul>
 </section>
-<section id="k-nearest-neighbors" class="slide level2">
-<h2>k Nearest Neighbors</h2>
-<p>No model at all: classify each point by a vote of its <span class="math inline">\(k\)</span> closest training points:</p>
+<section id="linear-and-flexible-discriminant-analysis" class="slide level2">
+<h2>Linear and Flexible Discriminant Analysis</h2>
+<p>Discriminant analysis finds the (linear) combinations of predictors that best <em>separate</em> the classes — <code>MASS::lda</code> (and <code>qda</code> for quadratic boundaries):</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">library</span>(class)</span>
-<span id="cb14-2"><a href=""></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"word_freq_free"</span>, <span class="st">"word_freq_money"</span>,</span>
-<span id="cb14-3"><a href=""></a>          <span class="st">"capital_run_length_total"</span>, <span class="st">"char_freq_exclamation"</span>)</span>
-<span id="cb14-4"><a href=""></a>pred.knn <span class="ot">&lt;-</span> <span class="fu">knn</span>(<span class="fu">scale</span>(train[, vars]), <span class="fu">scale</span>(test[, vars]),</span>
-<span id="cb14-5"><a href=""></a>                <span class="at">cl =</span> train<span class="sc">$</span>is_spam, <span class="at">k =</span> <span class="dv">5</span>)</span>
-<span id="cb14-6"><a href=""></a><span class="fu">mean</span>(pred.knn <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.7482823</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(MASS)</span>
+<span id="cb2-2"><a href=""></a>iris.lda <span class="ot">&lt;-</span> <span class="fu">lda</span>(Species <span class="sc">~</span> ., <span class="at">data=</span>iris)</span>
+<span id="cb2-3"><a href=""></a><span class="fu">predict</span>(iris.lda, iris)<span class="sc">$</span>class          <span class="co"># predicted classes</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>Richer variants in package <code>mda</code>:</p>
+<ul>
+<li><strong><code>fda</code></strong> — <em>flexible</em> discriminant analysis (nonlinear boundaries via regression);</li>
+<li><strong><code>mda</code></strong> — <em>mixture</em> discriminant analysis (each class a mixture of Gaussians).</li>
+</ul>
+<p>LDA assumes equal class covariances and roughly normal predictors; QDA relaxes the equal-covariance assumption.</p>
+</section>
+<section id="log-linear-models" class="slide level2">
+<h2>Log-Linear Models</h2>
+<p>For counts in a contingency table, <strong>log-linear models</strong> test associations among categorical variables — <code>stats::loglin(table, margin, ...)</code> (and the friendlier formula interface <code>MASS::loglm</code>):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">library</span>(MASS)</span>
+<span id="cb3-2"><a href=""></a><span class="fu">loglm</span>(<span class="sc">~</span> Sex <span class="sc">+</span> Class <span class="sc">+</span> Survived, <span class="at">data=</span>Titanic)   <span class="co"># mutual independence</span></span>
+<span id="cb3-3"><a href=""></a><span class="fu">loglm</span>(<span class="sc">~</span> Sex<span class="sc">*</span>Class <span class="sc">+</span> Survived, <span class="at">data=</span>Titanic)     <span class="co"># Sex,Class associated</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>Arguments to <code>loglin</code>: the table, a list of margin vectors to fit, an optional starting estimate, and <code>maxit</code> (iteration cap for the IPF algorithm).</p>
+</section></section>
+<section>
+<section id="trees-and-ensembles" class="title-slide slide level1 center">
+<h1>Trees and Ensembles</h1>
+
+</section>
+<section id="classification-trees-rpart" class="slide level2">
+<h2>Classification Trees: rpart</h2>
+<p><code>rpart</code> builds a tree by <strong>recursive partitioning</strong> — repeatedly splitting on the feature that best separates classes:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">library</span>(rpart)</span>
+<span id="cb4-2"><a href=""></a>spam.tree <span class="ot">&lt;-</span> <span class="fu">rpart</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase)</span>
+<span id="cb4-3"><a href=""></a>spam.tree                                  <span class="co"># text description of the splits</span></span>
+<span id="cb4-4"><a href=""></a><span class="fu">printcp</span>(spam.tree)                         <span class="co"># CP table: complexity vs. error</span></span>
+<span id="cb4-5"><a href=""></a><span class="fu">plot</span>(spam.tree); <span class="fu">text</span>(spam.tree)           <span class="co"># draw it</span></span>
+<span id="cb4-6"><a href=""></a>spam.tree.pruned <span class="ot">&lt;-</span> <span class="fu">prune</span>(spam.tree, <span class="at">cp=</span><span class="fl">0.01</span>)   <span class="co"># prune to avoid overfitting</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>printcp</code>/<code>plotcp</code> output (CP, nsplit, rel error, xerror) guides <strong>pruning</strong>: pick the complexity parameter that minimizes cross-validated error.</p>
+</section>
+<section id="bagging-and-boosting" class="slide level2">
+<h2>Bagging and Boosting</h2>
+<p>Single trees are unstable; <strong>ensembles</strong> of trees are far more accurate:</p>
+<ul>
+<li><strong>Bagging</strong> (bootstrap aggregating) — <code>ipred::bagging</code> or <code>adabag::bagging</code>: fit many trees to bootstrap samples, average/vote. Reduces variance.</li>
+<li><strong>Boosting</strong> — <code>ada::ada</code> or <code>adabag::boosting</code> (AdaBoost), <code>gbm::gbm</code> (gradient boosting): fit trees <em>sequentially</em>, each focusing on the previous one’s errors. Reduces bias and variance.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">library</span>(adabag)</span>
+<span id="cb5-2"><a href=""></a>spam.bag  <span class="ot">&lt;-</span> <span class="fu">bagging</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase)</span>
+<span id="cb5-3"><a href=""></a>spam.boost <span class="ot">&lt;-</span> <span class="fu">boosting</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase)</span>
+<span id="cb5-4"><a href=""></a><span class="fu">predict</span>(spam.boost, newdata)<span class="sc">$</span>class</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>These are embarrassingly parallel — each tree fits independently (Chapter 26).</p>
+</section>
+<section id="random-forests" class="slide level2">
+<h2>Random Forests</h2>
+<p><code>randomForest</code> bags trees <em>and</em> randomizes the features considered at each split, decorrelating them — usually the strongest off-the-shelf classifier:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">library</span>(randomForest)</span>
+<span id="cb6-2"><a href=""></a>spam.rf <span class="ot">&lt;-</span> <span class="fu">randomForest</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase, <span class="at">ntree=</span><span class="dv">500</span>)</span>
+<span id="cb6-3"><a href=""></a>spam.rf                                <span class="co"># OOB error estimate + confusion matrix</span></span>
+<span id="cb6-4"><a href=""></a><span class="fu">importance</span>(spam.rf)                    <span class="co"># variable importance</span></span>
+<span id="cb6-5"><a href=""></a><span class="fu">predict</span>(spam.rf, newdata)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Key knobs: <code>ntree</code> (number of trees), <code>mtry</code> (features tried per split). The <strong>out-of-bag (OOB)</strong> error is a free, honest accuracy estimate — no separate test set needed.</p>
+</section></section>
+<section>
+<section id="neural-networks-and-svms" class="title-slide slide level1 center">
+<h1>Neural Networks and SVMs</h1>
+
+</section>
+<section id="neural-networks" class="slide level2">
+<h2>Neural Networks</h2>
+<p><code>nnet::nnet</code> fits a single-hidden-layer feed-forward network:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">library</span>(nnet)</span>
+<span id="cb7-2"><a href=""></a>spam.nn <span class="ot">&lt;-</span> <span class="fu">nnet</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase, <span class="at">size=</span><span class="dv">10</span>, <span class="at">decay=</span><span class="fl">0.01</span>, <span class="at">maxit=</span><span class="dv">200</span>)</span>
+<span id="cb7-3"><a href=""></a><span class="fu">predict</span>(spam.nn, newdata, <span class="at">type=</span><span class="st">"class"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>size</code> sets the hidden units, <code>decay</code> is weight regularization (curbing overfitting), <code>maxit</code> caps iterations. (Modern deep learning lives in <code>keras</code>/<code>torch</code>, but the idea is the same, scaled up.)</p>
+</section>
+<section id="support-vector-machines" class="slide level2">
+<h2>Support Vector Machines</h2>
+<p><code>e1071::svm</code> finds the maximum-margin boundary, kernelized for nonlinearity:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">library</span>(e1071)</span>
+<span id="cb8-2"><a href=""></a>spam.svm <span class="ot">&lt;-</span> <span class="fu">svm</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase,</span>
+<span id="cb8-3"><a href=""></a>                <span class="at">type=</span><span class="st">"C-classification"</span>, <span class="at">kernel=</span><span class="st">"radial"</span>)</span>
+<span id="cb8-4"><a href=""></a><span class="fu">predict</span>(spam.svm, newdata)</span>
+<span id="cb8-5"><a href=""></a><span class="fu">naiveBayes</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase)   <span class="co"># also in e1071: naive Bayes</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>type="C-classification"</code> is the standard classifier; <code>kernel</code> may be <code>"linear"</code>, <code>"polynomial"</code>, <code>"radial"</code> (RBF), or <code>"sigmoid"</code>. Tune cost and kernel parameters with <code>tune</code>. The same package’s <code>naiveBayes</code> gives a fast probabilistic baseline.</p>
+</section>
+<section id="k-nearest-neighbors-and-choosing-a-model" class="slide level2">
+<h2>k-Nearest Neighbors, and Choosing a Model</h2>
+<p>The simplest classifier of all — <code>class::knn(train, test, cl, k)</code> — labels each point by majority vote of its <code>k</code> nearest neighbors; no model is “fit” at all.</p>
 <div class="callout callout-tip callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -325,97 +352,10 @@ actual   0   1
 <p><strong>Tip</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Scale your features for kNN.</strong> Distance-based methods are dominated by whichever variable has the biggest units; standardize first.</p>
+<p><strong>No universal best.</strong> Logistic regression is interpretable; LDA needs few assumptions checked; trees are readable; <strong>random forests and boosting usually win on raw accuracy</strong>; SVMs shine in high dimensions; kNN is a quick baseline. Compare honestly with a held-out test set or cross-validation, and judge with a <strong>confusion matrix</strong>, not just overall accuracy.</p>
 </div>
 </div>
 </div>
-</section>
-<section id="classification-trees" class="slide level2">
-<h2>Classification Trees</h2>
-<p>Trees split the feature space by a sequence of yes/no questions — fully interpretable:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">library</span>(rpart)</span>
-<span id="cb16-2"><a href=""></a>spam.tree <span class="ot">&lt;-</span> <span class="fu">rpart</span>(<span class="fu">factor</span>(is_spam) <span class="sc">~</span> ., <span class="at">data =</span> train)</span>
-<span id="cb16-3"><a href=""></a><span class="fu">plot</span>(spam.tree, <span class="at">uniform =</span> <span class="cn">TRUE</span>, <span class="at">margin =</span> <span class="fl">0.05</span>)</span>
-<span id="cb16-4"><a href=""></a><span class="fu">text</span>(spam.tree, <span class="at">cex =</span> <span class="fl">0.7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">predict</span>(spam.tree, test, <span class="at">type =</span> <span class="st">"class"</span>) <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.8838226</code></pre>
-</div>
-</div>
-<img data-src="ch21_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><p><code>printcp()</code> and <code>prune()</code> control overfitting by cost-complexity pruning.</p>
-</section>
-<section id="neural-networks-and-svms" class="slide level2">
-<h2>Neural Networks and SVMs</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">library</span>(nnet)</span>
-<span id="cb19-2"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
-<span id="cb19-3"><a href=""></a>spam.nn <span class="ot">&lt;-</span> <span class="fu">nnet</span>(<span class="fu">factor</span>(is_spam) <span class="sc">~</span> ., <span class="at">data =</span> train,</span>
-<span id="cb19-4"><a href=""></a>                <span class="at">size =</span> <span class="dv">4</span>, <span class="at">decay =</span> <span class="fl">0.1</span>, <span class="at">maxit =</span> <span class="dv">200</span>, <span class="at">MaxNWts =</span> <span class="dv">2000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">predict</span>(spam.nn, test, <span class="at">type =</span> <span class="st">"class"</span>) <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9462836</code></pre>
-</div>
-</div>
-<ul>
-<li><code>nnet()</code> fits a single-hidden-layer network — the classical workhorse.</li>
-<li>Support vector machines (<code>svm()</code> in the <code>e1071</code> package) find maximum-margin boundaries and handle nonlinearity through kernels.</li>
-</ul>
-</section>
-<section id="random-forests" class="slide level2">
-<h2>Random Forests</h2>
-<p>Hundreds of trees on bootstrap samples, votes averaged:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">library</span>(randomForest)</span>
-<span id="cb22-2"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
-<span id="cb22-3"><a href=""></a>spam.rf <span class="ot">&lt;-</span> <span class="fu">randomForest</span>(<span class="fu">factor</span>(is_spam) <span class="sc">~</span> ., <span class="at">data =</span> train, <span class="at">ntree =</span> <span class="dv">200</span>)</span>
-<span id="cb22-4"><a href=""></a><span class="fu">mean</span>(<span class="fu">predict</span>(spam.rf, test) <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9406621</code></pre>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">varImpPlot</span>(spam.rf, <span class="at">n.var =</span> <span class="dv">10</span>, <span class="at">main =</span> <span class="st">"Top 10 features"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch21_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><p>Usually the best out-of-the-box accuracy, plus a free feature-importance ranking — at the price of interpretability.</p>
-</section>
-<section id="choosing-a-classifier" class="slide level2">
-<h2>Choosing a Classifier</h2>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th style="text-align: left;">Need</th>
-<th style="text-align: left;">Reach for</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">interpretable coefficients / odds</td>
-<td style="text-align: left;">logistic regression</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">interpretable rules</td>
-<td style="text-align: left;">classification tree</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">best plug-and-play accuracy</td>
-<td style="text-align: left;">random forest</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">small data, smooth boundary</td>
-<td style="text-align: left;">LDA / kNN</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">high-dimensional, margins matter</td>
-<td style="text-align: left;">SVM</td>
-</tr>
-</tbody>
-</table>
-<p>Whatever the model: train/test split (or cross-validation), confusion matrix, and error costs come first <span class="citation" data-cites="hastie2009elements">(Hastie et al. 2009)</span>. Chapter 22 widens the view to the rest of machine learning.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

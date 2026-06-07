@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,125 +211,115 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="r-at-scale" class="title-slide slide level1 center">
-<h1><strong>R at Scale</strong></h1>
+<section id="big-data-with-r" class="title-slide slide level1 center">
+<h1><strong>Big Data with R</strong></h1>
 
 </section>
-<section id="when-data-outgrows-one-machine" class="slide level2">
-<h2>When Data Outgrows One Machine</h2>
-<p>Everything so far assumed your data fits in one computer’s memory. When it does not — terabytes of logs, billions of records — computation must be <strong>distributed</strong> across a cluster. <strong>Hadoop</strong> is the classic open-source platform for this, built on two pieces:</p>
-<ul>
-<li><strong>HDFS</strong> — a distributed file system that stores data in blocks replicated across many machines;</li>
-<li><strong>MapReduce</strong> — a programming model for processing that data in parallel, close to where it lives.</li>
-</ul>
-<p>This chapter explains the model and how R connects to it; the code illustrates concepts rather than running locally.</p>
-</section>
-<section id="the-mapreduce-model" class="slide level2">
-<h2>The MapReduce Model</h2>
-<p>Many computations factor into two stages:</p>
-<div class="callout callout-note callout-titled callout-style-default">
+<section id="why-hadoop" class="slide level2">
+<h2>Why Hadoop</h2>
+<p>Some problems are too big for one machine. The fix: <strong>break the work into pieces, solve them in parallel, recombine</strong> — the laundry analogy: ten washers finish ten loads in the time one washer does one. Many statistical methods are naturally parallel — bagging, boosting, and random forests (Chapters 20–21) fit each tree independently.</p>
+<p>In the book’s era, <strong>Hadoop</strong> was the de facto standard for big data: store enormous data sets, run computations across a cluster, tolerate machine failures. This chapter shows how to drive Hadoop from R.</p>
+<div class="callout callout-warning callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<p><strong>Note</strong></p>
+<p><strong>Warning</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Map</strong> applies a function to each record independently, emitting <strong>key–value</strong> pairs. <strong>Reduce</strong> gathers all values sharing a key and combines them. The framework handles the hard parts in between — distributing data, sorting by key, and recovering from failures.</p>
+<p><strong>A snapshot of 2012.</strong> Hadoop’s dominance has faded — today’s big-data work leans on <strong>Spark</strong> (R interface <code>sparklyr</code>), cloud data warehouses, and <code>arrow</code>/<code>duckdb</code> for larger-than-memory data on one machine. The <em>concepts</em> below — Map/Reduce, distributed storage — remain foundational, and several still power modern systems.</p>
 </div>
 </div>
 </div>
-<p>The canonical example — word count — captures the whole idea: map each line to <code>(word, 1)</code> pairs; reduce by summing the 1s for each word.</p>
+</section></section>
+<section>
+<section id="how-hadoop-works" class="title-slide slide level1 center">
+<h1>How Hadoop Works</h1>
+
 </section>
-<section id="word-count-in-pseudo-r" class="slide level2">
-<h2>Word Count in Pseudo-R</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="co"># MAP: emit (word, 1) for every word in a line</span></span>
-<span id="cb1-2"><a href=""></a>map_fn <span class="ot">&lt;-</span> <span class="cf">function</span>(key, line) {</span>
-<span id="cb1-3"><a href=""></a>  words <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(<span class="fu">tolower</span>(line), <span class="st">"</span><span class="sc">\\</span><span class="st">W+"</span>)[[<span class="dv">1</span>]]</span>
-<span id="cb1-4"><a href=""></a>  <span class="fu">lapply</span>(words, <span class="cf">function</span>(w) <span class="fu">keyval</span>(w, <span class="dv">1</span>))</span>
-<span id="cb1-5"><a href=""></a>}</span>
-<span id="cb1-6"><a href=""></a></span>
-<span id="cb1-7"><a href=""></a><span class="co"># REDUCE: sum the counts for each distinct word</span></span>
-<span id="cb1-8"><a href=""></a>reduce_fn <span class="ot">&lt;-</span> <span class="cf">function</span>(word, counts) {</span>
-<span id="cb1-9"><a href=""></a>  <span class="fu">keyval</span>(word, <span class="fu">sum</span>(<span class="fu">unlist</span>(counts)))</span>
-<span id="cb1-10"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Because each map runs on one record and each reduce on one key, the framework can run thousands of them in parallel across the cluster — the programmer never writes scheduling or networking code.</p>
+<section id="mapreduce" class="slide level2">
+<h2>Map/Reduce</h2>
+<p>Hadoop’s programming model splits every job into two steps:</p>
+<ul>
+<li><strong>Map</strong> — process each record independently, emitting key–value pairs. (Parse each web-log line; emit <code>(location, 1)</code>.)</li>
+<li><strong>Reduce</strong> — gather all values for each key and combine them. (Sum the counts per location.)</li>
+</ul>
+<p>Because every map runs independently, the work spreads across as many machines as you have. Classic examples from the book: a <strong>web-traffic report</strong>, <strong>traffic by location</strong>, and <strong>predicting user behavior</strong> — all expressible as map then reduce.</p>
+</section>
+<section id="the-two-pillars" class="slide level2">
+<h2>The Two Pillars</h2>
+<p>Beyond Map/Reduce, Hadoop provides:</p>
+<ul>
+<li><strong>Distributed data storage — HDFS</strong> (Hadoop Distributed File System): splits files into blocks, replicates them across machines for fault tolerance, and presents one logical file system.</li>
+<li><strong>Cluster management</strong> — schedules jobs across servers, restarts failed tasks, moves computation to where the data lives.</li>
+</ul>
+<p>The framework itself is written in Java, but you need not write Java — R can drive it.</p>
+</section></section>
+<section>
+<section id="driving-hadoop-from-r" class="title-slide slide level1 center">
+<h1>Driving Hadoop from R</h1>
+
+</section>
+<section id="three-routes" class="slide level2">
+<h2>Three Routes</h2>
+<p>The book describes three ways to use Hadoop from R:</p>
+<ul>
+<li><strong>RHadoop</strong> — the most mature, best-integrated set of R packages;</li>
+<li><strong>Segue</strong> — runs R <code>lapply</code>-style jobs on Amazon Elastic MapReduce;</li>
+<li><strong>Hadoop streaming</strong> — feed any R script to Hadoop as a mapper/reducer via standard input and output.</li>
+</ul>
 </section>
 <section id="rhadoop" class="slide level2">
 <h2>RHadoop</h2>
-<p><strong>RHadoop</strong> is a family of packages letting you write MapReduce jobs in R instead of Java:</p>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th style="text-align: left;">Package</th>
-<th style="text-align: left;">Role</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><code>rhdfs</code></td>
-<td style="text-align: left;">read/write HDFS from R</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>rmr2</code></td>
-<td style="text-align: left;">write MapReduce jobs in R (<code>mapreduce()</code>)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>rhbase</code></td>
-<td style="text-align: left;">access the HBase database</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>plyrmr</code></td>
-<td style="text-align: left;">dplyr-style data manipulation over Hadoop</td>
-</tr>
-</tbody>
-</table>
+<p>RHadoop is three packages:</p>
+<ul>
+<li><strong><code>rmr</code></strong> — the core: write Map/Reduce jobs <em>in R</em>, move data in and out;</li>
+<li><strong><code>rhdfs</code></strong> — manage files on HDFS from R (most ordinary file operations);</li>
+<li><strong><code>rhbase</code></strong> — interface to HBase, Hadoop’s database.</li>
+</ul>
+<p>Setup, then a job (<code>rmr</code> syntax, shown unevaluated — it needs a Hadoop cluster):</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(rmr2)</span>
-<span id="cb2-2"><a href=""></a>wordcount <span class="ot">&lt;-</span> <span class="fu">mapreduce</span>(</span>
-<span id="cb2-3"><a href=""></a>  <span class="at">input    =</span> <span class="st">"hdfs://input/books"</span>,</span>
-<span id="cb2-4"><a href=""></a>  <span class="at">map      =</span> map_fn,</span>
-<span id="cb2-5"><a href=""></a>  <span class="at">reduce   =</span> reduce_fn)</span>
-<span id="cb2-6"><a href=""></a><span class="fu">from.dfs</span>(wordcount)        <span class="co"># pull the (small) result back into R</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">library</span>(rmr2)</span>
+<span id="cb1-2"><a href=""></a><span class="co"># count deaths by sex: a map step and a reduce step, both R functions</span></span>
+<span id="cb1-3"><a href=""></a>result <span class="ot">&lt;-</span> <span class="fu">mapreduce</span>(</span>
+<span id="cb1-4"><a href=""></a>  <span class="at">input =</span> <span class="st">"deaths.csv"</span>,</span>
+<span id="cb1-5"><a href=""></a>  <span class="at">map    =</span> <span class="cf">function</span>(k, v) <span class="fu">keyval</span>(v<span class="sc">$</span>sex, <span class="dv">1</span>),</span>
+<span id="cb1-6"><a href=""></a>  <span class="at">reduce =</span> <span class="cf">function</span>(sex, counts) <span class="fu">keyval</span>(sex, <span class="fu">sum</span>(counts)))</span>
+<span id="cb1-7"><a href=""></a><span class="fu">from.dfs</span>(result)                 <span class="co"># pull results back into R</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The book’s four-node example tallies US deaths by sex for 2009 — a job that runs in parallel across the cluster. <code>to.dfs</code>/<code>from.dfs</code> move data between R and HDFS.</p>
+</section>
+<section id="hadoop-in-the-cloud" class="slide level2">
+<h2>Hadoop in the Cloud</h2>
+<p>You needn’t own a cluster — rent one. The book walks through <strong>Amazon Elastic MapReduce (EMR)</strong>: bootstrap a cluster, configure it from a template, run the job, tear it down — paying only for the minutes used. <strong>Segue</strong> wraps this so an R user can run a parallel <code>lapply</code> on EMR with almost no Hadoop knowledge.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="co"># Segue-style: a parallel lapply on a rented cluster (conceptual)</span></span>
+<span id="cb2-2"><a href=""></a><span class="fu">library</span>(segue)</span>
+<span id="cb2-3"><a href=""></a>cluster <span class="ot">&lt;-</span> <span class="fu">createCluster</span>(<span class="at">numInstances=</span><span class="dv">4</span>)</span>
+<span id="cb2-4"><a href=""></a>results <span class="ot">&lt;-</span> <span class="fu">emrlapply</span>(cluster, my.list, my.function)</span>
+<span id="cb2-5"><a href=""></a><span class="fu">stopCluster</span>(cluster)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="the-pattern-reduce-then-pull" class="slide level2">
-<h2>The Pattern: Reduce, Then Pull</h2>
-<p>The recurring strategy across big-data tools:</p>
-<ol type="1">
-<li><strong>Push computation to the data</strong> — run map/reduce where the blocks live, avoiding network transfer of terabytes.</li>
-<li><strong>Shrink on the cluster</strong> — aggregation, filtering, and summarization collapse big data into small results.</li>
-<li><strong>Pull the summary into R</strong> — once the data is small, all of Chapters 13–23 apply normally.</li>
-</ol>
-<p><code>from.dfs()</code> and <code>to.dfs()</code> move data between R’s memory and HDFS; you bring back only what fits.</p>
-</section>
-<section id="the-modern-landscape" class="slide level2">
-<h2>The Modern Landscape</h2>
-<p>Hadoop MapReduce was the pioneer; today’s ecosystem has moved on, but the <em>principles</em> are unchanged:</p>
-<ul>
-<li><strong>Apache Spark</strong> with the <code>sparklyr</code> package — in-memory distributed computing, far faster than disk-based MapReduce, with a <code>dplyr</code> front end and built-in machine learning.</li>
-<li><strong><code>arrow</code> / <code>duckdb</code></strong> — query larger-than-memory data efficiently on a single machine, often removing the need for a cluster at all.</li>
-<li><strong>Cloud data warehouses</strong> (BigQuery, Snowflake) queried from R via DBI — push SQL to the warehouse, retrieve summaries.</li>
-</ul>
-<p>The decision rule is the same as in Chapter 11: do the heavy lifting where the data lives, bring back only the answer.</p>
-</section>
-<section id="course-wrap-up" class="slide level2">
-<h2>Course Wrap-Up</h2>
-<p>Over twenty-six chapters this course traveled from <code>1 + 1</code> to distributed computing:</p>
-<ul>
-<li><strong>Parts I–II</strong> — installing R and the structure of the language;</li>
-<li><strong>Part III</strong> — getting real data in and cleaning it;</li>
-<li><strong>Part IV</strong> — three graphics systems;</li>
-<li><strong>Part V</strong> — the statistical toolkit, from t-tests to random forests to ARIMA;</li>
-<li><strong>Part VI</strong> — performance and scale.</li>
-</ul>
-<p>The same language spans all of it. From here, depth comes from practice and from the focused follow-on courses — and every data set in these slides is one <code>download.file()</code> + <code>load()</code> away whenever you want to experiment.</p>
+<section id="putting-it-in-perspective" class="slide level2">
+<h2>Putting It in Perspective</h2>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>The enduring lessons.</strong> Hadoop the product is fading, but its ideas are everywhere: (1) <strong>partition</strong> data and computation; (2) express work as <strong>map</strong> (independent, parallel) then <strong>reduce</strong> (combine); (3) <strong>move compute to the data</strong>, not the reverse; (4) <strong>rent</strong> elastic capacity in the cloud. Modern R reaches big data through <code>sparklyr</code>, <code>arrow</code>, <code>duckdb</code>, and <code>future</code>/<code>furrr</code> for parallelism — but you’ll recognize Map/Reduce inside all of them.</p>
+</div>
+</div>
+</div>
+<p>This chapter closes <em>R in a Nutshell</em> — from installing R (Chapter 1) to running it across a cluster. The throughline: the same language, the same objects, the same functions, scaling from one console to thousands of machines.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

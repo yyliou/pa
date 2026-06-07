@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,21 +211,333 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="擴充-r-的能力" class="title-slide slide level1 center">
-<h1><strong>擴充 R 的能力</strong></h1>
+<section id="套件系統" class="title-slide slide level1 center">
+<h1><strong>套件系統</strong></h1>
 
 </section>
 <section id="什麼是套件" class="slide level2">
 <h2>什麼是套件？</h2>
-<p><strong>套件</strong>（package）把相關的函式、說明文件與資料集打包成一個可安裝的單位——相當於 Perl 的 module、C 的 library 或 Java 的類別庫。</p>
+<p><strong>套件（package）</strong>是一組打包在一起、彼此相關的函式、說明檔與資料檔——R 分享功能的基本單位。</p>
 <ul>
-<li>有些套件隨 R 一起出貨（<code>stats</code>、<code>graphics</code>、<code>utils</code> 等）。</li>
-<li>公開軟體庫中還有數以萬計的套件，涵蓋金融、基因體學到最新的機器學習方法。</li>
-<li>你也可以自己打造套件。</li>
+<li>其他語言的粗略對應：Perl 的 module、C/C++ 的 library、Java 的 class。（C 程式設計師注意：在 R 裡，「library」指的是<em>套件存放的地方</em>，不是套件本身。）</li>
+<li>套件內容通常主題一致：<code>stats</code> 套件收錄統計分析函式。</li>
+<li>生態系大得驚人：繪圖套件、統計檢定、最新的機器學習——還有各行業的專用工具：微陣列資料分析、信用風險建模、社會科學……</li>
+<li>有些套件隨 R 附贈；數以千計的套件放在公開儲存庫；你也能自己做。本章三者都談。</li>
 </ul>
+</section>
+<section id="函式庫以及套件為何要載入" class="slide level2">
+<h2>函式庫，以及套件為何要載入</h2>
+<p>使用任何套件之前有兩個步驟：</p>
+<ol type="1">
+<li>先<strong>安裝</strong>到本機的<strong>函式庫（library）</strong>（預設一個系統層級函式庫，可自行增加）；</li>
+<li>再<strong>載入</strong>到目前的工作階段。</li>
+</ol>
+<p>為什麼堅持手動載入、不乾脆全部載入？</p>
+<ul>
+<li><strong>說明系統的速度：</strong> 每多載入一個套件，說明搜尋就更慢（書的作者寫書時載了數十個套件，親身領教）。</li>
+<li><strong>名稱衝突：</strong> 兩個套件可能定義同名物件——你以為呼叫的是這個 <code>fit</code>，實際跑的是那個，產生詭異難解的結果。只載入需要的套件，把風險降到最低。</li>
+</ul>
+</section></section>
+<section>
+<section id="列出套件" class="title-slide slide level1 center">
+<h1>列出套件</h1>
+
+</section>
+<section id="哪些已載入哪些可用" class="slide level2">
+<h2>哪些已載入、哪些可用</h2>
+<p>三個快速檢查指令：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">getOption</span>(<span class="st">"defaultPackages"</span>)   <span class="co"># 啟動時載入的（不含永遠載入的 base）</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "datasets"  "utils"     "grDevices" "graphics"  "stats"     "methods"  </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>(<span class="fu">.packages</span>())                  <span class="co"># 目前已載入的（注意外層括號）</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "stats"     "graphics"  "grDevices" "utils"     "datasets"  "methods"  
+[7] "base"     </code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>(<span class="fu">.packages</span>(<span class="at">all.available=</span><span class="cn">TRUE</span>))  <span class="co"># 函式庫中安裝的全部套件</span></span>
+<span id="cb5-2"><a href=""></a><span class="fu">library</span>()                        <span class="co"># 同樣的資訊，以視窗顯示</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li>預設清單裡看不到 <code>base</code>，因為它實作語言的核心功能，<em>永遠</em>處於載入狀態。</li>
+</ul>
+</section>
+<section id="內附套件一基礎建設" class="slide level2">
+<h2>內附套件（一）：基礎建設</h2>
+<p>R 出廠就附帶一批精選套件。第一類實作語言與環境本身：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>套件</th>
+<th>預設載入</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>base</code></td>
+<td>✓</td>
+<td>語言核心：算術、輸入輸出、程式設計支援</td>
+</tr>
+<tr class="even">
+<td><code>utils</code></td>
+<td>✓</td>
+<td>工具集：套件管理、檔案讀寫、編輯</td>
+</tr>
+<tr class="odd">
+<td><code>methods</code></td>
+<td>✓</td>
+<td>正式（S4）類別與方法</td>
+</tr>
+<tr class="even">
+<td><code>stats</code></td>
+<td>✓</td>
+<td>統計檢定、機率分布、建模工具</td>
+</tr>
+<tr class="odd">
+<td><code>graphics</code></td>
+<td>✓</td>
+<td>基礎繪圖函式</td>
+</tr>
+<tr class="even">
+<td><code>grDevices</code></td>
+<td>✓</td>
+<td>基礎與 grid 繪圖的裝置支援</td>
+</tr>
+<tr class="odd">
+<td><code>datasets</code></td>
+<td>✓</td>
+<td>著名的範例資料集</td>
+</tr>
+<tr class="even">
+<td><code>grid</code></td>
+<td></td>
+<td>建構精緻圖形的底層引擎</td>
+</tr>
+<tr class="odd">
+<td><code>compiler</code></td>
+<td></td>
+<td>R 的位元組碼編譯器</td>
+</tr>
+<tr class="even">
+<td><code>parallel</code></td>
+<td></td>
+<td>平行運算與平行亂數生成</td>
+</tr>
+<tr class="odd">
+<td><code>tools</code></td>
+<td></td>
+<td>套件開發工具</td>
+</tr>
+<tr class="even">
+<td><code>tcltk</code></td>
+<td></td>
+<td>Tcl/Tk 介面，跨平台 UI 工具</td>
+</tr>
+<tr class="odd">
+<td><code>codetools</code></td>
+<td></td>
+<td>程式碼分析工具</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="內附套件二統計與建模" class="slide level2">
+<h2>內附套件（二）：統計與建模</h2>
+<p>第二類提供廣泛使用的統計方法——很多分析根本不必再裝別的：</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>套件</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>MASS</code></td>
+<td>Venables 與 Ripley 著《Modern Applied Statistics with S》的函式與資料——統計工具寶庫</td>
+</tr>
+<tr class="even">
+<td><code>cluster</code></td>
+<td>集群分析演算法</td>
+</tr>
+<tr class="odd">
+<td><code>class</code></td>
+<td>分類：最近鄰、自組織映射、學習向量量化</td>
+</tr>
+<tr class="even">
+<td><code>nnet</code></td>
+<td>前饋神經網路、多項對數線性模型</td>
+</tr>
+<tr class="odd">
+<td><code>rpart</code></td>
+<td>遞迴分割與迴歸樹</td>
+</tr>
+<tr class="even">
+<td><code>survival</code></td>
+<td>存活分析</td>
+</tr>
+<tr class="odd">
+<td><code>nlme</code></td>
+<td>線性與非線性混合效果模型</td>
+</tr>
+<tr class="even">
+<td><code>mgcv</code></td>
+<td>廣義可加（混合）模型</td>
+</tr>
+<tr class="odd">
+<td><code>splines</code></td>
+<td>迴歸樣條</td>
+</tr>
+<tr class="even">
+<td><code>boot</code></td>
+<td>拔靴法重抽樣</td>
+</tr>
+<tr class="odd">
+<td><code>KernSmooth</code></td>
+<td>核平滑</td>
+</tr>
+<tr class="even">
+<td><code>spatial</code></td>
+<td>克利金法、點型態分析</td>
+</tr>
+<tr class="odd">
+<td><code>foreign</code></td>
+<td>讀取 Stata、SAS、SPSS 檔案</td>
+</tr>
+<tr class="even">
+<td><code>lattice</code></td>
+<td>Trellis 圖形——比預設更漂亮</td>
+</tr>
+<tr class="odd">
+<td><code>stats4</code></td>
+<td>以 S4 類別／方法呈現的統計函式</td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="載入套件" class="title-slide slide level1 center">
+<h1>載入套件</h1>
+
+</section>
+<section id="library-指令" class="slide level2">
+<h2><code>library()</code> 指令</h2>
+<p>呼叫未載入套件的函式，R 會拒絕：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">rpart</span>(Kyphosis <span class="sc">~</span> Age <span class="sc">+</span> Number <span class="sc">+</span> Start, <span class="at">data =</span> kyphosis)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `rpart()`:
+! could not find function "rpart"</code></pre>
+</div>
+</div>
+<p>先載入套件，一切順利：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">library</span>(rpart)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li>還有個近親指令 <code>require()</code>，引數略有不同（套件缺少時回傳 <code>FALSE</code> 而非報錯）——詳見說明檔。</li>
+<li>GUI 也提供選單式載入——但<strong>腳本裡務必照樣寫上 <code>library()</code></strong>，否則換台機器執行就會失敗。</li>
+</ul>
+</section>
+<section id="各平台的-gui-載入方式" class="slide level2">
+<h2>各平台的 GUI 載入方式</h2>
+<ul>
+<li><strong>Windows／Linux GUI：</strong> 在 <em>Packages</em> 選單選 <em>Load package</em>，視窗會列出可載入的套件。</li>
+<li><strong>macOS：</strong> 更講究——在 <em>Packages &amp; Data</em> 選單選 <em>Package Manager</em>。套件管理員顯示哪些已載入、點一下即可載入，還能瀏覽各套件的說明檔。</li>
+<li>RStudio 使用者：<em>Packages</em> 窗格用勾選框做同一件事——而且會把 <code>library()</code> 指令寫到主控台，方便你複製進腳本。</li>
+</ul>
+</section></section>
+<section>
+<section id="探索套件儲存庫" class="title-slide slide level1 center">
+<h1>探索套件儲存庫</h1>
+
+</section>
+<section id="cranbioconductorr-forge" class="slide level2">
+<h2>CRAN、Bioconductor、R-Forge</h2>
+<p>線上有數以千計的套件；兩大來源：</p>
+<ul>
+<li><strong>CRAN</strong>（Comprehensive R Archive Network）——由 R 基金會主持，全球鏡像（挑近的鏡像站：你快、伺服器也輕鬆）。書中統計 2009 年 2 月有 1,698 個套件；如今已超過兩萬。懂 Perl 的話：CRAN 就是 R 的 CPAN。</li>
+<li><strong>Bioconductor</strong>——分析基因體資料的開源專案，工具以 R 打造、以 R 套件形式從自家管道發布（多數<em>不在</em> CRAN 上）。</li>
+<li><strong>R-Forge</strong>——進行中專案的協作開發站；可能挖到寶，但請細讀免責聲明——許多專案尚未完工。</li>
+</ul>
+<p>R 能從任意儲存庫安裝，但實務上幾乎所有專案都發布在 CRAN（甚至有書用 CRAN 散布範例程式與資料）。現代的例外：放在 <strong>GitHub</strong> 上的開發版——稍後介紹。</p>
+</section>
+<section id="在網路上找套件" class="slide level2">
+<h2>在網路上找套件</h2>
+<p>R 自己的 GUI 擅長安裝、不擅長<em>搜尋</em>。開瀏覽器吧：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>儲存庫</th>
+<th>網址</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>CRAN</td>
+<td><a href="https://cran.r-project.org/web/packages/" class="uri">https://cran.r-project.org/web/packages/</a>（權威清單；請改用本地鏡像）</td>
+</tr>
+<tr class="even">
+<td>Bioconductor</td>
+<td><a href="https://www.bioconductor.org/packages/release/BiocViews.html" class="uri">https://www.bioconductor.org/packages/release/BiocViews.html</a></td>
+</tr>
+<tr class="odd">
+<td>R-Forge</td>
+<td><a href="https://r-forge.r-project.org/" class="uri">https://r-forge.r-project.org/</a></td>
+</tr>
+</tbody>
+</table>
+<p>搜尋引擎也行：書中的訣竅是搜 <strong>「R package」＋應用名稱</strong>。書中實例：搜 <em>“R package multivariate additive regression splines”</em> 找到含 <code>mars</code> 函式的 <code>mda</code> 套件——雖然作者後來發現 <code>earth</code> 套件做這個演算法更好。（今天還有 <a href="https://r-universe.dev" class="uri">https://r-universe.dev</a> 與 CRAN Task Views，找套件容易多了。）</p>
+</section></section>
+<section>
+<section id="安裝套件" class="title-slide slide level1 center">
+<h1>安裝套件</h1>
+
+</section>
+<section id="windows-與-linux-gui" class="slide level2">
+<h2>Windows 與 Linux GUI</h2>
+<p>透過 Windows GUI 安裝：</p>
+<ol type="1">
+<li><em>（可選）</em> 預設從「CRAN」與「CRAN (extra)」類別抓取；想加別的，在 <em>Packages</em> 選單選 <em>Select repositories</em>（可複選）。</li>
+<li>在 <em>Packages</em> 選單選 <em>Install package(s)</em>。</li>
+<li>本次工作階段第一次安裝？R 會請你挑<strong>鏡像站</strong>——選地理位置近的。</li>
+<li>點選想裝的套件、按 OK；R 下載並安裝。</li>
+</ol>
+<p>權限問題與第一章如出一轍：管理員帳號暢行無阻；一般帳號可能得把 R 裝在自己的目錄，或以管理員身分執行 R 才能加裝套件。</p>
+</section>
+<section id="macos-gui" class="slide level2">
+<h2>macOS GUI</h2>
+<p>macOS 的安裝介面資訊較多，但也較令人困惑：</p>
+<ol type="1">
+<li>在 <em>Packages &amp; Data</em> 選單選 <em>Package Installer</em>。</li>
+<li><em>（可選）</em> 視窗左上角的選單選擇套件類別——初始為「CRAN (binaries)」。</li>
+<li>按 <strong>Get List</strong> 顯示可安裝的套件。</li>
+<li>搜尋框可過濾清單——但要<em>先</em>按過 Get List 才有結果。</li>
+<li>勾選想裝的套件，按 <strong>Install Selected</strong>。</li>
+</ol>
+<p>書中兩個提醒：R 預設<strong>安裝到系統層級</strong>供所有使用者共用（權限不足就改選其他位置）；而且這個介面<strong>不會</strong>自動安裝相依套件——載入時缺少相依套件會報錯。</p>
+</section>
+<section id="從-r-主控台安裝" class="slide level2">
+<h2>從 R 主控台安裝</h2>
+<p>主控台路線到處通用——也是該寫進腳本的那一種。書中範例：一次安裝 <code>tree</code> 與 <code>maptree</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"tree"</span>, <span class="st">"maptree"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>R 會逐一回報下載進度，並把套件裝進預設函式庫（位置存於 <code>.Library</code>）。想移除，要同時指名套件<em>與</em>安裝時的函式庫：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">remove.packages</span>(<span class="fu">c</span>(<span class="st">"tree"</span>, <span class="st">"maptree"</span>), .Library)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -235,135 +547,217 @@
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>兩個分開的步驟。</strong> 套件必須先<em>安裝</em>到磁碟上的本地函式庫（一次性），再於每個要使用它的工作階段中<em>載入</em>。把兩者分開能節省記憶體、維持說明系統的速度，並避免套件之間的名稱衝突。</p>
+<p>現代的 <code>install.packages()</code> 會<strong>自動解析並安裝相依套件</strong>——這是書出版之後悄悄變好的地方之一。</p>
 </div>
 </div>
 </div>
 </section>
-<section id="函式庫" class="slide level2">
-<h2>函式庫</h2>
-<p><strong>函式庫</strong>（library）是磁碟上存放已安裝套件的目錄。</p>
+<section id="套件管理詞彙表" class="slide level2">
+<h2>套件管理詞彙表</h2>
+<p>主控台指令全家福：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>指令</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>installed.packages</code></td>
+<td>已安裝套件的資訊矩陣</td>
+</tr>
+<tr class="even">
+<td><code>available.packages</code></td>
+<td>儲存庫中所有可安裝的套件</td>
+</tr>
+<tr class="odd">
+<td><code>old.packages</code></td>
+<td>已安裝且有新版可用的套件</td>
+</tr>
+<tr class="even">
+<td><code>new.packages</code></td>
+<td>儲存庫有、本機尚未安裝的套件</td>
+</tr>
+<tr class="odd">
+<td><code>download.packages</code></td>
+<td>把套件下載到本機目錄</td>
+</tr>
+<tr class="even">
+<td><code>install.packages</code></td>
+<td>從儲存庫安裝套件</td>
+</tr>
+<tr class="odd">
+<td><code>remove.packages</code></td>
+<td>移除已安裝的套件</td>
+</tr>
+<tr class="even">
+<td><code>update.packages</code></td>
+<td>把已安裝套件更新到最新版</td>
+</tr>
+<tr class="odd">
+<td><code>setRepositories</code></td>
+<td>設定套件儲存庫清單</td>
+</tr>
+</tbody>
+</table>
+<p>學期開始時跑一次 <code>update.packages()</code>，工具箱常保最新。</p>
+</section>
+<section id="從系統命令列安裝" class="slide level2">
+<h2>從系統命令列安裝</h2>
+<p>自己下載了套件檔？不必開 R shell，用 <code>R CMD INSTALL</code> 直接裝。書中以 <code>aplpack</code>（“Another PLotting PACKage”）為例：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href=""></a><span class="ex">$</span> R CMD INSTALL aplpack_1.1.1.tgz</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>成功會回報：</p>
+<pre><code>* Installing to library '/Library/Frameworks/R.framework/Resources/library'
+* Installing *binary* package 'aplpack' ...
+* DONE (aplpack)</code></pre>
+</section>
+<section id="從其他儲存庫安裝devtools" class="slide level2">
+<h2>從其他儲存庫安裝：devtools</h2>
+<p>不是所有東西都在 CRAN。<strong>devtools</strong> 套件能從 git 儲存庫與其他網址安裝——書中的例子是 Hadley Wickham 放在 GitHub 上的 ggplot2 開發版：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="co"># 第一次需要：</span></span>
+<span id="cb13-2"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"devtools"</span>)</span>
+<span id="cb13-3"><a href=""></a></span>
+<span id="cb13-4"><a href=""></a><span class="fu">library</span>(devtools)</span>
+<span id="cb13-5"><a href=""></a><span class="fu">install_github</span>(<span class="st">"tidyverse/ggplot2"</span>)   <span class="co"># 現代寫法：owner/repo</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>（書中寫的是 <code>install_github("ggplot2")</code>；這個函式現在要求 <code>owner/repo</code> 格式。更輕量的 <code>remotes</code> 套件如今提供同樣的 <code>install_github()</code>。）</p>
+</section></section>
+<section>
+<section id="自製套件" class="title-slide slide level1 center">
+<h1>自製套件</h1>
+
+</section>
+<section id="為什麼自己做套件" class="slide level2">
+<h2>為什麼自己做套件？</h2>
+<p>想<strong>和別人分享程式或資料</strong>，或單純想把自己的工作打包成可重用、有文件的形式，做套件就對了。書的作者身體力行：書中資料集就包成 <code>nutshell</code> 套件，正是用以下方法做的。</p>
+<p>簡易路線有三站：建立目錄骨架、編輯詮釋資料、建置與檢查。</p>
+</section>
+<section id="建立套件目錄package.skeleton" class="slide level2">
+<h2>建立套件目錄：<code>package.skeleton</code></h2>
+<p><code>package.skeleton</code> 鋪好必要的目錄結構，還能把一批 R 物件複製進去：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">package.skeleton</span>(<span class="at">name =</span> <span class="st">"anRpackage"</span>, list, <span class="at">environment =</span> .GlobalEnv,</span>
+<span id="cb14-2"><a href=""></a>                 <span class="at">path =</span> <span class="st">"."</span>, <span class="at">force =</span> <span class="cn">FALSE</span>, <span class="at">namespace =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb14-3"><a href=""></a>                 <span class="at">code_files =</span> <span class="fu">character</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>name</code></td>
+<td>新套件的名稱</td>
+<td><code>"anRpackage"</code>（書中吐槽：可能是全 R 最沒用的預設值）</td>
+</tr>
+<tr class="even">
+<td><code>list</code></td>
+<td>要納入的 R 物件名稱</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>environment</code></td>
+<td>評估 <code>list</code> 的環境</td>
+<td><code>.GlobalEnv</code></td>
+</tr>
+<tr class="even">
+<td><code>path</code></td>
+<td>檔案系統路徑</td>
+<td><code>"."</code></td>
+</tr>
+<tr class="odd">
+<td><code>force</code></td>
+<td>目錄已存在時是否覆寫</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>namespace</code></td>
+<td>是否加入命名空間</td>
+<td><code>FALSE</code></td>
+</tr>
+<tr class="odd">
+<td><code>code_files</code></td>
+<td>含 R 程式碼的檔案路徑</td>
+<td><code>character()</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="骨架裡有什麼" class="slide level2">
+<h2>骨架裡有什麼</h2>
+<p>書中作者自己的呼叫：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">package.skeleton</span>(<span class="at">name =</span> <span class="st">"nutshell"</span>, <span class="at">path =</span> <span class="st">"~/Documents/book/current/"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>R 回報建立了目錄、DESCRIPTION 檔、Read-and-delete-me、儲存的函式與資料、說明檔。關鍵目錄：</p>
 <ul>
-<li>R 一定有一個系統層級的函式庫；其上可再疊加個人函式庫（沒有管理員權限時特別有用）。</li>
-<li><code>.libPaths()</code> 顯示 R 目前搜尋的函式庫。</li>
+<li><strong><code>man/</code></strong>——說明檔；</li>
+<li><strong><code>R/</code></strong>——R 原始碼；</li>
+<li><strong><code>data/</code></strong>——資料檔，三種格式皆可：R 資料檔（<code>save()</code> 的輸出，副檔名 <code>.rda</code>／<code>.Rdata</code>）、逗號分隔的 <code>.csv</code>、或含 R 程式碼的 <code>.R</code> 檔；</li>
+<li><strong><code>DESCRIPTION</code></strong>——套件的詮釋資料，位於根目錄。</li>
 </ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">.libPaths</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "/Library/Frameworks/R.framework/Versions/4.6/Resources/library"</code></pre>
-</div>
-</div>
-<p>注意用語：你是把<em>套件</em>安裝進<em>函式庫</em>——儘管載入函式偏偏叫 <code>library()</code>。</p>
 </section>
-<section id="列出套件" class="slide level2">
-<h2>列出套件</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">library</span>()                    <span class="co"># 安裝了哪些？</span></span>
-<span id="cb3-2"><a href=""></a><span class="fu">installed.packages</span>()[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="fu">c</span>(<span class="st">"Package"</span>, <span class="st">"Version"</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="co"># 目前載入了哪些？</span></span>
-<span id="cb4-2"><a href=""></a>(<span class="fu">.packages</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "stats"     "graphics"  "grDevices" "utils"     "datasets"  "methods"  
-[7] "base"     </code></pre>
-</div>
-</div>
+<section id="description-檔" class="slide level2">
+<h2>DESCRIPTION 檔</h2>
+<p>自動產生的範本——每一行都等你改：</p>
+<pre><code>Package: nutshell
+Type: Package
+Title: What the package does (short line)
+Version: 1.0
+Date: 2012-03-13
+Author: Who wrote it
+Maintainer: Whom to complain to &lt;yourfault@somewhere.net&gt;
+Description: More about what it does (maybe more than one line)
+License: What license is it under?</code></pre>
+<p>實用的可選欄位：</p>
 <ul>
-<li><code>installed.packages()</code> 回傳一個矩陣，一列一個已安裝套件——名稱、版本、相依性、授權。</li>
-<li>新開的工作階段會自動載入一小組基礎套件。</li>
+<li><strong><code>LazyLoad</code></strong>——設為 <code>yes</code>（預設）時，資料物件以輕量的 <em>promise</em> 形式載入而非佔用記憶體；照常取用，（幾乎）不佔空間。</li>
+<li><strong><code>LazyData</code></strong>——同樣的機制，專門針對資料檔。</li>
+<li><strong><code>Depends</code></strong>——對 R 或其他套件的需求，例如 <code>Depends: R(&gt;= 2.8), nnet</code>。</li>
 </ul>
 </section>
-<section id="載入套件" class="slide level2">
-<h2>載入套件</h2>
-<p>用 <code>library()</code> 載入已安裝的套件（或用 <code>require()</code>，套件不存在時回傳 <code>FALSE</code> 而非報錯）：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">library</span>(lattice)         <span class="co"># lattice 的函式現在可見了</span></span>
-<span id="cb6-2"><a href=""></a><span class="st">"package:lattice"</span> <span class="sc">%in%</span> <span class="fu">search</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
-</div>
-</div>
+<section id="替套件寫文件" class="slide level2">
+<h2>替套件寫文件</h2>
+<p>R 用 <code>prompt</code> 家族自動產生說明檔樣板：</p>
 <ul>
-<li>載入會把套件掛上<strong>搜尋路徑</strong>（search path），即 R 解析名稱時查找的位置清單（第八章）。</li>
-<li><code>detach("package:lattice")</code> 可將其移除。</li>
-<li>各平台指令相同；GUI 只是提供同一個呼叫的選單捷徑。</li>
+<li><code>prompt</code>——一般物件的文件；</li>
+<li><code>promptData</code>——資料檔的文件；</li>
+<li><code>promptMethods</code>——泛型函式各方法的文件；</li>
+<li><code>promptClass</code>——類別的文件。</li>
 </ul>
+<p>每個都會在 <code>man/</code> 寫出待補完的 <code>.Rd</code> 骨架，細節見各自的說明頁。（現代開發者多半改用 <code>roxygen2</code> 套件，從程式碼內的註解直接生成 <code>.Rd</code>。）</p>
 </section>
-<section id="cran" class="slide level2">
-<h2>CRAN</h2>
-<p><strong>Comprehensive R Archive Network</strong> 是核心的公開軟體庫：</p>
-<ul>
-<li>超過兩萬個貢獻套件，各自附有文件與平台對應的編譯版。</li>
-<li>每個套件頁面列出相依性、手冊與長篇導覽（vignettes）。</li>
-<li><strong>Task Views</strong>（<a href="https://cran.r-project.org/web/views/" class="uri">https://cran.r-project.org/web/views/</a>）按領域整理套件——計量經濟、機器學習、時間序列、繪圖——是探索生態系的最佳入口。</li>
-</ul>
-<p>你還會遇到其他軟體庫：<strong>Bioconductor</strong>（基因體學；第二十五章）與 <strong>GitHub</strong>（開發版）。</p>
-</section>
-<section id="安裝套件" class="slide level2">
-<h2>安裝套件</h2>
-<p>一個函式就能完成下載與相依性解析：</p>
+<section id="建置與檢查" class="slide level2">
+<h2>建置與檢查</h2>
+<p>材料備齊後，在系統命令列（不是 R shell）收尾。先驗證套件符合規範、能正確建置：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"ggplot2"</span>)                     <span class="co"># 單一套件</span></span>
-<span id="cb8-2"><a href=""></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"dplyr"</span>, <span class="st">"lattice"</span>))         <span class="co"># 一次多個</span></span>
-<span id="cb8-3"><a href=""></a><span class="fu">update.packages</span>()                               <span class="co"># 全部更新</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href=""></a><span class="ex">$</span> R CMD check nutshell</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<ul>
-<li>在 RStudio：<em>Tools → Install Packages…</em> 不過是同一個呼叫包上對話框。</li>
-<li>每台機器安裝一次；每個工作階段 <code>library()</code> 一次。</li>
-<li>要從非 CRAN 軟體庫安裝可加 <code>repos=</code> 參數；GitHub 開發版則用 <code>remotes</code> 套件的 <code>install_github()</code>。</li>
-</ul>
-</section>
-<section id="套件資料與課程慣例" class="slide level2">
-<h2>套件資料與課程慣例</h2>
-<p>許多套件附帶範例資料集，以 <code>data()</code> 載入：</p>
+<p>再建置：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">data</span>(cars)        <span class="co"># 來自 datasets 套件</span></span>
-<span id="cb9-2"><a href=""></a><span class="fu">head</span>(cars, <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  speed dist
-1     4    2
-2     4   10
-3     7    4</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href=""></a><span class="ex">$</span> R CMD build nutshell</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<p>教科書的配套套件（<code>nutshell</code>、<code>nutshell.bbdb</code>、<code>nutshell.audioscrobbler</code>）已自 CRAN 下架，因此本課程改從 CRAN 的 GitHub 鏡像直接串流資料集：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb11-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/doctorates.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb11-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb11-4"><a href=""></a>doctorates[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  year engineering science education health humanities
-1 2001        5323   20643      6436   1591       5213
-2 2002        5511   20017      6349   1541       5178
-3 2003        5079   19529      6503   1654       5051
-4 2004        5280   20001      6643   1633       5020
-5 2005        5777   20498      6635   1720       5013
-6 2006        6425   21564      6226   1785       4949</code></pre>
-</div>
-</div>
-</section>
-<section id="自製套件" class="slide level2">
-<h2>自製套件</h2>
-<p>當你累積了一批常用函式，打包成套件是自然的歸宿：</p>
-<ul>
-<li>套件就是一個目錄：<code>DESCRIPTION</code> 檔（中繼資料）、<code>R/</code> 資料夾（程式碼）、<code>man/</code>（說明頁），可選的 <code>data/</code>。</li>
-<li><code>package.skeleton()</code> 能從工作空間的物件產生骨架；現代流程多用 <code>devtools</code> 與 <code>roxygen2</code>。</li>
-<li><code>R CMD build</code> 產生可散布的壓縮檔；<code>R CMD check</code> 執行完整的品質檢查。</li>
-</ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href=""></a><span class="ex">R</span> CMD build mypackage/</span>
-<span id="cb13-2"><a href=""></a><span class="ex">R</span> CMD check mypackage_1.0.0.tar.gz</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>就算永遠不上架 CRAN，打包也是與隊友——或未來的自己——分享程式碼最乾淨的方式。</p>
+<p>兩者都接受 <code>--help</code> 查選項。認真寫套件的權威參考是 CRAN 手冊《Writing R Extensions》：<a href="https://cran.r-project.org/doc/manuals/R-exts.pdf" class="uri">https://cran.r-project.org/doc/manuals/R-exts.pdf</a>。</p>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

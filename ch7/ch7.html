@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,277 +211,918 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="the-object-catalog" class="title-slide slide level1 center">
-<h1><strong>The Object Catalog</strong></h1>
+<section id="the-building-blocks" class="title-slide slide level1 center">
+<h1><strong>The Building Blocks</strong></h1>
 
 </section>
-<section id="primitive-object-types" class="slide level2">
-<h2>Primitive Object Types</h2>
-<p>Every R object has an underlying <strong>type</strong>, visible with <code>typeof()</code>. The catalog falls into natural families:</p>
+<section id="types-and-classes" class="slide level2">
+<h2>Types and Classes</h2>
+<p>All objects in R rest on a basic set of built-in objects:</p>
 <ul>
-<li><strong>Basic vectors</strong>: <code>logical</code>, <code>integer</code>, <code>double</code>, <code>complex</code>, <code>character</code>, <code>raw</code>;</li>
-<li><strong>Compound objects</strong>: <code>list</code> and everything built on lists;</li>
-<li><strong>Language objects</strong>: <code>symbol</code>, <code>call</code>, <code>expression</code>;</li>
-<li><strong>Functions</strong>: <code>closure</code> (R-level), <code>builtin</code> and <code>special</code> (implemented in C);</li>
-<li><strong>Special objects</strong>: <code>NULL</code>, environments, and a few internals.</li>
+<li>an object’s <strong>type</strong> defines how it is <em>stored</em>;</li>
+<li>its <strong>class</strong> defines what information it <em>contains</em> and how it may be <em>used</em>.</li>
 </ul>
+<p>This chapter covers the built-in objects themselves — the object-oriented machinery (class definitions, inheritance, methods) waits until Chapter 10. Note that “object-oriented programming” means more than “programming with objects”!</p>
+</section>
+<section id="a-map-of-the-primitive-types" class="slide level2">
+<h2>A Map of the Primitive Types</h2>
+<p>The built-in object types sort into a few categories:</p>
+<ul>
+<li><strong>Basic vectors</strong> — single-type collections: integers, doubles, complex, character, logical, raw.</li>
+<li><strong>Compound objects</strong> — containers of named objects: lists, pairlists, S4 objects, environments.</li>
+<li><strong>Special objects</strong> — <code>any</code>, <code>NULL</code>, <code>...</code>: each means something important in context, but you never create one yourself.</li>
+<li><strong>R language objects</strong> — objects representing R code, evaluable to other objects.</li>
+<li><strong>Functions</strong> — the workhorses: take arguments, return outputs, sometimes cause side effects (plots, files, network).</li>
+<li><strong>Internal / bytecode</strong> — types defined by R but normally invisible to user-level code.</li>
+</ul>
+</section>
+<section id="primitive-types-1-basic-vectors" class="slide level2">
+<h2>Primitive Types (1): Basic Vectors</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>integer</code></td>
+<td>Whole numbers; produced naturally by sequences</td>
+<td><code>5:5</code>, <code>integer(5)</code></td>
+</tr>
+<tr class="even">
+<td><code>double</code></td>
+<td>Floating-point (8 bytes on modern platforms); the default for numeric values</td>
+<td><code>1</code>, <code>-1</code>, <code>2^50</code></td>
+</tr>
+<tr class="odd">
+<td><code>complex</code></td>
+<td>Complex numbers; both parts must be written, even a zero real part</td>
+<td><code>2+3i</code>, <code>exp(0+1i*pi)</code></td>
+</tr>
+<tr class="even">
+<td><code>character</code></td>
+<td>Text strings (a “string” in other languages)</td>
+<td><code>"Hello world."</code></td>
+</tr>
+<tr class="odd">
+<td><code>logical</code></td>
+<td>Boolean values</td>
+<td><code>TRUE</code>, <code>FALSE</code></td>
+</tr>
+<tr class="even">
+<td><code>raw</code></td>
+<td>Raw bytes; for encoding objects from outside R</td>
+<td><code>raw(8)</code>, <code>charToRaw("Hello")</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="primitive-types-2-compound-objects" class="slide level2">
+<h2>Primitive Types (2): Compound Objects</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>list</code></td>
+<td>A possibly heterogeneous, optionally named collection; data frames are built on lists</td>
+<td><code>list(1, 2, "hat")</code></td>
+</tr>
+<tr class="even">
+<td><code>pairlist</code></td>
+<td>Name–value pairs, mainly internal; deprecated in user code (plain lists are as efficient and more flexible)</td>
+<td><code>.Options</code></td>
+</tr>
+<tr class="odd">
+<td><code>S4</code></td>
+<td>Objects supporting modern OO: inheritance, methods (Chapter 10)</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><code>environment</code></td>
+<td>The set of symbol–value pairs in a context, plus a pointer to an enclosing environment</td>
+<td><code>.GlobalEnv</code>, <code>new.env()</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="primitive-types-3-special-and-language" class="slide level2">
+<h2>Primitive Types (3): Special and Language</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>any</code></td>
+<td>“Any type is OK” — prevents coercion; used in S4 slots and generic signatures</td>
+<td><code>representation(data="ANY")</code></td>
+</tr>
+<tr class="even">
+<td><code>NULL</code></td>
+<td>“There is no object”; can have no attributes</td>
+<td><code>NULL</code></td>
+</tr>
+<tr class="odd">
+<td><code>...</code></td>
+<td>Variable-length argument lists, especially arguments passed through to other functions</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><code>symbol</code></td>
+<td>A language object referring to another object</td>
+<td><code>as.name("x")</code>, <code>quote(x)</code></td>
+</tr>
+<tr class="odd">
+<td><code>promise</code></td>
+<td>Evaluated on <em>first use</em>, not creation; implements delayed loading in packages</td>
+<td><code>delayedAssign("v", c(x,y,z))</code></td>
+</tr>
+<tr class="even">
+<td><code>language</code></td>
+<td>Objects representing R code itself</td>
+<td><code>quote(function(x) {x+1})</code></td>
+</tr>
+<tr class="odd">
+<td><code>expression</code></td>
+<td>An unevaluated expression; create with <code>expression()</code>, run with <code>eval()</code></td>
+<td><code>expression(1 + 2)</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="primitive-types-4-functions-and-internal" class="slide level2">
+<h2>Primitive Types (4): Functions and Internal</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>closure</code></td>
+<td>Functions written in R: user-defined, most of base R, most packages</td>
+<td><code>function(x) {x+1}</code>, <code>print</code></td>
+</tr>
+<tr class="even">
+<td><code>special</code></td>
+<td>Internal functions whose arguments are <em>not necessarily evaluated</em></td>
+<td><code>if</code>, <code>[</code></td>
+</tr>
+<tr class="odd">
+<td><code>builtin</code></td>
+<td>Internal functions that evaluate their arguments</td>
+<td><code>+</code>, <code>^</code></td>
+</tr>
+<tr class="even">
+<td><code>bytecode</code></td>
+<td>Compiled R functions from the <code>compiler</code> package</td>
+<td><code>cmpfun(function(x) {x^2})</code></td>
+</tr>
+<tr class="odd">
+<td><code>char</code></td>
+<td>Scalar “string”; character vectors are made of these (users never touch them)</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><code>externalptr</code></td>
+<td>External pointer, used in C code</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td><code>weakref</code></td>
+<td>Weak reference (internal only)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="vectors" class="title-slide slide level1 center">
+<h1>Vectors</h1>
+
+</section>
+<section id="building-vectors-c-and-coercion" class="slide level2">
+<h2>Building Vectors: c and Coercion</h2>
+<p>The six basic vector types appear constantly. The simplest constructor is <code>c</code>, which <strong>combines</strong> its arguments — and coerces them all to a single type:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">typeof</span>(<span class="fl">1.5</span>); <span class="fu">typeof</span>(<span class="dv">1</span>L); <span class="fu">typeof</span>(<span class="st">"a"</span>); <span class="fu">typeof</span>(<span class="fu">list</span>()); <span class="fu">typeof</span>(mean)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(.<span class="dv">295</span>, .<span class="dv">300</span>, .<span class="dv">250</span>, .<span class="dv">287</span>, .<span class="dv">215</span>)</span>
+<span id="cb1-2"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.295 0.300 0.250 0.287 0.215</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(.<span class="dv">295</span>, .<span class="dv">300</span>, .<span class="dv">250</span>, .<span class="dv">287</span>, <span class="st">"zilch"</span>)   <span class="co"># one character value...</span></span>
+<span id="cb3-2"><a href=""></a>v                                          <span class="co"># ...and everything is character</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "0.295" "0.3"   "0.25"  "0.287" "zilch"</code></pre>
+</div>
+</div>
+</section>
+<section id="recursive-combination" class="slide level2">
+<h2>Recursive Combination</h2>
+<p><code>c</code> can assemble a vector from nested structures with <code>recursive=TRUE</code> — but beware: a <em>list</em> argument without it gives you back a list:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(.<span class="dv">295</span>, .<span class="dv">300</span>, .<span class="dv">250</span>, .<span class="dv">287</span>, <span class="fu">list</span>(.<span class="dv">102</span>, .<span class="dv">200</span>, .<span class="dv">303</span>), <span class="at">recursive=</span><span class="cn">TRUE</span>)</span>
+<span id="cb5-2"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.295 0.300 0.250 0.287 0.102 0.200 0.303</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">typeof</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "double"</code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "integer"</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "character"</code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(.<span class="dv">295</span>, .<span class="dv">300</span>, .<span class="dv">250</span>, .<span class="dv">287</span>, <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span>
+<span id="cb9-2"><a href=""></a><span class="fu">typeof</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "list"</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">class</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "closure"</code></pre>
+<pre><code>[1] "list"</code></pre>
 </div>
 </div>
 </section>
-<section id="vectors" class="slide level2">
-<h2>Vectors</h2>
-<p>Vectors are R’s atoms: ordered, homogeneous collections. <code>c()</code> flattens its arguments recursively:</p>
+<section id="sequences-and-the-length-attribute" class="slide level2">
+<h2>Sequences and the length Attribute</h2>
+<p>Two more vector builders — the <code>:</code> operator and the more flexible <code>seq</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>, <span class="fu">c</span>(<span class="dv">5</span>)))</span>
-<span id="cb7-2"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="dv">1</span><span class="sc">:</span><span class="dv">10</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">seq</span>(<span class="at">from=</span><span class="dv">5</span>, <span class="at">to=</span><span class="dv">25</span>, <span class="at">by=</span><span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  5 10 15 20 25</code></pre>
+</div>
+</div>
+<p>A vector’s length can be manipulated <em>directly</em> — shrinking discards, expanding fills with <code>NA</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>w <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span></span>
+<span id="cb17-2"><a href=""></a><span class="fu">length</span>(w) <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb17-3"><a href=""></a>w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1 2 3 4 5</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">length</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">length</span>(w) <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb19-2"><a href=""></a>w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 5</code></pre>
+<pre><code> [1]  1  2  3  4  5 NA NA NA NA NA</code></pre>
 </div>
 </div>
-<p>Names can travel with the elements:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>prices <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">apple =</span> <span class="dv">30</span>, <span class="at">banana =</span> <span class="dv">12</span>, <span class="at">cherry =</span> <span class="dv">95</span>)</span>
-<span id="cb11-2"><a href=""></a>prices[<span class="st">"banana"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>banana 
-    12 </code></pre>
-</div>
-</div>
+</section></section>
+<section>
+<section id="lists" class="title-slide slide level1 center">
+<h1>Lists</h1>
+
 </section>
-<section id="lists" class="slide level2">
-<h2>Lists</h2>
-<p>Lists are heterogeneous containers, the backbone of every complex structure in R:</p>
+<section id="ordered-optionally-named-heterogeneous" class="slide level2">
+<h2>Ordered, Optionally Named, Heterogeneous</h2>
+<p>A list is an ordered collection of objects, indexable by position — recall the <code>[</code> vs.&nbsp;<code>[[</code> distinction:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a>rec <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">name =</span> <span class="st">"Kim"</span>, <span class="at">scores =</span> <span class="fu">c</span>(<span class="dv">88</span>, <span class="dv">92</span>), <span class="at">pass =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-2"><a href=""></a>rec<span class="sc">$</span>scores</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a>l <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span>
+<span id="cb21-2"><a href=""></a>l[<span class="dv">1</span>]      <span class="co"># a sublist</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 88 92</code></pre>
+<pre><code>[[1]]
+[1] 1</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>rec[[<span class="st">"name"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>l[[<span class="dv">1</span>]]    <span class="co"># the element</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "Kim"</code></pre>
+<pre><code>[1] 1</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>rec[<span class="dv">1</span>]          <span class="co"># single brackets return a (sub)list</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Named elements model real things naturally. A physical parcel — destination New York, 2×6×9 inches, $12.95 postage — mixes three data types in one object:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a>parcel <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">destination=</span><span class="st">"New York"</span>, <span class="at">dimensions=</span><span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">6</span>, <span class="dv">9</span>), <span class="at">price=</span><span class="fl">12.95</span>)</span>
+<span id="cb25-2"><a href=""></a>parcel<span class="sc">$</span>price</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>$name
-[1] "Kim"</code></pre>
+<pre><code>[1] 12.95</code></pre>
 </div>
 </div>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Note</strong></p>
-</div>
-<div class="callout-content">
-<p><strong><code>[ ]</code> vs.&nbsp;<code>[[ ]]</code>.</strong> Single brackets <em>slice</em> a list and return a list; double brackets <em>extract</em> one component and return the component itself. Confusing the two is the most common list error.</p>
-</div>
-</div>
-</div>
+<p>Lists are <em>the</em> building block for heterogeneous structures — data frames are built on them.</p>
+</section></section>
+<section>
+<section id="other-objects" class="title-slide slide level1 center">
+<h1>Other Objects</h1>
+
 </section>
-<section id="matrices-and-arrays" class="slide level2">
-<h2>Matrices and Arrays</h2>
-<p>A matrix is a vector with a <code>dim</code> attribute of length 2; arrays generalize to any number of dimensions:</p>
+<section id="matrices" class="slide level2">
+<h2>Matrices</h2>
+<p>A <strong>matrix</strong> extends a vector to two dimensions, holding two-dimensional data of one type. The clean constructor is <code>matrix</code>, here with named rows and columns:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="at">nrow =</span> <span class="dv">2</span>)</span>
-<span id="cb19-2"><a href=""></a>m</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">data=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, <span class="at">nrow=</span><span class="dv">4</span>, <span class="at">ncol=</span><span class="dv">3</span>,</span>
+<span id="cb27-2"><a href=""></a>            <span class="at">dimnames=</span><span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"r1"</span>, <span class="st">"r2"</span>, <span class="st">"r3"</span>, <span class="st">"r4"</span>),</span>
+<span id="cb27-3"><a href=""></a>                          <span class="fu">c</span>(<span class="st">"c1"</span>, <span class="st">"c2"</span>, <span class="st">"c3"</span>)))</span>
+<span id="cb27-4"><a href=""></a>m</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>     [,1] [,2] [,3]
-[1,]    1    3    5
-[2,]    2    4    6</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">dim</span>(m)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2 3</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">t</span>(m)            <span class="co"># transpose</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>     [,1] [,2]
-[1,]    1    2
-[2,]    3    4
-[3,]    5    6</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a>m <span class="sc">%*%</span> <span class="fu">t</span>(m)      <span class="co"># matrix product</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>     [,1] [,2]
-[1,]   35   44
-[2,]   44   56</code></pre>
-</div>
-</div>
-<p>Row and column names make matrices self-documenting: <code>dimnames(m) &lt;- list(c("r1","r2"), c("a","b","c"))</code>.</p>
-</section>
-<section id="factors" class="slide level2">
-<h2>Factors</h2>
-<p>A <strong>factor</strong> stores categorical data: integer codes plus a <code>levels</code> attribute mapping codes to labels.</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a>sizes <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">"S"</span>, <span class="st">"L"</span>, <span class="st">"M"</span>, <span class="st">"L"</span>, <span class="st">"S"</span>), <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"S"</span>, <span class="st">"M"</span>, <span class="st">"L"</span>))</span>
-<span id="cb27-2"><a href=""></a>sizes</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] S L M L S
-Levels: S M L</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">table</span>(sizes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sizes
-S M L 
-2 1 2 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">as.integer</span>(sizes)     <span class="co"># the codes underneath</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 3 2 3 1</code></pre>
+<pre><code>   c1 c2 c3
+r1  1  5  9
+r2  2  6 10
+r3  3  7 11
+r4  4  8 12</code></pre>
 </div>
 </div>
 <ul>
-<li><code>ordered = TRUE</code> creates ordinal factors (<code>S &lt; M &lt; L</code>), which comparison operators respect.</li>
-<li>Factors are how regression functions know a column is categorical — they generate dummy variables automatically.</li>
+<li>Other structures convert via <code>as.matrix</code>.</li>
+<li><strong>Implementation note:</strong> a matrix is stored as a <em>vector</em>, not as a vector of vectors — subscripts are an access convention, not the storage layout. And unlike most classes, matrices carry no explicit <code>class</code> attribute (attributes: later this chapter).</li>
 </ul>
+</section>
+<section id="arrays" class="slide level2">
+<h2>Arrays</h2>
+<p>An <strong>array</strong> extends a vector to <em>any</em> number of dimensions:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="at">data=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">24</span>, <span class="at">dim=</span><span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">2</span>))</span>
+<span id="cb29-2"><a href=""></a>a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>, , 1
+
+     [,1] [,2] [,3] [,4]
+[1,]    1    4    7   10
+[2,]    2    5    8   11
+[3,]    3    6    9   12
+
+, , 2
+
+     [,1] [,2] [,3] [,4]
+[1,]   13   16   19   22
+[2,]   14   17   20   23
+[3,]   15   18   21   24</code></pre>
+</div>
+</div>
+<p>Like matrices, arrays are stored as plain vectors underneath, and have no explicit class attribute.</p>
+</section>
+<section id="factors-categorical-values" class="slide level2">
+<h2>Factors: Categorical Values</h2>
+<p>Categorical data could live in a character vector — but repeating long strings is wasteful. A <strong>factor</strong> is an ordered collection of items whose possible values are called <strong>levels</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a>eye.colors <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">"brown"</span>, <span class="st">"blue"</span>, <span class="st">"blue"</span>, <span class="st">"green"</span>,</span>
+<span id="cb31-2"><a href=""></a>                       <span class="st">"brown"</span>, <span class="st">"brown"</span>, <span class="st">"brown"</span>))</span>
+<span id="cb31-3"><a href=""></a><span class="fu">levels</span>(eye.colors)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "blue"  "brown" "green"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a>eye.colors</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] brown blue  blue  green brown brown brown
+Levels: blue brown green</code></pre>
+</div>
+</div>
+<p>Note the print format: no quotes, and the levels listed explicitly — visibly <em>not</em> a character vector.</p>
+</section>
+<section id="ordered-factors" class="slide level2">
+<h2>Ordered Factors</h2>
+<p>Sometimes level order matters. A survey asks for reactions to “melon is delicious with an omelet”: Strongly Disagree … Strongly Agree. Coding these 1–5 <em>implies</em> equal spacing and meaningful averages — is Disagree + Agree really = Neutral? An <strong>ordered factor</strong> captures the ranking without the arithmetic claims:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a>survey.results <span class="ot">&lt;-</span> <span class="fu">factor</span>(</span>
+<span id="cb35-2"><a href=""></a>  <span class="fu">c</span>(<span class="st">"Disagree"</span>, <span class="st">"Neutral"</span>, <span class="st">"Strongly Disagree"</span>,</span>
+<span id="cb35-3"><a href=""></a>    <span class="st">"Neutral"</span>, <span class="st">"Agree"</span>, <span class="st">"Strongly Agree"</span>,</span>
+<span id="cb35-4"><a href=""></a>    <span class="st">"Disagree"</span>, <span class="st">"Strongly Agree"</span>, <span class="st">"Neutral"</span>,</span>
+<span id="cb35-5"><a href=""></a>    <span class="st">"Strongly Disagree"</span>, <span class="st">"Neutral"</span>, <span class="st">"Agree"</span>),</span>
+<span id="cb35-6"><a href=""></a>  <span class="at">levels=</span><span class="fu">c</span>(<span class="st">"Strongly Disagree"</span>, <span class="st">"Disagree"</span>, <span class="st">"Neutral"</span>,</span>
+<span id="cb35-7"><a href=""></a>           <span class="st">"Agree"</span>, <span class="st">"Strongly Agree"</span>),</span>
+<span id="cb35-8"><a href=""></a>  <span class="at">ordered=</span><span class="cn">TRUE</span>)</span>
+<span id="cb35-9"><a href=""></a>survey.results</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] Disagree          Neutral           Strongly Disagree Neutral          
+ [5] Agree             Strongly Agree    Disagree          Strongly Agree   
+ [9] Neutral           Strongly Disagree Neutral           Agree            
+5 Levels: Strongly Disagree &lt; Disagree &lt; Neutral &lt; ... &lt; Strongly Agree</code></pre>
+</div>
+</div>
+</section>
+<section id="factors-under-the-hood" class="slide level2">
+<h2>Factors Under the Hood</h2>
+<p>Internally a factor is an <strong>integer vector</strong> plus a <code>levels</code> attribute mapping integers to labels (integers are small and fixed-size — efficient). Strip the class and the implementation shows:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a>eye.colors</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] brown blue  blue  green brown brown brown
+Levels: blue brown green</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">class</span>(eye.colors)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "factor"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href=""></a>eye.colors.integer.vector <span class="ot">&lt;-</span> <span class="fu">unclass</span>(eye.colors)</span>
+<span id="cb41-2"><a href=""></a>eye.colors.integer.vector</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2 1 1 3 2 2 2
+attr(,"levels")
+[1] "blue"  "brown" "green"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href=""></a><span class="fu">class</span>(eye.colors.integer.vector)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "integer"</code></pre>
+</div>
+</div>
+<p>Restore the class attribute, and it’s a factor again:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href=""></a><span class="fu">class</span>(eye.colors.integer.vector) <span class="ot">&lt;-</span> <span class="st">"factor"</span></span>
+<span id="cb45-2"><a href=""></a>eye.colors.integer.vector</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] brown blue  blue  green brown brown brown
+Levels: blue brown green</code></pre>
+</div>
+</div>
 </section>
 <section id="data-frames" class="slide level2">
 <h2>Data Frames</h2>
-<p>The data frame — one row per observation, one column per variable — is technically a list of equal-length vectors with class <code>data.frame</code>:</p>
+<p>A <strong>data frame</strong> represents a table: scientific observations with several measurements each, or a database table of rows and typed columns. Each column (“variable”) may have a different type, but all must have the same length:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">player =</span> <span class="fu">c</span>(<span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>),</span>
-<span id="cb33-2"><a href=""></a>                 <span class="at">yards  =</span> <span class="fu">c</span>(<span class="dv">43</span>, <span class="dv">28</span>, <span class="dv">51</span>),</span>
-<span id="cb33-3"><a href=""></a>                 <span class="at">good   =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>))</span>
-<span id="cb33-4"><a href=""></a><span class="fu">str</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href=""></a><span class="fu">data.frame</span>(<span class="at">a=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>), <span class="at">b=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `data.frame()`:
+! arguments imply differing number of rows: 5, 4</code></pre>
+</div>
+</div>
+<p>The book’s example — where users search most for the word “bacon” (Google Insights, 2004–2009):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href=""></a>top.bacon.searching.cities <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb49-2"><a href=""></a>  <span class="at">city =</span> <span class="fu">c</span>(<span class="st">"Seattle"</span>, <span class="st">"Washington"</span>, <span class="st">"Chicago"</span>, <span class="st">"New York"</span>, <span class="st">"Portland"</span>,</span>
+<span id="cb49-3"><a href=""></a>           <span class="st">"St Louis"</span>, <span class="st">"Denver"</span>, <span class="st">"Boston"</span>, <span class="st">"Minneapolis"</span>, <span class="st">"Austin"</span>,</span>
+<span id="cb49-4"><a href=""></a>           <span class="st">"Philadelphia"</span>, <span class="st">"San Francisco"</span>, <span class="st">"Atlanta"</span>, <span class="st">"Los Angeles"</span>,</span>
+<span id="cb49-5"><a href=""></a>           <span class="st">"Richardson"</span>),</span>
+<span id="cb49-6"><a href=""></a>  <span class="at">rank =</span> <span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">96</span>, <span class="dv">94</span>, <span class="dv">93</span>, <span class="dv">93</span>, <span class="dv">92</span>, <span class="dv">90</span>, <span class="dv">90</span>, <span class="dv">89</span>, <span class="dv">87</span>, <span class="dv">85</span>, <span class="dv">84</span>, <span class="dv">82</span>, <span class="dv">80</span>, <span class="dv">80</span>)</span>
+<span id="cb49-7"><a href=""></a>)</span>
+<span id="cb49-8"><a href=""></a><span class="fu">head</span>(top.bacon.searching.cities, <span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>'data.frame':   3 obs. of  3 variables:
- $ player: chr  "A" "B" "C"
- $ yards : num  43 28 51
- $ good  : logi  TRUE FALSE TRUE</code></pre>
+<pre><code>        city rank
+1    Seattle  100
+2 Washington   96
+3    Chicago   94
+4   New York   93
+5   Portland   93
+6   St Louis   92
+7     Denver   90
+8     Boston   90</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a>df[df<span class="sc">$</span>good, <span class="st">"yards"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="data-frames-are-lists" class="slide level2">
+<h2>Data Frames Are Lists</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href=""></a><span class="fu">typeof</span>(top.bacon.searching.cities)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 43 51</code></pre>
+<pre><code>[1] "list"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href=""></a><span class="fu">class</span>(top.bacon.searching.cities)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "data.frame"</code></pre>
 </div>
 </div>
-<p><code>str()</code> is the single most useful inspection tool in R: structure, types, and a preview in one view.</p>
+<p>A data frame is implemented as a <strong>list with class <code>data.frame</code></strong> — so list methods work unchanged: <code>top.bacon.searching.cities$rank</code> extracts the rank column.</p>
 </section>
 <section id="formulas" class="slide level2">
 <h2>Formulas</h2>
-<p>A formula captures a model description <em>without evaluating it</em>:</p>
+<p>To express a relationship between variables — for a plot or a model — R provides the <strong>formula</strong> class:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a>f <span class="ot">&lt;-</span> yards <span class="sc">~</span> player <span class="sc">+</span> good</span>
-<span id="cb37-2"><a href=""></a><span class="fu">class</span>(f)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href=""></a>sample.formula <span class="ot">&lt;-</span> <span class="fu">as.formula</span>(y <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3)</span>
+<span id="cb55-2"><a href=""></a><span class="fu">class</span>(sample.formula)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "formula"</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a><span class="fu">typeof</span>(sample.formula)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "language"</code></pre>
 </div>
-<p>Formula syntax: <code>+</code> adds terms, <code>-</code> removes them, <code>*</code> crosses (<code>a*b</code> = <code>a + b + a:b</code>), <code>:</code> is an interaction, <code>.</code> means “all other columns”, and <code>I()</code> protects arithmetic (<code>I(x^2)</code>). Models, lattice plots, and aggregation functions all accept formulas.</p>
+</div>
+<p>This reads “y is a function of x1, x2, and x3.” Chapter 3’s lattice example, <code>Amount ~ Year | Food</code>, reads “Amount as a function of Year, conditioned on Food.”</p>
+</section>
+<section id="formula-vocabulary" class="slide level2">
+<h2>Formula Vocabulary</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Item</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>variable names</td>
+<td>the variables themselves</td>
+</tr>
+<tr class="even">
+<td><code>~</code></td>
+<td>separates response (left) from stimulus variables (right)</td>
+</tr>
+<tr class="odd">
+<td><code>+</code></td>
+<td>a linear relationship between variables</td>
+</tr>
+<tr class="even">
+<td><code>0</code></td>
+<td>added to a formula: omit the intercept, e.g.&nbsp;<code>y~u+w+v+0</code></td>
+</tr>
+<tr class="odd">
+<td><code>|</code></td>
+<td>conditioning variables (lattice formulas, Chapter 14)</td>
+</tr>
+<tr class="even">
+<td><code>I()</code></td>
+<td>interpret the enclosed expression <em>arithmetically</em>: <code>a+b</code> means both variables; <code>I(a+b)</code> means their sum</td>
+</tr>
+<tr class="odd">
+<td><code>*</code></td>
+<td>interactions: <code>y~(u+v)*w</code> ≡ <code>y~u+v+w+I(u*w)+I(v*w)</code></td>
+</tr>
+<tr class="even">
+<td><code>^</code></td>
+<td>crossing to a degree: <code>y~(u+w)^2</code> ≡ <code>y~(u+w)*(u+w)</code></td>
+</tr>
+<tr class="odd">
+<td><code>f(x)</code></td>
+<td>a function of variables as a term, e.g.&nbsp;<code>y~log(u)+sin(v)+w</code></td>
+</tr>
+</tbody>
+</table>
+<p>Some functions add their own vocabulary (e.g., <code>s()</code> for smoothing splines in <code>gam</code>). Formulas return in Chapters 14 and 20.</p>
 </section>
 <section id="time-series" class="slide level2">
 <h2>Time Series</h2>
-<p><code>ts</code> objects attach regular time metadata to a vector. The course convention loads the textbook’s turkey-price series from GitHub:</p>
+<p>Many problems track a variable <strong>over time</strong>; class <code>ts</code> represents this, feeding regression functions (<code>ar</code>, <code>arima</code>) and specialized plot methods.</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb39-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb39-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb39-4"><a href=""></a><span class="fu">class</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "ts"</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href=""></a><span class="fu">ts</span>(<span class="at">data =</span> <span class="cn">NA</span>, <span class="at">start =</span> <span class="dv">1</span>, <span class="at">end =</span> <span class="fu">numeric</span>(<span class="dv">0</span>), <span class="at">frequency =</span> <span class="dv">1</span>,</span>
+<span id="cb59-2"><a href=""></a>   <span class="at">deltat =</span> <span class="dv">1</span>, <span class="at">ts.eps =</span> <span class="fu">getOption</span>(<span class="st">"ts.eps"</span>), <span class="at">class =</span> , <span class="at">names =</span> )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href=""></a><span class="fu">start</span>(turkey.price.ts); <span class="fu">frequency</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data</code></td>
+<td>the observations (vector or matrix)</td>
+</tr>
+<tr class="even">
+<td><code>start</code> / <code>end</code></td>
+<td>time of first/last observation: one number, or (unit, offset)</td>
+</tr>
+<tr class="odd">
+<td><code>frequency</code></td>
+<td>observations per unit of time</td>
+</tr>
+<tr class="even">
+<td><code>deltat</code></td>
+<td>sampling fraction between observations (<code>frequency = 1/deltat</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>ts.eps</code></td>
+<td>comparison tolerance for frequencies</td>
+</tr>
+<tr class="even">
+<td><code>class</code></td>
+<td><code>"ts"</code> for one series; <code>c("mts","ts")</code> for several</td>
+</tr>
+<tr class="odd">
+<td><code>names</code></td>
+<td>names of each series in a multiseries object</td>
+</tr>
+</tbody>
+</table>
+<p>Eight quarters starting Q2 2008 — the print method knows about quarters and months:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href=""></a><span class="fu">ts</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, <span class="at">start=</span><span class="fu">c</span>(<span class="dv">2008</span>, <span class="dv">2</span>), <span class="at">frequency=</span><span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     Qtr1 Qtr2 Qtr3 Qtr4
+2008         1    2    3
+2009    4    5    6    7
+2010    8               </code></pre>
+</div>
+</div>
+</section>
+<section id="a-real-time-series-turkey-prices" class="slide level2">
+<h2>A Real Time Series: Turkey Prices</h2>
+<p>The USDA tracks retail meat prices (supermarkets covering ~20% of the US market, averaged by month). The book packages monthly turkey prices as <code>turkey.price.ts</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb62-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>,</span>
+<span id="cb62-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb62-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb62-5"><a href=""></a>turkey.price.ts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
+2001 1.58 1.75 1.63 1.45 1.56 2.07 1.81 1.74 1.54 1.45 0.57 1.15
+2002 1.50 1.66 1.34 1.67 1.81 1.60 1.70 1.87 1.47 1.59 0.74 0.82
+2003 1.43 1.77 1.47 1.38 1.66 1.66 1.61 1.74 1.62 1.39 0.70 1.07
+2004 1.48 1.48 1.50 1.27 1.56 1.61 1.55 1.69 1.49 1.32 0.53 1.03
+2005 1.62 1.63 1.40 1.73 1.73 1.80 1.92 1.77 1.71 1.53 0.67 1.09
+2006 1.71 1.90 1.68 1.46 1.86 1.85 1.88 1.86 1.62 1.45 0.67 1.18
+2007 1.68 1.74 1.70 1.49 1.81 1.96 1.97 1.91 1.89 1.65 0.70 1.17
+2008 1.76 1.78 1.53 1.90                                        </code></pre>
+</div>
+</div>
+<p>Utility functions read off the structure:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href=""></a><span class="fu">start</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 2001    1</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href=""></a><span class="fu">end</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2008    4</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href=""></a><span class="fu">frequency</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 12</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href=""></a><span class="fu">deltat</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.08333333</code></pre>
 </div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a><span class="fu">plot</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
 </div>
-<img data-src="ch7_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"></section>
+</section>
+<section id="shingles" class="slide level2">
+<h2>Shingles</h2>
+<p>A <strong>shingle</strong> generalizes a factor to a <em>continuous</em> variable: a numeric vector plus a set of intervals which — like roof shingles — may <strong>overlap</strong>. They let a continuous variable serve as a conditioning or grouping variable, and are used extensively in the <code>lattice</code> package (Chapter 14).</p>
+</section>
 <section id="dates-and-times" class="slide level2">
 <h2>Dates and Times</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href=""></a>d <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2026-09-22"</span>)</span>
-<span id="cb45-2"><a href=""></a>d <span class="sc">+</span> <span class="dv">7</span>                          <span class="co"># date arithmetic in days</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "2026-09-29"</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href=""></a><span class="fu">weekdays</span>(d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "Tuesday"</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href=""></a>now <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb49-2"><a href=""></a><span class="fu">class</span>(now)                     <span class="co"># POSIXct: seconds since 1970</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "POSIXct" "POSIXt" </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href=""></a><span class="fu">format</span>(now, <span class="st">"%Y-%m-%d %H:%M"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "2026-06-07 19:00"</code></pre>
-</div>
-</div>
+<p>Three classes represent moments in time:</p>
 <ul>
-<li><code>Date</code> for daily data; <code>POSIXct</code> for timestamps.</li>
-<li><code>difftime</code> objects represent durations; <code>seq(d, by = "month", length.out = 3)</code> builds calendars.</li>
+<li><strong><code>Date</code></strong> — dates without times;</li>
+<li><strong><code>POSIXct</code></strong> — date-times as seconds since 1970-01-01 00:00;</li>
+<li><strong><code>POSIXlt</code></strong> — date-times as separate vectors: <code>sec</code> (0–61, allowing leap seconds!), <code>min</code>, <code>hour</code>, <code>mday</code>, <code>mon</code> (0–11), <code>year</code> (since 1900), <code>wday</code>, <code>yday</code>, <code>isdst</code>.</li>
 </ul>
+<p>Store dates as date objects, not strings or numbers — the classes support arithmetic, and many plot functions require them:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href=""></a>date.I.started.writing <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2/13/2009"</span>, <span class="st">"%m/%d/%Y"</span>)</span>
+<span id="cb72-2"><a href=""></a>date.I.started.writing</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2009-02-13"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href=""></a>today <span class="ot">&lt;-</span> <span class="fu">Sys.Date</span>()</span>
+<span id="cb74-2"><a href=""></a>today <span class="sc">-</span> date.I.started.writing</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of 6324 days</code></pre>
+</div>
+</div>
 </section>
 <section id="connections" class="slide level2">
 <h2>Connections</h2>
-<p>Connections abstract over data sources — files, URLs, compressed archives, pipes — so reading functions need not care where bytes come from:</p>
+<p><strong>Connections</strong> move data between R and the outside world — like file pointers in C or filehandles in Perl. Targets include files, URLs, zip/gzip/bzip-compressed files, pipes, network sockets, FIFOs, even the system clipboard.</p>
+<p>The lifecycle: create → open → use → close. Loading a saved (gzip-compressed) data file explicitly:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb53-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda"</span>,</span>
-<span id="cb53-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb53-4"><a href=""></a><span class="fu">load</span>(temp)           <span class="co"># our GitHub convention: download, then load</span></span>
-<span id="cb53-5"><a href=""></a></span>
-<span id="cb53-6"><a href=""></a>gz <span class="ot">&lt;-</span> <span class="fu">gzfile</span>(<span class="st">"big.csv.gz"</span>)    <span class="co"># transparent decompression</span></span>
-<span id="cb53-7"><a href=""></a><span class="fu">read.csv</span>(gz)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href=""></a>consumption.connection <span class="ot">&lt;-</span> <span class="fu">gzfile</span>(<span class="at">description=</span><span class="st">"consumption.RData"</span>, <span class="at">open=</span><span class="st">"r"</span>)</span>
+<span id="cb76-2"><a href=""></a><span class="fu">load</span>(consumption.connection)</span>
+<span id="cb76-3"><a href=""></a><span class="fu">close</span>(consumption.connection)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>The course convention — <code>download.file()</code> to a temporary file, then <code>load()</code> — uses connections under the hood; <code>mode = "wb"</code> keeps the binary file intact on every platform.</p>
+<p>Usually you skip all this: <code>save</code>, <code>load</code>, <code>read.table</code> open connections <strong>implicitly</strong> when handed a filename or URL. Explicit connections earn their keep with nonstandard sources. See <code>?connection</code>.</p>
+</section></section>
+<section>
+<section id="attributes" class="title-slide slide level1 center">
+<h1>Attributes</h1>
+
 </section>
-<section id="attributes" class="slide level2">
-<h2>Attributes</h2>
-<p>Attributes are the metadata that turn plain vectors into richer structures:</p>
+<section id="properties-attached-to-objects" class="slide level2">
+<h2>Properties Attached to Objects</h2>
+<p>Objects carry named properties — <strong>attributes</strong> — explaining what the object represents and how to interpret it. Often, two similar objects differ <em>only</em> in their attributes. (Why attributes rather than lists or S4? History: attributes predate R’s modern object systems.)</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Attribute</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>class</code></td>
+<td>the class of the object</td>
+</tr>
+<tr class="even">
+<td><code>comment</code></td>
+<td>a comment, often a description</td>
+</tr>
+<tr class="odd">
+<td><code>dim</code></td>
+<td>dimensions</td>
+</tr>
+<tr class="even">
+<td><code>dimnames</code></td>
+<td>names along each dimension</td>
+</tr>
+<tr class="odd">
+<td><code>names</code></td>
+<td>names of elements (columns of a data frame, etc.)</td>
+</tr>
+<tr class="even">
+<td><code>row.names</code></td>
+<td>names of rows (related to <code>dimnames</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>tsp</code></td>
+<td>start time (time series)</td>
+</tr>
+<tr class="even">
+<td><code>levels</code></td>
+<td>levels of a factor</td>
+</tr>
+</tbody>
+</table>
+<p>For attribute <code>a</code> of object <code>x</code>: query with <code>a(x)</code>, set with <code>a(x) &lt;- value</code>. (Changes affect the current environment only.)</p>
+</section>
+<section id="inspecting-attributes" class="slide level2">
+<h2>Inspecting Attributes</h2>
+<p>All attributes at once via <code>attributes</code>; individually via accessor functions:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span></span>
-<span id="cb54-2"><a href=""></a><span class="fu">attr</span>(x, <span class="st">"dim"</span>) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>)     <span class="co"># now it's a matrix!</span></span>
-<span id="cb54-3"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>     [,1] [,2] [,3]
-[1,]    1    3    5
-[2,]    2    4    6</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href=""></a><span class="fu">class</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "matrix" "array" </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href=""></a><span class="fu">attributes</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">data=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, <span class="at">nrow=</span><span class="dv">4</span>, <span class="at">ncol=</span><span class="dv">3</span>,</span>
+<span id="cb77-2"><a href=""></a>            <span class="at">dimnames=</span><span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"r1"</span>, <span class="st">"r2"</span>, <span class="st">"r3"</span>, <span class="st">"r4"</span>),</span>
+<span id="cb77-3"><a href=""></a>                          <span class="fu">c</span>(<span class="st">"c1"</span>, <span class="st">"c2"</span>, <span class="st">"c3"</span>)))</span>
+<span id="cb77-4"><a href=""></a><span class="fu">attributes</span>(m)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$dim
-[1] 2 3</code></pre>
+[1] 4 3
+
+$dimnames
+$dimnames[[1]]
+[1] "r1" "r2" "r3" "r4"
+
+$dimnames[[2]]
+[1] "c1" "c2" "c3"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href=""></a><span class="fu">dim</span>(m)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href=""></a><span class="fu">colnames</span>(m)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "c1" "c2" "c3"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href=""></a><span class="fu">rownames</span>(m)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "r1" "r2" "r3" "r4"</code></pre>
 </div>
 </div>
-<p><code>names</code>, <code>dim</code>, <code>dimnames</code>, <code>levels</code>, and <code>class</code> are all just attributes — the entire object system of Chapter 10 rests on this one mechanism.</p>
+</section>
+<section id="attributes-define-the-object" class="slide level2">
+<h2>Attributes Define the Object</h2>
+<p>Change the attributes, change the class — remove <code>dim</code> and a matrix collapses to a vector:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href=""></a><span class="fu">dim</span>(m) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb85-2"><a href=""></a>m</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]  1  2  3  4  5  6  7  8  9 10 11 12</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href=""></a><span class="fu">class</span>(m)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "integer"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb89"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href=""></a><span class="fu">typeof</span>(m)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "integer"</code></pre>
+</div>
+</div>
+</section>
+<section id="same-data-different-attributes" class="slide level2">
+<h2>Same Data, Different Attributes</h2>
+<p>An array and a vector with identical contents:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb91"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href=""></a>a <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, <span class="at">dim=</span><span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>))</span>
+<span id="cb91-2"><a href=""></a>b <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span></span>
+<span id="cb91-3"><a href=""></a>a[<span class="dv">2</span>, <span class="dv">2</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href=""></a>b[<span class="dv">2</span>, <span class="dv">2</span>]      <span class="co"># error: b has no dimensions</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `b[2, 2]`:
+! incorrect number of dimensions</code></pre>
+</div>
+</div>
+<p>Are they “the same”? <code>==</code> compares cell-wise (and answers in the shape of <code>a</code>):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb95"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href=""></a>a <span class="sc">==</span> b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1] [,2] [,3] [,4]
+[1,] TRUE TRUE TRUE TRUE
+[2,] TRUE TRUE TRUE TRUE
+[3,] TRUE TRUE TRUE TRUE</code></pre>
+</div>
+</div>
+</section>
+<section id="all.equal-and-identical" class="slide level2">
+<h2>all.equal and identical</h2>
+<p><code>all.equal</code> compares data <em>and</em> attributes, explaining any differences; <code>identical</code> answers strictly yes or no:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb97"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href=""></a><span class="fu">all.equal</span>(a, b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Attributes: &lt; Modes: list, NULL &gt;"                   
+[2] "Attributes: &lt; Lengths: 1, 0 &gt;"                       
+[3] "Attributes: &lt; names for target but not for current &gt;"
+[4] "Attributes: &lt; current is not list-like &gt;"            
+[5] "target is matrix, current is numeric"                </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb99"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href=""></a><span class="fu">identical</span>(a, b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] FALSE</code></pre>
+</div>
+</div>
+<p>Give <code>b</code> the missing attribute and the difference evaporates:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb101"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href=""></a><span class="fu">dim</span>(b) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>)</span>
+<span id="cb101-2"><a href=""></a>b[<span class="dv">2</span>, <span class="dv">2</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb103"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href=""></a><span class="fu">all.equal</span>(a, b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb105"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb105-1"><a href=""></a><span class="fu">identical</span>(a, b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+</section>
+<section id="class-is-an-attribute" class="slide level2">
+<h2>Class Is an Attribute</h2>
+<p>For simple objects, class and type align; for compound objects they diverge. Query with <code>class</code> and <code>typeof</code> (for matrices/arrays the class is implicit):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb107"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
+<span id="cb107-2"><a href=""></a><span class="fu">typeof</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "double"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb109"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb109-1"><a href=""></a><span class="fu">class</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "numeric"</code></pre>
+</div>
+</div>
+<p>Because class is just an attribute, you can build a factor <em>by hand</em> from an integer vector:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb111"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb111-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>))</span>
+<span id="cb111-2"><a href=""></a><span class="fu">levels</span>(v) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"what"</span>, <span class="st">"who"</span>, <span class="st">"why"</span>)</span>
+<span id="cb111-3"><a href=""></a><span class="fu">class</span>(v) <span class="ot">&lt;-</span> <span class="st">"factor"</span></span>
+<span id="cb111-4"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] what what what who  what who  who  why  what
+Levels: what who why</code></pre>
+</div>
+</div>
+<p>(No guarantee the internal implementation of factors never changes — treat this trick as a demonstration, not a technique.)</p>
+</section>
+<section id="quoting-and-the-limits-of-inspection" class="slide level2">
+<h2>Quoting and the Limits of Inspection</h2>
+<p>To ask about a <em>symbol itself</em> rather than what it points to, quote it:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb113"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb113-1"><a href=""></a><span class="fu">class</span>(<span class="fu">quote</span>(x))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "name"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb115"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb115-1"><a href=""></a><span class="fu">typeof</span>(<span class="fu">quote</span>(x))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "symbol"</code></pre>
+</div>
+</div>
+<p>Some types resist inspection entirely: there is no way to isolate an <code>any</code>, <code>...</code>, <code>char</code>, or <code>promise</code> object — checking a promise’s type would force its evaluation, converting it into an ordinary object.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

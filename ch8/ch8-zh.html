@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,147 +211,348 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="名稱住在哪裡" class="title-slide slide level1 center">
-<h1><strong>名稱住在哪裡</strong></h1>
+<section id="名字住在哪裡" class="title-slide slide level1 center">
+<h1><strong>名字住在哪裡</strong></h1>
 
 </section>
-<section id="符號與繫結" class="slide level2">
-<h2>符號與繫結</h2>
-<p>定義變數的真正意義是：<strong>在某個環境中，把符號繫結到值</strong>。</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>            <span class="co"># 在目前環境把符號 `x` 繫結到 1</span></span>
-<span id="cb1-2"><a href=""></a>y <span class="ot">&lt;-</span> <span class="fu">quote</span>(x <span class="sc">+</span> <span class="dv">1</span>) <span class="co"># 一段提到 `x` 的未求值運算式</span></span>
-<span id="cb1-3"><a href=""></a><span class="fu">eval</span>(y)           <span class="co"># 求值：`x` 此刻才被查找</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">100</span></span>
-<span id="cb3-2"><a href=""></a><span class="fu">eval</span>(y)           <span class="co"># 同一運算式，新的答案</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 101</code></pre>
-</div>
-</div>
-<p>運算式在被求值之前只是資料；其中符號的值，要到求值當下、在某個環境裡才會決定。</p>
+<section id="終於正式定義環境" class="slide level2">
+<h2>終於正式定義：環境</h2>
+<p>從第三章起我們一直繞著環境打轉；現在正式定義。<strong>環境（environment）</strong>是一個 R 物件，包含：</p>
+<ul>
+<li>某個脈絡下可用的<strong>符號</strong>集合、</li>
+<li>與這些符號關聯的<strong>物件</strong>（兩者合稱<strong>frame</strong>），以及</li>
+<li>指向<strong>父環境</strong>的指標。</li>
+</ul>
+<p>每個求值脈絡都關聯一個環境。解析符號時，R 先搜尋目前的環境；找不到就<strong>遞迴往父環境搜尋</strong>，直到找到為止。</p>
+</section></section>
+<section>
+<section id="符號" class="title-slide slide level1 center">
+<h1>符號</h1>
+
 </section>
-<section id="延遲求值與承諾" class="slide level2">
-<h2>延遲求值與承諾</h2>
-<p>求值可以刻意延後：</p>
+<section id="解析發生在建構當下" class="slide level2">
+<h2>解析發生在建構當下</h2>
+<p>定義變數，就是在某個環境中把符號指派給值。用符號組裝物件時，R <strong>在建構當下</strong>就解析符號：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">delayedAssign</span>(<span class="st">"lazy"</span>, {<span class="fu">message</span>(<span class="st">"computing now!"</span>); <span class="dv">42</span>})</span>
-<span id="cb5-2"><a href=""></a><span class="co"># 目前什麼都沒印……</span></span>
-<span id="cb5-3"><a href=""></a>lazy             <span class="co"># 第一次觸碰才強制執行承諾</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb1-2"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(x, y, z)</span>
+<span id="cb1-3"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 42</code></pre>
+<pre><code>[1] 1 2 3</code></pre>
 </div>
-</div>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Note</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>承諾（promise）。</strong> 承諾打包了一段運算式與求值它的環境，直到第一次需要時才計算值。R <em>所有的</em>函式引數都以承諾傳遞——這就是「惰性求值」，也是未被使用的引數即使含有錯誤也不會讓呼叫失敗的原因。</p>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">10</span>      <span class="co"># v 早已建好；改 x 毫無影響</span></span>
+<span id="cb3-2"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 3</code></pre>
 </div>
 </div>
 </section>
-<section id="什麼是環境" class="slide level2">
-<h2>什麼是環境？</h2>
-<p><strong>環境</strong>（environment）是一組「符號到值」的繫結，外加一個指向<strong>父環境</strong>的指標。查找名稱會沿著鏈走：先看目前環境，再看父環境、祖父環境，直到 <code>emptyenv()</code>。</p>
+<section id="延遲求值quote-與-eval" class="slide level2">
+<h2>延遲求值：quote 與 eval</h2>
+<p>把運算式 quote 起來、之後再求值，就能延遲符號解析——每次 <code>eval</code> 都以<em>當下</em>的值解析：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>e <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
-<span id="cb7-2"><a href=""></a><span class="fu">assign</span>(<span class="st">"z"</span>, <span class="dv">99</span>, <span class="at">envir =</span> e)</span>
-<span id="cb7-3"><a href=""></a><span class="fu">get</span>(<span class="st">"z"</span>, <span class="at">envir =</span> e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb5-2"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">quote</span>(<span class="fu">c</span>(x, y, z))</span>
+<span id="cb5-3"><a href=""></a><span class="fu">eval</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 99</code></pre>
+<pre><code>[1] 1 2 3</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">exists</span>(<span class="st">"z"</span>, <span class="at">envir =</span> e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb7-2"><a href=""></a><span class="fu">eval</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
+<pre><code>[1] 5 2 3</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">ls</span>(<span class="at">envir =</span> e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="promisedelayedassign" class="slide level2">
+<h2>Promise：delayedAssign</h2>
+<p><strong>promise</strong> 把求值延到變數<em>第一次被使用</em>時：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb9-2"><a href=""></a><span class="fu">delayedAssign</span>(<span class="st">"v"</span>, <span class="fu">c</span>(x, y, z))</span>
+<span id="cb9-3"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb9-4"><a href=""></a>v          <span class="co"># 此刻才求值——用的是現在的 x</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "z"</code></pre>
+<pre><code>[1] 5 2 3</code></pre>
 </div>
 </div>
-<p>其他工具：<code>rm(..., envir=)</code> 移除繫結；<code>environmentName()</code> 標示常見環境的名字。</p>
+<p>套件用 promise 讓物件「可見但不佔記憶體」。兩個遺憾：你無法檢測一個物件<em>是不是</em> promise，也查不到它是在哪個環境建立的。</p>
+</section></section>
+<section>
+<section id="操作環境" class="title-slide slide level1 center">
+<h1>操作環境</h1>
+
+</section>
+<section id="環境工具箱" class="slide level2">
+<h2>環境工具箱</h2>
+<p>環境也是物件（內部以雜湊表儲存符號對應——第二十四章會利用這點寫出高效程式）。詞彙表：</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>函式</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>assign</code>／<code>get</code>／<code>exists</code></td>
+<td>在環境中繫結、取得、檢查名稱</td>
+</tr>
+<tr class="even">
+<td><code>objects</code></td>
+<td>環境中定義的所有名稱</td>
+</tr>
+<tr class="odd">
+<td><code>remove</code>（<code>rm</code>）</td>
+<td>從環境移除物件</td>
+</tr>
+<tr class="even">
+<td><code>search</code></td>
+<td>已附加套件的名稱——即父環境的鏈</td>
+</tr>
+<tr class="odd">
+<td><code>searchpaths</code></td>
+<td>已附加套件的路徑</td>
+</tr>
+<tr class="even">
+<td><code>attach</code>／<code>detach</code></td>
+<td>把串列、資料框或資料檔加入／移出搜尋路徑</td>
+</tr>
+<tr class="odd">
+<td><code>emptyenv</code></td>
+<td>空環境——所有鏈的終點</td>
+</tr>
+<tr class="even">
+<td><code>parent.env</code></td>
+<td>某環境的父環境</td>
+</tr>
+<tr class="odd">
+<td><code>baseenv</code></td>
+<td>base 套件的環境</td>
+</tr>
+<tr class="even">
+<td><code>globalenv</code>／<code>.GlobalEnv</code></td>
+<td>使用者工作空間</td>
+</tr>
+<tr class="odd">
+<td><code>environment</code></td>
+<td>函式的環境（不給引數：目前環境）</td>
+</tr>
+<tr class="even">
+<td><code>new.env</code></td>
+<td>全新的環境物件</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="objects-與-rm" class="slide level2">
+<h2>objects 與 rm</h2>
+<p>兩個日常呼叫——這裡有什麼、把它清掉：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())      <span class="co"># 先清空，從乾淨狀態開始</span></span>
+<span id="cb11-2"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>; y <span class="ot">&lt;-</span> <span class="dv">2</span>; z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb11-3"><a href=""></a><span class="fu">objects</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "x" "y" "z"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">rm</span>(x)</span>
+<span id="cb13-2"><a href=""></a><span class="fu">objects</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "y" "z"</code></pre>
+</div>
+</div>
 </section>
 <section id="全域環境" class="slide level2">
 <h2>全域環境</h2>
-<p>每個工作階段都從<strong>全域環境</strong>——你的工作空間——開始：</p>
+<p>每個工作階段都有一個存放你物件的新環境：<strong>全域環境（global environment）</strong>。出乎意料的是，它不是環境樹的根——而是搜尋路徑鏈上的<em>最後</em>一個。從 <code>.GlobalEnv</code> 沿著父環境走：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">environment</span>()             <span class="co"># 我在哪？</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>e <span class="ot">&lt;-</span> .GlobalEnv</span>
+<span id="cb15-2"><a href=""></a><span class="cf">while</span> (<span class="fu">environmentName</span>(e) <span class="sc">!=</span> <span class="fu">environmentName</span>(<span class="fu">emptyenv</span>())) {</span>
+<span id="cb15-3"><a href=""></a>  <span class="fu">print</span>(<span class="fu">environmentName</span>(<span class="fu">parent.env</span>(e))); e <span class="ot">&lt;-</span> <span class="fu">parent.env</span>(e)</span>
+<span id="cb15-4"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;environment: R_GlobalEnv&gt;</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">ls</span>()[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]                 <span class="co"># 我定義了什麼？</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "e"    "lazy" "x"    "y"    NA    </code></pre>
-</div>
-</div>
-<p>全域環境之上的鏈，正是已掛載的套件——也就是<strong>搜尋路徑</strong>：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">search</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] ".GlobalEnv"        "package:stats"     "package:graphics" 
-[4] "package:grDevices" "package:utils"     "package:datasets" 
-[7] "package:methods"   "Autoloads"         "package:base"     </code></pre>
+<pre><code>[1] "package:stats"
+[1] "package:graphics"
+[1] "package:grDevices"
+[1] "package:utils"
+[1] "package:datasets"
+[1] "package:methods"
+[1] "Autoloads"
+[1] "base"
+[1] "R_EmptyEnv"</code></pre>
 </div>
 </div>
-<p>這就是載入套件後函式變得可見的原因：它在查找鏈中插入了一個環境。</p>
+<p>已附加的套件一字排開成為父環境，最後到 <code>base</code>，終點是<strong>空環境</strong>——唯一沒有父環境的環境，所有鏈都通向它。</p>
+</section></section>
+<section>
+<section id="環境與函式" class="title-slide slide level1 center">
+<h1>環境與函式</h1>
+
 </section>
-<section id="環境與函式" class="slide level2">
-<h2>環境與函式</h2>
-<p>呼叫函式會替區域變數建立一個<em>全新的</em>環境，其父環境是函式<strong>被定義</strong>之處（而非被呼叫之處）：</p>
+<section id="函式呼叫會建立環境" class="slide level2">
+<h2>函式呼叫會建立環境</h2>
+<p>呼叫函式會建立新環境，引數在其中繫結成符號。（用語言學行話說：R 是<strong>詞法作用域（lexically scoped）</strong>的語言。）</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>make_counter <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb19-2"><a href=""></a>  count <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb19-3"><a href=""></a>  <span class="cf">function</span>() {</span>
-<span id="cb19-4"><a href=""></a>    count <span class="ot">&lt;&lt;-</span> count <span class="sc">+</span> <span class="dv">1</span>   <span class="co"># 寫入外層環境</span></span>
-<span id="cb19-5"><a href=""></a>    count</span>
-<span id="cb19-6"><a href=""></a>  }</span>
-<span id="cb19-7"><a href=""></a>}</span>
-<span id="cb19-8"><a href=""></a>tick <span class="ot">&lt;-</span> <span class="fu">make_counter</span>()</span>
-<span id="cb19-9"><a href=""></a><span class="fu">tick</span>(); <span class="fu">tick</span>(); <span class="fu">tick</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>env.demo <span class="ot">&lt;-</span> <span class="cf">function</span>(a, b, c, d) { <span class="fu">print</span>(<span class="fu">objects</span>()) }</span>
+<span id="cb17-2"><a href=""></a><span class="fu">env.demo</span>(<span class="dv">1</span>, <span class="st">"truck"</span>, <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), pi)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 3</code></pre>
+<pre><code>[1] "a" "b" "c" "d"</code></pre>
 </div>
 </div>
-<p>內層函式在多次呼叫之間<em>記得</em> <code>count</code>——這就是<strong>閉包</strong>（closure）。這條詞法作用域規則是 R 函式語意的核心。</p>
+<p>只看得到引數——其他東西都住在父環境裡。並請牢記：函式的父環境是<strong>它被建立的地方</strong>，不是被呼叫的地方。在主控台定義的函式兩者恰好相同；來自套件的函式則不同。</p>
 </section>
-<section id="全域指派與詞法指派" class="slide level2">
-<h2>全域指派與詞法指派</h2>
+<section id="呼叫堆疊" class="slide level2">
+<h2>呼叫堆疊</h2>
+<p>R 同時維護一個呼叫環境的<strong>堆疊（stack）</strong>（堆疊：只能從頂端加、從頂端拿——push 與 pop，像餐廳疊托盤）。每次呼叫推入一個環境；每次返回彈出一個。</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>函式</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>sys.call</code></td>
+<td>目前的函式呼叫（語言物件）</td>
+</tr>
+<tr class="even">
+<td><code>sys.frame</code></td>
+<td>呼叫環境</td>
+</tr>
+<tr class="odd">
+<td><code>sys.nframe</code></td>
+<td>目前 frame 的編號（在主控台為 0）</td>
+</tr>
+<tr class="even">
+<td><code>sys.function</code></td>
+<td>正在求值的函式</td>
+</tr>
+<tr class="odd">
+<td><code>sys.parent</code></td>
+<td>父 frame 的編號</td>
+</tr>
+<tr class="even">
+<td><code>sys.calls</code>／<code>sys.frames</code>／<code>sys.parents</code></td>
+<td>整個堆疊的呼叫、環境、父 frame</td>
+</tr>
+<tr class="odd">
+<td><code>sys.on.exit</code></td>
+<td>目前 frame 的 <code>on.exit</code> 運算式</td>
+</tr>
+<tr class="even">
+<td><code>sys.status</code></td>
+<td>前三者打包成一個串列</td>
+</tr>
+<tr class="odd">
+<td><code>parent.frame</code></td>
+<td><code>sys.frame(sys.parent(n))</code>——父 frame</td>
+</tr>
+</tbody>
+</table>
+<p>為何在意？套件函式有時需要知道某符號<strong>在呼叫端</strong>的意義。建模函式正是如此：公式裡只有符號名、沒有資料，當你省略 <code>data</code> 引數時，模型函式就到呼叫環境裡找變數。</p>
+</section>
+<section id="在別的環境求值eval" class="slide level2">
+<h2>在別的環境求值：eval</h2>
+<p><code>eval</code> 能在任意環境中評估運算式：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="st">"global"</span></span>
-<span id="cb23-2"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>() { v <span class="ot">&lt;-</span> <span class="st">"local"</span>; v }</span>
-<span id="cb23-3"><a href=""></a>g <span class="ot">&lt;-</span> <span class="cf">function</span>() { v <span class="ot">&lt;&lt;-</span> <span class="st">"overwritten"</span>; v }</span>
-<span id="cb23-4"><a href=""></a><span class="fu">f</span>(); v          <span class="co"># 區域指派不動全域</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">eval</span>(expr, <span class="at">envir =</span> <span class="fu">parent.frame</span>(),</span>
+<span id="cb19-2"><a href=""></a>     <span class="at">enclos =</span> <span class="cf">if</span> (<span class="fu">is.list</span>(envir) <span class="sc">||</span> <span class="fu">is.pairlist</span>(envir))</span>
+<span id="cb19-3"><a href=""></a>                <span class="fu">parent.frame</span>() <span class="cf">else</span> <span class="fu">baseenv</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>書中範例：一個計時包裝函式——記下開始時間、<strong>在呼叫者的 frame 中</strong>評估引數、再印出耗時：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>timethis <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
+<span id="cb20-2"><a href=""></a>  start.time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb20-3"><a href=""></a>  <span class="fu">eval</span>(..., <span class="fu">sys.frame</span>(<span class="fu">sys.parent</span>(<span class="fu">sys.parent</span>())))</span>
+<span id="cb20-4"><a href=""></a>  end.time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb20-5"><a href=""></a>  <span class="fu">print</span>(end.time <span class="sc">-</span> start.time)</span>
+<span id="cb20-6"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="計時示範" class="slide level2">
+<h2>計時示範</h2>
+<p>替一個逐格擴張向量的低效函式計時（主控台逐字稿）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a>create.vector.of.ones <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
+<span id="cb21-2"><a href=""></a>  return.vector <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb21-3"><a href=""></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb21-4"><a href=""></a>    return.vector[i] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb21-5"><a href=""></a>  }</span>
+<span id="cb21-6"><a href=""></a>  return.vector</span>
+<span id="cb21-7"><a href=""></a>}</span>
+<span id="cb21-8"><a href=""></a><span class="fu">timethis</span>(returned.vector <span class="ot">&lt;-</span> <span class="fu">create.vector.of.ones</span>(<span class="dv">10000</span>))</span>
+<span id="cb21-9"><a href=""></a><span class="do">## Time difference of 1.485959 secs</span></span>
+<span id="cb21-10"><a href=""></a><span class="fu">length</span>(returned.vector)</span>
+<span id="cb21-11"><a href=""></a><span class="do">## [1] 10000</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>計時很有趣；但<em>重點</em>是最後一行——指派發生<strong>在呼叫環境裡</strong>，所以事後 <code>returned.vector</code> 確實存在。（順帶一提：迴圈前先用 <code>length(return.vector) &lt;- n</code> 預先配置，時間從約 1.5 秒掉到約 0.04 秒——第二十四章的預告。）</p>
+</section>
+<section id="簡寫evalqeval.parentlocal" class="slide level2">
+<h2>簡寫：evalq、eval.parent、local</h2>
+<p><code>eval</code> 的三個方便包裝：</p>
+<ul>
+<li><code>evalq(expr, ...)</code> ≡ <code>eval(quote(expr), ...)</code>——幫你 quote；</li>
+<li><code>eval.parent(expr, n)</code> ≡ <code>eval(expr, parent.frame(n))</code>——在呼叫者處求值；</li>
+<li><code>local(expr)</code> ≡ <code>eval(quote(expr), envir=new.env())</code>——在全新環境中求值。</li>
+</ul>
+<p>用 <code>eval.parent</code> 能把計時函式寫得更短：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a>timethis.b <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
+<span id="cb22-2"><a href=""></a>  start.time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb22-3"><a href=""></a>  <span class="fu">eval.parent</span>(...)</span>
+<span id="cb22-4"><a href=""></a>  end.time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb22-5"><a href=""></a>  <span class="fu">print</span>(end.time <span class="sc">-</span> start.time)</span>
+<span id="cb22-6"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="把資料當環境用with-與-within" class="slide level2">
+<h2>把資料當環境用：with 與 within</h2>
+<p>把資料框或串列當成環境，就能像用符號一樣直呼其中的元素名：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>example.list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">2</span>, <span class="at">c=</span><span class="dv">3</span>)</span>
+<span id="cb23-2"><a href=""></a>a <span class="sc">+</span> b <span class="sc">+</span> c                          <span class="co"># 工作空間裡沒有……</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error:
+! object 'a' not found</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">with</span>(example.list, a <span class="sc">+</span> b <span class="sc">+</span> c)      <span class="co"># ……但 with() 找得到</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "local"</code></pre>
+<pre><code>[1] 6</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">within</span>(example.list, d <span class="ot">&lt;-</span> a <span class="sc">+</span> b <span class="sc">+</span> c)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "global"</code></pre>
+<pre><code>$a
+[1] 1
+
+$b
+[1] 2
+
+$c
+[1] 3
+
+$d
+[1] 6</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">g</span>(); v          <span class="co"># &lt;&lt;- 往上爬並取而代之</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "overwritten"</code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "overwritten"</code></pre>
+<p><code>with(data, expr)</code> 評估並回傳<strong>結果</strong>；<code>within(data, expr)</code> 修改並回傳<strong>資料</strong>。</p>
+</section>
+<section id="attach-與-detach" class="slide level2">
+<h2>attach 與 detach</h2>
+<p><code>attach</code> 把一個「資料庫」——串列、資料框或 <code>save</code> 存的資料檔——的物件加入搜尋路徑；<code>detach</code> 移除：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">attach</span>(what, <span class="at">pos =</span> <span class="dv">2</span>, <span class="at">name =</span> <span class="fu">deparse</span>(<span class="fu">substitute</span>(what)),</span>
+<span id="cb29-2"><a href=""></a>       <span class="at">warn.conflicts =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb29-3"><a href=""></a><span class="fu">detach</span>(name, <span class="at">pos =</span> <span class="dv">2</span>, <span class="at">unload =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
+<p><code>pos</code> 是搜尋路徑位置，<code>name</code> 是附加資料庫的標籤（<code>detach</code> 時還會用到），<code>warn.conflicts</code> 控制名稱衝突警告，<code>unload</code> 控制是否卸載命名空間。</p>
 <div class="callout callout-warning callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -361,52 +562,117 @@
 <p><strong>Warning</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>節制使用 <code>&lt;&lt;-</code>。</strong> 偷偷修改外部狀態的函式難以測試與除錯。閉包（前頁）是它紀律良好的使用場景。</p>
+<p><strong>attach 請節制使用。</strong> 多個資料框欄名相同時，會真的分不清某個名字指的是誰的欄位。建議改用 <code>transform</code> 修改資料框欄位、用 <code>with</code> 對資料框評估運算式。</p>
 </div>
 </div>
 </div>
+</section></section>
+<section>
+<section id="例外處理" class="title-slide slide level1 center">
+<h1>例外處理</h1>
+
 </section>
-<section id="操作呼叫堆疊" class="slide level2">
-<h2>操作呼叫堆疊</h2>
-<p>函式<em>被呼叫</em>之處的環境也能取得——對需要在呼叫者脈絡中解讀運算式的函式至關重要：</p>
+<section id="錯誤與警告" class="slide level2">
+<h2>錯誤與警告</h2>
+<p>不合法的運算式產生<strong>錯誤（error）</strong>；可疑的運算式產生<strong>警告（warning）</strong>：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a>whodunit <span class="ot">&lt;-</span> <span class="cf">function</span>() <span class="fu">sys.function</span>(<span class="sc">-</span><span class="dv">1</span>)   <span class="co"># 誰呼叫了我？</span></span>
-<span id="cb29-2"><a href=""></a>show_caller_x <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb29-3"><a href=""></a>  <span class="fu">eval</span>(<span class="fu">quote</span>(x), <span class="at">envir =</span> <span class="fu">parent.frame</span>())</span>
-<span id="cb29-4"><a href=""></a>}</span>
-<span id="cb29-5"><a href=""></a>x <span class="ot">&lt;-</span> <span class="st">"caller's x"</span></span>
-<span id="cb29-6"><a href=""></a><span class="fu">show_caller_x</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "caller's x"</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a><span class="dv">12</span> <span class="sc">/</span> <span class="st">"hat"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `12 / "hat"`:
+! non-numeric argument to binary operator</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="cf">if</span> (<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>)) <span class="cn">TRUE</span> <span class="cf">else</span> <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `if (c(TRUE, FALSE)) ...`:
+! the condition has length &gt; 1</code></pre>
 </div>
 </div>
-<ul>
-<li><code>sys.call()</code>——目前的呼叫式；<code>match.call()</code>——補齊引數名稱的版本。</li>
-<li><code>parent.frame()</code>——呼叫端環境。<code>lm()</code> 之類的函式正是用這招，把公式對著你的資料求值。</li>
-</ul>
+<p>（第二個在書中年代只是警告；現代 R 已升格為錯誤。）為什麼在「環境」這章談例外？因為例外發生時，直譯器可能得放棄目前的函式、<strong>到呼叫環境去發出例外訊號</strong>——例外處理與環境密不可分。</p>
 </section>
-<section id="套件中的環境" class="slide level2">
-<h2>套件中的環境</h2>
-<ul>
-<li>每個載入的套件都在搜尋路徑上貢獻一個環境；查找順序解釋了遮蔽現象——工作空間裡的名稱會蓋住套件裡的同名者。</li>
-<li>用 <code>::</code> 運算子明確指定來源：</li>
-</ul>
+<section id="發出訊號stopwarningmessage" class="slide level2">
+<h2>發出訊號：stop、warning、message</h2>
+<p>告知使用者的三個層級，從致命到閒聊：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a>stats<span class="sc">::</span><span class="fu">sd</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a>doWork <span class="ot">&lt;-</span> <span class="cf">function</span>(filename) {</span>
+<span id="cb34-2"><a href=""></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(filename)) <span class="fu">read.delim</span>(filename)</span>
+<span id="cb34-3"><a href=""></a>  <span class="cf">else</span> <span class="fu">stop</span>(<span class="st">"Could not open the file: "</span>, filename)</span>
+<span id="cb34-4"><a href=""></a>}</span>
+<span id="cb34-5"><a href=""></a><span class="fu">doWork</span>(<span class="st">"file that doesn't exist"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `doWork()`:
+! Could not open the file: file that doesn't exist</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a>doNoWork <span class="ot">&lt;-</span> <span class="cf">function</span>(filename) {</span>
+<span id="cb36-2"><a href=""></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(filename)) <span class="st">"la la la"</span></span>
+<span id="cb36-3"><a href=""></a>  <span class="cf">else</span> <span class="fu">warning</span>(<span class="st">"File does not exist: "</span>, filename)</span>
+<span id="cb36-4"><a href=""></a>}</span>
+<span id="cb36-5"><a href=""></a><span class="fu">doNoWork</span>(<span class="st">"another file that doesn't exist"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in doNoWork("another file that doesn't exist"): File does not exist:
+another file that doesn't exist</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a>doNothing <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb38-2"><a href=""></a>  <span class="fu">message</span>(<span class="st">"This function does nothing."</span>)</span>
+<span id="cb38-3"><a href=""></a>}</span>
+<span id="cb38-4"><a href=""></a><span class="fu">doNothing</span>(<span class="st">"another input value"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>This function does nothing.</code></pre>
+</div>
+</div>
+<p>寫自己的程式時：讓工作失效的錯誤用 <code>stop</code>；呼叫者該知道的問題用 <code>warning</code>；單純報訊息用 <code>message</code>。</p>
+</section>
+<section id="攔截try" class="slide level2">
+<h2>攔截：try</h2>
+<p>假設 <code>foo</code> 呼叫 <code>bar</code>，<code>bar</code> 偶爾失敗（例如打不開檔案），而 <code>foo</code> 想要<em>活下來</em>改做別的事。簡單的工具是 <code>try</code>，它把大部分機制藏了起來：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a>res <span class="ot">&lt;-</span> <span class="fu">try</span>({x <span class="ot">&lt;-</span> <span class="dv">1</span>}, <span class="at">silent=</span><span class="cn">TRUE</span>)</span>
+<span id="cb40-2"><a href=""></a>res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1.290994</code></pre>
+<pre><code>[1] 1</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>res <span class="ot">&lt;-</span> <span class="fu">try</span>({<span class="fu">open</span>(<span class="st">"file that doesn't exist"</span>)}, <span class="at">silent=</span><span class="cn">TRUE</span>)</span>
+<span id="cb42-2"><a href=""></a>res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Error in UseMethod(\"open\") : \n  no applicable method for 'open' applied to an object of class \"character\"\n"
+attr(,"class")
+[1] "try-error"
+attr(,"condition")
+&lt;simpleError in UseMethod("open"): no applicable method for 'open' applied to an object of class "character"&gt;</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a><span class="fu">class</span>(res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "try-error"</code></pre>
 </div>
 </div>
-<ul>
-<li>套件以<strong>命名空間</strong>讓內部輔助函式保持隱形，並用<em>承諾</em>（惰性資料載入）讓大型資料集在被觸碰前不佔任何成本。</li>
-</ul>
+<p><code>try(expr, silent)</code> 評估 <code>expr</code>；失敗時回傳 class 為 <code>"try-error"</code> 的物件（除非 <code>silent=TRUE</code>，否則順便印出錯誤訊息）。</p>
+</section>
+<section id="攔截trycatch" class="slide level2">
+<h2>攔截：tryCatch</h2>
+<p>更有力的工具是 <code>tryCatch</code>：一個運算式、一組<strong>處理器（handler）</strong>、加一個收尾運算式：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">tryCatch</span>(expression, handler1, handler2, ..., <span class="at">finally=</span>finalexpr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>求值順序：先評估 <code>expression</code>；若出現<strong>條件（condition）</strong>（錯誤或警告），R 挑選引數類別與條件吻合的處理器；之後評估 <code>finally</code>——此時處理器已不再生效。小試一下：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href=""></a><span class="fu">tryCatch</span>({</span>
+<span id="cb47-2"><a href=""></a>  <span class="fu">log</span>(<span class="sc">-</span><span class="dv">1</span>)</span>
+<span id="cb47-3"><a href=""></a>}, <span class="at">warning =</span> <span class="cf">function</span>(w) <span class="st">"caught a warning"</span>,</span>
+<span id="cb47-4"><a href=""></a>   <span class="at">finally =</span> <span class="fu">message</span>(<span class="st">"done either way"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "caught a warning"</code></pre>
+</div>
+</div>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

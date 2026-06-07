@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,176 +211,640 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="r-的格狀圖" class="title-slide slide level1 center">
-<h1><strong>R 的格狀圖</strong></h1>
+<section id="trellis-繪圖" class="title-slide slide level1 center">
+<h1><strong>Trellis 繪圖</strong></h1>
 
 </section>
-<section id="歷史與理念" class="slide level2">
-<h2>歷史與理念</h2>
-<p><code>lattice</code> 套件 <span class="citation" data-cites="sarkar2008lattice">(Sarkar 2008)</span> 實作了 <strong>trellis 繪圖</strong>——Cleveland 為<em>條件化</em>資料設計的視覺化框架 <span class="citation" data-cites="cleveland1993visualizing">(Cleveland 1993)</span>：對資料的每個子集重複同一種面板，排成網格以便即時比較。</p>
-<ul>
-<li>公式介面：<code>y ~ x | condition</code> 讀作「y 對 x，condition 的每個水準一個面板」。</li>
-<li>lattice 函式<strong>回傳物件</strong>；物件被列印時圖才出現——在腳本與函式中務必記得這點。</li>
-</ul>
+<section id="歷史與強項" class="slide level2">
+<h2>歷史與強項</h2>
+<p>1990 年代初，貝爾實驗室的 Richard Becker 與 William Cleveland 打造了 <strong>Trellis graphics</strong>，立基於 Cleveland 對人類如何感知資訊的研究。<strong>lattice</strong> 套件是它的 R 實作（有些函式名仍留著「trellis」字樣）。</p>
+<p>lattice 的真本事：用條件或分組變數把圖<strong>拆成多個面板</strong>（網格排列）或<strong>分組</strong>（不同顏色／符號）——而且預設輸出乾淨易讀。熟面孔（散布、長條、直方）與新朋友（點圖、帶狀圖、Q-Q 圖）一應俱全。</p>
+</section>
+<section id="lattice-怎麼運作" class="slide level2">
+<h2>Lattice 怎麼運作</h2>
+<p>詞彙表：矩形繪圖區叫<strong>面板（panel）</strong>；送進面板的資料叫<strong>封包（packet）</strong>；實際作畫的是<strong>面板函式（panel function）</strong>。生命週期：</p>
+<ol type="1">
+<li>你呼叫高階 lattice 函式；</li>
+<li>它組裝並<em>回傳</em>一個 lattice 物件（class 是 <code>"trellis"</code>——所以方法叫 <code>print.trellis</code>、<code>plot.trellis</code>）；</li>
+<li>列印物件（主控台會自動做）才真正畫圖；</li>
+<li><code>plot.trellis</code> 排好面板矩陣、分配封包，再對每個面板呼叫<strong>面板函式</strong>。</li>
+</ol>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Warning</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>在函式或腳本裡，不明確 <code>print</code> 物件，lattice 什麼都不畫</strong>——經典陷阱（第三章初次見面）。</p>
+</div>
+</div>
+</div>
+</section>
+<section id="簡單範例公式條件分組" class="slide level2">
+<h2>簡單範例：公式、條件、分組</h2>
+<p>lattice 的引數很一致：先放<strong>公式</strong>（用位置傳——它的名字改過！），再放 <code>data</code>。同一份玩具資料三種畫法：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">dim</span>(births2006.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>d <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>), <span class="at">z=</span><span class="fu">c</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>), <span class="at">times=</span><span class="dv">5</span>)))</span>
+<span id="cb1-2"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x, <span class="at">data=</span>d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-1-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x<span class="sc">|</span>z, <span class="at">data=</span>d)            <span class="co"># 條件：依 z 拆面板</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-1-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x, <span class="at">groups=</span>z, <span class="at">data=</span>d)    <span class="co"># 分組：依 z 變色／變符號</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-1-3.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><code>y~x|z</code> 唸作「y 對 x，以 z 為條件」。</p>
+</section>
+<section id="graphics-對-lattice-字典" class="slide level2">
+<h2>graphics 對 lattice 字典</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>graphics 函式</th>
+<th>lattice 函式</th>
+<th>圖型</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>barplot</code></td>
+<td><code>barchart</code></td>
+<td>長條／直條圖</td>
+</tr>
+<tr class="even">
+<td><code>dotchart</code></td>
+<td><code>dotplot</code></td>
+<td>Cleveland 點圖</td>
+</tr>
+<tr class="odd">
+<td><code>hist</code></td>
+<td><code>histogram</code></td>
+<td>直方圖</td>
+</tr>
+<tr class="even">
+<td><code>density</code>+<code>plot</code></td>
+<td><code>densityplot</code></td>
+<td>核密度圖</td>
+</tr>
+<tr class="odd">
+<td><code>stripchart</code></td>
+<td><code>stripplot</code></td>
+<td>帶狀圖</td>
+</tr>
+<tr class="even">
+<td><code>qqnorm</code>（stats）</td>
+<td><code>qqmath</code></td>
+<td>理論 Q-Q 圖</td>
+</tr>
+<tr class="odd">
+<td><code>plot</code></td>
+<td><code>xyplot</code></td>
+<td>散布圖</td>
+</tr>
+<tr class="even">
+<td><code>qqplot</code>（stats）</td>
+<td><code>qq</code></td>
+<td>雙樣本 Q-Q 圖</td>
+</tr>
+<tr class="odd">
+<td><code>pairs</code></td>
+<td><code>splom</code></td>
+<td>散布圖矩陣</td>
+</tr>
+<tr class="even">
+<td><code>image</code></td>
+<td><code>levelplot</code></td>
+<td>影像圖</td>
+</tr>
+<tr class="odd">
+<td><code>contour</code></td>
+<td><code>contourplot</code></td>
+<td>等高線圖</td>
+</tr>
+<tr class="even">
+<td><code>persp</code></td>
+<td><code>cloud</code>、<code>wireframe</code></td>
+<td>3D 透視</td>
+</tr>
+</tbody>
+</table>
+<p>多數函式接受公式＋資料框；許多也直接吃陣列、矩陣、表格或向量（例如 <code>barchart</code> 很樂意吃 <code>table</code>）。</p>
+</section>
+<section id="自訂面板函式" class="slide level2">
+<h2>自訂面板函式</h2>
+<p>想疊加額外元素，就替換<strong>面板函式</strong>——典型寫法是包一層：先加東西、再委派回原函式：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x<span class="sc">|</span>z, <span class="at">data=</span>d,</span>
+<span id="cb4-2"><a href=""></a>  <span class="at">panel=</span><span class="cf">function</span>(...){</span>
+<span id="cb4-3"><a href=""></a>    <span class="fu">panel.abline</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">1</span>)</span>
+<span id="cb4-4"><a href=""></a>    <span class="fu">panel.xyplot</span>(...)</span>
+<span id="cb4-5"><a href=""></a>  })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
+<section>
+<section id="單變量-trellis-圖" class="title-slide slide level1 center">
+<h1>單變量 Trellis 圖</h1>
+
+</section>
+<section id="出生資料" class="slide level2">
+<h2>出生資料</h2>
+<p>貫穿範例：2006 年美國的每一筆出生（CDC 出生檔——原始 3.1 GB；書中作者以 Perl <code>unpack</code> 腳本預處理、在 R 重編因子，抽 10% 成 <code>births2006.smpl</code>）。變數包括 <code>DOB_MM</code>／<code>DOB_WK</code>（出生月／星期）、<code>MAGER</code>（母親年齡）、<code>WTGAIN</code>、<code>SEX</code>、<code>APGAR5</code>、<code>DMEDUC</code>、<code>UPREVIS</code>、<code>ESTGEST</code>、<code>DMETH_REC</code>（生產方式）、<code>DPLURAL</code>（單胞胎／雙胞胎……）、<code>DBWT</code>（出生體重，公克）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb5-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda"</span>,</span>
+<span id="cb5-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb5-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb5-5"><a href=""></a><span class="fu">dim</span>(births2006.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 427323     13</code></pre>
 </div>
 </div>
 </section>
-<section id="簡單範例" class="slide level2">
-<h2>簡單範例</h2>
-<p>2006 年美國出生資料（10% 抽樣）：出生體重與生產方式有什麼關係？</p>
+<section id="barchart" class="slide level2">
+<h2>barchart</h2>
+<p>各星期幾的出生數（1＝週日）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">histogram</span>(<span class="sc">~</span> DBWT <span class="sc">|</span> DMETH_REC, <span class="at">data =</span> births2006.smpl,</span>
-<span id="cb3-2"><a href=""></a>          <span class="at">xlab =</span> <span class="st">"Birth weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>births.dow <span class="ot">&lt;-</span> <span class="fu">table</span>(births2006.smpl<span class="sc">$</span>DOB_WK)</span>
+<span id="cb7-2"><a href=""></a><span class="fu">barchart</span>(births.dow)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>平日的寶寶遠多於週末——意外吧！是<em>生產方式</em>造成的嗎？按星期×方式列表（剔除未知）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>births2006.dm <span class="ot">&lt;-</span> <span class="fu">transform</span>(</span>
+<span id="cb8-2"><a href=""></a>  births2006.smpl[births2006.smpl<span class="sc">$</span>DMETH_REC <span class="sc">!=</span> <span class="st">"Unknown"</span>,],</span>
+<span id="cb8-3"><a href=""></a>  <span class="at">DMETH_REC=</span><span class="fu">as.factor</span>(<span class="fu">as.character</span>(DMETH_REC)))</span>
+<span id="cb8-4"><a href=""></a>dob.dm.tbl <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">WK=</span>births2006.dm<span class="sc">$</span>DOB_WK, <span class="at">MM=</span>births2006.dm<span class="sc">$</span>DMETH_REC)</span>
+<span id="cb8-5"><a href=""></a><span class="fu">barchart</span>(dob.dm.tbl)            <span class="co"># 預設：堆疊分組、沒有圖例</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="迭代逼近正確的呈現" class="slide level2">
+<h2>迭代逼近正確的呈現</h2>
+<p>先解開堆疊、加圖例；還是難比較——乾脆放棄顏色分組，改成<strong>兩個面板</strong>的直條：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">barchart</span>(dob.dm.tbl, <span class="at">stack=</span><span class="cn">FALSE</span>, <span class="at">auto.key=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">barchart</span>(dob.dm.tbl, <span class="at">horizontal=</span><span class="cn">FALSE</span>, <span class="at">groups=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-6-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>現在一目了然：自然產週末降約 25–30%，<strong>剖腹產掉 50–60%</strong>。lattice 的快速迭代——堆疊／解開、分組／分面板、翻轉——正是逼近真相的方法。</p>
+</section>
+<section id="dotplot" class="slide level2">
+<h2>dotplot</h2>
+<p>Cleveland <strong>點圖</strong>一個類別一個點——比長條安靜，適合較大的表。週間型態有季節性嗎？按週×月×方式列表再畫：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>dob.dm.tbl.alt <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">WEEK=</span>births2006.dm<span class="sc">$</span>DOB_WK,</span>
+<span id="cb11-2"><a href=""></a>                        <span class="at">MONTH=</span>births2006.dm<span class="sc">$</span>DOB_MM,</span>
+<span id="cb11-3"><a href=""></a>                        <span class="at">METHOD=</span>births2006.dm<span class="sc">$</span>DMETH_REC)</span>
+<span id="cb11-4"><a href=""></a><span class="fu">dotplot</span>(dob.dm.tbl.alt, <span class="at">stack=</span><span class="cn">FALSE</span>, <span class="at">auto.key=</span><span class="cn">TRUE</span>, <span class="at">groups=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:70.0%"><p>一條公式產出三個對齊的面板——不用迴圈就完成條件化。</p>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>季節間略有起伏；週間型態整年不變。</p>
 </section>
-<section id="使用-lattice-函式" class="slide level2">
-<h2>使用 lattice 函式</h2>
-<p>所有高階 lattice 函式共享同一套解剖構造：</p>
+<section id="dotplot輪胎失效資料" class="slide level2">
+<h2>dotplot：輪胎失效資料</h2>
+<p>NHTSA 2003 年的「逐級加速至失效」測試（Firestone 召回案之後，選在炎熱的鳳凰城進行）：輪胎以遞增速度運轉直到失效。六種輪胎（B–L，各種尺寸／品牌）。變數：<code>Time_To_Failure</code>、<code>Speed_At_Failure_km_h</code>（階梯值——當因子處理！）、<code>Tire_Type</code>：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">xyplot</span>(y <span class="sc">~</span> x <span class="sc">|</span> g,            <span class="co"># 公式，條件化可選</span></span>
-<span id="cb4-2"><a href=""></a>       <span class="at">data =</span> df,            <span class="co"># 變數所在</span></span>
-<span id="cb4-3"><a href=""></a>       <span class="at">groups =</span> h,           <span class="co"># 面板內的分組疊加</span></span>
-<span id="cb4-4"><a href=""></a>       <span class="at">layout =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>),     <span class="co"># 面板排列</span></span>
-<span id="cb4-5"><a href=""></a>       <span class="at">main =</span> <span class="st">"..."</span>, <span class="at">xlab =</span> <span class="st">"..."</span>, <span class="at">ylab =</span> <span class="st">"..."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb12-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda"</span>,</span>
+<span id="cb12-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb12-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb12-5"><a href=""></a><span class="fu">dotplot</span>(<span class="fu">as.factor</span>(Speed_At_Failure_km_h)<span class="sc">~</span>Time_To_Failure<span class="sc">|</span>Tire_Type,</span>
+<span id="cb12-6"><a href=""></a>        <span class="at">data=</span>tires.sus)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
 </div>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>D 型胎在 180 km/h 全數速死；某些 H 型胎撐得很久。（第十八章再會。）</p>
+</section>
+<section id="histogram" class="slide level2">
+<h2>histogram</h2>
+<p>出生體重按胎數分——注意面板按字母序排列（所以水準名前面加了數字），且預設以方形面板填滿空間：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">histogram</span>(<span class="sc">~</span>DBWT<span class="sc">|</span>DPLURAL, <span class="at">data=</span>births2006.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>用 <code>layout</code> 疊直行，方便比較：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">histogram</span>(<span class="sc">~</span>DBWT<span class="sc">|</span>DPLURAL, <span class="at">data=</span>births2006.smpl, <span class="at">layout=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>各組內大致常態；平均體重隨胎數遞減。（其他引數：<code>type</code> ＝ <code>"percent"</code>／<code>"count"</code>／<code>"density"</code>，分組距用 <code>nint</code>／<code>breaks</code>／<code>endpoints</code>／<code>equal.widths</code>。）</p>
+</section>
+<section id="densityplot" class="slide level2">
+<h2>densityplot</h2>
+<p>一條平滑曲線取代長條——而且能疊。42.7 萬筆觀測，關掉逐點帶狀（<code>plot.points=FALSE</code>）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">densityplot</span>(<span class="sc">~</span>DBWT<span class="sc">|</span>DPLURAL, <span class="at">data=</span>births2006.smpl,</span>
+<span id="cb15-2"><a href=""></a>            <span class="at">layout=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">5</span>), <span class="at">plot.points=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>密度圖<em>疊加</em>得很優雅——把條件變數改成分組變數：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">densityplot</span>(<span class="sc">~</span>DBWT, <span class="at">groups=</span>DPLURAL, <span class="at">data=</span>births2006.smpl,</span>
+<span id="cb16-2"><a href=""></a>            <span class="at">plot.points=</span><span class="cn">FALSE</span>, <span class="at">auto.key=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="stripplot" class="slide level2">
+<h2>stripplot</h2>
+<p><strong>帶狀圖</strong>是一維散布圖——一個類別許多值（點圖則是一值），最適合<em>小</em>資料。四胞胎以上的體重（44 筆），加抖動：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">stripplot</span>(<span class="sc">~</span>DBWT, <span class="at">data=</span>births2006.smpl,</span>
+<span id="cb17-2"><a href=""></a>          <span class="at">subset=</span>(DPLURAL<span class="sc">==</span><span class="st">"5 Quintuplet or higher"</span> <span class="sc">|</span></span>
+<span id="cb17-3"><a href=""></a>                  DPLURAL<span class="sc">==</span><span class="st">"4 Quadruplet"</span>),</span>
+<span id="cb17-4"><a href=""></a>          <span class="at">jitter.data=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-13-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="qqmath" class="slide level2">
+<h2>qqmath</h2>
+<p><code>qqmath</code> 把樣本分位數對理論分布作圖（預設常態 <code>qnorm</code>；另有 <code>f.value</code>、<code>distribution</code>、<code>qtype</code>）。先用真常態數驗證，再看出生資料：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">qqmath</span>(<span class="fu">rnorm</span>(<span class="dv">100000</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-14-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span>DBWT<span class="sc">|</span>DPLURAL,</span>
+<span id="cb19-2"><a href=""></a>       <span class="at">data=</span>births2006.smpl[<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(births2006.smpl), <span class="dv">50000</span>), ],</span>
+<span id="cb19-3"><a href=""></a>       <span class="at">pch=</span><span class="dv">19</span>, <span class="at">cex=</span><span class="fl">0.25</span>,</span>
+<span id="cb19-4"><a href=""></a>       <span class="at">subset=</span>(DPLURAL <span class="sc">!=</span> <span class="st">"5 Quintuplet or higher"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-14-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>出生體重：不太常態。</p>
+</section>
+<section id="舊金山房屋銷售資料" class="slide level2">
+<h2>舊金山房屋銷售資料</h2>
+<p>第二個貫穿範例：3,281 筆舊金山房屋成交，2008-02-13 至 2009-07-14，作者從報紙彙整、地理編碼、再用 <code>sp</code>／<code>maptools</code> 與 <code>point.in.polygon</code> 連結 Zillow 街區圖資。變數（依套件實際打包——書中文字的命名略有出入）：<code>line</code>、<code>county</code>、<code>street</code>、<code>city</code>、<code>zip</code>、<code>date</code>（成交日）、<code>price</code>、<code>bedrooms</code>、<code>squarefeet</code>、<code>lotsize</code>、<code>year</code>（建造年）、<code>latitude</code>／<code>longitude</code>、<code>month</code>、<code>neighborhood</code>。真實資料——不完美、有缺值：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb20-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda"</span>,</span>
+<span id="cb20-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb20-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="房價的-qqmath發現對數常態" class="slide level2">
+<h2>房價的 qqmath：發現對數常態</h2>
+<p>價格從 10 萬到 950 萬美元——直覺上就不會常態：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span>price, <span class="at">data=</span>sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-16-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span><span class="fu">log</span>(price), <span class="at">data=</span>sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-16-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>取對數後漂亮地拉直了。再按房間數分組——以平滑線取代散點（<code>type="smooth"</code>，這個引數會流進面板函式），用明確的子集讓圖例乾淨：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span><span class="fu">log</span>(price), <span class="at">groups=</span>bedrooms,</span>
+<span id="cb23-2"><a href=""></a>       <span class="at">data=</span><span class="fu">subset</span>(sanfrancisco.home.sales,</span>
+<span id="cb23-3"><a href=""></a>                   <span class="sc">!</span><span class="fu">is.na</span>(bedrooms) <span class="sc">&amp;</span> bedrooms <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> bedrooms <span class="sc">&lt;</span> <span class="dv">7</span>),</span>
+<span id="cb23-4"><a href=""></a>       <span class="at">auto.key=</span><span class="cn">TRUE</span>, <span class="at">drop.unused.levels=</span><span class="cn">TRUE</span>, <span class="at">type=</span><span class="st">"smooth"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-17-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>線各自分離、房間越多越高——同一招也適用於坪數六分位（<code>Hmisc::cut2(squarefeet, g=6)</code> 當 <code>groups</code>）與街區。</p>
+</section></section>
+<section>
+<section id="雙變量-trellis-圖" class="title-slide slide level1 center">
+<h1>雙變量 Trellis 圖</h1>
+
+</section>
+<section id="xyplot" class="slide level2">
+<h2>xyplot</h2>
+<p>價格 vs.&nbsp;坪數——先天真地畫，再修剪（價格 &lt; 400 萬、&lt; 6,000 平方英尺）並按郵遞區號分面板、自訂 strip：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">xyplot</span>(price<span class="sc">~</span>squarefeet, <span class="at">data=</span>sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">trellis.par.set</span>(<span class="at">fontsize=</span><span class="fu">list</span>(<span class="at">text=</span><span class="dv">7</span>))</span>
+<span id="cb25-2"><a href=""></a><span class="fu">xyplot</span>(price<span class="sc">~</span>squarefeet<span class="sc">|</span>zip, <span class="at">data=</span>sanfrancisco.home.sales,</span>
+<span id="cb25-3"><a href=""></a>       <span class="at">subset=</span>(zip<span class="sc">!=</span><span class="dv">94100</span> <span class="sc">&amp;</span> zip<span class="sc">!=</span><span class="dv">94104</span> <span class="sc">&amp;</span> zip<span class="sc">!=</span><span class="dv">94108</span> <span class="sc">&amp;</span></span>
+<span id="cb25-4"><a href=""></a>               zip<span class="sc">!=</span><span class="dv">94111</span> <span class="sc">&amp;</span> zip<span class="sc">!=</span><span class="dv">94133</span> <span class="sc">&amp;</span> zip<span class="sc">!=</span><span class="dv">94158</span> <span class="sc">&amp;</span></span>
+<span id="cb25-5"><a href=""></a>               price <span class="sc">&lt;</span> <span class="dv">4000000</span> <span class="sc">&amp;</span></span>
+<span id="cb25-6"><a href=""></a>               <span class="fu">ifelse</span>(<span class="fu">is.na</span>(squarefeet), <span class="cn">FALSE</span>, squarefeet <span class="sc">&lt;</span> <span class="dv">6000</span>)),</span>
+<span id="cb25-7"><a href=""></a>       <span class="at">strip=</span><span class="fu">strip.custom</span>(<span class="at">strip.levels=</span><span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-18-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">trellis.par.set</span>(<span class="at">fontsize=</span><span class="fu">list</span>(<span class="at">text=</span><span class="dv">12</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>分區之後線性關係鮮明許多——按街區分（<code>price~squarefeet|neighborhood</code>，配 <code>pch=19, cex=.2</code>）標籤更好讀、故事相同。</p>
+</section>
+<section id="bwplot按月的盒鬚圖" class="slide level2">
+<h2>bwplot：按月的盒鬚圖</h2>
+<p>價格分布隨時間的變化——用 <code>cut</code> 把日期取整到月。原始嘗試被離群值淹沒；取對數、轉直、旋轉標籤：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">bwplot</span>(<span class="fu">log</span>(price)<span class="sc">~</span><span class="fu">cut</span>(date, <span class="st">"month"</span>),</span>
+<span id="cb27-2"><a href=""></a>       <span class="at">data=</span>sanfrancisco.home.sales,</span>
+<span id="cb27-3"><a href=""></a>       <span class="at">scales=</span><span class="fu">list</span>(<span class="at">x=</span><span class="fu">list</span>(<span class="at">rot=</span><span class="dv">90</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-19-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>中位數動得不少；四分位距動得較少；高價端明顯萎縮——但分布的基本形狀逐月穩定。（量的提醒：資料始於 2 月中、止於 7 月中——那兩個月別過度解讀。）</p>
+</section>
+<section id="splom-與-qq" class="slide level2">
+<h2>splom 與 qq</h2>
 <ul>
-<li><code>groups=</code> 在面板<em>內</em>區分子集（配 <code>auto.key=TRUE</code> 出圖例）；<code>|</code> 在面板<em>間</em>區分子集。</li>
-<li>回傳的 <code>"trellis"</code> 物件可以儲存、用 <code>update()</code> 修改、之後再列印。</li>
+<li><strong><code>splom(x, data, ...)</code></strong>——散布圖矩陣（lattice 版 <code>pairs</code>）；面板由 <code>panel.splom</code> 畫、矩陣由 <code>superpanel=panel.pairs</code> 統籌、軸細節用 <code>pscales</code>、變數名用 <code>varnames</code>。</li>
+<li><strong><code>qq(x, data, ...)</code></strong>——<em>雙樣本</em>分位數圖，比較兩個觀測分布（公式寫法 <code>factor ~ value</code>）。</li>
 </ul>
-</section>
-<section id="單變量圖直方圖與密度圖" class="slide level2">
-<h2>單變量圖：直方圖與密度圖</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">densityplot</span>(<span class="sc">~</span> DBWT <span class="sc">|</span> DPLURAL, <span class="at">data =</span> births2006.smpl,</span>
-<span id="cb5-2"><a href=""></a>            <span class="at">plot.points =</span> <span class="cn">FALSE</span>, <span class="at">layout =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>),</span>
-<span id="cb5-3"><a href=""></a>            <span class="at">xlab =</span> <span class="st">"Birth weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section></section>
+<section>
+<section id="三變量圖" class="title-slide slide level1 center">
+<h1>三變量圖</h1>
 
-</div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:68.0%"><p>把面板直向堆疊（每種胎數一格：單胞胎、雙胞胎、三胞胎……）讓 x 軸對齊——多胞胎體重較輕，整個故事一欄講完。</p>
 </section>
-<section id="單變量圖點條與分位數" class="slide level2">
-<h2>單變量圖：點條與分位數</h2>
+<section id="levelplot" class="slide level2">
+<h2>levelplot</h2>
+<p>平面網格、第三維上色（由 <code>panel.levelplot</code> 繪製；重點引數 <code>at</code>、<code>cuts=15</code>、<code>region</code>、<code>colorkey</code>、<code>col.regions</code>、<code>contour</code>）。座標太精細不能直接畫——先 <code>cut</code> 分箱再 <code>table</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">attach</span>(sanfrancisco.home.sales)</span>
+<span id="cb28-2"><a href=""></a><span class="fu">levelplot</span>(<span class="fu">table</span>(<span class="fu">cut</span>(longitude, <span class="at">breaks=</span><span class="dv">40</span>), <span class="fu">cut</span>(latitude, <span class="at">breaks=</span><span class="dv">40</span>)),</span>
+<span id="cb28-3"><a href=""></a>          <span class="at">scales=</span><span class="fu">list</span>(<span class="at">y=</span><span class="fu">list</span>(<span class="at">cex=</span>.<span class="dv">5</span>), <span class="at">x=</span><span class="fu">list</span>(<span class="at">rot=</span><span class="dv">90</span>, <span class="at">cex=</span>.<span class="dv">5</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-20-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>想看各區平均<em>價格</em>？把 <code>table</code> 換成 <code>tapply</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">levelplot</span>(<span class="fu">tapply</span>(price,</span>
+<span id="cb29-2"><a href=""></a>                 <span class="at">INDEX=</span><span class="fu">list</span>(<span class="fu">cut</span>(longitude, <span class="at">breaks=</span><span class="dv">40</span>),</span>
+<span id="cb29-3"><a href=""></a>                            <span class="fu">cut</span>(latitude, <span class="at">breaks=</span><span class="dv">40</span>)),</span>
+<span id="cb29-4"><a href=""></a>                 <span class="at">FUN=</span>mean),</span>
+<span id="cb29-5"><a href=""></a>          <span class="at">scales=</span><span class="fu">list</span>(<span class="at">draw=</span><span class="cn">FALSE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-21-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="帶條件的-levelplotcontourplot" class="slide level2">
+<h2>帶條件的 levelplot；contourplot</h2>
+<p>第三個因子變成面板——按（封頂的）房間數看成交地點：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a>bedrooms.capped <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(bedrooms <span class="sc">&lt;</span> <span class="dv">5</span>, bedrooms, <span class="dv">5</span>)</span>
+<span id="cb30-2"><a href=""></a><span class="fu">levelplot</span>(<span class="fu">table</span>(<span class="fu">cut</span>(longitude, <span class="at">breaks=</span><span class="dv">25</span>),</span>
+<span id="cb30-3"><a href=""></a>                <span class="fu">cut</span>(latitude, <span class="at">breaks=</span><span class="dv">25</span>),</span>
+<span id="cb30-4"><a href=""></a>                bedrooms.capped),</span>
+<span id="cb30-5"><a href=""></a>          <span class="at">scales=</span><span class="fu">list</span>(<span class="at">draw=</span><span class="cn">FALSE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">detach</span>(sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-22-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><strong><code>contourplot</code></strong> 是地形圖式的手足（<code>cuts=7</code>、<code>labels</code>、<code>contour=TRUE</code>、<code>region=FALSE</code>）。</p>
+</section>
+<section id="cloud-與-wireframe" class="slide level2">
+<h2>cloud 與 wireframe</h2>
 <ul>
-<li><code>stripplot()</code>——一筆觀測一個點，小群組的理想選擇；</li>
-<li><code>qqmath()</code>——樣本分位數對理論分布；</li>
-<li><code>bwplot()</code>——盒鬚圖，<code>boxplot()</code> 的 lattice 表親：</li>
+<li><strong><code>cloud</code></strong>——3D 點雲（3D 點投影到 2D）；引數含 <code>aspect=c(1,1)</code>、<code>panel.aspect</code>，繪製交給 <code>panel.cloud</code> → <code>panel.3dscatter</code>。</li>
+<li><strong><code>wireframe</code></strong>——3D 曲面，lattice 版 <code>persp</code>（底層 <code>panel.3dwire</code>）。</li>
+<li>其他值得認識的 lattice 圖：<strong><code>rfs</code></strong>（模型的殘差與配適散布圖，可配 <code>distribution=qnorm</code>）與 <strong><code>parallel</code></strong>（平行座標圖）。</li>
 </ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">bwplot</span>(DBWT <span class="sc">~</span> <span class="fu">factor</span>(APGAR5), <span class="at">data =</span> births2006.smpl,</span>
-<span id="cb6-2"><a href=""></a>       <span class="at">xlab =</span> <span class="st">"5-minute Apgar score"</span>, <span class="at">ylab =</span> <span class="st">"Birth weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section></section>
+<section>
+<section id="客製化-lattice-圖形" class="title-slide slide level1 center">
+<h1>客製化 Lattice 圖形</h1>
 
-</div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:68.0%"><p>體重與 Apgar 分數同升——二十個盒子一眼看盡。</p>
 </section>
-<section id="雙變量圖" class="slide level2">
-<h2>雙變量圖</h2>
-<p><code>xyplot()</code> 是條件化散佈圖。各星期幾的平均出生體重，依生產方式分面板：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>wt <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(DBWT <span class="sc">~</span> DOB_WK <span class="sc">+</span> DMETH_REC, <span class="at">data =</span> births2006.smpl, mean)</span>
-<span id="cb7-2"><a href=""></a><span class="fu">xyplot</span>(DBWT <span class="sc">~</span> DOB_WK <span class="sc">|</span> DMETH_REC, <span class="at">data =</span> wt, <span class="at">type =</span> <span class="st">"h"</span>,</span>
-<span id="cb7-3"><a href=""></a>       <span class="at">layout =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>), <span class="at">xlab =</span> <span class="st">"Day of week"</span>, <span class="at">ylab =</span> <span class="st">"Mean weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:70.0%"><p>其他雙變量夥伴：<code>barchart()</code>、<code>dotplot()</code>（Cleveland 點圖——常是圓餅圖與長條圖的最佳替代品）。</p>
-</section>
-<section id="三變量圖" class="slide level2">
-<h2>三變量圖</h2>
-<p>三個數值維度時：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>, <span class="at">length.out =</span> <span class="dv">40</span>)</span>
-<span id="cb8-2"><a href=""></a>grid <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">x =</span> x, <span class="at">y =</span> x)</span>
-<span id="cb8-3"><a href=""></a>grid<span class="sc">$</span>z <span class="ot">&lt;-</span> <span class="fu">with</span>(grid, <span class="fu">exp</span>(<span class="sc">-</span>(x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> y<span class="sc">^</span><span class="dv">2</span>)))</span>
-<span id="cb8-4"><a href=""></a><span class="fu">levelplot</span>(z <span class="sc">~</span> x <span class="sc">*</span> y, <span class="at">data =</span> grid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><ul>
-<li><code>levelplot()</code>——彩色磚塊；<code>contourplot()</code>——帶標籤的等高線；</li>
-<li><code>cloud()</code>——3D 點雲；<code>wireframe()</code>——3D 曲面。</li>
-</ul>
-</section>
-<section id="自訂面板函式" class="slide level2">
-<h2>自訂面板函式</h2>
-<p>面板函式決定每個方格內畫什麼。包住預設函式再往上加：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">xyplot</span>(DBWT <span class="sc">~</span> WTGAIN <span class="sc">|</span> SEX,</span>
-<span id="cb9-2"><a href=""></a>       <span class="at">data =</span> births2006.smpl[<span class="fu">sample</span>(<span class="fu">nrow</span>(births2006.smpl), <span class="dv">2000</span>), ],</span>
-<span id="cb9-3"><a href=""></a>       <span class="at">alpha =</span> <span class="fl">0.2</span>,</span>
-<span id="cb9-4"><a href=""></a>       <span class="at">panel =</span> <span class="cf">function</span>(x, y, ...) {</span>
-<span id="cb9-5"><a href=""></a>         <span class="fu">panel.xyplot</span>(x, y, ...)</span>
-<span id="cb9-6"><a href=""></a>         <span class="fu">panel.lmline</span>(x, y, <span class="at">col =</span> <span class="st">"red"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
-<span id="cb9-7"><a href=""></a>       },</span>
-<span id="cb9-8"><a href=""></a>       <span class="at">xlab =</span> <span class="st">"Maternal weight gain (lb)"</span>, <span class="at">ylab =</span> <span class="st">"Birth weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p><code>panel.lmline</code>、<code>panel.loess</code>、<code>panel.abline</code>、<code>panel.grid</code> 都是現成的積木。</p>
-</section>
-<section id="自訂-lattice-外觀" class="slide level2">
-<h2>自訂 lattice 外觀</h2>
-<ul>
-<li><code>trellis.par.get()</code> / <code>trellis.par.set()</code> 全域調整主題（顏色、字型、符號）。</li>
-<li><code>show.settings()</code> 一眼展示目前主題。</li>
-<li>單張圖：<code>par.settings=</code> 把主題調整注入單一呼叫；</li>
-<li><code>update(plot_object, ...)</code> 修改既有的 trellis 物件——潤飾存好的圖而不必重算。</li>
-</ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>my.theme <span class="ot">&lt;-</span> <span class="fu">trellis.par.get</span>()</span>
-<span id="cb10-2"><a href=""></a>my.theme<span class="sc">$</span>plot.symbol<span class="sc">$</span>pch <span class="ot">&lt;-</span> <span class="dv">19</span></span>
-<span id="cb10-3"><a href=""></a><span class="fu">trellis.par.set</span>(my.theme)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="lattice-與基礎繪圖的比較" class="slide level2">
-<h2>Lattice 與基礎繪圖的比較</h2>
+<section id="高階函式的共同引數" class="slide level2">
+<h2>高階函式的共同引數</h2>
+<p>各高階函式共享：</p>
 <table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;"></th>
-<th style="text-align: left;">基礎繪圖</th>
-<th style="text-align: left;">Lattice</th>
+<th>引數</th>
+<th>說明</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">條件化</td>
-<td style="text-align: left;">手動迴圈＋<code>par(mfrow)</code></td>
-<td style="text-align: left;">公式裡的 <code>| g</code></td>
+<td><code>x</code>（公式）、<code>data</code></td>
+<td>畫什麼、變數在哪</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">回傳值</td>
-<td style="text-align: left;">無（筆墨上紙）</td>
-<td style="text-align: left;">trellis 物件</td>
+<td><code>allow.multiple</code>、<code>outer</code></td>
+<td><code>y1+y2~x</code> 公式的處理：疊加或分面板</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">圖例</td>
-<td style="text-align: left;">手動 <code>legend()</code></td>
-<td style="text-align: left;"><code>auto.key = TRUE</code></td>
+<td><code>groups</code>／<code>subset</code>／<code>subscripts</code></td>
+<td>分組變數；列篩選；把索引交給面板</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">面板間一致性</td>
-<td style="text-align: left;">自己負責</td>
-<td style="text-align: left;">自動</td>
+<td><code>panel</code></td>
+<td>面板函式——<em>最重要的</em>客製化掛勾</td>
+</tr>
+<tr class="odd">
+<td><code>aspect</code></td>
+<td>面板長寬比（<code>"fill"</code>、<code>"xy"</code> 45° banking、數值）</td>
+</tr>
+<tr class="even">
+<td><code>auto.key</code></td>
+<td>快速圖例（邏輯值或串列）</td>
+</tr>
+<tr class="odd">
+<td><code>prepanel</code></td>
+<td>決定各面板空間／範圍的函式</td>
+</tr>
+<tr class="even">
+<td><code>strip</code></td>
+<td>strip 繪製函式（如 <code>strip.custom</code>）；左側用 <code>strip.left</code></td>
+</tr>
+<tr class="odd">
+<td><code>xlab</code>、<code>ylab</code>、<code>main</code>、<code>sub</code>、<code>xlim</code>、<code>ylim</code></td>
+<td>註記與範圍</td>
+</tr>
+<tr class="even">
+<td><code>scales</code></td>
+<td>座標軸控制（下一張）</td>
+</tr>
+<tr class="odd">
+<td><code>layout</code>、<code>between</code>、<code>skip</code></td>
+<td>面板排列與間距</td>
+</tr>
+<tr class="even">
+<td><code>drop.unused.levels</code>、<code>default.scales</code>、<code>lattice.options</code></td>
+<td>長尾（經 <code>trellis.skeleton</code> 傳遞）</td>
 </tr>
 </tbody>
 </table>
-<p>當問題是「這個模式<em>在每個子群內</em>都成立嗎？」時，lattice 正是利器——第十五章將介紹 <code>ggplot2</code>，第三套建立在完整文法上的系統。</p>
+</section>
+<section id="控制座標軸scales" class="slide level2">
+<h2>控制座標軸：scales</h2>
+<p><code>scales</code> 是一個串列（可再分 <code>x</code>、<code>y</code> 子串列）：</p>
+<ul>
+<li><code>relation</code>——<code>"same"</code>（共用範圍）、<code>"free"</code>（各自）、<code>"sliced"</code>（等長切片）；</li>
+<li><code>draw</code>、<code>alternating</code>、<code>tick.number</code>、<code>at</code>、<code>labels</code>、<code>cex</code>、<code>rot</code>、<code>font</code>、<code>col</code>、<code>log</code>、<code>abbreviate</code>……</li>
+</ul>
+<p>前面已經用過：<code>scales=list(x=list(rot=90))</code> 旋轉月份標籤、<code>scales=list(draw=FALSE)</code> 讓地圖閉嘴。</p>
+</section>
+<section id="參數trellis.par.getset" class="slide level2">
+<h2>參數：trellis.par.get／set</h2>
+<p>lattice 不理會 <code>par</code>；它的設定住在一個深層參數串列裡：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">trellis.par.get</span>(<span class="st">"axis.text"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$alpha
+[1] 1
+
+$cex
+[1] 0.8
+
+$col
+[1] "black"
+
+$font
+[1] 1
+
+$lineheight
+[1] 1</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">trellis.par.set</span>(<span class="fu">list</span>(<span class="at">axis.text =</span> <span class="fu">list</span>(<span class="at">cex =</span> <span class="fl">0.5</span>)))</span>
+<span id="cb34-2"><a href=""></a><span class="fu">show.settings</span>()                    <span class="co"># 目前設定的視覺總覽</span></span>
+<span id="cb34-3"><a href=""></a><span class="fu">names</span>(<span class="fu">trellis.par.get</span>())           <span class="co"># 30 多組、約 380 個參數</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>參數組包括 <code>superpose.symbol</code>／<code>superpose.line</code>（分組）、<code>plot.polygon</code>（長條／直方）、<code>box.rectangle</code>／<code>box.umbrella</code>（bwplot）、<code>plot.line</code>／<code>plot.symbol</code>（xyplot 等）、<code>reference.line</code>、<code>regions</code> 與 <code>shade.colors</code>（levelplot／wireframe）、<code>strip.background</code>／<code>strip.shingle</code>、<code>fontsize</code>、<code>par.main.text</code> 等。</p>
+</section>
+<section id="plot.trellisstrip.defaultsimplekey" class="slide level2">
+<h2>plot.trellis、strip.default、simpleKey</h2>
+<ul>
+<li><strong><code>plot.trellis</code></strong>——控制繪製的引數：<code>position</code>／<code>split</code>／<code>more</code>（同頁畫多個 trellis 物件）、<code>panel.height</code>／<code>panel.width</code>、<code>packet.panel</code>（哪個封包進哪個面板；預設 <code>packet.panel.default</code>）、<code>panel.error</code>。</li>
+<li><strong><code>strip.default(which.given, which.panel, var.name, factor.levels, shingle.intervals, strip.names, strip.levels, style, bg, fg, par.strip.text)</code></strong>——strip 如何顯示條件水準；用 <code>strip.custom</code> 客製。</li>
+<li><strong><code>simpleKey(text, points=TRUE, rectangles=FALSE, lines=FALSE, col, cex, ...)</code></strong>——<code>auto.key</code> 背後的圖例建構者。</li>
+</ul>
+</section>
+<section id="低階與面板函式" class="slide level2">
+<h2>低階與面板函式</h2>
+<p>以 grid 為底的繪圖原語對應 base graphics：<code>llines</code>／<code>panel.lines</code>、<code>lpoints</code>／<code>panel.points</code>、<code>ltext</code>／<code>panel.text</code>、<code>lsegments</code>／<code>panel.segments</code>、<code>lpolygon</code>／<code>panel.polygon</code>、<code>larrows</code>／<code>panel.arrows</code>、<code>lrect</code>／<code>panel.rect</code>，外加 <code>panel.axis</code> 與 <code>panel.superpose</code>。</p>
+<p>現成的面板小幫手，可組進自訂面板：</p>
+<ul>
+<li><code>panel.abline</code>、<code>panel.curve</code>、<code>panel.rug</code>、<code>panel.grid</code>、<code>panel.fill</code>；</li>
+<li><code>panel.mathdensity</code>（疊理論密度）、<code>panel.average</code>；</li>
+<li><code>panel.loess</code>（平滑線）、<code>panel.lmline</code>（迴歸線）；</li>
+<li>以及各高階函式的 <code>panel.*</code>（如 <code>panel.xyplot</code>、<code>panel.barchart</code>、<code>panel.histogram</code>）供委派——正是我們第一個自訂面板的寫法。</li>
+</ul>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

@@ -238,7 +238,7 @@ qqmath(~DBWT|DPLURAL,
 
 ## 舊金山房屋銷售資料
 
-第二個貫穿範例：3,281 筆舊金山房屋成交，2008-02-13 至 2009-07-14，作者從報紙彙整、地理編碼、再用 `sp`／`maptools` 與 `point.in.polygon` 連結 Zillow 街區圖資。變數：`street`、`city`、`zip`、`saledate`、`price`、`bedrooms`、`squarefeet`、`lotsize`、`yearbuilt`、`condolike`、`latitude`／`longitude`、`neighborhood`。真實資料——不完美、有缺值：
+第二個貫穿範例：3,281 筆舊金山房屋成交，2008-02-13 至 2009-07-14，作者從報紙彙整、地理編碼、再用 `sp`／`maptools` 與 `point.in.polygon` 連結 Zillow 街區圖資。變數（依套件實際打包——書中文字的命名略有出入）：`line`、`county`、`street`、`city`、`zip`、`date`（成交日）、`price`、`bedrooms`、`squarefeet`、`lotsize`、`year`（建造年）、`latitude`／`longitude`、`month`、`neighborhood`。真實資料——不完美、有缺值：
 
 ```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
@@ -292,7 +292,7 @@ trellis.par.set(fontsize=list(text=12))
 價格分布隨時間的變化——用 `cut` 把日期取整到月。原始嘗試被離群值淹沒；取對數、轉直、旋轉標籤：
 
 ```{r,echo=TRUE}
-bwplot(log(price)~cut(saledate, "month"),
+bwplot(log(price)~cut(date, "month"),
        data=sanfrancisco.home.sales,
        scales=list(x=list(rot=90)))
 ```

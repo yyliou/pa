@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,207 +211,563 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="基礎繪圖" class="title-slide slide level1 center">
 <h1><strong>基礎繪圖</strong></h1>
 
 </section>
-<section id="畫家模型" class="slide level2">
-<h2>畫家模型</h2>
-<p>基礎繪圖採「筆在紙上」的模型：高階函式畫出一張完整圖表，低階函式在其上疊加筆墨，畫上去就擦不掉——只能重畫 <span class="citation" data-cites="tukey1977exploratory cleveland1993visualizing">(Tukey 1977; Cleveland 1993)</span>。</p>
+<section id="三套繪圖系統各佔一章" class="slide level2">
+<h2>三套繪圖系統，各佔一章</h2>
+<p>R 繪圖的方式很多；本書聚焦三個最流行的套件：</p>
 <ul>
-<li><strong>高階</strong>：<code>plot()</code>、<code>hist()</code>、<code>barplot()</code>、<code>pie()</code>、<code>boxplot()</code>……</li>
-<li><strong>低階</strong>：<code>points()</code>、<code>lines()</code>、<code>text()</code>、<code>legend()</code>、<code>abline()</code>……</li>
-<li>輸出送往作用中的<strong>繪圖裝置</strong>（螢幕、PDF、PNG）。</li>
+<li><strong>graphics</strong>（本章）——經典系統：好客製、好修改、可在螢幕上互動；</li>
+<li><strong>lattice</strong>（第十四章）——專為<em>依條件變數拆分資料</em>而生；</li>
+<li><strong>ggplot2</strong>（第十五章）——另一套隱喻，讓複雜又漂亮的圖變得容易。</li>
 </ul>
-<p>本章範例資料，依課程慣例載入：</p>
+<p>本章路線：常見圖型巡禮 → 繪圖裝置 → 完整的客製化機制（<code>par</code>、低階函式）。</p>
+</section></section>
+<section>
+<section id="散布圖" class="title-slide slide level1 center">
+<h1>散布圖</h1>
+
+</section>
+<section id="plot泛型入口" class="slide level2">
+<h2>plot：泛型入口</h2>
+<p>範例資料：2008 年癌症病例（美國癌症協會）與 2006 年各州毒物排放（EPA），打包成 <code>toxins.and.cancer</code>：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-5"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-6"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-7"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-8"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-9"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda"</span>,</span>
+<span id="cb1-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</section>
-<section id="散佈圖" class="slide level2">
-<h2>散佈圖</h2>
-<p>環境毒物排放與癌症死亡率有關嗎？一個問題、一個 <code>plot()</code>：</p>
+<p><code>plot</code> 是泛型函式——向量、表格、時間序列都能畫。兩個向量時執行的是 <code>plot.default</code>。癌症死亡率 vs.&nbsp;毒物排放率：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">plot</span>(toxins.and.cancer<span class="sc">$</span>total_toxic_chemicals <span class="sc">/</span> toxins.and.cancer<span class="sc">$</span>Surface_Area,</span>
-<span id="cb2-2"><a href=""></a>     toxins.and.cancer<span class="sc">$</span>deaths_total <span class="sc">/</span> toxins.and.cancer<span class="sc">$</span>Population,</span>
-<span id="cb2-3"><a href=""></a>     <span class="at">xlab =</span> <span class="st">"Toxins released per sq mile"</span>,</span>
-<span id="cb2-4"><a href=""></a>     <span class="at">ylab =</span> <span class="st">"Deaths per capita"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">attach</span>(toxins.and.cancer)</span>
+<span id="cb2-2"><a href=""></a><span class="fu">plot</span>(total_toxic_chemicals<span class="sc">/</span>Surface_Area, deaths_total<span class="sc">/</span>Population)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p><code>plot(x, y)</code> 是萬用入口；公式寫法 <code>plot(y ~ x, data = df)</code> 也可以。</p>
-</section>
-<section id="標示資料點" class="slide level2">
-<h2>標示資料點</h2>
-<p>用低階函式替有趣的觀測值加上標籤：</p>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="plot.default引數" class="slide level2">
+<h2>plot.default：引數</h2>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">attach</span>(toxins.and.cancer)</span>
-<span id="cb3-2"><a href=""></a><span class="fu">plot</span>(air_on_site <span class="sc">/</span> Surface_Area, deaths_lung <span class="sc">/</span> Population,</span>
-<span id="cb3-3"><a href=""></a>     <span class="at">xlab =</span> <span class="st">"Air toxins"</span>, <span class="at">ylab =</span> <span class="st">"Lung-cancer deaths per capita"</span>)</span>
-<span id="cb3-4"><a href=""></a><span class="fu">text</span>(air_on_site <span class="sc">/</span> Surface_Area, deaths_lung <span class="sc">/</span> Population,</span>
-<span id="cb3-5"><a href=""></a>     <span class="at">labels =</span> State_Abbrev, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">pos =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">detach</span>(toxins.and.cancer)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">plot</span>(x, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">type =</span> <span class="st">"p"</span>, <span class="at">xlim =</span> <span class="cn">NULL</span>, <span class="at">ylim =</span> <span class="cn">NULL</span>, <span class="at">log =</span> <span class="st">""</span>,</span>
+<span id="cb3-2"><a href=""></a>     <span class="at">main =</span> <span class="cn">NULL</span>, <span class="at">sub =</span> <span class="cn">NULL</span>, <span class="at">xlab =</span> <span class="cn">NULL</span>, <span class="at">ylab =</span> <span class="cn">NULL</span>,</span>
+<span id="cb3-3"><a href=""></a>     <span class="at">ann =</span> <span class="fu">par</span>(<span class="st">"ann"</span>), <span class="at">axes =</span> <span class="cn">TRUE</span>, <span class="at">frame.plot =</span> axes,</span>
+<span id="cb3-4"><a href=""></a>     <span class="at">panel.first =</span> <span class="cn">NULL</span>, <span class="at">panel.last =</span> <span class="cn">NULL</span>, <span class="at">asp =</span> <span class="cn">NA</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-3-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><p>互動模式下，<code>identify()</code> 與 <code>locator()</code> 讓你直接在繪圖視窗點選，找出資料點與座標。</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x</code>、<code>y</code></td>
+<td>資料：兩個向量，或時間序列／公式／串列／兩欄矩陣（見 <code>?xy.coords</code>）</td>
+</tr>
+<tr class="even">
+<td><code>type</code></td>
+<td><code>"p"</code> 點、<code>"l"</code> 線、<code>"o"</code> 點線重疊、<code>"b"</code> 點線相連、<code>"s"</code> 階梯、<code>"h"</code> 垂直線、<code>"n"</code> 不畫</td>
+</tr>
+<tr class="odd">
+<td><code>xlim</code>／<code>ylim</code></td>
+<td>座標軸範圍</td>
+</tr>
+<tr class="even">
+<td><code>log</code></td>
+<td>對數軸：<code>""</code>、<code>"x"</code>、<code>"y"</code>、<code>"xy"</code></td>
+</tr>
+<tr class="odd">
+<td><code>main</code>／<code>sub</code>／<code>xlab</code>／<code>ylab</code></td>
+<td>標題與軸標籤</td>
+</tr>
+<tr class="even">
+<td><code>ann</code>／<code>axes</code>／<code>frame.plot</code></td>
+<td>畫註記／座標軸／外框？</td>
+</tr>
+<tr class="odd">
+<td><code>panel.first</code>／<code>panel.last</code></td>
+<td>畫點之前／之後評估的運算式</td>
+</tr>
+<tr class="even">
+<td><code>asp</code></td>
+<td>長寬比 y/x</td>
+</tr>
+<tr class="odd">
+<td><code>...</code></td>
+<td>圖形參數（見後）</td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="繪製時間序列" class="slide level2">
-<h2>繪製時間序列</h2>
-<p><code>plot()</code> 認得 <code>ts</code> 物件，會沿著日曆畫出折線：</p>
+<section id="互動式辨識與標籤" class="slide level2">
+<h2>互動式辨識與標籤</h2>
+<p><em>空氣</em>毒物與<em>肺癌</em>之間的相關更強：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">plot</span>(turkey.price.ts, <span class="at">ylab =</span> <span class="st">"US cents per pound"</span>,</span>
-<span id="cb5-2"><a href=""></a>     <span class="at">main =</span> <span class="st">"Average turkey price by month"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">plot</span>(air_on_site<span class="sc">/</span>Surface_Area, deaths_lung<span class="sc">/</span>Population,</span>
+<span id="cb4-2"><a href=""></a>     <span class="at">xlab=</span><span class="st">"Air Release Rate of Toxic Chemicals"</span>,</span>
+<span id="cb4-3"><a href=""></a>     <span class="at">ylab=</span><span class="st">"Lung Cancer Death Rate"</span>)</span>
+<span id="cb4-4"><a href=""></a><span class="fu">text</span>(air_on_site<span class="sc">/</span>Surface_Area, deaths_lung<span class="sc">/</span>Population,</span>
+<span id="cb4-5"><a href=""></a>     <span class="at">labels=</span>State_Abbrev, <span class="at">cex=</span><span class="fl">0.5</span>, <span class="at">adj=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="sc">-</span><span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p>節慶需求一眼可見——價格每年十一月都下探。</p>
-</section>
-<section id="長條圖" class="slide level2">
-<h2>長條圖</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>doubles.by.team <span class="ot">&lt;-</span> <span class="fu">tapply</span>(batting<span class="fl">.2008</span><span class="sc">$</span><span class="st">`</span><span class="at">2B</span><span class="st">`</span>, batting<span class="fl">.2008</span><span class="sc">$</span>teamID, sum)</span>
-<span id="cb6-2"><a href=""></a><span class="fu">barplot</span>(<span class="fu">sort</span>(doubles.by.team, <span class="at">decreasing =</span> <span class="cn">TRUE</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>],</span>
-<span id="cb6-3"><a href=""></a>        <span class="at">las =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">"Doubles by team, 2008 (top 8)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><ul>
-<li><code>horiz=TRUE</code> 翻成橫向；輸入矩陣可畫分組或堆疊長條（<code>beside=</code>）。</li>
-<li><code>las=2</code> 旋轉座標軸標籤——小小旗標，大大提升可讀性。</li>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><ul>
+<li>互動工具：<code>locator(1)</code> 印出你點擊位置的座標；<code>identify(x, y, labels)</code> 邊點邊標記。</li>
+<li>一次標出全部，用 <code>text</code>（這裡以 <code>cex</code> 縮小、<code>adj</code> 調位）。這個關係<em>確實</em>統計顯著（第十八章）——但僅憑這點談不上因果。</li>
 </ul>
 </section>
-<section id="圓餅圖與馬賽克圖" class="slide level2">
-<h2>圓餅圖與馬賽克圖</h2>
+<section id="matplotsmoothscatterpairs" class="slide level2">
+<h2>matplot、smoothScatter、pairs</h2>
+<p>三個特殊場合的親戚：</p>
+<ul>
+<li><strong><code>matplot(x, y, type=, lty=, lwd=, pch=, col=, cex=, ..., add=)</code></strong> 把一個矩陣的各欄對另一個矩陣的各欄作圖；常見的 <code>par</code> 式引數在此接受<em>向量</em>，一個序列一個值。</li>
+<li><strong><code>smoothScatter</code></strong> 依點的<em>密度</em>塗色——點太多疊成一團時的解藥（見第十六章）。</li>
+<li><strong><code>pairs</code></strong> 替每對變數畫散布圖矩陣：</li>
+</ul>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">pie</span>(<span class="fu">c</span>(<span class="at">Good =</span> <span class="dv">787</span>, <span class="at">Missed =</span> <span class="dv">163</span>, <span class="at">Blocked =</span> <span class="dv">24</span>),</span>
-<span id="cb7-2"><a href=""></a>    <span class="at">main =</span> <span class="st">"Field goal outcomes, 2005"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb5-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda"</span>,</span>
+<span id="cb5-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb5-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb5-5"><a href=""></a><span class="fu">pairs</span>(batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>AB<span class="sc">&gt;</span><span class="dv">100</span>, <span class="fu">c</span>(<span class="st">"H"</span>, <span class="st">"R"</span>, <span class="st">"SO"</span>, <span class="st">"BB"</span>, <span class="st">"HR"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:55.0%"><ul>
-<li>知覺研究對圓餅圖很不留情：人類比較長度遠勝於比較角度。數值接近時請改用長條圖。</li>
-<li>兩個類別變數時，<code>mosaicplot(~ cut + color, data = ...)</code> 依交叉表比例鋪滿平面。</li>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
+<section>
+<section id="繪製時間序列" class="title-slide slide level1 center">
+<h1>繪製時間序列</h1>
+
+</section>
+<section id="plot.ts-與-acf" class="slide level2">
+<h2>plot.ts 與 acf</h2>
+<p><code>plot</code> 有時間序列方法（<code>plot.type</code> 可選 <code>"multiple"</code>／<code>"single"</code>，另有 <code>panel</code>、<code>nc</code>、<code>yax.flip</code> 與邊界控制……）。第七章的火雞價格：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb6-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>,</span>
+<span id="cb6-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb6-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb6-5"><a href=""></a><span class="fu">plot</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>季節性強烈：十一、十二月大特價（感恩節、聖誕節），春天小降價（大概是復活節）。</p>
+</section>
+<section id="相關圖correlogram" class="slide level2">
+<h2>相關圖（Correlogram）</h2>
+<p><strong>自我相關函數</strong>顯示各時間差下序列與自身過去的相關——<code>acf</code> 計算並預設畫圖：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">acf</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>12 個月週期正相關、6 個月週期負相關。（時間序列分析正篇：第二十三章。）</p>
+</section></section>
+<section>
+<section id="長條圖" class="title-slide slide level1 center">
+<h1>長條圖</h1>
+
+</section>
+<section id="barplot-基礎" class="slide level2">
+<h2>barplot 基礎</h2>
+<p>2001–2006 年美國博士學位授予數（Statistical Abstract），直接輸入：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>doctorates <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb8-2"><a href=""></a>  <span class="at">year=</span><span class="fu">c</span>(<span class="dv">2001</span>, <span class="dv">2002</span>, <span class="dv">2003</span>, <span class="dv">2004</span>, <span class="dv">2005</span>, <span class="dv">2006</span>),</span>
+<span id="cb8-3"><a href=""></a>  <span class="at">engineering=</span><span class="fu">c</span>(<span class="dv">5323</span>, <span class="dv">5511</span>, <span class="dv">5079</span>, <span class="dv">5280</span>, <span class="dv">5777</span>, <span class="dv">6425</span>),</span>
+<span id="cb8-4"><a href=""></a>  <span class="at">science=</span><span class="fu">c</span>(<span class="dv">20643</span>, <span class="dv">20017</span>, <span class="dv">19529</span>, <span class="dv">20001</span>, <span class="dv">20498</span>, <span class="dv">21564</span>),</span>
+<span id="cb8-5"><a href=""></a>  <span class="at">education=</span><span class="fu">c</span>(<span class="dv">6436</span>, <span class="dv">6349</span>, <span class="dv">6503</span>, <span class="dv">6643</span>, <span class="dv">6635</span>, <span class="dv">6226</span>),</span>
+<span id="cb8-6"><a href=""></a>  <span class="at">health=</span><span class="fu">c</span>(<span class="dv">1591</span>, <span class="dv">1541</span>, <span class="dv">1654</span>, <span class="dv">1633</span>, <span class="dv">1720</span>, <span class="dv">1785</span>),</span>
+<span id="cb8-7"><a href=""></a>  <span class="at">humanities=</span><span class="fu">c</span>(<span class="dv">5213</span>, <span class="dv">5178</span>, <span class="dv">5051</span>, <span class="dv">5020</span>, <span class="dv">5013</span>, <span class="dv">4949</span>),</span>
+<span id="cb8-8"><a href=""></a>  <span class="at">other=</span><span class="fu">c</span>(<span class="dv">2159</span>, <span class="dv">2141</span>, <span class="dv">2209</span>, <span class="dv">2180</span>, <span class="dv">2480</span>, <span class="dv">2436</span>))</span>
+<span id="cb8-9"><a href=""></a>doctorates.m <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(doctorates[<span class="dv">2</span><span class="sc">:</span><span class="dv">7</span>])   <span class="co"># barplot 要矩陣，</span></span>
+<span id="cb8-10"><a href=""></a><span class="fu">rownames</span>(doctorates.m) <span class="ot">&lt;-</span> doctorates[, <span class="dv">1</span>]    <span class="co"># 不收資料框</span></span>
+<span id="cb8-11"><a href=""></a><span class="fu">barplot</span>(doctorates.m[<span class="dv">1</span>, ])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>預設行為：畫 y 軸、不畫 x 軸線、以欄名替長條命名。</p>
+</section>
+<section id="並排與堆疊" class="slide level2">
+<h2>並排與堆疊</h2>
+<p>並排的水平長條加圖例；然後是堆疊直條（先轉置使欄＝年份，加寬 <code>ylim</code> 容納圖例）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">barplot</span>(doctorates.m, <span class="at">beside=</span><span class="cn">TRUE</span>, <span class="at">horiz=</span><span class="cn">TRUE</span>, <span class="at">legend=</span><span class="cn">TRUE</span>, <span class="at">cex.names=</span>.<span class="dv">75</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">barplot</span>(<span class="fu">t</span>(doctorates.m), <span class="at">legend=</span><span class="cn">TRUE</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">66000</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-9-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="barplot引數" class="slide level2">
+<h2>barplot：引數</h2>
+<p>重點引數（不只這些）：</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>height</code></td>
+<td>向量，或矩陣（<code>beside=FALSE</code> 堆疊、<code>TRUE</code> 並排）</td>
+</tr>
+<tr class="even">
+<td><code>width</code>／<code>space</code></td>
+<td>條寬／間距（<code>beside=TRUE</code> 時可給 <code>c(組內, 組間)</code>）</td>
+</tr>
+<tr class="odd">
+<td><code>names.arg</code>／<code>legend.text</code></td>
+<td>條的標籤／圖例（邏輯值＝用列名）</td>
+</tr>
+<tr class="even">
+<td><code>beside</code>／<code>horiz</code></td>
+<td>並排 vs.&nbsp;堆疊／水平 vs.&nbsp;垂直</td>
+</tr>
+<tr class="odd">
+<td><code>density</code>／<code>angle</code></td>
+<td>每英寸陰影線數／陰影線斜率</td>
+</tr>
+<tr class="even">
+<td><code>col</code>／<code>border</code></td>
+<td>條色／邊框色</td>
+</tr>
+<tr class="odd">
+<td><code>main</code>、<code>sub</code>、<code>xlab</code>、<code>ylab</code>、<code>xlim</code>、<code>ylim</code>、<code>log</code>、<code>axes</code></td>
+<td>慣常的註記</td>
+</tr>
+<tr class="even">
+<td><code>xpd</code></td>
+<td>允許條超出繪圖區？</td>
+</tr>
+<tr class="odd">
+<td><code>cex.axis</code>／<code>cex.names</code>／<code>axisnames</code>／<code>axis.lty</code></td>
+<td>軸文字大小與樣式</td>
+</tr>
+<tr class="even">
+<td><code>inside</code>／<code>offset</code>／<code>add</code>／<code>args.legend</code></td>
+<td>分隔線、基線位移、疊圖、圖例選項</td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="圓餅圖" class="title-slide slide level1 center">
+<h1>圓餅圖</h1>
+
+</section>
+<section id="pie慎用" class="slide level2">
+<h2>pie——慎用</h2>
+<p>2006 年美國漁獲的去向（百萬磅）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>domestic.catch<span class="fl">.2006</span> <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">7752</span>, <span class="dv">1166</span>, <span class="dv">463</span>, <span class="dv">108</span>)</span>
+<span id="cb11-2"><a href=""></a><span class="fu">names</span>(domestic.catch<span class="fl">.2006</span>) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Fresh and frozen"</span>,</span>
+<span id="cb11-3"><a href=""></a>  <span class="st">"Reduced to meal, oil, etc."</span>, <span class="st">"Canned"</span>, <span class="st">"Cured"</span>)</span>
+<span id="cb11-4"><a href=""></a><span class="fu">pie</span>(domestic.catch<span class="fl">.2006</span>, <span class="at">init.angle=</span><span class="dv">100</span>, <span class="at">cex=</span>.<span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>引數：<code>x</code>（非負值）、<code>labels</code>、<code>edges</code>（圓的平滑度）、<code>radius</code>、<code>clockwise</code> 與 <code>init.angle</code>、<code>density</code>／<code>angle</code> 陰影、<code>col</code>（預設六種粉彩色）、<code>border</code>、<code>lty</code>、<code>main</code>。</p>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Warning</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>說明檔自己都這麼說：</strong>「圓餅圖是非常糟糕的資訊呈現方式。人眼擅長判斷線性長度、不擅長判斷相對面積。長條圖或點圖是呈現這類資料更好的選擇。」</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="繪製類別資料" class="title-slide slide level1 center">
+<h1>繪製類別資料</h1>
+
+</section>
+<section id="條件密度cdplot" class="slide level2">
+<h2>條件密度：cdplot</h2>
+<p><em>類別</em>結果如何沿<em>數值</em>軸變化？<code>cdplot</code> 以核密度估計平滑（底層是 <code>density</code>；<code>bw</code>、<code>n</code>、<code>from</code>、<code>to</code> 會轉傳；<code>ylevels</code> 重排順序；支援公式＋<code>data</code>＋<code>subset</code>）。打擊慣用手 vs.&nbsp;打擊率：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>batting.w.names<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">transform</span>(batting<span class="fl">.2008</span>,</span>
+<span id="cb12-2"><a href=""></a>  <span class="at">AVG=</span>H<span class="sc">/</span>AB, <span class="at">bats=</span><span class="fu">as.factor</span>(bats), <span class="at">throws=</span><span class="fu">as.factor</span>(throws))</span>
+<span id="cb12-3"><a href=""></a><span class="fu">cdplot</span>(bats<span class="sc">~</span>AVG, <span class="at">data=</span>batting.w.names<span class="fl">.2008</span>,</span>
+<span id="cb12-4"><a href=""></a>       <span class="at">subset=</span>(batting.w.names<span class="fl">.2008</span><span class="sc">$</span>AB<span class="sc">&gt;</span><span class="dv">100</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>左右開弓（<code>B</code>）的比例隨打擊率上升。</p>
+</section>
+<section id="馬賽克圖脊柱圖關聯圖" class="slide level2">
+<h2>馬賽克圖、脊柱圖、關聯圖</h2>
+<p>兩個因子的列聯結構，三種畫法：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">mosaicplot</span>(<span class="at">formula=</span>bats<span class="sc">~</span>throws, <span class="at">data=</span>batting.w.names<span class="fl">.2008</span>, <span class="at">color=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><ul>
+<li><code>mosaicplot</code> 的方塊面積與次數成比例；其餘引數：<code>sort</code>、<code>off</code>（間距）、<code>dir</code>（方向）、<code>shade</code>（延伸圖，依對數線性模型殘差上色）、<code>margin</code>、<code>type</code>（<code>"pearson"</code>／<code>"deviance"</code>／<code>"FT"</code> 殘差）。</li>
+<li><code>spineplot(bats~throws, data=...)</code>——近親。</li>
+<li><code>assocplot(table(bats, throws))</code>——以長條顯示各格<em>偏離獨立</em>的程度（Cohen–Friendly 關聯圖）。</li>
+<li>另見 <code>stars</code> 與 <code>fourfoldplot</code>。</li>
+</ul>
+</section></section>
+<section>
+<section id="三維資料" class="title-slide slide level1 center">
+<h1>三維資料</h1>
+
+</section>
+<section id="優勝美地高程資料" class="slide level2">
+<h2>優勝美地高程資料</h2>
+<p>所有 3D 函式都畫一個<strong>矩陣</strong>：列索引＝x、欄索引＝y、格值＝z。書中範例：USGS 的優勝美地谷高程，以 GridFloat 下載（562×253 的 4 位元組浮點流，用 <code>readBin(..., size=4, endian="little")</code> 讀入再設 <code>dim</code>）；打包為 <code>yosemite</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb14-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda"</span>,</span>
+<span id="cb14-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb14-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb14-5"><a href=""></a><span class="fu">dim</span>(yosemite)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 562 253</code></pre>
+</div>
+</div>
+</section>
+<section id="persp透視曲面" class="slide level2">
+<h2>persp：透視曲面</h2>
+<p>重點引數：<code>x</code>／<code>y</code>（列／欄的座標）、<code>z</code>（矩陣）、<code>theta</code>／<code>phi</code>（視角方位角／餘緯度）、<code>r</code>／<code>d</code>（視點距離、透視強度）、<code>expand</code>（z 誇張倍率）、<code>col</code>／<code>border</code>、<code>ltheta</code>／<code>lphi</code>（光源）、<code>shade</code>、<code>box</code>／<code>axes</code>／<code>nticks</code>／<code>ticktype</code>。</p>
+<p>望向半圓頂——先左右翻轉欄（persp 的 y 由下往上畫），取方形的 253 欄子集（小心柵欄錯誤的 <code>+1</code>！），再旋轉、打光：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a>halfdome <span class="ot">&lt;-</span> yosemite[(<span class="fu">nrow</span>(yosemite) <span class="sc">-</span> <span class="fu">ncol</span>(yosemite) <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span><span class="dv">562</span>,</span>
+<span id="cb16-2"><a href=""></a>                     <span class="fu">seq</span>(<span class="at">from=</span><span class="dv">253</span>, <span class="at">to=</span><span class="dv">1</span>)]</span>
+<span id="cb16-3"><a href=""></a><span class="fu">persp</span>(halfdome, <span class="at">col=</span><span class="fu">grey</span>(.<span class="dv">25</span>), <span class="at">border=</span><span class="cn">NA</span>, <span class="at">expand=</span>.<span class="dv">15</span>,</span>
+<span id="cb16-4"><a href=""></a>      <span class="at">theta=</span><span class="dv">225</span>, <span class="at">phi=</span><span class="dv">20</span>, <span class="at">ltheta=</span><span class="dv">45</span>, <span class="at">lphi=</span><span class="dv">20</span>, <span class="at">shade=</span>.<span class="dv">75</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-14-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="image-與-heatmap" class="slide level2">
+<h2>image 與 heatmap</h2>
+<p><code>image</code> 把矩陣畫成上色的格網（引數：<code>zlim</code>、<code>col</code>——常用 <code>heat.colors</code>、<code>topo.colors</code>、<code>terrain.colors</code>、<code>breaks</code>、<code>oldstyle</code>、<code>add</code>）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">image</span>(yosemite, <span class="at">asp=</span><span class="dv">253</span><span class="sc">/</span><span class="dv">562</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>), <span class="at">col=</span><span class="fu">sapply</span>((<span class="dv">0</span><span class="sc">:</span><span class="dv">32</span>)<span class="sc">/</span><span class="dv">32</span>, gray))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-15-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>（微調：長寬比配合資料、y 軸反向、32 階灰。）生物學風味的親戚 <strong><code>heatmap</code></strong> 在邊緣加上可選的<strong>樹狀圖（dendrogram）</strong>——<code>Rowv</code>／<code>Colv</code>、<code>distfun</code>／<code>hclustfun</code>、<code>scale</code>、<code>margins</code>、<code>cexRow</code>／<code>cexCol</code> 等。</p>
+</section>
+<section id="contour" class="slide level2">
+<h2>contour</h2>
+<p><code>contour</code> 以等值線連接相同的值——引數 <code>nlevels</code>／<code>levels</code>、<code>labels</code>／<code>labcex</code>／<code>drawlabels</code>／<code>method</code>（標籤位置：<code>"simple"</code>、<code>"edge"</code>、<code>"flattest"</code>）、<code>vfont</code>，加上慣常的 <code>col</code>／<code>lty</code>／<code>lwd</code>／<code>add</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">contour</span>(yosemite, <span class="at">asp=</span><span class="dv">253</span><span class="sc">/</span><span class="dv">562</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-16-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>等值線常<em>疊加在</em> image 圖上（<code>add=TRUE</code>）。</p>
+</section></section>
+<section>
+<section id="繪製分布" class="title-slide slide level1 center">
+<h1>繪製分布</h1>
+
+</section>
+<section id="直方圖" class="slide level2">
+<h2>直方圖</h2>
+<p>2008 年每位打者的打席數（PA ＝ AB+BB+HBP+SF+SH）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a>batting<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">transform</span>(batting<span class="fl">.2008</span>, <span class="at">PA=</span>AB<span class="sc">+</span>BB<span class="sc">+</span>HBP<span class="sc">+</span>SF<span class="sc">+</span>SH)</span>
+<span id="cb19-2"><a href=""></a><span class="fu">hist</span>(batting<span class="fl">.2008</span><span class="sc">$</span>PA)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-17-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>一大群打席不到 50 的球員——算比率統計時值得剔除。拉近並細分組距：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">hist</span>(batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>PA<span class="sc">&gt;</span><span class="dv">25</span>, <span class="st">"PA"</span>], <span class="at">breaks=</span><span class="dv">50</span>, <span class="at">cex.main=</span>.<span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="密度圖與-rug" class="slide level2">
+<h2>密度圖與 rug</h2>
+<p>許多統計學家偏好<strong>密度圖</strong>——更穩健、更好讀。用 <code>density</code> 計算、<code>plot</code> 繪製、<code>rug</code> 點綴（沿軸的帶狀小線段）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">plot</span>(<span class="fu">density</span>(batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>PA<span class="sc">&gt;</span><span class="dv">25</span>, <span class="st">"PA"</span>]))</span>
+<span id="cb21-2"><a href=""></a><span class="fu">rug</span>(batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>PA<span class="sc">&gt;</span><span class="dv">25</span>, <span class="st">"PA"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-19-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="分位數分位數圖" class="slide level2">
+<h2>分位數—分位數圖</h2>
+<p><strong>Q-Q 圖</strong>把樣本分位數對理論分位數作圖——點落在 45° 對角線上代表分布吻合。<code>qqnorm</code> 對照常態；<code>qqplot</code> 對照任意兩個分布：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">qqnorm</span>(batting<span class="fl">.2008</span><span class="sc">$</span>AB)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-20-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>打數顯然<em>不</em>常態——彎曲的形狀一眼就說明了。</p>
+</section></section>
+<section>
+<section id="盒鬚圖" class="title-slide slide level1 center">
+<h1>盒鬚圖</h1>
+
+</section>
+<section id="構造與函式" class="slide level2">
+<h2>構造與函式</h2>
+<p><strong>盒鬚圖</strong>壓縮一個分布：盒＝四分位距（25–75 百分位）、盒內線＝中位數、鬚＝<em>鄰接值</em>（≤ Q3 + 1.5·IQR 的最大觀測；≥ Q1 − 1.5·IQR 的最小觀測）、散點＝外圍值。</p>
+<p><code>boxplot</code> 重點引數：公式 <code>y~grp</code> ＋ <code>data</code> ＋ <code>subset</code>（或直接給向量）；<code>range</code>（鬚的長度）、<code>width</code>／<code>varwidth</code>（∝ √n）、<code>notch</code>（±1.58·IQR/√n 的凹口）、<code>outline</code>、<code>names</code>、<code>plot</code>（FALSE 時回傳統計量）、<code>border</code>／<code>col</code>、<code>log</code>、<code>horizontal</code>、<code>add</code>、<code>at</code>、<code>pars</code>。</p>
+</section>
+<section id="各隊的上壘率" class="slide level2">
+<h2>各隊的上壘率</h2>
+<p>美聯各隊的上壘率，只算常規球員：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a>batting<span class="fl">.2008</span> <span class="ot">&lt;-</span> <span class="fu">transform</span>(batting<span class="fl">.2008</span>, <span class="at">OBP=</span>(H<span class="sc">+</span>BB<span class="sc">+</span>HBP)<span class="sc">/</span>(AB<span class="sc">+</span>BB<span class="sc">+</span>HBP<span class="sc">+</span>SF))</span>
+<span id="cb23-2"><a href=""></a><span class="fu">boxplot</span>(OBP<span class="sc">~</span>teamID,</span>
+<span id="cb23-3"><a href=""></a>        <span class="at">data=</span>batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>PA<span class="sc">&gt;</span><span class="dv">100</span> <span class="sc">&amp;</span> batting<span class="fl">.2008</span><span class="sc">$</span>lgID<span class="sc">==</span><span class="st">"AL"</span>,],</span>
+<span id="cb23-4"><a href=""></a>        <span class="at">cex.axis=</span>.<span class="dv">7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-21-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
+<section>
+<section id="繪圖裝置" class="title-slide slide level1 center">
+<h1>繪圖裝置</h1>
+
+</section>
+<section id="螢幕與檔案" class="slide level2">
+<h2>螢幕與檔案</h2>
+<p>圖形落在<strong>裝置（device）</strong>上。各平台預設：<code>windows</code>（Windows）、<code>X11</code>（Unix）、<code>quartz</code>（macOS）。檔案裝置：<code>bmp</code>、<code>jpeg</code>、<code>png</code>、<code>tiff</code>，加上 <code>postscript</code>、<code>pdf</code>、<code>pictex</code>（LaTeX）、<code>xfig</code>、<code>bitmap</code>。</p>
+<ul>
+<li>多數接受 <code>width</code>、<code>height</code>、<code>pointsize</code>；檔案裝置收 <code>file</code> 引數。（嚴格說 bmp/jpeg/png/tiff 叫 <code>filename</code>——但拜部分比對之賜，寫 <code>file</code> 處處通行。）</li>
+<li><strong>用 <code>dev.off()</code> 關閉裝置</strong>檔案才真正寫入。書中的圖正是這樣產生的：</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">png</span>(<span class="st">"scatter.1.png"</span>, <span class="at">width=</span><span class="fl">4.3</span>, <span class="at">height=</span><span class="fl">4.3</span>, <span class="at">units=</span><span class="st">"in"</span>, <span class="at">res=</span><span class="dv">72</span>)</span>
+<span id="cb24-2"><a href=""></a><span class="fu">plot</span>(total_toxic_chemicals<span class="sc">/</span>Surface_Area, deaths_total<span class="sc">/</span>Population)</span>
+<span id="cb24-3"><a href=""></a><span class="fu">dev.off</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section></section>
+<section>
+<section id="客製化圖表" class="title-slide slide level1 center">
+<h1>客製化圖表</h1>
+
+</section>
+<section id="四條路與共同引數" class="slide level2">
+<h2>四條路，與共同引數</h2>
+<p>客製化的途徑：(1) 繪圖函式的引數、(2) 工作階段參數（<code>par</code>）、(3) 修改既有圖表的函式、(4) 從零自寫函式。多數繪圖函式共享的引數：<code>add</code>、<code>axes</code>、<code>log</code>、<code>type</code>、<code>xlab</code>／<code>ylab</code>、<code>main</code>、<code>sub</code>。</p>
+<p><strong><code>par</code></strong> 查詢與設定作用中裝置的參數——設一次、影響之後每張圖：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">par</span>(<span class="st">"bg"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "white"</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">par</span>(<span class="at">bg=</span><span class="st">"white"</span>)           <span class="co"># 設定</span></span>
+<span id="cb27-2"><a href=""></a><span class="fu">par</span>()                     <span class="co"># 列出全部</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>所有參數皆可讀寫，唯讀的只有 <code>cin</code>、<code>cra</code>、<code>csi</code>、<code>cxy</code>、<code>din</code>。注意：有些函式的引數與參數同名但意義不同（如 <code>points</code> 的 <code>bg</code> ＝點的底色）。</p>
+</section>
+<section id="版面邊界與多圖" class="slide level2">
+<h2>版面：邊界與多圖</h2>
+<ul>
+<li><strong>邊界：</strong> <code>mai</code>（英寸）／<code>mar</code>（文字行數，預設 <code>c(5.1, 4.1, 4.1, 2.1)</code> 對應下左上右）／<code>mex</code>（行高倍率）；標題與標籤間距用 <code>mgp</code>；裝置尺寸看唯讀的 <code>din</code>；正方形繪圖區設 <code>pty="s"</code>。</li>
+<li><strong>多圖：</strong> <code>mfcol=c(3,2)</code>（先填欄）或 <code>mfrow</code>（先填列）切割裝置；<code>mfg</code> 跳到指定格。外邊界：<code>omi</code>／<code>oma</code>／<code>omd</code>。各圖幾何：<code>pin</code>、<code>plt</code>、<code>fig</code>。裁切：<code>xpd</code>。</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfcol=</span><span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">2</span>))</span>
+<span id="cb28-2"><a href=""></a><span class="fu">pie</span>(<span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">3</span>)); <span class="fu">plot</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="fl">1.1</span>,<span class="fl">1.9</span>,<span class="dv">3</span>,<span class="fl">3.9</span>,<span class="dv">6</span>))</span>
+<span id="cb28-3"><a href=""></a><span class="fu">barplot</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>)); <span class="fu">barplot</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), <span class="at">horiz=</span><span class="cn">TRUE</span>)</span>
+<span id="cb28-4"><a href=""></a><span class="fu">pie</span>(<span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">1</span>)); <span class="fu">plot</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>), <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">6</span>,<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">par</span>(<span class="at">mfcol=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-25-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>（更輕鬆的替代：<code>layout</code>、<code>split.screen</code>——或乾脆用 grid／lattice。）</p>
+</section>
+<section id="文字線條顏色座標軸點" class="slide level2">
+<h2>文字、線條、顏色、座標軸、點</h2>
+<ul>
+<li><strong>文字大小：</strong> <code>ps</code>（點數）×<code>cex</code>（整體倍率）×<code>cex.axis</code>／<code>cex.lab</code>／<code>cex.main</code>／<code>cex.sub</code>。<strong>字體：</strong> <code>family</code>；樣式用 <code>font</code>（另有 <code>.axis</code>、<code>.lab</code>、<code>.main</code>、<code>.sub</code>）。對齊 <code>adj</code>、行距 <code>lheight</code>、旋轉 <code>crt</code>（單字元）／<code>srt</code>（整串）。</li>
+<li><strong>線條：</strong> 型式 <code>lty</code>（0 無、1 實線、2 虛線、3 點線、4 點虛、5 長虛、6 雙虛）、寬度 <code>lwd</code>、線端 <code>lend</code>、接點 <code>ljoin</code>／<code>lmitre</code>；外框樣式 <code>bty</code>（<code>"o"</code>、<code>"l"</code>、<code>"7"</code>、<code>"]"</code>、<code>"c"</code>、<code>"u"</code>、<code>"n"</code>）。</li>
+<li><strong>顏色：</strong> <code>bg</code>、<code>fg</code>、<code>col</code>（另有 <code>.axis</code>、<code>.lab</code>、<code>.main</code>、<code>.sub</code>）。可用名稱（<code>colors()</code>）、<code>"#RRGGBB"</code>、調色盤索引（<code>palette()</code>）；生成函式：<code>rgb</code>、<code>hsv</code>、<code>hcl</code>、<code>gray</code>、<code>rainbow</code>。</li>
+<li><strong>座標軸：</strong> <code>lab</code>（刻度數）、<code>las</code>（標籤方向）、<code>mgp</code>、刻度長 <code>tcl</code>／<code>tck</code>、刻度位置 <code>xaxp</code>／<code>yaxp</code>、區間算法 <code>xaxs</code>／<code>yaxs</code>（<code>"r"</code> 外擴 4%、<code>"i"</code> 內含）、<code>xaxt="n"</code>／<code>yaxt="n"</code> 隱藏；對數旗標 <code>xlog</code>／<code>ylog</code>。</li>
+<li><strong>點：</strong> 符號用 <code>pch</code>（19 實心圓、20 小圓點、21 填色圓、22 方、23 菱、24/25 三角；見 <code>?points</code>）；歷史上符號大小是 <code>mkh</code>。</li>
+<li>其他：<code>ann</code>（註記開關）、<code>ask</code>（換頁前詢問）、<code>new</code>（假裝新畫布以疊圖）、<code>usr</code>（使用者座標極值）、<code>smo</code>、<code>err</code>。</li>
+</ul>
+</section></section>
+<section>
+<section id="基礎繪圖函式" class="title-slide slide level1 center">
+<h1>基礎繪圖函式</h1>
+
+</section>
+<section id="低階層" class="slide level2">
+<h2>低階層</h2>
+<p>高階函式是<em>由低階函式組裝的</em>——<code>plot</code> 呼叫 <code>title</code>、<code>plot.new</code>、<code>plot.window</code>、<code>points</code>、<code>lines</code>、<code>axis</code>、<code>box</code>；<code>pie</code> 呼叫 <code>polygon</code>、<code>lines</code>、<code>text</code>、<code>title</code>；<code>boxplot</code> 把活交給 <code>bxp</code>；依此類推。懂低階層，就能把客製化<em>穿過</em>高階函式傳下去，或從零組出圖表。</p>
+<ul>
+<li><strong><code>points(x, y, type="p", ...)</code></strong>——加點（好用的：<code>col</code>、<code>bg</code>、<code>pch</code>、<code>cex</code>、<code>lwd</code>）；矩陣版 <code>matpoints</code>。</li>
+<li><strong><code>lines(x, y, ...)</code></strong>——加折線（好用的：<code>lty</code>、<code>lwd</code>、<code>col</code>、<code>lend</code>、<code>ljoin</code>、<code>lmitre</code>）；矩陣版 <code>matlines</code>。</li>
+<li><strong><code>curve(expr, from, to, n=101, add=, ...)</code></strong>——畫 <code>x</code> 的運算式或函式名。</li>
 </ul>
 </section>
-<section id="三維資料" class="slide level2">
-<h2>三維資料</h2>
-<p>曲面與網格有三位朋友：<code>image()</code>、<code>contour()</code>、<code>persp()</code>。優勝美地山谷的高程網格：</p>
+<section id="直線形狀線段" class="slide level2">
+<h2>直線、形狀、線段</h2>
+<p><strong><code>abline</code></strong> 橫貫繪圖區畫一條線——截距＋斜率（<code>a</code>、<code>b</code>）、水平（<code>h</code>）、垂直（<code>v</code>）、迴歸物件（<code>reg</code>）或 <code>coef</code>；對數軸上 <code>untf</code> 控制是否反變換：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">image</span>(yosemite, <span class="at">col =</span> <span class="fu">terrain.colors</span>(<span class="dv">64</span>), <span class="at">asp =</span> <span class="dv">1</span>,</span>
-<span id="cb8-2"><a href=""></a>      <span class="at">main =</span> <span class="st">"Half Dome (elevation raster)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">persp</span>(yosemite[<span class="fu">seq</span>(<span class="dv">1</span>, <span class="fu">nrow</span>(yosemite), <span class="dv">6</span>), <span class="fu">seq</span>(<span class="dv">1</span>, <span class="fu">ncol</span>(yosemite), <span class="dv">6</span>)],</span>
-<span id="cb9-2"><a href=""></a>      <span class="at">expand =</span> <span class="fl">0.2</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">20</span>, <span class="at">shade =</span> <span class="fl">0.6</span>, <span class="at">border =</span> <span class="cn">NA</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center" style="width:55.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="繪製分布" class="slide level2">
-<h2>繪製分布</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">hist</span>(batting<span class="fl">.2008</span><span class="sc">$</span>AB[batting<span class="fl">.2008</span><span class="sc">$</span>AB <span class="sc">&gt;</span> <span class="dv">100</span>], <span class="at">breaks =</span> <span class="dv">30</span>,</span>
-<span id="cb10-2"><a href=""></a>     <span class="at">xlab =</span> <span class="st">"Batting average"</span>, <span class="at">main =</span> <span class="st">"Hitters with 100+ at-bats"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">plot</span>(<span class="fu">density</span>(batting<span class="fl">.2008</span><span class="sc">$</span>AB[batting<span class="fl">.2008</span><span class="sc">$</span>AB <span class="sc">&gt;</span> <span class="dv">100</span>]),</span>
-<span id="cb11-2"><a href=""></a>     <span class="at">main =</span> <span class="st">"Kernel density estimate"</span>)</span>
-<span id="cb11-3"><a href=""></a><span class="fu">rug</span>(batting<span class="fl">.2008</span><span class="sc">$</span>AB[batting<span class="fl">.2008</span><span class="sc">$</span>AB <span class="sc">&gt;</span> <span class="dv">100</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<p><code>qqnorm()</code> 把樣本與常態分布對照——點落在直線上代表「常態尚屬合理」。</p>
-</section>
-<section id="盒鬚圖" class="slide level2">
-<h2>盒鬚圖</h2>
-<p>五數摘要的圖像化，一組一個盒子：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">boxplot</span>(AB <span class="sc">~</span> teamID, <span class="at">data =</span> batting<span class="fl">.2008</span>[batting<span class="fl">.2008</span><span class="sc">$</span>AB <span class="sc">&gt;</span> <span class="dv">100</span>, ],</span>
-<span id="cb12-2"><a href=""></a>        <span class="at">las =</span> <span class="dv">2</span>, <span class="at">cex.axis =</span> <span class="fl">0.7</span>, <span class="at">ylab =</span> <span class="st">"Batting average"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a><span class="fu">plot</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>))</span>
+<span id="cb30-2"><a href=""></a><span class="fu">abline</span>(<span class="at">h=</span><span class="dv">4</span>); <span class="fu">abline</span>(<span class="at">v=</span><span class="dv">3</span>)</span>
+<span id="cb30-3"><a href=""></a><span class="fu">abline</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">1</span>); <span class="fu">abline</span>(<span class="at">coef=</span><span class="fu">c</span>(<span class="dv">10</span>, <span class="sc">-</span><span class="dv">1</span>))</span>
+<span id="cb30-4"><a href=""></a><span class="fu">polygon</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">4</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">2</span>))</span>
+<span id="cb30-5"><a href=""></a><span class="fu">segments</span>(<span class="at">x0=</span><span class="dv">6</span>, <span class="at">y0=</span><span class="dv">6</span>, <span class="at">x1=</span><span class="dv">8</span>, <span class="at">y1=</span><span class="dv">9</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:68.0%"><p>鬚延伸到 1.5 × IQR；其外的點被標為離群值——Tukey 的配方，自 1977 年以來不曾改變。</p>
+<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-26-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>向量引數一次畫多條（<code>abline(h=1:10, v=1:10)</code>）——但要畫格線，請改用 <code>grid(nx, ny, col, lty, lwd)</code>。形狀：<code>polygon(x, y, density, angle, border, col, lty)</code>；矩形用 <code>rect(xleft, ybottom, xright, ytop, ...)</code>；點對線段用 <code>segments(x0, y0, x1, y1, ...)</code>；箭頭用 <code>arrows</code>。</p>
 </section>
-<section id="繪圖裝置" class="slide level2">
-<h2>繪圖裝置</h2>
-<p>圖表呈現在<strong>裝置</strong>上。螢幕是預設；檔案則是要開啟與關閉的裝置：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">pdf</span>(<span class="st">"figure.pdf"</span>, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">5</span>)    <span class="co"># 向量圖：任意縮放都銳利</span></span>
-<span id="cb13-2"><a href=""></a><span class="fu">plot</span>(turkey.price.ts)</span>
-<span id="cb13-3"><a href=""></a><span class="fu">dev.off</span>()                                    <span class="co"># 一定要關閉裝置</span></span>
-<span id="cb13-4"><a href=""></a></span>
-<span id="cb13-5"><a href=""></a><span class="fu">png</span>(<span class="st">"figure.png"</span>, <span class="at">width =</span> <span class="dv">800</span>, <span class="at">height =</span> <span class="dv">600</span>) <span class="co"># 點陣圖：適合網頁</span></span>
-<span id="cb13-6"><a href=""></a><span class="fu">plot</span>(turkey.price.ts)</span>
-<span id="cb13-7"><a href=""></a><span class="fu">dev.off</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>忘記 <code>dev.off()</code> 會留下寫到一半的檔案——腳本中最常見的繪圖錯誤。</p>
-</section>
-<section id="自訂圖表" class="slide level2">
-<h2>自訂圖表</h2>
-<p>多數繪圖函式共享同一批引數；<code>par()</code> 設定整個工作階段的繪圖參數：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">1</span>))   <span class="co"># 1x2 版面</span></span>
-<span id="cb14-2"><a href=""></a><span class="fu">plot</span>(cars, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">col =</span> <span class="st">"steelblue"</span>, <span class="at">main =</span> <span class="st">"pch &amp; col"</span>)</span>
-<span id="cb14-3"><a href=""></a><span class="fu">plot</span>(cars, <span class="at">type =</span> <span class="st">"l"</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">main =</span> <span class="st">"lines"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-13-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><ul>
-<li>單次呼叫：<code>pch</code>（符號）、<code>col</code>、<code>lty</code>/<code>lwd</code>（線型／線寬）、<code>cex</code>（大小）、<code>xlim</code>/<code>ylim</code>、<code>main</code>/<code>xlab</code>/<code>ylab</code>。</li>
-<li>全階段：<code>par(mfrow=)</code> 排版多圖、<code>par(mar=)</code> 調邊界。像上面那樣保存並還原 <code>par()</code>。</li>
+<section id="textmtexttitlelegend" class="slide level2">
+<h2>text、mtext、title、legend</h2>
+<ul>
+<li><strong><code>text(x, y, labels, adj, pos, offset, vfont, cex, col, font)</code></strong>——在座標處放文字（<code>pos</code>：1 下、2 左、3 上、4 右）。</li>
+<li><strong><code>mtext(text, side=3, line=0, outer=, at=, ...)</code></strong>——在<em>邊界</em>放文字（side 1–4 ＝下／左／上／右）。</li>
+<li><strong><code>title(main, sub, xlab, ylab, line=, outer=)</code></strong>——事後補註記。</li>
+<li><strong><code>legend(x, y, legend, ...)</code></strong>——應有盡有：<code>fill</code>（色塊）、<code>col</code>／<code>lty</code>／<code>lwd</code>／<code>pch</code>（示例線與點）、<code>bty</code>／<code>bg</code>／<code>box.*</code>（圖例外框）、<code>pt.bg</code>／<code>pt.cex</code>／<code>pt.lwd</code>、<code>xjust</code>／<code>yjust</code>、<code>x.intersp</code>／<code>y.intersp</code>／<code>adj</code>／<code>text.width</code>／<code>text.col</code>、<code>merge</code>、<code>ncol</code>／<code>horiz</code>、<code>title</code>、<code>inset</code>、<code>xpd</code>。</li>
 </ul>
 </section>
-<section id="註解函式" class="slide level2">
-<h2>註解函式</h2>
-<p>一層一層把圖蓋起來：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">plot</span>(cars, <span class="at">pch =</span> <span class="dv">19</span>)</span>
-<span id="cb16-2"><a href=""></a><span class="fu">abline</span>(<span class="fu">lm</span>(dist <span class="sc">~</span> speed, <span class="at">data =</span> cars), <span class="at">col =</span> <span class="st">"red"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
-<span id="cb16-3"><a href=""></a><span class="fu">text</span>(<span class="dv">8</span>, <span class="dv">100</span>, <span class="st">"fitted line"</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span>
-<span id="cb16-4"><a href=""></a><span class="fu">legend</span>(<span class="st">"topleft"</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"data"</span>, <span class="st">"fit"</span>),</span>
-<span id="cb16-5"><a href=""></a>       <span class="at">pch =</span> <span class="fu">c</span>(<span class="dv">19</span>, <span class="cn">NA</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="dv">1</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"black"</span>, <span class="st">"red"</span>))</span>
-<span id="cb16-6"><a href=""></a><span class="fu">title</span>(<span class="at">main =</span> <span class="st">"Stopping distance vs. speed"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch13-zh_files/figure-revealjs/unnamed-chunk-14-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><p><code>points()</code>、<code>lines()</code>、<code>segments()</code>、<code>arrows()</code>、<code>rect()</code> 與 <code>polygon()</code> 補齊這套加墨工具箱。</p>
+<section id="axisboxtrans3d" class="slide level2">
+<h2>axis、box、trans3d</h2>
+<ul>
+<li><strong><code>axis(side, at, labels, tick, line, pos, outer, font, lty, lwd, lwd.ticks, col, col.ticks, hadj, padj)</code></strong>——想在哪畫軸、怎麼畫，悉聽尊便（side 1–4 同前）。</li>
+<li><strong><code>box(which="plot", lty="solid")</code></strong>——替 <code>"plot"</code>、<code>"figure"</code>、<code>"inner"</code> 或 <code>"outer"</code> 區域加框。</li>
+<li><strong><code>trans3d(x, y, z, pmat)</code></strong>——把 3D 點投影到 <code>persp</code> 圖上，使用 <code>persp</code> 回傳的透視矩陣。3D 曲面與 2D 註記之間的橋。</li>
+</ul>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

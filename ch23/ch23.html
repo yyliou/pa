@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,97 +211,105 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="data-with-a-clock" class="title-slide slide level1 center">
-<h1><strong>Data with a Clock</strong></h1>
+<section id="data-over-time" class="title-slide slide level1 center">
+<h1><strong>Data Over Time</strong></h1>
 
 </section>
-<section id="time-series-objects" class="slide level2">
-<h2>Time Series Objects</h2>
-<p>Observations ordered in time violate the independence assumed everywhere else — they need their own tools <span class="citation" data-cites="shumway2011time">(Shumway and Stoffer 2011)</span>. The course data sets include two monthly price series:</p>
+<section id="why-time-series-are-different" class="slide level2">
+<h2>Why Time Series Are Different</h2>
+<p>Time series carry <strong>long-term trends</strong> and <strong>periodic patterns</strong> that ordinary summary statistics miss. Analyzing them needs tools that respect <em>order</em> and <em>lag</em>. We revisit the turkey-price series from Chapter 7:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/ham.price.ts.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-5"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-6"><a href=""></a>turkey.price.ts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
-2001 1.58 1.75 1.63 1.45 1.56 2.07 1.81 1.74 1.54 1.45 0.57 1.15
-2002 1.50 1.66 1.34 1.67 1.81 1.60 1.70 1.87 1.47 1.59 0.74 0.82
-2003 1.43 1.77 1.47 1.38 1.66 1.66 1.61 1.74 1.62 1.39 0.70 1.07
-2004 1.48 1.48 1.50 1.27 1.56 1.61 1.55 1.69 1.49 1.32 0.53 1.03
-2005 1.62 1.63 1.40 1.73 1.73 1.80 1.92 1.77 1.71 1.53 0.67 1.09
-2006 1.71 1.90 1.68 1.46 1.86 1.85 1.88 1.86 1.62 1.45 0.67 1.18
-2007 1.68 1.74 1.70 1.49 1.81 1.96 1.97 1.91 1.89 1.65 0.70 1.17
-2008 1.76 1.78 1.53 1.90                                        </code></pre>
+<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda"</span>,</span>
+<span id="cb1-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">plot</span>(turkey.price.ts, <span class="at">ylab =</span> <span class="st">"US cents/lb"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section></section>
+<section>
+<section id="autocorrelation" class="title-slide slide level1 center">
+<h1>Autocorrelation</h1>
 
-</div>
-<img data-src="ch23_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"></section>
-<section id="autocorrelation-functions" class="slide level2">
-<h2>Autocorrelation Functions</h2>
-<p>How strongly does a series correlate <em>with its own past</em>?</p>
+</section>
+<section id="acf-and-pacf" class="slide level2">
+<h2>acf and pacf</h2>
+<p>The <strong>autocorrelation function</strong> measures how correlated a series is with its own past, by lag — the signature of seasonality and cycles:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">acf</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch23_files/figure-revealjs/unnamed-chunk-3-1.png" class="quarto-figure quarto-figure-center" style="width:62.0%"></p>
-</figure>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">acf</span>(x, <span class="at">lag.max =</span> <span class="cn">NULL</span>, <span class="at">type =</span> <span class="fu">c</span>(<span class="st">"correlation"</span>, <span class="st">"covariance"</span>, <span class="st">"partial"</span>),</span>
+<span id="cb2-2"><a href=""></a>    <span class="at">plot =</span> <span class="cn">TRUE</span>, na.action, <span class="at">demean =</span> <span class="cn">TRUE</span>, ...)</span>
+<span id="cb2-3"><a href=""></a><span class="fu">pacf</span>(x, lag.max, plot, na.action, ...)   <span class="co"># alias: type = "partial"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">acf</span>(turkey.price.ts, <span class="at">plot=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Autocorrelations of series 'turkey.price.ts', by lag
+
+0.0000 0.0833 0.1667 0.2500 0.3333 0.4167 0.5000 0.5833 0.6667 0.7500 0.8333 
+ 1.000  0.465 -0.019 -0.165 -0.145 -0.219 -0.215 -0.122 -0.136 -0.200 -0.016 
+0.9167 1.0000 1.0833 1.1667 1.2500 1.3333 1.4167 1.5000 1.5833 
+ 0.368  0.723  0.403 -0.013 -0.187 -0.141 -0.180 -0.226 -0.130 </code></pre>
 </div>
 </div>
 <ul>
-<li>Spikes at lag 12 (and 24): annual seasonality — November discounts echo every year.</li>
-<li><code>pacf()</code> shows <em>partial</em> autocorrelations — the direct effect of lag <span class="math inline">\(k\)</span> after removing shorter lags — the standard tool for choosing AR order.</li>
+<li><code>acf</code> plots by default; <code>plot=FALSE</code> returns the numbers.</li>
+<li><strong><code>pacf</code></strong> (partial autocorrelation) — correlation at a lag <em>after removing</em> the influence of shorter lags; it helps identify the order of an AR model.</li>
 </ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">pacf</span>(turkey.price.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch23_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" style="width:62.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="cross-correlation" class="slide level2">
-<h2>Cross-Correlation</h2>
-<p>Do two series move together, possibly at a delay?</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">ccf</span>(turkey.price.ts, ham.price.ts, <span class="at">main =</span> <span class="st">"Turkey vs. ham prices"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The turkey series shows strong positive autocorrelation at 12-month lags, negative at 6 — clear annual seasonality.</p>
+</section></section>
+<section>
+<section id="time-series-models" class="title-slide slide level1 center">
+<h1>Time Series Models</h1>
 
-</div>
-<img data-src="ch23_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><p><code>ccf()</code> correlates one series with lagged copies of another — peaks away from lag 0 suggest one series leads the other.</p>
 </section>
-<section id="decomposition-and-smoothing" class="slide level2">
-<h2>Decomposition and Smoothing</h2>
-<p>Split a series into trend + seasonal + remainder:</p>
+<section id="autoregressive-models-ar" class="slide level2">
+<h2>Autoregressive Models: ar</h2>
+<p>Time-series models predict future values from past ones. The <strong>autoregressive (AR)</strong> model regresses each value on its predecessors — <code>ar</code> even picks the order automatically by AIC:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">plot</span>(<span class="fu">stl</span>(turkey.price.ts, <span class="at">s.window =</span> <span class="st">"periodic"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">ar</span>(x, <span class="at">aic =</span> <span class="cn">TRUE</span>, <span class="at">order.max =</span> <span class="cn">NULL</span>, <span class="at">method =</span> <span class="fu">c</span>(<span class="st">"yule-walker"</span>,<span class="st">"burg"</span>,</span>
+<span id="cb5-2"><a href=""></a>   <span class="st">"ols"</span>,<span class="st">"mle"</span>,<span class="st">"yw"</span>), ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<img data-src="ch23_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><ul>
-<li><code>stl()</code> uses loess smoothing; <code>decompose()</code> is the moving-average classic.</li>
-<li><code>filter()</code> computes moving averages directly; <code>diff()</code> removes trend by differencing — the “I” in ARIMA.</li>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>turkey.price.ts.ar <span class="ot">&lt;-</span> <span class="fu">ar</span>(turkey.price.ts)</span>
+<span id="cb6-2"><a href=""></a>turkey.price.ts.ar<span class="sc">$</span>order      <span class="co"># order chosen by AIC</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 12</code></pre>
+</div>
+</div>
+<ul>
+<li><code>aic=TRUE</code> selects the order; <code>order.max</code> caps it; <code>method</code> chooses the estimation algorithm.</li>
+<li>The fitted object reports the chosen order and the AR coefficients.</li>
 </ul>
 </section>
-<section id="arima-models" class="slide level2">
-<h2>ARIMA Models</h2>
-<p>The ARMA family models a (differenced) series as autoregression plus moving-average noise:</p>
-<p><span class="math display">\[x_t = \phi_1 x_{t-1} + \cdots + \phi_p x_{t-p} + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}\]</span></p>
+<section id="forecasting-with-predict" class="slide level2">
+<h2>Forecasting with predict</h2>
+<p><code>predict</code> on an <code>ar</code> object projects future values, with standard errors:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">arima</span>(turkey.price.ts, <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
-<span id="cb8-2"><a href=""></a>             <span class="at">seasonal =</span> <span class="fu">list</span>(<span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>), <span class="at">period =</span> <span class="dv">12</span>))</span>
-<span id="cb8-3"><a href=""></a>fit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>turkey.forecast <span class="ot">&lt;-</span> <span class="fu">predict</span>(turkey.price.ts.ar, <span class="at">n.ahead=</span><span class="dv">12</span>)</span>
+<span id="cb8-2"><a href=""></a>turkey.forecast<span class="sc">$</span>pred</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           Jan       Feb       Mar       Apr       May       Jun       Jul
+2008                                         1.8827277 1.7209182 1.7715016
+2009 1.5439290 1.6971933 1.5849406 1.7800358                              
+           Aug       Sep       Oct       Nov       Dec
+2008 1.9416776 1.7791961 1.4822070 0.9894343 1.1588863
+2009                                                  </code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">ts.plot</span>(turkey.price.ts, turkey.forecast<span class="sc">$</span>pred, <span class="at">col=</span><span class="fu">c</span>(<span class="st">"black"</span>,<span class="st">"blue"</span>), <span class="at">lty=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch23_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="arima-and-beyond" class="slide level2">
+<h2>ARIMA and Beyond</h2>
+<p>For richer dynamics, <strong><code>arima</code></strong> fits autoregressive integrated moving-average models — the order <code>(p, d, q)</code> capturing AR terms, differencing, and MA terms; seasonal terms extend it to <strong>SARIMA</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>turkey.arima <span class="ot">&lt;-</span> <span class="fu">arima</span>(turkey.price.ts, <span class="at">order=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>),</span>
+<span id="cb11-2"><a href=""></a>                      <span class="at">seasonal=</span><span class="fu">list</span>(<span class="at">order=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>), <span class="at">period=</span><span class="dv">12</span>))</span>
+<span id="cb11-3"><a href=""></a>turkey.arima</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -315,36 +323,30 @@ s.e.  0.1127  0.0475     0.0956
 
 sigma^2 estimated as 0.02875:  log likelihood = 23.22,  aic = -38.44</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">predict</span>(turkey.arima, <span class="at">n.ahead=</span><span class="dv">6</span>)<span class="sc">$</span>pred</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          May      Jun      Jul      Aug      Sep      Oct
+2008 1.846322 1.917925 1.916521 1.863201 1.845705 1.639351</code></pre>
 </div>
-<ul>
-<li><code>order = c(p, d, q)</code>: AR order, differencing, MA order; <code>seasonal=</code> adds the seasonal counterpart.</li>
-<li>Choose orders from ACF/PACF shapes, or by AIC comparison across candidates; <code>tsdiag(fit)</code> checks the residuals.</li>
-</ul>
-</section>
-<section id="forecasting" class="slide level2">
-<h2>Forecasting</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>pr <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">n.ahead =</span> <span class="dv">24</span>)</span>
-<span id="cb10-2"><a href=""></a><span class="fu">ts.plot</span>(turkey.price.ts, pr<span class="sc">$</span>pred,</span>
-<span id="cb10-3"><a href=""></a>        pr<span class="sc">$</span>pred <span class="sc">+</span> <span class="dv">2</span> <span class="sc">*</span> pr<span class="sc">$</span>se, pr<span class="sc">$</span>pred <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> pr<span class="sc">$</span>se,</span>
-<span id="cb10-4"><a href=""></a>        <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">3</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"black"</span>, <span class="st">"red"</span>, <span class="st">"grey"</span>, <span class="st">"grey"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
 </div>
-<img data-src="ch23_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><ul>
-<li><code>predict()</code> returns point forecasts and standard errors; the cone widens — honesty about growing uncertainty.</li>
-<li>The <code>forecast</code> package automates order selection (<code>auto.arima()</code>) and adds exponential smoothing (<code>ets()</code>).</li>
-</ul>
+<p>Supporting tools: <code>diff</code> (differencing to remove trend), <code>Box.test</code> (testing residual autocorrelation), <code>HoltWinters</code> (exponential smoothing), <code>StructTS</code> (structural models), and <code>decompose</code>/<code>stl</code> (splitting a series into trend, seasonal, and remainder).</p>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>The Box-Jenkins rhythm.</strong> Plot the series; check <code>acf</code>/<code>pacf</code>; difference until stationary; fit an <code>arima</code>; check that the <em>residuals</em> look like white noise (<code>acf</code>, <code>Box.test</code>); then forecast. The modern <code>forecast</code> and <code>fable</code> packages automate much of this (<code>auto.arima</code>).</p>
+</div>
+</div>
+</div>
 </section>
-<section id="a-time-series-checklist" class="slide level2">
-<h2>A Time Series Checklist</h2>
-<ol type="1">
-<li>Plot the series; note trend, seasonality, breaks.</li>
-<li>Stabilize: log-transform if variance grows; difference until stationary.</li>
-<li>Inspect <code>acf()</code>/<code>pacf()</code>; propose ARIMA orders.</li>
-<li>Fit <code>arima()</code>; compare candidates by AIC.</li>
-<li>Validate residuals (<code>tsdiag</code>, Ljung–Box) — they should look like white noise.</li>
-<li>Forecast with intervals, never just the point line.</li>
-</ol>
+<section id="additional-topics" class="slide level2">
+<h2>Additional Topics</h2>
+<p>The book closes by pointing onward: time series feed into broader analyses — regression with lagged predictors, volatility models (GARCH, package <code>tseries</code>), and multivariate series (VAR). The <code>ts</code> class (Chapter 7) is the common substrate; specialized classes like <code>zoo</code> and <code>xts</code> handle irregular spacing and richer date indexing.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

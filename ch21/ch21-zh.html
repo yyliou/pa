@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,111 +211,138 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="預測類別" class="title-slide slide level1 center">
 <h1><strong>預測類別</strong></h1>
 
 </section>
-<section id="垃圾郵件問題" class="slide level2">
-<h2>垃圾郵件問題</h2>
-<p>分類預測的是<strong>類別</strong>而非數字。貫穿本章的例子：4,601 封郵件、57 個數值特徵、一個標籤——是不是垃圾郵件：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/spambase.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">dim</span>(spambase)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 4601   58</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">table</span>(spambase<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-   0    1 
-2788 1813 </code></pre>
-</div>
-</div>
-<p>切成訓練集與測試集——衡量分類器唯一誠實的方式：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
-<span id="cb5-2"><a href=""></a>idx   <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">nrow</span>(spambase), <span class="dv">3000</span>)</span>
-<span id="cb5-3"><a href=""></a>train <span class="ot">&lt;-</span> spambase[idx, ]</span>
-<span id="cb5-4"><a href=""></a>test  <span class="ot">&lt;-</span> spambase[<span class="sc">-</span>idx, ]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<section id="迴歸的類別表親" class="slide level2">
+<h2>迴歸的類別表親</h2>
+<p><strong>分類模型</strong>預測<em>類別</em>反應——垃圾信或正常信、患病或健康、屬於哪一類。工具與第二十章相互呼應，但反應變數是因子。本章的貫穿範例是 <strong>Spambase</strong>：4,601 封電子郵件、57 個數值特徵，各標記為垃圾信或否。</p>
+<p>我們從線性方法（邏輯斯迴歸、判別分析）走到樹與集成（bagging、boosting、隨機森林），再到神經網路與 SVM。</p>
+</section></section>
+<section>
+<section id="線性分類模型" class="title-slide slide level1 center">
+<h1>線性分類模型</h1>
+
 </section>
 <section id="邏輯斯迴歸" class="slide level2">
 <h2>邏輯斯迴歸</h2>
-<p>透過 logit 連結建模垃圾郵件的<em>機率</em>：</p>
-<p><span class="math display">\[\log \frac{p}{1-p} = c_0 + c_1 x_1 + \cdots + c_n x_n\]</span></p>
+<p><strong>二元</strong>反應的主力：<code>family=binomial</code> 的 <code>glm</code>，建模結果的對數勝算（log-odds）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>spam.glm <span class="ot">&lt;-</span> <span class="fu">glm</span>(is_spam <span class="sc">~</span> word_freq_free <span class="sc">+</span> word_freq_money <span class="sc">+</span></span>
-<span id="cb6-2"><a href=""></a>                  capital_run_length_total <span class="sc">+</span> char_freq_exclamation,</span>
-<span id="cb6-3"><a href=""></a>                <span class="at">family =</span> binomial, <span class="at">data =</span> train)</span>
-<span id="cb6-4"><a href=""></a><span class="fu">coef</span>(<span class="fu">summary</span>(spam.glm))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>                             Estimate   Std. Error    z value      Pr(&gt;|z|)
-(Intercept)              -1.759095227 0.0659533885 -26.671795 1.000164e-156
-word_freq_free            1.293936372 0.1163358590  11.122421  9.758760e-29
-word_freq_money           3.461685530 0.3511920670   9.856958  6.395761e-23
-capital_run_length_total  0.001213516 0.0001225411   9.902937  4.042276e-23
-char_freq_exclamation     2.265879949 0.1610712761  14.067561  6.010716e-45</code></pre>
-</div>
-</div>
-<p>正係數提高垃圾郵件的勝算；<code>exp(coef)</code> 給出勝算比。</p>
-</section>
-<section id="從機率到決策" class="slide level2">
-<h2>從機率到決策</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>p.hat <span class="ot">&lt;-</span> <span class="fu">predict</span>(spam.glm, <span class="at">newdata =</span> test, <span class="at">type =</span> <span class="st">"response"</span>)</span>
-<span id="cb8-2"><a href=""></a>pred  <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(p.hat <span class="sc">&gt;</span> <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
-<span id="cb8-3"><a href=""></a>tab   <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">actual =</span> test<span class="sc">$</span>is_spam, <span class="at">predicted =</span> pred)</span>
-<span id="cb8-4"><a href=""></a>tab</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      predicted
-actual   0   1
-     0 899  60
-     1 240 402</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">sum</span>(<span class="fu">diag</span>(tab)) <span class="sc">/</span> <span class="fu">sum</span>(tab)        <span class="co"># 準確率</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.8126171</code></pre>
-</div>
-</div>
-<p><strong>混淆矩陣</strong>把偽陽性（好信被攔）與偽陰性（垃圾信放行）分開——多數應用中兩種錯誤代價不同，門檻值應據此調整。</p>
-</section>
-<section id="線性判別分析" class="slide level2">
-<h2>線性判別分析</h2>
-<p>LDA 把每個類別建模為高斯分布，畫出最佳線性邊界：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">library</span>(MASS)</span>
-<span id="cb12-2"><a href=""></a>spam.lda <span class="ot">&lt;-</span> <span class="fu">lda</span>(is_spam <span class="sc">~</span> word_freq_free <span class="sc">+</span> word_freq_money <span class="sc">+</span></span>
-<span id="cb12-3"><a href=""></a>                  capital_run_length_total <span class="sc">+</span> char_freq_exclamation,</span>
-<span id="cb12-4"><a href=""></a>                <span class="at">data =</span> train)</span>
-<span id="cb12-5"><a href=""></a><span class="fu">mean</span>(<span class="fu">predict</span>(spam.lda, test)<span class="sc">$</span>class <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.7576515</code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>spam.model <span class="ot">&lt;-</span> <span class="fu">glm</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase, <span class="at">family=</span><span class="fu">binomial</span>(<span class="at">link=</span><span class="st">"logit"</span>))</span>
+<span id="cb1-2"><a href=""></a><span class="fu">summary</span>(spam.model)</span>
+<span id="cb1-3"><a href=""></a><span class="fu">predict</span>(spam.model, newdata, <span class="at">type=</span><span class="st">"response"</span>)   <span class="co"># 預測機率</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <ul>
-<li>類別分得開且接近高斯時很穩定；<code>qda()</code> 允許彎曲邊界。</li>
-<li>純列聯表資料則由對數線性模型（<code>loglin()</code>／<code>poisson</code> 家族的 <code>glm</code>）扮演對應角色。</li>
+<li><code>summary</code> 報告係數、z 值、p 值，外加<strong>虛無與殘差離差（deviance）</strong>及 <strong>AIC</strong>（不是 R²）。</li>
+<li><code>type="response"</code> 回傳機率；設門檻（如 0.5）轉成類別標籤。</li>
+<li>「Number of Fisher Scoring iterations」報告 IRLS 配適多快收斂。</li>
+<li>多類別延伸：<code>nnet::multinom</code>（多項對數線性模型），或有序結果用 <code>MASS::polr</code>。</li>
 </ul>
 </section>
-<section id="k-最近鄰" class="slide level2">
-<h2>k 最近鄰</h2>
-<p>完全不建模型：每個點由 <span class="math inline">\(k\)</span> 個最近的訓練點投票決定：</p>
+<section id="線性與彈性判別分析" class="slide level2">
+<h2>線性與彈性判別分析</h2>
+<p>判別分析找出最能<em>分隔</em>類別的（線性）預測變數組合——<code>MASS::lda</code>（二次邊界用 <code>qda</code>）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">library</span>(class)</span>
-<span id="cb14-2"><a href=""></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"word_freq_free"</span>, <span class="st">"word_freq_money"</span>,</span>
-<span id="cb14-3"><a href=""></a>          <span class="st">"capital_run_length_total"</span>, <span class="st">"char_freq_exclamation"</span>)</span>
-<span id="cb14-4"><a href=""></a>pred.knn <span class="ot">&lt;-</span> <span class="fu">knn</span>(<span class="fu">scale</span>(train[, vars]), <span class="fu">scale</span>(test[, vars]),</span>
-<span id="cb14-5"><a href=""></a>                <span class="at">cl =</span> train<span class="sc">$</span>is_spam, <span class="at">k =</span> <span class="dv">5</span>)</span>
-<span id="cb14-6"><a href=""></a><span class="fu">mean</span>(pred.knn <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.7482823</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(MASS)</span>
+<span id="cb2-2"><a href=""></a>iris.lda <span class="ot">&lt;-</span> <span class="fu">lda</span>(Species <span class="sc">~</span> ., <span class="at">data=</span>iris)</span>
+<span id="cb2-3"><a href=""></a><span class="fu">predict</span>(iris.lda, iris)<span class="sc">$</span>class          <span class="co"># 預測類別</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>更豐富的變體在套件 <code>mda</code>：</p>
+<ul>
+<li><strong><code>fda</code></strong>——<em>彈性</em>判別分析（透過迴歸做非線性邊界）；</li>
+<li><strong><code>mda</code></strong>——<em>混合</em>判別分析（每類別為高斯混合）。</li>
+</ul>
+<p>LDA 假設各類別共變異數相等、預測變數大致常態；QDA 鬆綁共變異數相等的假設。</p>
+</section>
+<section id="對數線性模型" class="slide level2">
+<h2>對數線性模型</h2>
+<p>對列聯表中的計數，<strong>對數線性模型</strong>檢驗類別變數間的關聯——<code>stats::loglin(table, margin, ...)</code>（更友善的公式介面是 <code>MASS::loglm</code>）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">library</span>(MASS)</span>
+<span id="cb3-2"><a href=""></a><span class="fu">loglm</span>(<span class="sc">~</span> Sex <span class="sc">+</span> Class <span class="sc">+</span> Survived, <span class="at">data=</span>Titanic)   <span class="co"># 互相獨立</span></span>
+<span id="cb3-3"><a href=""></a><span class="fu">loglm</span>(<span class="sc">~</span> Sex<span class="sc">*</span>Class <span class="sc">+</span> Survived, <span class="at">data=</span>Titanic)     <span class="co"># Sex、Class 有關聯</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p><code>loglin</code> 的引數：表格、要配適的邊際向量清單、可選的起始估計、<code>maxit</code>（IPF 演算法的迭代上限）。</p>
+</section></section>
+<section>
+<section id="樹與集成" class="title-slide slide level1 center">
+<h1>樹與集成</h1>
+
+</section>
+<section id="分類樹rpart" class="slide level2">
+<h2>分類樹：rpart</h2>
+<p><code>rpart</code> 以<strong>遞迴分割</strong>建樹——反覆挑出最能分隔類別的特徵來切：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">library</span>(rpart)</span>
+<span id="cb4-2"><a href=""></a>spam.tree <span class="ot">&lt;-</span> <span class="fu">rpart</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase)</span>
+<span id="cb4-3"><a href=""></a>spam.tree                                  <span class="co"># 各分裂的文字描述</span></span>
+<span id="cb4-4"><a href=""></a><span class="fu">printcp</span>(spam.tree)                         <span class="co"># CP 表：複雜度 vs. 誤差</span></span>
+<span id="cb4-5"><a href=""></a><span class="fu">plot</span>(spam.tree); <span class="fu">text</span>(spam.tree)           <span class="co"># 畫出來</span></span>
+<span id="cb4-6"><a href=""></a>spam.tree.pruned <span class="ot">&lt;-</span> <span class="fu">prune</span>(spam.tree, <span class="at">cp=</span><span class="fl">0.01</span>)   <span class="co"># 修剪避免過度配適</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>printcp</code>／<code>plotcp</code> 的輸出（CP、nsplit、rel error、xerror）指引<strong>修剪</strong>：選使交叉驗證誤差最小的複雜度參數。</p>
+</section>
+<section id="bagging-與-boosting" class="slide level2">
+<h2>Bagging 與 Boosting</h2>
+<p>單棵樹不穩定；樹的<strong>集成</strong>準得多：</p>
+<ul>
+<li><strong>Bagging</strong>（拔靴聚合）——<code>ipred::bagging</code> 或 <code>adabag::bagging</code>：對拔靴樣本配多棵樹、平均／投票。降低變異。</li>
+<li><strong>Boosting</strong>——<code>ada::ada</code> 或 <code>adabag::boosting</code>（AdaBoost）、<code>gbm::gbm</code>（梯度提升）：<em>依序</em>配樹，每棵聚焦前一棵的錯誤。同時降低偏誤與變異。</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">library</span>(adabag)</span>
+<span id="cb5-2"><a href=""></a>spam.bag  <span class="ot">&lt;-</span> <span class="fu">bagging</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase)</span>
+<span id="cb5-3"><a href=""></a>spam.boost <span class="ot">&lt;-</span> <span class="fu">boosting</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase)</span>
+<span id="cb5-4"><a href=""></a><span class="fu">predict</span>(spam.boost, newdata)<span class="sc">$</span>class</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>這些是極易平行的——每棵樹獨立配適（第二十六章）。</p>
+</section>
+<section id="隨機森林" class="slide level2">
+<h2>隨機森林</h2>
+<p><code>randomForest</code> 既對樹做 bagging、<em>又</em>在每個分裂隨機限制可考慮的特徵，使樹彼此去相關——通常是最強的現成分類器：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">library</span>(randomForest)</span>
+<span id="cb6-2"><a href=""></a>spam.rf <span class="ot">&lt;-</span> <span class="fu">randomForest</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase, <span class="at">ntree=</span><span class="dv">500</span>)</span>
+<span id="cb6-3"><a href=""></a>spam.rf                                <span class="co"># OOB 誤差估計＋混淆矩陣</span></span>
+<span id="cb6-4"><a href=""></a><span class="fu">importance</span>(spam.rf)                    <span class="co"># 變數重要性</span></span>
+<span id="cb6-5"><a href=""></a><span class="fu">predict</span>(spam.rf, newdata)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>關鍵旋鈕：<code>ntree</code>（樹數）、<code>mtry</code>（每次分裂試的特徵數）。<strong>袋外（OOB）</strong>誤差是免費又誠實的準確度估計——不必另留測試集。</p>
+</section></section>
+<section>
+<section id="神經網路與-svm" class="title-slide slide level1 center">
+<h1>神經網路與 SVM</h1>
+
+</section>
+<section id="神經網路" class="slide level2">
+<h2>神經網路</h2>
+<p><code>nnet::nnet</code> 配適單一隱藏層的前饋網路：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">library</span>(nnet)</span>
+<span id="cb7-2"><a href=""></a>spam.nn <span class="ot">&lt;-</span> <span class="fu">nnet</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase, <span class="at">size=</span><span class="dv">10</span>, <span class="at">decay=</span><span class="fl">0.01</span>, <span class="at">maxit=</span><span class="dv">200</span>)</span>
+<span id="cb7-3"><a href=""></a><span class="fu">predict</span>(spam.nn, newdata, <span class="at">type=</span><span class="st">"class"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>size</code> 設隱藏單元數、<code>decay</code> 是權重正則化（抑制過度配適）、<code>maxit</code> 限制迭代。（現代深度學習住在 <code>keras</code>／<code>torch</code>，想法相同、規模放大。）</p>
+</section>
+<section id="支援向量機" class="slide level2">
+<h2>支援向量機</h2>
+<p><code>e1071::svm</code> 找最大邊際的邊界，以核函數處理非線性：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">library</span>(e1071)</span>
+<span id="cb8-2"><a href=""></a>spam.svm <span class="ot">&lt;-</span> <span class="fu">svm</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase,</span>
+<span id="cb8-3"><a href=""></a>                <span class="at">type=</span><span class="st">"C-classification"</span>, <span class="at">kernel=</span><span class="st">"radial"</span>)</span>
+<span id="cb8-4"><a href=""></a><span class="fu">predict</span>(spam.svm, newdata)</span>
+<span id="cb8-5"><a href=""></a><span class="fu">naiveBayes</span>(is_spam <span class="sc">~</span> ., <span class="at">data=</span>spambase)   <span class="co"># 同套件還有單純貝氏</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>type="C-classification"</code> 是標準分類器；<code>kernel</code> 可為 <code>"linear"</code>、<code>"polynomial"</code>、<code>"radial"</code>（RBF）、<code>"sigmoid"</code>。用 <code>tune</code> 調 cost 與核參數。同套件的 <code>naiveBayes</code> 提供快速的機率式基準。</p>
+</section>
+<section id="k-最近鄰以及如何選模型" class="slide level2">
+<h2>k 最近鄰，以及如何選模型</h2>
+<p>最簡單的分類器——<code>class::knn(train, test, cl, k)</code>——以最近 <code>k</code> 個鄰居的多數決替每點標記；根本沒有「配適」模型。</p>
 <div class="callout callout-tip callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -325,104 +352,17 @@ actual   0   1
 <p><strong>Tip</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>kNN 要先標準化特徵。</strong> 距離法會被單位最大的變數宰制；先 scale 再上。</p>
+<p><strong>沒有萬用最佳解。</strong> 邏輯斯迴歸好解釋；LDA 要檢查的假設少；樹好讀；<strong>隨機森林與 boosting 通常在純準確度上勝出</strong>；SVM 在高維出色；kNN 是快速基準。用獨立測試集或交叉驗證誠實比較，並以<strong>混淆矩陣</strong>判斷、別只看整體準確度。</p>
 </div>
 </div>
 </div>
-</section>
-<section id="分類樹" class="slide level2">
-<h2>分類樹</h2>
-<p>樹用一連串是非題切割特徵空間——完全可解釋：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">library</span>(rpart)</span>
-<span id="cb16-2"><a href=""></a>spam.tree <span class="ot">&lt;-</span> <span class="fu">rpart</span>(<span class="fu">factor</span>(is_spam) <span class="sc">~</span> ., <span class="at">data =</span> train)</span>
-<span id="cb16-3"><a href=""></a><span class="fu">plot</span>(spam.tree, <span class="at">uniform =</span> <span class="cn">TRUE</span>, <span class="at">margin =</span> <span class="fl">0.05</span>)</span>
-<span id="cb16-4"><a href=""></a><span class="fu">text</span>(spam.tree, <span class="at">cex =</span> <span class="fl">0.7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">predict</span>(spam.tree, test, <span class="at">type =</span> <span class="st">"class"</span>) <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.8838226</code></pre>
-</div>
-</div>
-<img data-src="ch21-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><p><code>printcp()</code> 與 <code>prune()</code> 以成本複雜度修剪控制過度配適。</p>
-</section>
-<section id="類神經網路與-svm" class="slide level2">
-<h2>類神經網路與 SVM</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">library</span>(nnet)</span>
-<span id="cb19-2"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
-<span id="cb19-3"><a href=""></a>spam.nn <span class="ot">&lt;-</span> <span class="fu">nnet</span>(<span class="fu">factor</span>(is_spam) <span class="sc">~</span> ., <span class="at">data =</span> train,</span>
-<span id="cb19-4"><a href=""></a>                <span class="at">size =</span> <span class="dv">4</span>, <span class="at">decay =</span> <span class="fl">0.1</span>, <span class="at">maxit =</span> <span class="dv">200</span>, <span class="at">MaxNWts =</span> <span class="dv">2000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">predict</span>(spam.nn, test, <span class="at">type =</span> <span class="st">"class"</span>) <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9462836</code></pre>
-</div>
-</div>
-<ul>
-<li><code>nnet()</code> 配適單隱藏層網路——經典主力。</li>
-<li>支援向量機（<code>e1071</code> 套件的 <code>svm()</code>）尋找最大邊界，並以核函數處理非線性。</li>
-</ul>
-</section>
-<section id="隨機森林" class="slide level2">
-<h2>隨機森林</h2>
-<p>數百棵樹建立在拔靴樣本上，投票平均：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">library</span>(randomForest)</span>
-<span id="cb22-2"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
-<span id="cb22-3"><a href=""></a>spam.rf <span class="ot">&lt;-</span> <span class="fu">randomForest</span>(<span class="fu">factor</span>(is_spam) <span class="sc">~</span> ., <span class="at">data =</span> train, <span class="at">ntree =</span> <span class="dv">200</span>)</span>
-<span id="cb22-4"><a href=""></a><span class="fu">mean</span>(<span class="fu">predict</span>(spam.rf, test) <span class="sc">==</span> test<span class="sc">$</span>is_spam)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9406621</code></pre>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">varImpPlot</span>(spam.rf, <span class="at">n.var =</span> <span class="dv">10</span>, <span class="at">main =</span> <span class="st">"Top 10 features"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch21-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><p>通常是開箱即用準確率最高的選擇，還免費附贈特徵重要性排名——代價是可解釋性。</p>
-</section>
-<section id="如何挑選分類器" class="slide level2">
-<h2>如何挑選分類器</h2>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th style="text-align: left;">需求</th>
-<th style="text-align: left;">選擇</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">可解釋的係數／勝算</td>
-<td style="text-align: left;">邏輯斯迴歸</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">可解釋的規則</td>
-<td style="text-align: left;">分類樹</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">即插即用的最佳準確率</td>
-<td style="text-align: left;">隨機森林</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">小資料、平滑邊界</td>
-<td style="text-align: left;">LDA / kNN</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">高維度、重視邊界</td>
-<td style="text-align: left;">SVM</td>
-</tr>
-</tbody>
-</table>
-<p>不論用哪個模型：訓練／測試切分（或交叉驗證）、混淆矩陣與錯誤成本永遠優先 <span class="citation" data-cites="hastie2009elements">(Hastie et al. 2009)</span>。第二十二章將視野擴大到機器學習的其他面向。</p>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

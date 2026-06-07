@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,169 +211,633 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="trellis-plots-in-r" class="title-slide slide level1 center">
-<h1><strong>Trellis Plots in R</strong></h1>
+<section id="trellis-graphics" class="title-slide slide level1 center">
+<h1><strong>Trellis Graphics</strong></h1>
 
 </section>
-<section id="history-and-idea" class="slide level2">
-<h2>History and Idea</h2>
-<p>The <code>lattice</code> package <span class="citation" data-cites="sarkar2008lattice">(Sarkar 2008)</span> implements <strong>trellis graphics</strong>, Cleveland’s framework for visualizing <em>conditioned</em> data <span class="citation" data-cites="cleveland1993visualizing">(Cleveland 1993)</span>: the same panel repeated for every subset of the data, arranged in a grid for instant comparison.</p>
-<ul>
-<li>Formula interface: <code>y ~ x | condition</code> reads “y against x, one panel per level of condition.”</li>
-<li>Lattice functions <strong>return objects</strong>; the plot appears when the object is printed — remember this inside scripts and functions.</li>
-</ul>
+<section id="history-and-strengths" class="slide level2">
+<h2>History and Strengths</h2>
+<p>In the early 1990s, Richard Becker and William Cleveland at Bell Labs built <strong>Trellis graphics</strong>, grounded in Cleveland’s research on how people actually perceive information. The <strong>lattice</strong> package is R’s implementation (some function names still say “trellis”).</p>
+<p>Lattice’s real strength: <strong>splitting a chart into panels</strong> (a grid) or <strong>groups</strong> (colors/symbols) using conditioning or grouping variables — plus clean, readable output by default. Familiar charts (scatter, bar, histogram) and new friends (dot plots, strip plots, Q-Q plots) all included.</p>
+</section>
+<section id="how-lattice-works" class="slide level2">
+<h2>How Lattice Works</h2>
+<p>The vocabulary: rectangular drawing areas are <strong>panels</strong>; the data sent to a panel is a <strong>packet</strong>; <strong>panel functions</strong> actually draw packets. The lifecycle:</p>
+<ol type="1">
+<li>you call a high-level lattice function;</li>
+<li>it assembles and <em>returns</em> a lattice object (class <code>"trellis"</code> — hence <code>print.trellis</code>, <code>plot.trellis</code>);</li>
+<li>printing the object (automatic at the console) is what draws it;</li>
+<li><code>plot.trellis</code> lays out the panel matrix, assigns packets, and calls the <strong>panel function</strong> for each.</li>
+</ol>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Warning</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Inside functions and scripts, lattice plots nothing unless you <code>print</code> the object</strong> — the classic lattice gotcha (first met in Chapter 3).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="a-simple-example-formula-conditioning-groups" class="slide level2">
+<h2>A Simple Example: Formula, Conditioning, Groups</h2>
+<p>Lattice arguments are consistent: a <strong>formula</strong> first (positional — its name has changed before!), then <code>data</code>. The same toy data three ways:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a><span class="fu">dim</span>(births2006.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>d <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>), <span class="at">z=</span><span class="fu">c</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>), <span class="at">times=</span><span class="dv">5</span>)))</span>
+<span id="cb1-2"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x, <span class="at">data=</span>d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-1-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x<span class="sc">|</span>z, <span class="at">data=</span>d)            <span class="co"># conditioning: panels split by z</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-1-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x, <span class="at">groups=</span>z, <span class="at">data=</span>d)    <span class="co"># grouping: colors/symbols by z</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-1-3.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><code>y~x|z</code> reads “y against x, conditioned on z.”</p>
+</section>
+<section id="graphics-to-lattice-dictionary" class="slide level2">
+<h2>Graphics-to-Lattice Dictionary</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>graphics function</th>
+<th>lattice function</th>
+<th>Chart</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>barplot</code></td>
+<td><code>barchart</code></td>
+<td>bar/column charts</td>
+</tr>
+<tr class="even">
+<td><code>dotchart</code></td>
+<td><code>dotplot</code></td>
+<td>Cleveland dot plots</td>
+</tr>
+<tr class="odd">
+<td><code>hist</code></td>
+<td><code>histogram</code></td>
+<td>histograms</td>
+</tr>
+<tr class="even">
+<td><code>density</code>+<code>plot</code></td>
+<td><code>densityplot</code></td>
+<td>kernel density plots</td>
+</tr>
+<tr class="odd">
+<td><code>stripchart</code></td>
+<td><code>stripplot</code></td>
+<td>strip charts</td>
+</tr>
+<tr class="even">
+<td><code>qqnorm</code> (stats)</td>
+<td><code>qqmath</code></td>
+<td>theoretical Q-Q plots</td>
+</tr>
+<tr class="odd">
+<td><code>plot</code></td>
+<td><code>xyplot</code></td>
+<td>scatter plots</td>
+</tr>
+<tr class="even">
+<td><code>qqplot</code> (stats)</td>
+<td><code>qq</code></td>
+<td>two-sample Q-Q plots</td>
+</tr>
+<tr class="odd">
+<td><code>pairs</code></td>
+<td><code>splom</code></td>
+<td>scatter plot matrices</td>
+</tr>
+<tr class="even">
+<td><code>image</code></td>
+<td><code>levelplot</code></td>
+<td>image plots</td>
+</tr>
+<tr class="odd">
+<td><code>contour</code></td>
+<td><code>contourplot</code></td>
+<td>contour plots</td>
+</tr>
+<tr class="even">
+<td><code>persp</code></td>
+<td><code>cloud</code>, <code>wireframe</code></td>
+<td>3-D perspective</td>
+</tr>
+</tbody>
+</table>
+<p>Most functions accept a formula + data frame; many also take arrays, matrices, tables, or vectors directly (e.g., <code>barchart</code> happily eats a <code>table</code>).</p>
+</section>
+<section id="custom-panel-functions" class="slide level2">
+<h2>Custom Panel Functions</h2>
+<p>To superimpose extra elements, replace the <strong>panel function</strong> — typically a wrapper that adds something, then delegates:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x<span class="sc">|</span>z, <span class="at">data=</span>d,</span>
+<span id="cb4-2"><a href=""></a>  <span class="at">panel=</span><span class="cf">function</span>(...){</span>
+<span id="cb4-3"><a href=""></a>    <span class="fu">panel.abline</span>(<span class="at">a=</span><span class="dv">1</span>, <span class="at">b=</span><span class="dv">1</span>)</span>
+<span id="cb4-4"><a href=""></a>    <span class="fu">panel.xyplot</span>(...)</span>
+<span id="cb4-5"><a href=""></a>  })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch14_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
+<section>
+<section id="univariate-trellis-plots" class="title-slide slide level1 center">
+<h1>Univariate Trellis Plots</h1>
+
+</section>
+<section id="the-births-data" class="slide level2">
+<h2>The Births Data</h2>
+<p>Running example: every US birth of 2006 (CDC natality file — 3.1 GB raw; the book preprocessed it with a Perl <code>unpack</code> script, recoded factors in R, and sampled 10% into <code>births2006.smpl</code>). Variables include <code>DOB_MM</code>/<code>DOB_WK</code> (month/weekday of birth), <code>MAGER</code> (mother’s age), <code>WTGAIN</code>, <code>SEX</code>, <code>APGAR5</code>, <code>DMEDUC</code>, <code>UPREVIS</code>, <code>ESTGEST</code>, <code>DMETH_REC</code> (delivery method), <code>DPLURAL</code> (single/twin/…), <code>DBWT</code> (birth weight, grams):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb5-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda"</span>,</span>
+<span id="cb5-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb5-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb5-5"><a href=""></a><span class="fu">dim</span>(births2006.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 427323     13</code></pre>
 </div>
 </div>
 </section>
-<section id="a-simple-example" class="slide level2">
-<h2>A Simple Example</h2>
-<p>US births in 2006 (a 10% sample): how does birth weight relate to delivery method?</p>
+<section id="barchart" class="slide level2">
+<h2>barchart</h2>
+<p>Births by day of week (1 = Sunday):</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">histogram</span>(<span class="sc">~</span> DBWT <span class="sc">|</span> DMETH_REC, <span class="at">data =</span> births2006.smpl,</span>
-<span id="cb3-2"><a href=""></a>          <span class="at">xlab =</span> <span class="st">"Birth weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>births.dow <span class="ot">&lt;-</span> <span class="fu">table</span>(births2006.smpl<span class="sc">$</span>DOB_WK)</span>
+<span id="cb7-2"><a href=""></a><span class="fu">barchart</span>(births.dow)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Far more babies arrive on weekdays — surprising! Is it the <em>delivery method</em>? Tabulate by weekday × method (dropping unknowns):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>births2006.dm <span class="ot">&lt;-</span> <span class="fu">transform</span>(</span>
+<span id="cb8-2"><a href=""></a>  births2006.smpl[births2006.smpl<span class="sc">$</span>DMETH_REC <span class="sc">!=</span> <span class="st">"Unknown"</span>,],</span>
+<span id="cb8-3"><a href=""></a>  <span class="at">DMETH_REC=</span><span class="fu">as.factor</span>(<span class="fu">as.character</span>(DMETH_REC)))</span>
+<span id="cb8-4"><a href=""></a>dob.dm.tbl <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">WK=</span>births2006.dm<span class="sc">$</span>DOB_WK, <span class="at">MM=</span>births2006.dm<span class="sc">$</span>DMETH_REC)</span>
+<span id="cb8-5"><a href=""></a><span class="fu">barchart</span>(dob.dm.tbl)            <span class="co"># default: stacked groups, no key</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="iterating-to-the-right-display" class="slide level2">
+<h2>Iterating to the Right Display</h2>
+<p>Unstack and add a key; still hard to compare — so drop the color groups and switch to columns in <strong>two panels</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">barchart</span>(dob.dm.tbl, <span class="at">stack=</span><span class="cn">FALSE</span>, <span class="at">auto.key=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">barchart</span>(dob.dm.tbl, <span class="at">horizontal=</span><span class="cn">FALSE</span>, <span class="at">groups=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-6-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Now it’s plain: vaginal births dip ~25–30% on weekends, <strong>C-sections drop 50–60%</strong>. Lattice’s quick iteration — stack/unstack, group/panel, flip — is exactly how you zero in on the story.</p>
+</section>
+<section id="dotplot" class="slide level2">
+<h2>dotplot</h2>
+<p>Cleveland <strong>dot plots</strong> show one point per category — calmer than bars for bigger tables. Is the weekday pattern seasonal? Count by week × month × method and plot:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>dob.dm.tbl.alt <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">WEEK=</span>births2006.dm<span class="sc">$</span>DOB_WK,</span>
+<span id="cb11-2"><a href=""></a>                        <span class="at">MONTH=</span>births2006.dm<span class="sc">$</span>DOB_MM,</span>
+<span id="cb11-3"><a href=""></a>                        <span class="at">METHOD=</span>births2006.dm<span class="sc">$</span>DMETH_REC)</span>
+<span id="cb11-4"><a href=""></a><span class="fu">dotplot</span>(dob.dm.tbl.alt, <span class="at">stack=</span><span class="cn">FALSE</span>, <span class="at">auto.key=</span><span class="cn">TRUE</span>, <span class="at">groups=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch14_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:70.0%"><p>One formula produced three aligned panels — conditioning without loops.</p>
+<img data-src="ch14_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Slight seasonal wiggles; the weekly pattern persists year-round.</p>
 </section>
-<section id="using-lattice-functions" class="slide level2">
-<h2>Using Lattice Functions</h2>
-<p>All high-level lattice functions share the same anatomy:</p>
+<section id="dotplot-the-tire-failure-data" class="slide level2">
+<h2>dotplot: the Tire Failure Data</h2>
+<p>NHTSA’s 2003 “Stepped-Up Speed to Failure” tests (post-Firestone recall, run in hot Phoenix): tires run at increasing speeds until failure. Six tire types (B–L, various sizes/brands). Variables: <code>Time_To_Failure</code>, <code>Speed_At_Failure_km_h</code> (a stepped value — treat as a factor!), <code>Tire_Type</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">xyplot</span>(y <span class="sc">~</span> x <span class="sc">|</span> g,            <span class="co"># formula with optional conditioning</span></span>
-<span id="cb4-2"><a href=""></a>       <span class="at">data =</span> df,            <span class="co"># where the variables live</span></span>
-<span id="cb4-3"><a href=""></a>       <span class="at">groups =</span> h,           <span class="co"># overlay groups within panels</span></span>
-<span id="cb4-4"><a href=""></a>       <span class="at">layout =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>),     <span class="co"># panel arrangement</span></span>
-<span id="cb4-5"><a href=""></a>       <span class="at">main =</span> <span class="st">"..."</span>, <span class="at">xlab =</span> <span class="st">"..."</span>, <span class="at">ylab =</span> <span class="st">"..."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb12-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda"</span>,</span>
+<span id="cb12-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb12-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb12-5"><a href=""></a><span class="fu">dotplot</span>(<span class="fu">as.factor</span>(Speed_At_Failure_km_h)<span class="sc">~</span>Time_To_Failure<span class="sc">|</span>Tire_Type,</span>
+<span id="cb12-6"><a href=""></a>        <span class="at">data=</span>tires.sus)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
 </div>
+<img data-src="ch14_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>All type D tires died fast at 180 km/h; some type H tires endured. (Revisited in Chapter 18.)</p>
+</section>
+<section id="histogram" class="slide level2">
+<h2>histogram</h2>
+<p>Birth weight by plurality — note alphabetical panel order (hence the numbered level names) and the space-filling square panels:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">histogram</span>(<span class="sc">~</span>DBWT<span class="sc">|</span>DPLURAL, <span class="at">data=</span>births2006.smpl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Stack the panels with <code>layout</code> for comparability:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">histogram</span>(<span class="sc">~</span>DBWT<span class="sc">|</span>DPLURAL, <span class="at">data=</span>births2006.smpl, <span class="at">layout=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Roughly normal within groups; mean weight falls as plurality rises. (Other arguments: <code>type</code> = <code>"percent"</code>/<code>"count"</code>/<code>"density"</code>, <code>nint</code>/<code>breaks</code>/<code>endpoints</code>/<code>equal.widths</code> for binning.)</p>
+</section>
+<section id="densityplot" class="slide level2">
+<h2>densityplot</h2>
+<p>One smooth line instead of bins — and stackable. With 427k observations we suppress the per-point strip (<code>plot.points=FALSE</code>):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">densityplot</span>(<span class="sc">~</span>DBWT<span class="sc">|</span>DPLURAL, <span class="at">data=</span>births2006.smpl,</span>
+<span id="cb15-2"><a href=""></a>            <span class="at">layout=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">5</span>), <span class="at">plot.points=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Density plots <em>superimpose</em> gracefully — turn the conditioning variable into a grouping one:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">densityplot</span>(<span class="sc">~</span>DBWT, <span class="at">groups=</span>DPLURAL, <span class="at">data=</span>births2006.smpl,</span>
+<span id="cb16-2"><a href=""></a>            <span class="at">plot.points=</span><span class="cn">FALSE</span>, <span class="at">auto.key=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="stripplot" class="slide level2">
+<h2>stripplot</h2>
+<p><strong>Strip plots</strong> are one-dimensional scatter plots — many values per category (vs.&nbsp;dot plots’ one), ideal for <em>small</em> data. Weights of quadruplets-and-up (44 observations), jittered:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">stripplot</span>(<span class="sc">~</span>DBWT, <span class="at">data=</span>births2006.smpl,</span>
+<span id="cb17-2"><a href=""></a>          <span class="at">subset=</span>(DPLURAL<span class="sc">==</span><span class="st">"5 Quintuplet or higher"</span> <span class="sc">|</span></span>
+<span id="cb17-3"><a href=""></a>                  DPLURAL<span class="sc">==</span><span class="st">"4 Quadruplet"</span>),</span>
+<span id="cb17-4"><a href=""></a>          <span class="at">jitter.data=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch14_files/figure-revealjs/unnamed-chunk-13-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="qqmath" class="slide level2">
+<h2>qqmath</h2>
+<p><code>qqmath</code> compares sample quantiles to a theoretical distribution (default: normal via <code>qnorm</code>; also <code>f.value</code>, <code>distribution</code>, <code>qtype</code>). Sanity check with actual normals, then the births:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">qqmath</span>(<span class="fu">rnorm</span>(<span class="dv">100000</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-14-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span>DBWT<span class="sc">|</span>DPLURAL,</span>
+<span id="cb19-2"><a href=""></a>       <span class="at">data=</span>births2006.smpl[<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(births2006.smpl), <span class="dv">50000</span>), ],</span>
+<span id="cb19-3"><a href=""></a>       <span class="at">pch=</span><span class="dv">19</span>, <span class="at">cex=</span><span class="fl">0.25</span>,</span>
+<span id="cb19-4"><a href=""></a>       <span class="at">subset=</span>(DPLURAL <span class="sc">!=</span> <span class="st">"5 Quintuplet or higher"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-14-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Birth weights: not quite normal.</p>
+</section>
+<section id="the-san-francisco-home-sales-data" class="slide level2">
+<h2>The San Francisco Home Sales Data</h2>
+<p>Second running example: 3,281 San Francisco home sales, 2008-02-13 to 2009-07-14, compiled by the author from newspaper listings, geocoded, and joined to Zillow neighborhood shapefiles (with <code>sp</code>/<code>maptools</code> and <code>point.in.polygon</code>). Variables (as packaged — the book’s text names a few differently): <code>line</code>, <code>county</code>, <code>street</code>, <code>city</code>, <code>zip</code>, <code>date</code> (sale date), <code>price</code>, <code>bedrooms</code>, <code>squarefeet</code>, <code>lotsize</code>, <code>year</code> (built), <code>latitude</code>/<code>longitude</code>, <code>month</code>, <code>neighborhood</code>. Real data — imperfect, partially missing:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb20-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda"</span>,</span>
+<span id="cb20-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb20-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="qqmath-on-prices-finding-the-log-normal" class="slide level2">
+<h2>qqmath on Prices: Finding the Log-Normal</h2>
+<p>Prices range $100,000–$9,500,000 — intuitively not normal:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span>price, <span class="at">data=</span>sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-16-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span><span class="fu">log</span>(price), <span class="at">data=</span>sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-16-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The log transform straightens the line nicely. Now split by bedrooms — groups, smooth lines instead of points (<code>type="smooth"</code>, an argument that flows to the panel function), explicit subset to keep the key clean:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span><span class="fu">log</span>(price), <span class="at">groups=</span>bedrooms,</span>
+<span id="cb23-2"><a href=""></a>       <span class="at">data=</span><span class="fu">subset</span>(sanfrancisco.home.sales,</span>
+<span id="cb23-3"><a href=""></a>                   <span class="sc">!</span><span class="fu">is.na</span>(bedrooms) <span class="sc">&amp;</span> bedrooms <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> bedrooms <span class="sc">&lt;</span> <span class="dv">7</span>),</span>
+<span id="cb23-4"><a href=""></a>       <span class="at">auto.key=</span><span class="cn">TRUE</span>, <span class="at">drop.unused.levels=</span><span class="cn">TRUE</span>, <span class="at">type=</span><span class="st">"smooth"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-17-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Separated lines, higher for more bedrooms — the same trick works for square-footage sextiles (<code>Hmisc::cut2(squarefeet, g=6)</code> as <code>groups</code>) and neighborhoods.</p>
+</section></section>
+<section>
+<section id="bivariate-trellis-plots" class="title-slide slide level1 center">
+<h1>Bivariate Trellis Plots</h1>
+
+</section>
+<section id="xyplot" class="slide level2">
+<h2>xyplot</h2>
+<p>Price vs.&nbsp;size — first naively, then trimmed (price &lt; $4M, &lt; 6,000 sq ft) and conditioned by zip code with custom strips:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">xyplot</span>(price<span class="sc">~</span>squarefeet, <span class="at">data=</span>sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">trellis.par.set</span>(<span class="at">fontsize=</span><span class="fu">list</span>(<span class="at">text=</span><span class="dv">7</span>))</span>
+<span id="cb25-2"><a href=""></a><span class="fu">xyplot</span>(price<span class="sc">~</span>squarefeet<span class="sc">|</span>zip, <span class="at">data=</span>sanfrancisco.home.sales,</span>
+<span id="cb25-3"><a href=""></a>       <span class="at">subset=</span>(zip<span class="sc">!=</span><span class="dv">94100</span> <span class="sc">&amp;</span> zip<span class="sc">!=</span><span class="dv">94104</span> <span class="sc">&amp;</span> zip<span class="sc">!=</span><span class="dv">94108</span> <span class="sc">&amp;</span></span>
+<span id="cb25-4"><a href=""></a>               zip<span class="sc">!=</span><span class="dv">94111</span> <span class="sc">&amp;</span> zip<span class="sc">!=</span><span class="dv">94133</span> <span class="sc">&amp;</span> zip<span class="sc">!=</span><span class="dv">94158</span> <span class="sc">&amp;</span></span>
+<span id="cb25-5"><a href=""></a>               price <span class="sc">&lt;</span> <span class="dv">4000000</span> <span class="sc">&amp;</span></span>
+<span id="cb25-6"><a href=""></a>               <span class="fu">ifelse</span>(<span class="fu">is.na</span>(squarefeet), <span class="cn">FALSE</span>, squarefeet <span class="sc">&lt;</span> <span class="dv">6000</span>)),</span>
+<span id="cb25-7"><a href=""></a>       <span class="at">strip=</span><span class="fu">strip.custom</span>(<span class="at">strip.levels=</span><span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-18-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">trellis.par.set</span>(<span class="at">fontsize=</span><span class="fu">list</span>(<span class="at">text=</span><span class="dv">12</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The linear relationship sharpens within each zip — neighborhood conditioning (<code>price~squarefeet|neighborhood</code>, with <code>pch=19, cex=.2</code>) tells the same story with better labels.</p>
+</section>
+<section id="bwplot-box-plots-by-month" class="slide level2">
+<h2>bwplot: Box Plots by Month</h2>
+<p>Distribution of prices over time — round dates to months with <code>cut</code>. The raw attempt drowns in outliers; log-transform and rotate the labels:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">bwplot</span>(<span class="fu">log</span>(price)<span class="sc">~</span><span class="fu">cut</span>(date, <span class="st">"month"</span>),</span>
+<span id="cb27-2"><a href=""></a>       <span class="at">data=</span>sanfrancisco.home.sales,</span>
+<span id="cb27-3"><a href=""></a>       <span class="at">scales=</span><span class="fu">list</span>(<span class="at">x=</span><span class="fu">list</span>(<span class="at">rot=</span><span class="dv">90</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch14_files/figure-revealjs/unnamed-chunk-19-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Medians wandered; the interquartile range moved less; the high end visibly thinned — yet the basic shape stayed stable month to month. (Volume note: the data starts mid-February and ends mid-July — don’t over-read those months.)</p>
+</section>
+<section id="splom-and-qq" class="slide level2">
+<h2>splom and qq</h2>
 <ul>
-<li><code>groups=</code> distinguishes subsets <em>inside</em> a panel (with <code>auto.key=TRUE</code> for a legend); <code>|</code> separates subsets <em>across</em> panels.</li>
-<li>The returned <code>"trellis"</code> object can be stored, updated with <code>update()</code>, and printed later.</li>
+<li><strong><code>splom(x, data, ...)</code></strong> — scatter plot matrices (lattice’s <code>pairs</code>); panels drawn by <code>panel.splom</code>, the matrix orchestrated by <code>superpanel=panel.pairs</code>, axis detail via <code>pscales</code>, names via <code>varnames</code>.</li>
+<li><strong><code>qq(x, data, ...)</code></strong> — <em>two-sample</em> quantile-quantile plots, comparing two observed distributions (formula syntax <code>factor ~ value</code>).</li>
 </ul>
-</section>
-<section id="univariate-plots-histograms-and-densities" class="slide level2">
-<h2>Univariate Plots: Histograms and Densities</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">densityplot</span>(<span class="sc">~</span> DBWT <span class="sc">|</span> DPLURAL, <span class="at">data =</span> births2006.smpl,</span>
-<span id="cb5-2"><a href=""></a>            <span class="at">plot.points =</span> <span class="cn">FALSE</span>, <span class="at">layout =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>),</span>
-<span id="cb5-3"><a href=""></a>            <span class="at">xlab =</span> <span class="st">"Birth weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section></section>
+<section>
+<section id="trivariate-plots" class="title-slide slide level1 center">
+<h1>Trivariate Plots</h1>
 
-</div>
-<img data-src="ch14_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:68.0%"><p>Stacking the panels vertically (one per plurality: singles, twins, triplets…) aligns the x-axes — multiples are born lighter, and the whole story is one column tall.</p>
 </section>
-<section id="univariate-plots-strips-and-quantiles" class="slide level2">
-<h2>Univariate Plots: Strips and Quantiles</h2>
+<section id="levelplot" class="slide level2">
+<h2>levelplot</h2>
+<p>Flat grids colored by a third value (drawn by <code>panel.levelplot</code>; key arguments <code>at</code>, <code>cuts=15</code>, <code>region</code>, <code>colorkey</code>, <code>col.regions</code>, <code>contour</code>). Coordinates are too precise to plot raw — bin first with <code>cut</code> + <code>table</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">attach</span>(sanfrancisco.home.sales)</span>
+<span id="cb28-2"><a href=""></a><span class="fu">levelplot</span>(<span class="fu">table</span>(<span class="fu">cut</span>(longitude, <span class="at">breaks=</span><span class="dv">40</span>), <span class="fu">cut</span>(latitude, <span class="at">breaks=</span><span class="dv">40</span>)),</span>
+<span id="cb28-3"><a href=""></a>          <span class="at">scales=</span><span class="fu">list</span>(<span class="at">y=</span><span class="fu">list</span>(<span class="at">cex=</span>.<span class="dv">5</span>), <span class="at">x=</span><span class="fu">list</span>(<span class="at">rot=</span><span class="dv">90</span>, <span class="at">cex=</span>.<span class="dv">5</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-20-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Mean <em>price</em> by area? Swap <code>table</code> for <code>tapply</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">levelplot</span>(<span class="fu">tapply</span>(price,</span>
+<span id="cb29-2"><a href=""></a>                 <span class="at">INDEX=</span><span class="fu">list</span>(<span class="fu">cut</span>(longitude, <span class="at">breaks=</span><span class="dv">40</span>),</span>
+<span id="cb29-3"><a href=""></a>                            <span class="fu">cut</span>(latitude, <span class="at">breaks=</span><span class="dv">40</span>)),</span>
+<span id="cb29-4"><a href=""></a>                 <span class="at">FUN=</span>mean),</span>
+<span id="cb29-5"><a href=""></a>          <span class="at">scales=</span><span class="fu">list</span>(<span class="at">draw=</span><span class="cn">FALSE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch14_files/figure-revealjs/unnamed-chunk-21-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="levelplot-with-conditioning-contourplot" class="slide level2">
+<h2>levelplot with Conditioning; contourplot</h2>
+<p>A third factor makes panels — sales location by (capped) bedroom count:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a>bedrooms.capped <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(bedrooms <span class="sc">&lt;</span> <span class="dv">5</span>, bedrooms, <span class="dv">5</span>)</span>
+<span id="cb30-2"><a href=""></a><span class="fu">levelplot</span>(<span class="fu">table</span>(<span class="fu">cut</span>(longitude, <span class="at">breaks=</span><span class="dv">25</span>),</span>
+<span id="cb30-3"><a href=""></a>                <span class="fu">cut</span>(latitude, <span class="at">breaks=</span><span class="dv">25</span>),</span>
+<span id="cb30-4"><a href=""></a>                bedrooms.capped),</span>
+<span id="cb30-5"><a href=""></a>          <span class="at">scales=</span><span class="fu">list</span>(<span class="at">draw=</span><span class="cn">FALSE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">detach</span>(sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<img data-src="ch14_files/figure-revealjs/unnamed-chunk-22-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><strong><code>contourplot</code></strong> is the topographic-map sibling (<code>cuts=7</code>, <code>labels</code>, <code>contour=TRUE</code>, <code>region=FALSE</code>).</p>
+</section>
+<section id="cloud-and-wireframe" class="slide level2">
+<h2>cloud and wireframe</h2>
 <ul>
-<li><code>stripplot()</code> — one point per observation, ideal for small groups;</li>
-<li><code>qqmath()</code> — quantiles of a sample against a theoretical distribution;</li>
-<li><code>bwplot()</code> — box-and-whisker, the lattice cousin of <code>boxplot()</code>:</li>
+<li><strong><code>cloud</code></strong> — 3-D point clouds (projections of 3-D points onto 2-D); arguments include <code>aspect=c(1,1)</code>, <code>panel.aspect</code>, drawing handled by <code>panel.cloud</code> → <code>panel.3dscatter</code>.</li>
+<li><strong><code>wireframe</code></strong> — 3-D surfaces, lattice’s <code>persp</code> (<code>panel.3dwire</code> underneath).</li>
+<li>Other lattice plots worth knowing: <strong><code>rfs</code></strong> (residual and fit spread plots for a model, optionally with <code>distribution=qnorm</code>) and <strong><code>parallel</code></strong> (parallel-coordinate plots).</li>
 </ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">bwplot</span>(DBWT <span class="sc">~</span> <span class="fu">factor</span>(APGAR5), <span class="at">data =</span> births2006.smpl,</span>
-<span id="cb6-2"><a href=""></a>       <span class="at">xlab =</span> <span class="st">"5-minute Apgar score"</span>, <span class="at">ylab =</span> <span class="st">"Birth weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section></section>
+<section>
+<section id="customizing-lattice-graphics" class="title-slide slide level1 center">
+<h1>Customizing Lattice Graphics</h1>
 
-</div>
-<img data-src="ch14_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:68.0%"><p>Weight and Apgar score rise together — visible across twenty boxes at once.</p>
 </section>
-<section id="bivariate-plots" class="slide level2">
-<h2>Bivariate Plots</h2>
-<p><code>xyplot()</code> is the conditioned scatter plot. Average birth weight by day of week, split by delivery method:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>wt <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(DBWT <span class="sc">~</span> DOB_WK <span class="sc">+</span> DMETH_REC, <span class="at">data =</span> births2006.smpl, mean)</span>
-<span id="cb7-2"><a href=""></a><span class="fu">xyplot</span>(DBWT <span class="sc">~</span> DOB_WK <span class="sc">|</span> DMETH_REC, <span class="at">data =</span> wt, <span class="at">type =</span> <span class="st">"h"</span>,</span>
-<span id="cb7-3"><a href=""></a>       <span class="at">layout =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>), <span class="at">xlab =</span> <span class="st">"Day of week"</span>, <span class="at">ylab =</span> <span class="st">"Mean weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch14_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:70.0%"><p>Other bivariate friends: <code>barchart()</code>, <code>dotplot()</code> (Cleveland’s dot plot — often the best replacement for both pies and bars).</p>
-</section>
-<section id="trivariate-plots" class="slide level2">
-<h2>Trivariate Plots</h2>
-<p>For three numeric dimensions:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>, <span class="at">length.out =</span> <span class="dv">40</span>)</span>
-<span id="cb8-2"><a href=""></a>grid <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">x =</span> x, <span class="at">y =</span> x)</span>
-<span id="cb8-3"><a href=""></a>grid<span class="sc">$</span>z <span class="ot">&lt;-</span> <span class="fu">with</span>(grid, <span class="fu">exp</span>(<span class="sc">-</span>(x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> y<span class="sc">^</span><span class="dv">2</span>)))</span>
-<span id="cb8-4"><a href=""></a><span class="fu">levelplot</span>(z <span class="sc">~</span> x <span class="sc">*</span> y, <span class="at">data =</span> grid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch14_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><ul>
-<li><code>levelplot()</code> — colored tiles; <code>contourplot()</code> — labeled contour lines;</li>
-<li><code>cloud()</code> — 3-D point clouds; <code>wireframe()</code> — 3-D surfaces.</li>
-</ul>
-</section>
-<section id="custom-panel-functions" class="slide level2">
-<h2>Custom Panel Functions</h2>
-<p>A panel function decides what gets drawn inside each rectangle. Wrap the default and add to it:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">xyplot</span>(DBWT <span class="sc">~</span> WTGAIN <span class="sc">|</span> SEX,</span>
-<span id="cb9-2"><a href=""></a>       <span class="at">data =</span> births2006.smpl[<span class="fu">sample</span>(<span class="fu">nrow</span>(births2006.smpl), <span class="dv">2000</span>), ],</span>
-<span id="cb9-3"><a href=""></a>       <span class="at">alpha =</span> <span class="fl">0.2</span>,</span>
-<span id="cb9-4"><a href=""></a>       <span class="at">panel =</span> <span class="cf">function</span>(x, y, ...) {</span>
-<span id="cb9-5"><a href=""></a>         <span class="fu">panel.xyplot</span>(x, y, ...)</span>
-<span id="cb9-6"><a href=""></a>         <span class="fu">panel.lmline</span>(x, y, <span class="at">col =</span> <span class="st">"red"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
-<span id="cb9-7"><a href=""></a>       },</span>
-<span id="cb9-8"><a href=""></a>       <span class="at">xlab =</span> <span class="st">"Maternal weight gain (lb)"</span>, <span class="at">ylab =</span> <span class="st">"Birth weight (g)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch14_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p><code>panel.lmline</code>, <code>panel.loess</code>, <code>panel.abline</code>, and <code>panel.grid</code> are ready-made building blocks.</p>
-</section>
-<section id="customizing-lattice" class="slide level2">
-<h2>Customizing Lattice</h2>
-<ul>
-<li><code>trellis.par.get()</code> / <code>trellis.par.set()</code> adjust the theme (colors, fonts, symbols) globally.</li>
-<li><code>show.settings()</code> displays the current theme at a glance.</li>
-<li>Per-plot: <code>par.settings=</code> injects theme tweaks into a single call;</li>
-<li><code>update(plot_object, ...)</code> modifies an existing trellis object — handy for polishing a stored plot without recomputing.</li>
-</ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>my.theme <span class="ot">&lt;-</span> <span class="fu">trellis.par.get</span>()</span>
-<span id="cb10-2"><a href=""></a>my.theme<span class="sc">$</span>plot.symbol<span class="sc">$</span>pch <span class="ot">&lt;-</span> <span class="dv">19</span></span>
-<span id="cb10-3"><a href=""></a><span class="fu">trellis.par.set</span>(my.theme)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="lattice-vs.-base-graphics" class="slide level2">
-<h2>Lattice vs.&nbsp;Base Graphics</h2>
+<section id="common-arguments-to-lattice-functions" class="slide level2">
+<h2>Common Arguments to Lattice Functions</h2>
+<p>Shared by the high-level functions:</p>
 <table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;"></th>
-<th style="text-align: left;">Base</th>
-<th style="text-align: left;">Lattice</th>
+<th>Argument</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Conditioning</td>
-<td style="text-align: left;">manual loops + <code>par(mfrow)</code></td>
-<td style="text-align: left;"><code>| g</code> in the formula</td>
+<td><code>x</code> (formula), <code>data</code></td>
+<td>what to plot, where the variables live</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Return value</td>
-<td style="text-align: left;">none (ink on paper)</td>
-<td style="text-align: left;">trellis object</td>
+<td><code>allow.multiple</code>, <code>outer</code></td>
+<td>handling of <code>y1+y2~x</code> formulas: superpose or separate panels</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Legends</td>
-<td style="text-align: left;">manual <code>legend()</code></td>
-<td style="text-align: left;"><code>auto.key = TRUE</code></td>
+<td><code>groups</code> / <code>subset</code> / <code>subscripts</code></td>
+<td>grouping variable; row filter; expose indices to panels</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Consistency across panels</td>
-<td style="text-align: left;">your job</td>
-<td style="text-align: left;">automatic</td>
+<td><code>panel</code></td>
+<td>the panel function — <em>the</em> customization hook</td>
+</tr>
+<tr class="odd">
+<td><code>aspect</code></td>
+<td>panel aspect ratio (<code>"fill"</code>, <code>"xy"</code> banking to 45°, numeric)</td>
+</tr>
+<tr class="even">
+<td><code>auto.key</code></td>
+<td>quick legend (logical or list)</td>
+</tr>
+<tr class="odd">
+<td><code>prepanel</code></td>
+<td>function determining per-panel space/limits</td>
+</tr>
+<tr class="even">
+<td><code>strip</code></td>
+<td>strip-drawing function (e.g., <code>strip.custom</code>); <code>strip.left</code> for left strips</td>
+</tr>
+<tr class="odd">
+<td><code>xlab</code>, <code>ylab</code>, <code>main</code>, <code>sub</code>, <code>xlim</code>, <code>ylim</code></td>
+<td>annotation and limits</td>
+</tr>
+<tr class="even">
+<td><code>scales</code></td>
+<td>axis control (next slide)</td>
+</tr>
+<tr class="odd">
+<td><code>layout</code>, <code>between</code>, <code>skip</code></td>
+<td>panel arrangement, spacing</td>
+</tr>
+<tr class="even">
+<td><code>drop.unused.levels</code>, <code>default.scales</code>, <code>lattice.options</code></td>
+<td>the long tail (passed via <code>trellis.skeleton</code>)</td>
 </tr>
 </tbody>
 </table>
-<p>Lattice shines exactly when the question is “does this pattern hold <em>within every subgroup</em>?” — Chapter 15 shows <code>ggplot2</code>, a third system built on a full grammar.</p>
+</section>
+<section id="controlling-axes-scales" class="slide level2">
+<h2>Controlling Axes: scales</h2>
+<p><code>scales</code> is a list (optionally with <code>x</code> and <code>y</code> sublists):</p>
+<ul>
+<li><code>relation</code> — <code>"same"</code> (shared limits), <code>"free"</code> (per-panel), <code>"sliced"</code> (equal-length slices);</li>
+<li><code>draw</code>, <code>alternating</code>, <code>tick.number</code>, <code>at</code>, <code>labels</code>, <code>cex</code>, <code>rot</code>, <code>font</code>, <code>col</code>, <code>log</code>, <code>abbreviate</code>…</li>
+</ul>
+<p>Seen in action earlier: <code>scales=list(x=list(rot=90))</code> for rotated month labels, <code>scales=list(draw=FALSE)</code> to silence map axes.</p>
+</section>
+<section id="parameters-trellis.par.get-set" class="slide level2">
+<h2>Parameters: trellis.par.get / set</h2>
+<p>Lattice ignores <code>par</code>; its own settings live in a deep parameter list:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">trellis.par.get</span>(<span class="st">"axis.text"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$alpha
+[1] 1
+
+$cex
+[1] 0.8
+
+$col
+[1] "black"
+
+$font
+[1] 1
+
+$lineheight
+[1] 1</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a><span class="fu">trellis.par.set</span>(<span class="fu">list</span>(<span class="at">axis.text =</span> <span class="fu">list</span>(<span class="at">cex =</span> <span class="fl">0.5</span>)))</span>
+<span id="cb34-2"><a href=""></a><span class="fu">show.settings</span>()                    <span class="co"># visual overview of current settings</span></span>
+<span id="cb34-3"><a href=""></a><span class="fu">names</span>(<span class="fu">trellis.par.get</span>())           <span class="co"># 30+ groups, ~380 parameters</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Groups include <code>superpose.symbol</code>/<code>superpose.line</code> (groups), <code>plot.polygon</code> (bars/histograms), <code>box.rectangle</code>/<code>box.umbrella</code> (bwplot), <code>plot.line</code>/<code>plot.symbol</code> (xyplot et al.), <code>reference.line</code>, <code>regions</code>+<code>shade.colors</code> (levelplot/wireframe), <code>strip.background</code>/<code>strip.shingle</code>, <code>fontsize</code>, <code>par.main.text</code> and friends.</p>
+</section>
+<section id="plot.trellis-strip.default-simplekey" class="slide level2">
+<h2>plot.trellis, strip.default, simpleKey</h2>
+<ul>
+<li><strong><code>plot.trellis</code></strong> — arguments controlling drawing: <code>position</code>/<code>split</code>/<code>more</code> (plot several trellis objects on one page), <code>panel.height</code>/<code>panel.width</code>, <code>packet.panel</code> (which packet lands in which panel; default <code>packet.panel.default</code>), <code>panel.error</code>.</li>
+<li><strong><code>strip.default(which.given, which.panel, var.name, factor.levels, shingle.intervals, strip.names, strip.levels, style, bg, fg, par.strip.text)</code></strong> — how strips display conditioning levels; customize via <code>strip.custom</code>.</li>
+<li><strong><code>simpleKey(text, points=TRUE, rectangles=FALSE, lines=FALSE, col, cex, ...)</code></strong> — builds the legend that <code>auto.key</code> requests.</li>
+</ul>
+</section>
+<section id="low-level-and-panel-functions" class="slide level2">
+<h2>Low-Level and Panel Functions</h2>
+<p>Grid-based primitives mirror base graphics: <code>llines</code>/<code>panel.lines</code>, <code>lpoints</code>/<code>panel.points</code>, <code>ltext</code>/<code>panel.text</code>, <code>lsegments</code>/<code>panel.segments</code>, <code>lpolygon</code>/<code>panel.polygon</code>, <code>larrows</code>/<code>panel.arrows</code>, <code>lrect</code>/<code>panel.rect</code>, plus <code>panel.axis</code> and <code>panel.superpose</code>.</p>
+<p>Ready-made panel helpers to compose into custom panels:</p>
+<ul>
+<li><code>panel.abline</code>, <code>panel.curve</code>, <code>panel.rug</code>, <code>panel.grid</code>, <code>panel.fill</code>;</li>
+<li><code>panel.mathdensity</code> (overlay a theoretical density), <code>panel.average</code>;</li>
+<li><code>panel.loess</code> (smoother), <code>panel.lmline</code> (regression line);</li>
+<li>and each high-level function’s <code>panel.*</code> (e.g., <code>panel.xyplot</code>, <code>panel.barchart</code>, <code>panel.histogram</code>) for delegation — the pattern from our first custom panel.</li>
+</ul>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

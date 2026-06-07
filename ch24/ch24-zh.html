@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,191 +211,158 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="讓-r-跑得快" class="title-slide slide level1 center">
-<h1><strong>讓 R 跑得快</strong></h1>
+<section id="讓-r-更快" class="title-slide slide level1 center">
+<h1><strong>讓 R 更快</strong></h1>
 
 </section>
 <section id="先量測再優化" class="slide level2">
-<h2>先量測，再優化</h2>
-<p>鐵則：永遠不要猜時間花在哪——量它。</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">system.time</span>({</span>
-<span id="cb1-2"><a href=""></a>  x <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">0</span>)</span>
-<span id="cb1-3"><a href=""></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20000</span>) x <span class="ot">&lt;-</span> <span class="fu">c</span>(x, i)   <span class="co"># 「向量長大」之罪</span></span>
-<span id="cb1-4"><a href=""></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.276   0.011   0.288 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">system.time</span>({</span>
-<span id="cb3-2"><a href=""></a>  y <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">20000</span>)</span>
-<span id="cb3-3"><a href=""></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20000</span>) y[i] <span class="ot">&lt;-</span> i      <span class="co"># 預先配置</span></span>
-<span id="cb3-4"><a href=""></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.001   0.000   0.001 </code></pre>
-</div>
-</div>
-<p>同一個迴圈、成本天差地遠——因為 <code>c()</code> 每一輪都把整個向量重新複製一次。</p>
+<h2>先量測、再優化</h2>
+<p>黃金法則：<strong>絕不盲目優化</strong>。先找出時間與記憶體實際花在哪，再修<em>那裡</em>。R 兩者都有工具。</p>
+</section></section>
+<section>
+<section id="量測效能" class="title-slide slide level1 center">
+<h1>量測效能</h1>
+
 </section>
-<section id="效能剖析" class="slide level2">
-<h2>效能剖析</h2>
-<p>對整支程式，剖析器把時間歸給各函式：</p>
+<section id="計時system.time" class="slide level2">
+<h2>計時：system.time</h2>
+<p>最簡單的量測——包住任何運算式：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a>slow_demo <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
-<span id="cb5-2"><a href=""></a>  m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> <span class="dv">50</span>), <span class="at">ncol =</span> <span class="dv">50</span>)</span>
-<span id="cb5-3"><a href=""></a>  out <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">ncol</span>(m))</span>
-<span id="cb5-4"><a href=""></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">ncol</span>(m))) out[j] <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">sort</span>(m[, j]))</span>
-<span id="cb5-5"><a href=""></a>  out</span>
-<span id="cb5-6"><a href=""></a>}</span>
-<span id="cb5-7"><a href=""></a><span class="fu">Rprof</span>(tmp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>())</span>
-<span id="cb5-8"><a href=""></a><span class="fu">invisible</span>(<span class="fu">slow_demo</span>(<span class="dv">20000</span>))</span>
-<span id="cb5-9"><a href=""></a><span class="fu">Rprof</span>(<span class="cn">NULL</span>)</span>
-<span id="cb5-10"><a href=""></a><span class="fu">head</span>(<span class="fu">summaryRprof</span>(tmp)<span class="sc">$</span>by.self, <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">system.time</span>(<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fl">1e6</span>) <span class="fu">sqrt</span>(i))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>        self.time self.pct total.time total.pct
-"rnorm"      0.02       50       0.02        50
-"sort"       0.02       50       0.02        50</code></pre>
+<pre><code>   user  system elapsed 
+  0.015   0.000   0.015 </code></pre>
+</div>
+</div>
+<p>三個數字：<strong>user time</strong>（R 本身做的工）、<strong>system time</strong>（OS 替 R 做的工）、<strong>elapsed time</strong>（牆上時鐘）。<code>gcFirst=TRUE</code>（預設）先做垃圾回收，讀數更乾淨。（嚴謹的微基準請用現代的 <code>microbenchmark</code> 與 <code>bench</code>，會重複並比較。）</p>
+</section>
+<section id="剖析rprof-與-summaryrprof" class="slide level2">
+<h2>剖析：Rprof 與 summaryRprof</h2>
+<p>要看整支程式<em>時間花在哪</em>，就<strong>剖析（profile）</strong>它：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">Rprof</span>(<span class="st">"Rprof.out"</span>, <span class="at">interval =</span> <span class="fl">0.02</span>, <span class="at">memory.profiling =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-2"><a href=""></a><span class="fu">do.stuff</span>()                       <span class="co"># ……你的程式……</span></span>
+<span id="cb3-3"><a href=""></a><span class="fu">Rprof</span>(<span class="cn">NULL</span>)                      <span class="co"># 停止剖析</span></span>
+<span id="cb3-4"><a href=""></a><span class="fu">summaryRprof</span>(<span class="st">"Rprof.out"</span>)        <span class="co"># 哪些函式吃掉時間</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>Rprof</code> 每 <code>interval</code> 秒採樣一次呼叫堆疊、寫進檔案；<code>Rprof(NULL)</code> 停止。<code>summaryRprof</code> 依自身與總時間排名（加 <code>memory=</code> 還能依配置量）。這就是你找出<em>那一行</em>佔掉大半執行時間的方法——往往出人意料。</p>
+</section>
+<section id="監測記憶體" class="slide level2">
+<h2>監測記憶體</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">gc</span>()                             <span class="co"># 垃圾回收「並」回報用量</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
+Ncells  626460 33.5    1420424 75.9         NA  1420424 75.9
+Vcells 1158800  8.9    8388608 64.0      16384  2013854 15.4</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">object.size</span>(<span class="st">"Hello world!"</span>)      <span class="co"># 單一物件的約略大小</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>120 bytes</code></pre>
 </div>
 </div>
 <ul>
-<li><code>Rprof()</code> 抽樣呼叫堆疊；<code>summaryRprof()</code> 把結果列表。</li>
-<li><code>Rprof(memory.profiling = TRUE)</code> 與 <code>tracemem()</code> 揭露看不見的複製。</li>
+<li><strong><code>gc()</code></strong> 強制垃圾回收<em>並</em>回報目前記憶體用量。</li>
+<li><strong><code>object.size(x)</code></strong> 估計物件佔用——當一個「小」資料框其實龐大時，價值連城。</li>
+<li><strong><code>memory.profile()</code></strong> 依物件型別拆解用量；Windows 上 <code>memory.size()</code>／<code>memory.limit()</code> 回報並設定總用量上限。</li>
+<li><strong><code>Rprofmem(filename, threshold=)</code></strong> 記錄大配置（R 須以記憶體剖析編譯）。</li>
 </ul>
+</section></section>
+<section>
+<section id="優化你的程式碼" class="title-slide slide level1 center">
+<h1>優化你的程式碼</h1>
+
 </section>
-<section id="向量化" class="slide level2">
-<h2>向量化</h2>
-<p>R 最大的單一加速來源：把逐元素迴圈換成整向量運算，後者跑在編譯過的 C 裡：</p>
+<section id="善用向量運算" class="slide level2">
+<h2>善用向量運算</h2>
+<p>R 最大的提速槓桿：把<strong>逐元素的迭代程式碼換成整個向量的運算</strong>。第八章的例子加強版——在迴圈中擴張向量 vs.&nbsp;一次處理：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fl">1e6</span>)</span>
-<span id="cb7-2"><a href=""></a><span class="fu">system.time</span>({ s <span class="ot">&lt;-</span> <span class="dv">0</span>; <span class="cf">for</span> (xi <span class="cf">in</span> v) s <span class="ot">&lt;-</span> s <span class="sc">+</span> xi<span class="sc">^</span><span class="dv">2</span> })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>slow <span class="ot">&lt;-</span> <span class="cf">function</span>(n) { v <span class="ot">&lt;-</span> <span class="cn">NA</span>; <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) v[i] <span class="ot">&lt;-</span> i<span class="sc">^</span><span class="dv">2</span>; v }</span>
+<span id="cb8-2"><a href=""></a>fast <span class="ot">&lt;-</span> <span class="cf">function</span>(n) { (<span class="dv">1</span><span class="sc">:</span>n)<span class="sc">^</span><span class="dv">2</span> }</span>
+<span id="cb8-3"><a href=""></a><span class="fu">system.time</span>(<span class="fu">slow</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.022   0.000   0.021 </code></pre>
+<pre><code>elapsed 
+  0.007 </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">system.time</span>(<span class="fu">sum</span>(v<span class="sc">^</span><span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">system.time</span>(<span class="fu">fast</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.002   0.000   0.002 </code></pre>
+<pre><code>elapsed 
+      0 </code></pre>
 </div>
 </div>
+<p>向量版又快又清楚。兩個原因：迴圈主體要重複分派 R 函式上萬次，而<strong>擴張向量每一步都重新配置記憶體</strong>。預先配置（<code>v &lt;- numeric(n)</code>）有幫助；向量化幫助更大。</p>
+</section>
+<section id="把問題改寫成內建函式" class="slide level2">
+<h2>把問題改寫成內建函式</h2>
+<p>許多迴圈能改寫成以 C 實作的函式呼叫：</p>
 <ul>
-<li><code>rowSums()</code>、<code>colMeans()</code>、<code>cumsum()</code>、<code>pmax()</code>，以及不靠 <code>ifelse()</code> 的邏輯運算（<code>(x &gt; 0) * x</code>）都把常見模式向量化了。</li>
-<li>apply 家族比迴圈<em>清楚</em>，但本質上不更快——真正的向量運算才快。</li>
+<li><strong>apply 家族</strong>——<code>sapply</code>、<code>lapply</code>、<code>vapply</code>、<code>mapply</code>、<code>tapply</code>（第九、十二章）；</li>
+<li><strong>矩陣代數</strong>——<code>%*%</code>、<code>crossprod</code>、<code>rowSums</code>、<code>colMeans</code> 取代巢狀迴圈；</li>
+<li><strong><code>outer</code></strong>、<code>cumsum</code>、<code>diff</code>、<code>tabulate</code>、<code>findInterval</code> 處理常見模式。</li>
 </ul>
-</section>
-<section id="查找效能" class="slide level2">
-<h2>查找效能</h2>
-<p>資料一大，「怎麼找東西」就開始要緊：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>n <span class="ot">&lt;-</span> <span class="fl">1e5</span></span>
-<span id="cb11-2"><a href=""></a>named.vec <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">rnorm</span>(n), <span class="fu">paste0</span>(<span class="st">"k"</span>, <span class="dv">1</span><span class="sc">:</span>n))</span>
-<span id="cb11-3"><a href=""></a>e <span class="ot">&lt;-</span> <span class="fu">new.env</span>(<span class="at">hash =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb11-4"><a href=""></a><span class="cf">for</span> (k <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"k50000"</span>)) <span class="fu">assign</span>(k, named.vec[[k]], <span class="at">envir =</span> e)</span>
-<span id="cb11-5"><a href=""></a><span class="fu">system.time</span>(<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>) named.vec[<span class="st">"k50000"</span>])   <span class="co"># 名稱查找：線性掃描</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span><span class="sc">:</span><span class="fl">1e6</span>, <span class="at">ncol=</span><span class="dv">1000</span>)</span>
+<span id="cb12-2"><a href=""></a><span class="fu">system.time</span>(<span class="fu">apply</span>(m, <span class="dv">2</span>, sum))[<span class="st">"elapsed"</span>]      <span class="co"># 易讀</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.088   0.000   0.089 </code></pre>
+<pre><code>elapsed 
+  0.005 </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">system.time</span>(<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>) <span class="fu">get</span>(<span class="st">"k50000"</span>, <span class="at">envir =</span> e))  <span class="co"># 雜湊：常數時間</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">system.time</span>(<span class="fu">colSums</span>(m))[<span class="st">"elapsed"</span>]            <span class="co"># 內建，快得多</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.000   0.000   0.001 </code></pre>
+<pre><code>elapsed 
+  0.001 </code></pre>
 </div>
 </div>
-<ul>
-<li>依名稱索引向量是掃描；雜湊環境（以及 <code>fastmatch</code>/<code>data.table</code> 套件）直接跳到目標。</li>
-<li>迴圈裡 <code>match()</code> 勝過反覆 <code>%in%</code>；排序過的鍵可用 <code>findInterval()</code>。</li>
-</ul>
+<p>教訓：在 <em>C 裡跑迴圈</em>的內建函式，勝過任何 R 層級的迴圈。</p>
 </section>
-<section id="記憶體很重要" class="slide level2">
-<h2>記憶體很重要</h2>
-<p>R 把一切放在 RAM，而複製是沉默的殺手：</p>
+<section id="查值效能用環境當雜湊表" class="slide level2">
+<h2>查值效能：用環境當雜湊表</h2>
+<p>反覆以名稱查值？<strong>具名向量或串列</strong>做的是線性掃描；<strong>環境</strong>是雜湊表，查找近乎常數時間。要做上千次按鍵查找，就把資料放進環境：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">gc</span>()[, <span class="fu">c</span>(<span class="st">"used"</span>, <span class="st">"max used"</span>)] <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a>e <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb16-2"><a href=""></a><span class="fu">assign</span>(<span class="st">"BG"</span>, <span class="dv">42</span>, <span class="at">envir=</span>e)        <span class="co"># 或 e[["BG"]] &lt;- 42</span></span>
+<span id="cb16-3"><a href=""></a><span class="fu">get</span>(<span class="st">"BG"</span>, <span class="at">envir=</span>e)               <span class="co"># O(1) 查找</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>          used max used
-Ncells  736405  1420447
-Vcells 2586890  8387625</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">object.size</span>(<span class="fu">rnorm</span>(<span class="fl">1e6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>8000048 bytes</code></pre>
+<pre><code>[1] 42</code></pre>
 </div>
 </div>
-<ul>
-<li>用完的大物件 <code>rm()</code> 掉；<code>gc()</code> 回報（並觸發）垃圾回收。</li>
-<li>迴圈內修改欄位、別修改整個資料框；對大物件的每個「小」改動都可能整份複製。</li>
-<li>資料大過 RAM 時：<code>data.table</code>（仍在記憶體但省）、<code>ff</code>/<code>bigmemory</code>（磁碟支援）、資料庫（第十一章）、Hadoop（第二十六章）。</li>
-</ul>
+<p>書中把它與具名向量查找對比，發現表越大、環境越是大幅勝出——許多高效能 R 套件背後的訣竅。</p>
 </section>
-<section id="位元組碼編譯器" class="slide level2">
-<h2>位元組碼編譯器</h2>
-<p>R 會把函式編成位元組碼；確保熱點函式受惠：</p>
+<section id="位元組碼編譯器以及更遠" class="slide level2">
+<h2>位元組碼編譯器，以及更遠</h2>
+<p>R 內附<strong>位元組碼編譯器</strong>（<code>compiler</code> 套件），能加速純 R 函式——而且自 R 2.14 起，base 與 recommended 套件已預先編譯；自 R 3.4 起，函式在使用時即時（JIT）編譯：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">library</span>(compiler)</span>
-<span id="cb19-2"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(n) { s <span class="ot">&lt;-</span> <span class="dv">0</span>; <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) s <span class="ot">&lt;-</span> s <span class="sc">+</span> i; s }</span>
-<span id="cb19-3"><a href=""></a>fc <span class="ot">&lt;-</span> <span class="fu">cmpfun</span>(f)</span>
-<span id="cb19-4"><a href=""></a><span class="fu">system.time</span>(<span class="fu">f</span>(<span class="fl">2e6</span>)); <span class="fu">system.time</span>(<span class="fu">fc</span>(<span class="fl">2e6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a><span class="fu">library</span>(compiler)</span>
+<span id="cb18-2"><a href=""></a>slow.c <span class="ot">&lt;-</span> <span class="fu">cmpfun</span>(slow)           <span class="co"># 編譯成位元組碼</span></span>
+<span id="cb18-3"><a href=""></a><span class="fu">system.time</span>(<span class="fu">slow.c</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.034   0.000   0.034 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.033   0.000   0.033 </code></pre>
+<pre><code>elapsed 
+  0.005 </code></pre>
 </div>
 </div>
-<p>R 3.4 起 JIT 會自動編譯多數函式——但這個差距顯示了直譯器的成本，也說明為何躲不掉的迴圈最終要靠 <code>Rcpp</code> 套件的 C++ 重砲。</p>
-</section>
-<section id="平行運算" class="slide level2">
-<h2>平行運算</h2>
-<p>許多工作是「尷尬地平行」——彼此獨立、無需溝通：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a><span class="fu">library</span>(parallel)</span>
-<span id="cb22-2"><a href=""></a><span class="fu">detectCores</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 8</code></pre>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="fu">system.time</span>(res1 <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(<span class="fu">rnorm</span>(<span class="fl">4e5</span>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.075   0.003   0.078 </code></pre>
+<p><strong>Tip</strong></p>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(<span class="dv">2</span>)</span>
-<span id="cb26-2"><a href=""></a><span class="fu">system.time</span>(res2 <span class="ot">&lt;-</span> <span class="fu">parLapply</span>(cl, <span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, <span class="cf">function</span>(i) <span class="fu">mean</span>(<span class="fu">rnorm</span>(<span class="fl">4e5</span>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.001   0.001   0.049 </code></pre>
+<div class="callout-content">
+<p><strong>優化的階梯。</strong> (1) 向量化。(2) 用內建／C 函式與矩陣代數。(3) 預先配置；查找用環境。(4) 編譯熱點函式。(5) 之後才平行化（第二十六章）或用 C++（<code>Rcpp</code>）重寫瓶頸。每一步後都重新剖析——並在「夠快」時停手。</p>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">stopCluster</span>(cl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<ul>
-<li><code>mclapply()</code>（Unix/macOS 的 fork）是一行版；<code>parLapply()</code> 各平台通用。</li>
-<li>模擬、拔靴、交叉驗證折、網格搜尋都完美平行；但開銷意味著太小的工作未必划算。</li>
-</ul>
-</section>
-<section id="優化檢查清單" class="slide level2">
-<h2>優化檢查清單</h2>
-<ol type="1">
-<li><strong>量測</strong>（<code>system.time</code>、<code>Rprof</code>）——找出真正的瓶頸。</li>
-<li><strong>向量化</strong>熱點迴圈；預先配置結果。</li>
-<li><strong>避免複製</strong>——當心長大的物件與對大資料框的反覆切片。</li>
-<li><strong>更好的演算法／結構</strong>——雜湊、排序、<code>data.table</code>。</li>
-<li><strong>平行化</strong>獨立的工作。</li>
-<li>以上都不夠時才<strong>下探 C++</strong>（<code>Rcpp</code>）。</li>
-</ol>
-<p>可讀又快勝過聰明而脆弱：優化那要緊的 5%，其餘保持清楚。</p>
+</div>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

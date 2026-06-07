@@ -231,7 +231,7 @@ download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfr
               temp, mode = "wb")
 load(temp)
 home.sale.prices.june2008 <- subset(sanfrancisco.home.sales,
-  format(saledate, "%Y-%m")=="2008-06")$price
+  format(date, "%Y-%m")=="2008-06")$price
 library(boot)
 b <- boot(data=home.sale.prices.june2008,
           statistic=function(d, i) { median(d[i]) },

@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,144 +211,238 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="designing-experiments" class="title-slide slide level1 center">
 <h1><strong>Designing Experiments</strong></h1>
 
 </section>
-<section id="power-the-missing-quantity" class="slide level2">
-<h2>Power: the Missing Quantity</h2>
-<p>A test can fail two ways: rejecting a true <span class="math inline">\(H_0\)</span> (<strong>Type I error</strong>, probability <span class="math inline">\(\alpha\)</span>) or missing a real effect (<strong>Type II error</strong>, probability <span class="math inline">\(\beta\)</span>).</p>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Note</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>Power</strong> <span class="math inline">\(= 1 - \beta\)</span>: the probability of detecting an effect that truly exists. Four quantities are locked together — sample size <span class="math inline">\(n\)</span>, significance level <span class="math inline">\(\alpha\)</span>, effect size, and power. Fix any three and the fourth is determined.</p>
-</div>
-</div>
-</div>
-<p>Power analysis answers the planning question every experiment faces: <strong>how many observations do I need?</strong></p>
+<section id="how-much-data-do-you-need" class="slide level2">
+<h2>How Much Data Do You Need?</h2>
+<p>Before collecting data, two questions decide an experiment’s fate:</p>
+<ul>
+<li>how much data is needed for a statistically significant result?</li>
+<li>given the data you <em>can</em> collect, how strong a result is even detectable?</li>
+</ul>
+<p>R’s <code>power.*</code> family answers both. The vocabulary: <strong>significance level</strong> = Type I error probability (false positive); <strong>power</strong> = 1 − Type II error probability (1 − false negative). Each function computes whichever parameter you leave as <code>NULL</code>.</p>
 </section>
-<section id="power.t.test" class="slide level2">
-<h2>power.t.test()</h2>
-<p>Sample size for detecting a 5-unit difference (sd = 10) with 80% power:</p>
+<section id="a-worked-example-designing-a-drug-trial" class="slide level2">
+<h2>A Worked Example: Designing a Drug Trial</h2>
+<p>Testing an antidepressant, with depression measured on the HAMD scale (0–48). Assume sd = 8.9 (from FDA materials), significance 0.05, desired power 0.95. With 25 subjects per arm, what group difference would be detectable?</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">delta =</span> <span class="dv">5</span>, <span class="at">sd =</span> <span class="dv">10</span>, <span class="at">sig.level =</span> <span class="fl">0.05</span>, <span class="at">power =</span> <span class="fl">0.80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">power=</span>.<span class="dv">95</span>, <span class="at">sig.level=</span>.<span class="dv">05</span>, <span class="at">sd=</span><span class="fl">8.9</span>, <span class="at">n=</span><span class="dv">25</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
      Two-sample t test power calculation 
 
-              n = 63.76576
-          delta = 5
-             sd = 10
+              n = 25
+          delta = 9.26214
+             sd = 8.9
       sig.level = 0.05
-          power = 0.8
+          power = 0.95
     alternative = two.sided
 
 NOTE: n is number in *each* group</code></pre>
 </div>
 </div>
-<p>About 64 subjects <em>per group</em>. Leave out any one argument and R solves for it:</p>
+<p>A difference of at least <strong>9.26</strong> HAMD points. Double the subjects:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">n =</span> <span class="dv">30</span>, <span class="at">delta =</span> <span class="dv">5</span>, <span class="at">sd =</span> <span class="dv">10</span>)<span class="sc">$</span>power</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">power=</span>.<span class="dv">95</span>, <span class="at">sig.level=</span>.<span class="dv">05</span>, <span class="at">sd=</span><span class="fl">8.9</span>, <span class="at">n=</span><span class="dv">50</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.477841</code></pre>
+<pre><code>
+     Two-sample t test power calculation 
+
+              n = 50
+          delta = 6.480487
+             sd = 8.9
+      sig.level = 0.05
+          power = 0.95
+    alternative = two.sided
+
+NOTE: n is number in *each* group</code></pre>
 </div>
 </div>
-<p>With only 30 per group, power falls below 50% — a coin flip’s chance of finding the effect.</p>
+<p>Now <strong>6.48</strong> suffices. This is experiment design in action: trade sample size against detectable effect <em>before</em> spending a dollar on data collection.</p>
+</section></section>
+<section>
+<section id="t-test-design" class="title-slide slide level1 center">
+<h1>t-Test Design</h1>
+
+</section>
+<section id="power.t.test" class="slide level2">
+<h2>power.t.test</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">power.t.test</span>(<span class="at">n =</span> <span class="cn">NULL</span>, <span class="at">delta =</span> <span class="cn">NULL</span>, <span class="at">sd =</span> <span class="dv">1</span>, <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
+<span id="cb5-2"><a href=""></a>             <span class="at">power =</span> <span class="cn">NULL</span>,</span>
+<span id="cb5-3"><a href=""></a>             <span class="at">type =</span> <span class="fu">c</span>(<span class="st">"two.sample"</span>, <span class="st">"one.sample"</span>, <span class="st">"paired"</span>),</span>
+<span id="cb5-4"><a href=""></a>             <span class="at">alternative =</span> <span class="fu">c</span>(<span class="st">"two.sided"</span>, <span class="st">"one.sided"</span>),</span>
+<span id="cb5-5"><a href=""></a>             <span class="at">strict =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>n</code></td>
+<td>observations <em>per group</em></td>
+</tr>
+<tr class="even">
+<td><code>delta</code></td>
+<td>true difference in means</td>
+</tr>
+<tr class="odd">
+<td><code>sd</code></td>
+<td>true standard deviation</td>
+</tr>
+<tr class="even">
+<td><code>sig.level</code></td>
+<td>significance level (Type I error probability)</td>
+</tr>
+<tr class="odd">
+<td><code>power</code></td>
+<td>1 − Type II error probability</td>
+</tr>
+<tr class="even">
+<td><code>type</code></td>
+<td>two-sample / one-sample / paired</td>
+</tr>
+<tr class="odd">
+<td><code>alternative</code></td>
+<td>two-sided or one-sided</td>
+</tr>
+<tr class="even">
+<td><code>strict</code></td>
+<td>strict interpretation in the two-sided case</td>
+</tr>
+</tbody>
+</table>
+<p>Supply <strong>four</strong> of <code>n</code>, <code>delta</code>, <code>sd</code>, <code>sig.level</code>, <code>power</code>; leave the fifth <code>NULL</code> — that’s what gets computed.</p>
+</section></section>
+<section>
+<section id="proportion-test-design" class="title-slide slide level1 center">
+<h1>Proportion Test Design</h1>
+
 </section>
 <section id="power.prop.test" class="slide level2">
-<h2>power.prop.test()</h2>
-<p>Comparing two proportions — does a change lift conversion from 10% to 12%?</p>
+<h2>power.prop.test</h2>
+<p>For experiments measured with <code>prop.test</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">p1 =</span> <span class="fl">0.10</span>, <span class="at">p2 =</span> <span class="fl">0.12</span>, <span class="at">power =</span> <span class="fl">0.80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">n =</span> <span class="cn">NULL</span>, <span class="at">p1 =</span> <span class="cn">NULL</span>, <span class="at">p2 =</span> <span class="cn">NULL</span>, <span class="at">sig.level =</span> <span class="fl">0.05</span>,</span>
+<span id="cb6-2"><a href=""></a>                <span class="at">power =</span> <span class="cn">NULL</span>,</span>
+<span id="cb6-3"><a href=""></a>                <span class="at">alternative =</span> <span class="fu">c</span>(<span class="st">"two.sided"</span>, <span class="st">"one.sided"</span>),</span>
+<span id="cb6-4"><a href=""></a>                <span class="at">strict =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>p1</code>/<code>p2</code> are the success probabilities in the two groups; the rest as before. Again: four of <code>n</code>, <code>p1</code>, <code>p2</code>, <code>sig.level</code>, <code>power</code> given, the <code>NULL</code> one computed.</p>
+</section>
+<section id="are-situational-baseball-stats-nonsense" class="slide level2">
+<h2>Are Situational Baseball Stats Nonsense?</h2>
+<p>ESPN flashes stats like “3-for-10 with two on and two out.” Suppose a batter hits .300 in some situation but .260 otherwise — how many situational at-bats make .300 significant (α = 0.05, power 0.95, one-sided)?</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">p1=</span>.<span class="dv">260</span>, <span class="at">p2=</span>.<span class="dv">300</span>, <span class="at">sig.level=</span><span class="fl">0.05</span>,</span>
+<span id="cb7-2"><a href=""></a>                <span class="at">power=</span>.<span class="dv">95</span>, <span class="at">alternative=</span><span class="st">"one.sided"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
      Two-sample comparison of proportions power calculation 
 
-              n = 3840.847
-             p1 = 0.1
-             p2 = 0.12
+              n = 2724.482
+             p1 = 0.26
+             p2 = 0.3
       sig.level = 0.05
-          power = 0.8
-    alternative = two.sided
+          power = 0.95
+    alternative = one.sided
 
 NOTE: n is number in *each* group</code></pre>
 </div>
 </div>
-<p>Thousands of observations per arm: small effects on small baselines are <em>expensive</em>. This single calculation prevents the most common A/B-testing mistake — calling a test after too few visitors.</p>
+<p><strong>Over 2,724 at-bats</strong> — per group. Flip the question: with n = 10, what’s achievable?</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">n=</span><span class="dv">10</span>, <span class="at">p1=</span>.<span class="dv">260</span>, <span class="at">p2=</span>.<span class="dv">300</span>, <span class="at">power=</span>.<span class="dv">95</span>,</span>
+<span id="cb9-2"><a href=""></a>                <span class="at">sig.level=</span><span class="cn">NULL</span>, <span class="at">alternative=</span><span class="st">"one.sided"</span>)<span class="sc">$</span>sig.level</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9256439</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">power.prop.test</span>(<span class="at">n=</span><span class="dv">10</span>, <span class="at">p1=</span>.<span class="dv">260</span>, <span class="at">p2=</span>.<span class="dv">300</span>, <span class="at">power=</span><span class="cn">NULL</span>,</span>
+<span id="cb11-2"><a href=""></a>                <span class="at">sig.level=</span>.<span class="dv">05</span>, <span class="at">alternative=</span><span class="st">"one.sided"</span>)<span class="sc">$</span>power</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.07393654</code></pre>
+</div>
+</div>
+<p>Significance level 0.93, or power 0.07. The book’s verdict: most situational statistics are nonsense — now you can prove it.</p>
+</section></section>
+<section>
+<section id="anova-test-design" class="title-slide slide level1 center">
+<h1>ANOVA Test Design</h1>
+
 </section>
 <section id="power.anova.test" class="slide level2">
-<h2>power.anova.test()</h2>
-<p>For comparing several group means:</p>
+<h2>power.anova.test</h2>
+<p>For multi-group designs analyzed with ANOVA:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">power.anova.test</span>(<span class="at">groups =</span> <span class="dv">4</span>,</span>
-<span id="cb7-2"><a href=""></a>                 <span class="at">between.var =</span> <span class="dv">1</span>, <span class="at">within.var =</span> <span class="dv">9</span>,</span>
-<span id="cb7-3"><a href=""></a>                 <span class="at">power =</span> <span class="fl">0.80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">power.anova.test</span>(<span class="at">groups =</span> <span class="cn">NULL</span>, <span class="at">n =</span> <span class="cn">NULL</span>,</span>
+<span id="cb13-2"><a href=""></a>                 <span class="at">between.var =</span> <span class="cn">NULL</span>, <span class="at">within.var =</span> <span class="cn">NULL</span>,</span>
+<span id="cb13-3"><a href=""></a>                 <span class="at">sig.level =</span> <span class="fl">0.05</span>, <span class="at">power =</span> <span class="cn">NULL</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>groups</code></td>
+<td>number of groups</td>
+</tr>
+<tr class="even">
+<td><code>n</code></td>
+<td>observations per group</td>
+</tr>
+<tr class="odd">
+<td><code>between.var</code> / <code>within.var</code></td>
+<td>variance between / within groups</td>
+</tr>
+<tr class="even">
+<td><code>sig.level</code> / <code>power</code></td>
+<td>as before</td>
+</tr>
+</tbody>
+</table>
+<p>Here <strong>six</strong> of the seven parameters must be specified; the remaining <code>NULL</code> argument is calculated.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">power.anova.test</span>(<span class="at">groups=</span><span class="dv">4</span>, <span class="at">between.var=</span><span class="dv">1</span>, <span class="at">within.var=</span><span class="dv">3</span>, <span class="at">power=</span>.<span class="dv">80</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
      Balanced one-way analysis of variance power calculation 
 
          groups = 4
-              n = 33.70068
+              n = 11.92613
     between.var = 1
-     within.var = 9
+     within.var = 3
       sig.level = 0.05
           power = 0.8
 
 NOTE: n is number in each group</code></pre>
 </div>
 </div>
-<ul>
-<li><code>between.var</code> / <code>within.var</code> encode the effect size: how far apart the group means are relative to the noise.</li>
-<li>More groups at fixed total <span class="math inline">\(n\)</span> means fewer observations per group — and less power.</li>
-</ul>
-</section>
-<section id="effect-sizes-and-curves" class="slide level2">
-<h2>Effect Sizes and Curves</h2>
-<p>Effect size is the input you must <em>guess</em> — from pilot data, past studies, or the smallest difference that would matter. Plot power across the plausible range:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>deltas <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">10</span>, <span class="fl">0.5</span>)</span>
-<span id="cb9-2"><a href=""></a>pw <span class="ot">&lt;-</span> <span class="fu">sapply</span>(deltas, <span class="cf">function</span>(d)</span>
-<span id="cb9-3"><a href=""></a>  <span class="fu">power.t.test</span>(<span class="at">n =</span> <span class="dv">50</span>, <span class="at">delta =</span> d, <span class="at">sd =</span> <span class="dv">10</span>)<span class="sc">$</span>power)</span>
-<span id="cb9-4"><a href=""></a><span class="fu">plot</span>(deltas, pw, <span class="at">type =</span> <span class="st">"l"</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
-<span id="cb9-5"><a href=""></a>     <span class="at">xlab =</span> <span class="st">"True difference"</span>, <span class="at">ylab =</span> <span class="st">"Power (n = 50/group)"</span>)</span>
-<span id="cb9-6"><a href=""></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fl">0.8</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
 </div>
-<img data-src="ch19_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"></section>
-<section id="power-by-simulation" class="slide level2">
-<h2>Power by Simulation</h2>
-<p>When no canned formula fits your design, simulate it (Chapter 17 toolkit):</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">9</span>)</span>
-<span id="cb10-2"><a href=""></a>one_run <span class="ot">&lt;-</span> <span class="cf">function</span>(n, delta) {</span>
-<span id="cb10-3"><a href=""></a>  <span class="fu">t.test</span>(<span class="fu">rnorm</span>(n), <span class="fu">rnorm</span>(n, <span class="at">mean =</span> delta))<span class="sc">$</span>p.value <span class="sc">&lt;</span> <span class="fl">0.05</span></span>
-<span id="cb10-4"><a href=""></a>}</span>
-<span id="cb10-5"><a href=""></a><span class="fu">mean</span>(<span class="fu">replicate</span>(<span class="dv">2000</span>, <span class="fu">one_run</span>(<span class="dv">64</span>, <span class="dv">5</span><span class="sc">/</span><span class="dv">10</span> <span class="sc">*</span> <span class="dv">10</span>)))   <span class="co"># matches power.t.test</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1</code></pre>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Habit for every empirical project:</strong> run the power calculation <em>before</em> the experiment. It converts wishful thinking (“we’ll see if it’s significant”) into design (“we need n per group to detect the effect we care about”).</p>
 </div>
 </div>
-<p>Replace <code>rnorm()</code> with your actual design — unequal groups, skewed errors, clustered data — and the same loop still measures power.</p>
-</section>
-<section id="planning-checklist" class="slide level2">
-<h2>Planning Checklist</h2>
-<ol type="1">
-<li>Decide <span class="math inline">\(\alpha\)</span> (usually 0.05) and target power (usually 0.80+).</li>
-<li>Specify the <strong>smallest effect worth detecting</strong> — a scientific judgment, not a statistical one.</li>
-<li>Estimate the noise (sd or baseline proportion).</li>
-<li>Compute <span class="math inline">\(n\)</span> with <code>power.*.test()</code> or simulation.</li>
-<li>Add margin for dropouts — then collect data <em>before</em> peeking at p-values.</li>
-</ol>
-<p>Underpowered studies waste effort coming and going: they miss real effects, and their occasional “significant” findings exaggerate them.</p>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

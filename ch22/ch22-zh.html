@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,146 +211,137 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="沒有標籤的學習" class="title-slide slide level1 center">
-<h1><strong>沒有標籤的學習</strong></h1>
+<section id="尋找結構" class="title-slide slide level1 center">
+<h1><strong>尋找結構</strong></h1>
 
 </section>
-<section id="監督式與非監督式" class="slide level2">
-<h2>監督式與非監督式</h2>
-<p>第二十、二十一章是<em>監督式</em>學習：已知的結果引導配適。本章是<strong>非監督式</strong>的那一面——沒有標籤，只有等待發現的結構：</p>
+<section id="監督式學習之外" class="slide level2">
+<h2>監督式學習之外</h2>
+<p>第二十、二十一章是<strong>監督式</strong>——預測已知的反應。本章談兩種<strong>非監督式</strong>任務：沒有反應要預測，只有結構待發掘：</p>
 <ul>
-<li><strong>購物籃分析</strong>：哪些品項在交易中一起出現？</li>
-<li><strong>分群</strong>：哪些觀測值屬於同一掛？</li>
+<li><strong>購物籃分析</strong>——哪些品項一起出現（關聯規則）；</li>
+<li><strong>集群分析</strong>——哪些觀測夠相似、可歸為一群。</li>
 </ul>
-<p>兩者都是探索工具：它們產生假設，而非檢定假設 <span class="citation" data-cites="hastie2009elements">(Hastie et al. 2009)</span>。</p>
+</section></section>
+<section>
+<section id="購物籃分析" class="title-slide slide level1 center">
+<h1>購物籃分析</h1>
+
 </section>
-<section id="購物籃分析" class="slide level2">
-<h2>購物籃分析</h2>
-<p><code>arules</code> 套件從交易資料中挖掘形如 <span class="math inline">\(\{A, B\} \Rightarrow \{C\}\)</span> 的<strong>關聯規則</strong>：</p>
+<section id="關聯規則與-apriori" class="slide level2">
+<h2>關聯規則與 apriori</h2>
+<p>給定一組<strong>交易</strong>（一個購物籃、一段聆聽紀錄），關聯規則探勘找出<strong>經常一起出現的品項</strong>——「買了 X 的客人也買了 Y」。經典演算法是 <strong>a priori</strong>，在套件 <code>arules</code>：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">library</span>(arules)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">data</span>(Groceries)             <span class="co"># arules 內建</span></span>
-<span id="cb1-3"><a href=""></a><span class="fu">summary</span>(Groceries)<span class="sc">@</span>lengths[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sizes
-   1    2    3    4    5 
-2159 1643 1299 1005  855 </code></pre>
+<span id="cb1-2"><a href=""></a><span class="fu">apriori</span>(data, <span class="at">parameter =</span> <span class="cn">NULL</span>, <span class="at">appearance =</span> <span class="cn">NULL</span>, <span class="at">control =</span> <span class="cn">NULL</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
+<ul>
+<li><code>data</code>——一個 <code>transactions</code> 物件（或可轉換的矩陣／資料框）；</li>
+<li><code>parameter</code>——門檻，主要是<strong>支持度（support）</strong>（品項一起出現的頻率）與<strong>信賴度（confidence）</strong>（規則的可靠程度）；</li>
+<li><code>appearance</code> 限制各邊可出現哪些品項；<code>control</code> 調整演算法。</li>
+</ul>
+<p><code>arules</code> 建立在 S4 類別上（資料用 <code>transactions</code> 類別），底層是 Christian Borgelt 精心打造的 apriori C 實作。</p>
+</section>
+<section id="範例audioscrobbler" class="slide level2">
+<h2>範例：Audioscrobbler</h2>
+<p>書中探勘 Audioscrobbler 的聆聽資料（現屬 Last.fm）。用 <code>read.transactions</code> 載入、探勘、檢視：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>rules <span class="ot">&lt;-</span> <span class="fu">apriori</span>(Groceries,</span>
-<span id="cb3-2"><a href=""></a>                 <span class="at">parameter =</span> <span class="fu">list</span>(<span class="at">supp =</span> <span class="fl">0.005</span>, <span class="at">conf =</span> <span class="fl">0.5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(arules)</span>
+<span id="cb2-2"><a href=""></a>playlists <span class="ot">&lt;-</span> <span class="fu">read.transactions</span>(<span class="st">"audioscrobbler.csv"</span>, <span class="at">format=</span><span class="st">"basket"</span>, <span class="at">sep=</span><span class="st">","</span>)</span>
+<span id="cb2-3"><a href=""></a>rules <span class="ot">&lt;-</span> <span class="fu">apriori</span>(playlists,</span>
+<span id="cb2-4"><a href=""></a>                 <span class="at">parameter=</span><span class="fu">list</span>(<span class="at">support=</span><span class="fl">0.01</span>, <span class="at">confidence=</span><span class="fl">0.5</span>))</span>
+<span id="cb2-5"><a href=""></a><span class="fu">inspect</span>(<span class="fu">head</span>(<span class="fu">sort</span>(rules, <span class="at">by=</span><span class="st">"lift"</span>), <span class="dv">10</span>))   <span class="co"># 依 lift 排出最強的規則</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>產生的規則讀起來像「聽 Green Day 和 Nirvana 的人也聽 Red Hot Chili Peppers」，各帶支持度、信賴度與 <strong>lift</strong>（比隨機高出多少倍）。一個相關、更快的頻繁項目集演算法是 <code>eclat</code>。</p>
+</section></section>
+<section>
+<section id="集群分析" class="title-slide slide level1 center">
+<h1>集群分析</h1>
+
+</section>
+<section id="距離度量" class="slide level2">
+<h2>距離度量</h2>
+<p>集群把觀測分組，使同群成員彼此比群外更相似——而相似從<strong>距離</strong>開始。<code>stats::dist</code> 建距離矩陣：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">inspect</span>(<span class="fu">head</span>(<span class="fu">sort</span>(rules, <span class="at">by =</span> <span class="st">"lift"</span>), <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">dist</span>(x, <span class="at">method =</span> <span class="st">"euclidean"</span>, <span class="at">diag =</span> <span class="cn">FALSE</span>, <span class="at">upper =</span> <span class="cn">FALSE</span>, <span class="at">p =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>method</code> 可為 <code>"euclidean"</code>、<code>"manhattan"</code>、<code>"maximum"</code>、<code>"canberra"</code>、<code>"binary"</code> 或 <code>"minkowski"</code>（搭配參數 <code>p</code>）。度量的選擇至關重要：尺度與單位形塑後續的每一群，所以變數範圍不同時要先標準化。</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>d <span class="ot">&lt;-</span> <span class="fu">dist</span>(<span class="fu">scale</span>(iris[, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]))     <span class="co"># 先標準化、再算歐氏距離</span></span>
+<span id="cb4-2"><a href=""></a><span class="fu">as.matrix</span>(d)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>    lhs                   rhs                    support confidence    coverage     lift count
-[1] {tropical fruit,                                                                          
-     curd}             =&gt; {yogurt}           0.005287239  0.5148515 0.010269446 3.690645    52
-[2] {citrus fruit,                                                                            
-     root vegetables,                                                                         
-     whole milk}       =&gt; {other vegetables} 0.005795628  0.6333333 0.009150991 3.273165    57
-[3] {pip fruit,                                                                               
-     root vegetables,                                                                         
-     whole milk}       =&gt; {other vegetables} 0.005490595  0.6136364 0.008947636 3.171368    54</code></pre>
+<pre><code>         1         2         3         4
+1 0.000000 1.1722914 0.8427840 1.0999999
+2 1.172291 0.0000000 0.5216255 0.4325508
+3 0.842784 0.5216255 0.0000000 0.2829432
+4 1.100000 0.4325508 0.2829432 0.0000000</code></pre>
 </div>
 </div>
 </section>
-<section id="讀懂一條規則" class="slide level2">
-<h2>讀懂一條規則</h2>
-<p>每條規則由三個數字鑑定：</p>
-<div class="callout callout-note callout-titled callout-style-default">
+<section id="切割式kmeanspamclara" class="slide level2">
+<h2>切割式：kmeans、pam、clara</h2>
+<p><strong>切割式</strong>演算法把資料分成指定數量 <code>k</code> 的群：</p>
+<ul>
+<li><strong><code>kmeans(x, centers, ...)</code></strong>——快，最小化群內平方和；對離群值與起始中心敏感。</li>
+<li><strong><code>cluster::pam(x, k)</code></strong>——圍繞中心點（medoid）切割；以真實資料點為中心，比 k-means 穩健。</li>
+<li><strong><code>cluster::clara(x, k)</code></strong>——透過抽樣讓 pam 擴展到大資料。</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb6-2"><a href=""></a>km <span class="ot">&lt;-</span> <span class="fu">kmeans</span>(<span class="fu">scale</span>(iris[, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]), <span class="at">centers=</span><span class="dv">3</span>)</span>
+<span id="cb6-3"><a href=""></a><span class="fu">table</span>(km<span class="sc">$</span>cluster, iris<span class="sc">$</span>Species)   <span class="co"># 群 vs. 真實品種</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   
+    setosa versicolor virginica
+  1      0         39        14
+  2      0         11        36
+  3     50          0         0</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>km<span class="sc">$</span>centers[, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Sepal.Length Sepal.Width
+1  -0.05005221 -0.88042696
+2   1.13217737  0.08812645
+3  -1.01119138  0.85041372</code></pre>
+</div>
+</div>
+</section>
+<section id="集群品質與階層式集群" class="slide level2">
+<h2>集群品質與階層式集群</h2>
+<ul>
+<li><strong><code>cluster::silhouette</code></strong> 度量每點與所屬群的契合度（−1 到 1）；平均輪廓寬度有助於<strong>選 <code>k</code></strong>。</li>
+<li><strong>階層式集群</strong>不必預先決定 <code>k</code>——<code>hclust(距離物件, method=)</code> 建一棵樹（樹狀圖），逐步合併最近的群；<code>cluster::agnes</code>（聚合式）與 <code>diana</code>（分裂式）是更豐富的替代。</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>hc <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="fu">dist</span>(<span class="fu">scale</span>(iris[, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>])), <span class="at">method=</span><span class="st">"ward.D2"</span>)</span>
+<span id="cb10-2"><a href=""></a><span class="fu">plot</span>(hc, <span class="at">labels=</span><span class="cn">FALSE</span>, <span class="at">main=</span><span class="st">"Hierarchical clustering of iris"</span>)</span>
+<span id="cb10-3"><a href=""></a><span class="fu">rect.hclust</span>(hc, <span class="at">k=</span><span class="dv">3</span>)              <span class="co"># 切成 3 群</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch22-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><code>method</code> 涵蓋 <code>"complete"</code>、<code>"average"</code>、<code>"single"</code>、<code>"ward.D2"</code>……——各自對「群與群之間的距離」定義不同，產生形狀不同的群。</p>
+<div class="callout callout-tip callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<p><strong>Note</strong></p>
+<p><strong>Tip</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>支持度（support）</strong>——包含規則所有品項的交易比例。<strong>信賴度（confidence）</strong>——<span class="math inline">\(P(\text{rhs} \mid \text{lhs})\)</span>：左邊出現時右邊跟著出現的頻率。<strong>提升度（lift）</strong>——信賴度除以右邊的基準率；lift <span class="math inline">\(&gt; 1\)</span> 才是真關聯，而非單純的高人氣。</p>
+<p><strong>非監督式工作沒有標準答案。</strong> 沒有準確度可優化——只有結構可判斷。變換距離度量、演算法與 <code>k</code>；用輪廓寬度、領域知識，以及這些群是否<em>有用</em>（而非只是存在）來驗證。</p>
 </div>
 </div>
 </div>
-<ul>
-<li>高信賴、低提升的規則（「⇒ 全脂牛奶」）只是重述牛奶很熱門——lift 正是過濾這種假象的濾網。</li>
-<li><code>apriori()</code> 的門檻在規則數量與品質之間取捨。</li>
-</ul>
-</section>
-<section id="k-means-分群" class="slide level2">
-<h2>k-means 分群</h2>
-<p>把 <span class="math inline">\(n\)</span> 筆觀測切成 <span class="math inline">\(k\)</span> 個緊湊的群：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
-<span id="cb6-2"><a href=""></a>km <span class="ot">&lt;-</span> <span class="fu">kmeans</span>(<span class="fu">scale</span>(USArrests), <span class="at">centers =</span> <span class="dv">4</span>, <span class="at">nstart =</span> <span class="dv">25</span>)</span>
-<span id="cb6-3"><a href=""></a><span class="fu">table</span>(km<span class="sc">$</span>cluster)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
- 1  2  3  4 
-13 13 16  8 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>km<span class="sc">$</span>centers</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      Murder    Assault   UrbanPop        Rape
-1  0.6950701  1.0394414  0.7226370  1.27693964
-2 -0.9615407 -1.1066010 -0.9301069 -0.96676331
-3 -0.4894375 -0.3826001  0.5758298 -0.26165379
-4  1.4118898  0.8743346 -0.8145211  0.01927104</code></pre>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">plot</span>(<span class="fu">prcomp</span>(<span class="fu">scale</span>(USArrests))<span class="sc">$</span>x[, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>], <span class="at">col =</span> km<span class="sc">$</span>cluster, <span class="at">pch =</span> <span class="dv">19</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch22-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><ul>
-<li>變數先標準化；<code>nstart = 25</code> 多次重啟以避開差勁的局部最佳解。</li>
-<li><span class="math inline">\(k\)</span> 的選法：對候選值畫 <code>km$tot.withinss</code> 找手肘點，或用輪廓係數（<code>cluster</code> 套件）。</li>
-</ul>
-</section>
-<section id="階層式分群" class="slide level2">
-<h2>階層式分群</h2>
-<p>不必預先給 <span class="math inline">\(k\)</span>——先長出合併樹，之後再剪：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>d  <span class="ot">&lt;-</span> <span class="fu">dist</span>(<span class="fu">scale</span>(USArrests))</span>
-<span id="cb11-2"><a href=""></a>hc <span class="ot">&lt;-</span> <span class="fu">hclust</span>(d, <span class="at">method =</span> <span class="st">"ward.D2"</span>)</span>
-<span id="cb11-3"><a href=""></a><span class="fu">plot</span>(hc, <span class="at">cex =</span> <span class="fl">0.55</span>, <span class="at">main =</span> <span class="st">"US states by crime profile"</span>)</span>
-<span id="cb11-4"><a href=""></a><span class="fu">rect.hclust</span>(hc, <span class="at">k =</span> <span class="dv">4</span>, <span class="at">border =</span> <span class="st">"red"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch22-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:68.0%"><ul>
-<li><code>dist()</code> 提供 euclidean、manhattan 等距離；連結方式（<code>single</code>、<code>complete</code>、<code>average</code>、<code>ward.D2</code>）改變樹的性格。</li>
-<li><code>cutree(hc, k = 4)</code> 萃取群標籤供後續使用。</li>
-</ul>
-</section>
-<section id="其他非監督工具" class="slide level2">
-<h2>其他非監督工具</h2>
-<ul>
-<li><strong>模型式分群</strong>：<code>mclust</code> 套件配適高斯混合，並以 BIC 自動選 <span class="math inline">\(k\)</span>。</li>
-<li><strong>密度式</strong>：<code>dbscan</code> 找出任意形狀的群，並標記雜訊點。</li>
-<li><strong>降維當前處理</strong>：分群前先 PCA（第十六章）常能同時改善速度與品質。</li>
-<li><strong>自組織映射圖</strong>（<code>kohonen</code>）把高維資料投影到二維網格上。</li>
-</ul>
-</section>
-<section id="誠實的評估" class="slide level2">
-<h2>誠實的評估</h2>
-<p>非監督式的結果最需要懷疑精神：</p>
-<ol type="1">
-<li>穩定性——換個種子或重抽樣後，群還在嗎？</li>
-<li>輪廓係數／群內變異——群真的緊湊嗎？</li>
-<li>詮釋——領域專家能替每個群命名嗎？</li>
-<li>規則類：先在保留期間驗證頂尖規則，再依它行動。</li>
-</ol>
-<p>無法命名的分群、下一季就消失的規則，都是穿著戲服的雜訊。</p>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

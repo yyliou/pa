@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,115 +211,186 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
 <section id="r-的思考方式" class="title-slide slide level1 center">
 <h1><strong>R 的思考方式</strong></h1>
 
 </section>
-<section id="整體圖像" class="slide level2">
-<h2>整體圖像</h2>
-<p>第三章帶你逐句體驗 R；本章則是文法課。接下來第二部分的一切，都由四個概念組織起來：</p>
+<section id="文法課開始" class="slide level2">
+<h2>文法課開始</h2>
+<p>學電腦語言很像學外語（只是簡單得多）。觀光客背幾句常用語就能應付；第三章給你的就是那些常用語。但想<em>說得流利</em>，就得學文法——動詞變化、句型結構。本章是 R 的文法課，由四個概念撐起：</p>
 <ul>
 <li>程式由<strong>運算式</strong>（expression）構成；</li>
 <li>運算式操作<strong>物件</strong>（object）；</li>
 <li>名稱是繫結到物件的<strong>符號</strong>（symbol）；</li>
 <li>工作由<strong>函式</strong>完成——而函式本身也是物件。</li>
 </ul>
-<p>掌握這四點之後，第六章的細部語法會顯得理所當然，而非武斷的規定。</p>
+<p>掌握這四點，第六章的細部語法就會顯得理所當然，而非武斷的規定。</p>
 </section>
 <section id="運算式" class="slide level2">
 <h2>運算式</h2>
-<p>一支 R 程式是一連串依序求值的運算式：</p>
+<p>R 程式是一連串的<strong>運算式</strong>：指派、條件判斷、算術等等——每個都會求值並產生結果：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">3</span> <span class="sc">*</span> <span class="dv">7</span>          <span class="co"># 指派運算式</span></span>
-<span id="cb1-2"><a href=""></a><span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">20</span>) <span class="st">"big"</span> <span class="cf">else</span> <span class="st">"small"</span>   <span class="co"># 連流程控制都會回傳值</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb1-2"><a href=""></a><span class="cf">if</span> (<span class="dv">1</span> <span class="sc">&gt;</span> <span class="dv">2</span>) <span class="st">"yes"</span> <span class="cf">else</span> <span class="st">"no"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "big"</code></pre>
+<pre><code>[1] "no"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="dv">127</span> <span class="sc">%%</span> <span class="dv">10</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7</code></pre>
 </div>
 </div>
-<ul>
-<li>運算式之間以換行或分號分隔。</li>
-<li>大括號 <code>{ }</code> 能把多個運算式組成一個，整個區塊的值是最後一個運算式的值。</li>
-<li>因為一切都會回傳值，運算式可以層層組合：<code>if</code> 可以嵌在函式呼叫裡，再嵌在指派中。</li>
-</ul>
+<p>運算式由物件與函式組成，彼此之間可用換行<strong>或分號</strong>分隔：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="st">"this expression will be printed"</span>; <span class="dv">7</span> <span class="sc">+</span> <span class="dv">13</span>; <span class="fu">exp</span>(<span class="dv">0</span><span class="sc">+</span><span class="dv">1</span>i<span class="sc">*</span>pi)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "this expression will be printed"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 20</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -1+1.224647e-16i</code></pre>
+</div>
+</div>
 </section>
 <section id="物件" class="slide level2">
 <h2>物件</h2>
-<p>運算式接觸到的每個值都是<strong>物件</strong>：向量、串列、函式、模型、環境。</p>
+<p>所有 R 程式碼都在操作<strong>物件</strong>——電腦所表示的「東西」。數值向量、字元向量、串列、函式，全都是物件：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">6</span>, <span class="dv">7</span>)</span>
-<span id="cb3-2"><a href=""></a><span class="fu">class</span>(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)                       <span class="co"># 數值向量（五個元素）</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "numeric"</code></pre>
+<pre><code>[1] 1 2 3 4 5</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">attributes</span>(<span class="fu">matrix</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="st">"This is an object too"</span>               <span class="co"># 字元向量（一個元素）</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>$dim
-[1] 2 3</code></pre>
+<pre><code>[1] "This is an object too"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>), <span class="st">"This is an object too"</span>, <span class="st">"this whole thing is a list"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+[1] 1 2 3 4 5
+
+[[2]]
+[1] "This is an object too"
+
+[[3]]
+[1] "this whole thing is a list"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="cf">function</span>(x, y) { x <span class="sc">+</span> y }               <span class="co"># 函式也是物件</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y) 
+{
+    x + y
+}</code></pre>
 </div>
 </div>
-<p>物件帶有<strong>屬性</strong>（attributes）——維度、名稱、類別等中繼資料——決定泛型函式如何對待它們。矩陣其實就是戴著 <code>dim</code> 屬性的向量。</p>
 </section>
 <section id="符號" class="slide level2">
 <h2>符號</h2>
-<p>變數名稱本身也是物件：在某個環境中繫結到值的<strong>符號</strong>。</p>
+<p>正式地說，R 的變數名稱叫<strong>符號</strong>。把值指派給名稱，就是<em>在目前的環境中</em>把符號繫結到物件——而環境（有點套套邏輯地）定義為某個脈絡下已定義符號的集合：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>fortune <span class="ot">&lt;-</span> <span class="st">"When in doubt, make a data frame."</span></span>
-<span id="cb7-2"><a href=""></a>fortune</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "When in doubt, make a data frame."</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span>     <span class="co"># 在目前環境中，把符號 "x" 繫結到物件 1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<ul>
-<li>對符號 <code>fortune</code> 求值，就是查出它繫結到什麼。</li>
-<li>繫結存放在<strong>環境</strong>（environment）中（第八章）；同一個名稱在不同環境裡可以繫結到不同的值。</li>
-<li>這正是 R 能「把程式碼當資料」的原因：<code>quote(x + y)</code> 會回傳未求值的運算式，符號原封不動。</li>
-</ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">quote</span>(x <span class="sc">+</span> y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>x + y</code></pre>
-</div>
-</div>
+<p>第八章會完整討論符號與環境；現在只要記得：名稱和名稱所指的東西，是兩個不同的物件。</p>
+</section></section>
+<section>
+<section id="函式" class="title-slide slide level1 center">
+<h1>函式</h1>
+
 </section>
-<section id="函式" class="slide level2">
-<h2>函式</h2>
-<p>函式是接受<strong>引數</strong>、回傳<strong>值</strong>的物件：</p>
+<section id="所有工作都由函式完成" class="slide level2">
+<h2>所有工作都由函式完成</h2>
+<p><strong>函式</strong>接收輸入物件（<strong>引數</strong>）、回傳輸出物件。每一個敘述——設變數、做算術、跑迴圈——都能寫成函式呼叫。書中的示範從一個樸素的向量開始：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) {</span>
-<span id="cb11-2"><a href=""></a>  x <span class="sc">+</span> <span class="dv">2</span> <span class="sc">*</span> y</span>
-<span id="cb11-3"><a href=""></a>}</span>
-<span id="cb11-4"><a href=""></a><span class="fu">f</span>(<span class="dv">1</span>, <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>animals <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"cow"</span>, <span class="st">"chicken"</span>, <span class="st">"pig"</span>, <span class="st">"tuba"</span>)</span>
+<span id="cb18-2"><a href=""></a>animals[<span class="dv">4</span>] <span class="ot">&lt;-</span> <span class="st">"duck"</span>     <span class="co"># 修改第 4 個元素的正常寫法</span></span>
+<span id="cb18-3"><a href=""></a>animals</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 21</code></pre>
+<pre><code>[1] "cow"     "chicken" "pig"     "duck"   </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">f</span>(<span class="at">y =</span> <span class="dv">1</span>, <span class="at">x =</span> <span class="dv">10</span>)        <span class="co"># 引數可以用名稱指定</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>那個中括號指派其實<em>被剖析成</em>對函式 <code>[&lt;-</code> 的呼叫。下面是等價的寫法：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>animals <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"cow"</span>, <span class="st">"chicken"</span>, <span class="st">"pig"</span>, <span class="st">"tuba"</span>)</span>
+<span id="cb20-2"><a href=""></a><span class="st">`</span><span class="at">[&lt;-</span><span class="st">`</span>(animals, <span class="dv">4</span>, <span class="st">"duck"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 12</code></pre>
+<pre><code>[1] "cow"     "chicken" "pig"     "duck"   </code></pre>
 </div>
 </div>
-<ul>
-<li>函式可以指派給變數、放進串列、傳給其他函式、當成結果回傳——這正是 R 作為<em>函數式</em>語言的特徵。</li>
-<li>預設值讓引數變成選填：<code>function(x, base = 10)</code>。</li>
-</ul>
+<p>（一個細微差異：這樣寫結果不會自動印出——但效果完全相同。）</p>
+</section>
+<section id="為什麼要知道一切都是函式呼叫" class="slide level2">
+<h2>為什麼要知道「一切都是函式呼叫」？</h2>
+<p>實務上你絕不會寫 <code>`[&lt;-`(animals, 4, "duck")</code>——中括號好讀太多了。但知道背後有個函式，意味著你能<strong>檢視它的程式碼</strong>、<strong>查它的說明頁</strong>，或<strong>為自己的類別寫同名方法</strong>（第十章）。更多「漂亮寫法 vs 函式寫法」的對照：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href=""></a>apples <span class="ot">&lt;-</span> <span class="dv">3</span>            <span class="co"># 漂亮的指派</span></span>
+<span id="cb22-2"><a href=""></a><span class="st">`</span><span class="at">&lt;-</span><span class="st">`</span>(oranges, <span class="dv">4</span>)       <span class="co"># 指派的函式寫法</span></span>
+<span id="cb22-3"><a href=""></a>apples <span class="sc">+</span> oranges       <span class="co"># 漂亮的算術</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href=""></a><span class="st">`</span><span class="at">+</span><span class="st">`</span>(apples, oranges)   <span class="co"># 算術的函式寫法</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="cf">if</span> (apples <span class="sc">&gt;</span> oranges) <span class="st">"apples are better"</span> <span class="cf">else</span> <span class="st">"oranges are better"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "oranges are better"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="st">`</span><span class="at">if</span><span class="st">`</span>(apples <span class="sc">&gt;</span> oranges, <span class="st">"apples are better"</span>, <span class="st">"oranges are better"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "oranges are better"</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"apple"</span>,<span class="st">"orange"</span>,<span class="st">"banana"</span>,<span class="st">"pear"</span>)</span>
+<span id="cb30-2"><a href=""></a>x[<span class="dv">2</span>]                   <span class="co"># 漂亮的向量取值</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "orange"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="st">`</span><span class="at">[</span><span class="st">`</span>(x, <span class="dv">2</span>)              <span class="co"># 取值的函式寫法</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "orange"</code></pre>
+</div>
+</div>
 </section>
 <section id="指派時物件會被複製" class="slide level2">
 <h2>指派時物件會被複製</h2>
-<p>R 的行為就像指派與傳遞引數都會<strong>複製</strong>物件，而不是共享參照：</p>
+<p>在指派敘述中，多數物件是<strong>不可變的（immutable）</strong>：R 複製的是物件本身，不是物件的參照。（不可變是好事——能避免一整類錯誤，例如多執行緒程式裡的競態。）</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
-<span id="cb15-2"><a href=""></a>double_it <span class="ot">&lt;-</span> <span class="cf">function</span>(z) { z <span class="ot">&lt;-</span> z <span class="sc">*</span> <span class="dv">2</span>; z }</span>
-<span id="cb15-3"><a href=""></a><span class="fu">double_it</span>(w)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a>u <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="dv">1</span>)</span>
+<span id="cb34-2"><a href=""></a>v <span class="ot">&lt;-</span> u</span>
+<span id="cb34-3"><a href=""></a>u[[<span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="st">"hat"</span></span>
+<span id="cb34-4"><a href=""></a>u</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 2 4 6</code></pre>
+<pre><code>[[1]]
+[1] "hat"</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>w                       <span class="co"># 原封不動</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a>v          <span class="co"># v 仍保有原值</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 2 3</code></pre>
+<pre><code>[[1]]
+[1] 1</code></pre>
 </div>
 </div>
+<p>向量、串列與多數基本物件都遵守這條規則。</p>
+</section>
+<section id="函式呼叫也會複製" class="slide level2">
+<h2>函式呼叫也會複製</h2>
+<p>引數同樣會被複製。下面的函式把 <code>x</code> 的第 <code>i</code> 個元素設成 4——對外卻什麼也沒改變：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, i) { x[i] <span class="ot">=</span> <span class="dv">4</span> }</span>
+<span id="cb38-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>, <span class="dv">13</span>)</span>
+<span id="cb38-3"><a href=""></a><span class="fu">f</span>(w, <span class="dv">1</span>)</span>
+<span id="cb38-4"><a href=""></a>w          <span class="co"># 原封不動：w 被複製給了 x</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10 11 12 13</code></pre>
+</div>
+</div>
+<p>技術上，直譯器複製了繫結在 <code>w</code> 上的物件，再把符號 <code>x</code> 繫結到副本；修改只發生在函式的脈絡裡。（可變物件與傳參照，要靠環境才辦得到——第八章。）</p>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -329,104 +400,340 @@
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>傳值呼叫（call by value）。</strong> 函式不可能不小心改壞你的資料；它操作的是自己的副本。（R 內部其實會延後實際複製，直到真的有修改發生，所以成本比想像中低。）</p>
+<p><strong>語意 vs 效能。</strong> R 的<em>行為彷彿</em>每次指派都複製，但實際上常常<strong>就地修改</strong>——例如 <code>v &lt;- 1:100; v[50] &lt;- 27</code> 並不複製向量。語意相同，速度好得多。細節見 <em>R Internals</em> 手冊。</p>
 </div>
 </div>
 </div>
 </section>
-<section id="一切皆物件" class="slide level2">
-<h2>一切皆物件</h2>
-<p>不只資料，語言自身的機制也由物件構成：</p>
+<section id="r-裡一切皆物件" class="slide level2">
+<h2>R 裡一切皆物件</h2>
+<p>不只資料：<strong>函式、符號、甚至運算式</strong>都是物件。函式名稱其實是指向函式物件的符號（這層關係又存放在環境物件裡）。同一個符號可以這一刻是數字、下一刻是函式：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">class</span>(mean)             <span class="co"># 函式是物件</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb40-2"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "function"</code></pre>
+<pre><code>[1] 1</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">class</span>(<span class="fu">quote</span>(x <span class="sc">+</span> y))     <span class="co"># 未求值的程式碼是物件</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a><span class="fu">x</span>(<span class="dv">2</span>)                     <span class="co"># x（還）不是函式</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `x()`:
+! could not find function "x"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) i<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb44-2"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "call"</code></pre>
+<pre><code>function (i) 
+i^2</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">formals</span>(double_it)      <span class="co"># 函式的引數清單，本身就是資料</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a><span class="fu">x</span>(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>$z</code></pre>
+<pre><code>[1] 4</code></pre>
 </div>
 </div>
-<p>函式名稱只是指向函式物件的符號——所以才能寫 <code>apply(m, 1, mean)</code>：你傳遞的是函式本身。</p>
+<p>你甚至能用 R 程式碼建構新函式——原則上，可以寫出會改寫自身定義的函式。</p>
+</section></section>
+<section>
+<section id="特殊值" class="title-slide slide level1 center">
+<h1>特殊值</h1>
+
 </section>
-<section id="特殊值" class="slide level2">
-<h2>特殊值</h2>
-<p>幾個特殊常數在實務資料工作中無所不在：</p>
+<section id="na缺失值" class="slide level2">
+<h2>NA：缺失值</h2>
+<p><code>NA</code>（“not available”）代表<strong>缺失值</strong>——常見於載入的文字資料，也用來取代資料庫的 <code>NULL</code>。把結構撐大到原本沒定義的位置，新格子就填入 <code>NA</code>：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="cn">NA</span> <span class="sc">+</span> <span class="dv">1</span>                  <span class="co"># NA：缺失值，會感染整個計算</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
+<span id="cb48-2"><a href=""></a><span class="fu">length</span>(v) <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb48-3"><a href=""></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] NA</code></pre>
+<pre><code>[1]  1  2  3 NA</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="dv">1</span> <span class="sc">/</span> <span class="dv">0</span>                   <span class="co"># Inf</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="inf-inf-與-nan" class="slide level2">
+<h2>Inf、-Inf 與 NaN</h2>
+<p>大到無法表示的數會變成<strong>無限大</strong>，帶正負號——除以零也是同樣下場：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href=""></a><span class="dv">2</span> <span class="sc">^</span> <span class="dv">1024</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] Inf</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="sc">-</span><span class="dv">1</span> <span class="sc">/</span> <span class="dv">0</span>                  <span class="co"># -Inf</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href=""></a><span class="sc">-</span> <span class="dv">2</span> <span class="sc">^</span> <span class="dv">1024</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] -Inf</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="dv">0</span> <span class="sc">/</span> <span class="dv">0</span>                   <span class="co"># NaN：非數</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href=""></a><span class="dv">1</span> <span class="sc">/</span> <span class="dv">0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] Inf</code></pre>
+</div>
+</div>
+<p>說不通的計算則得到 <strong><code>NaN</code></strong>（“not a number”）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href=""></a><span class="cn">Inf</span> <span class="sc">-</span> <span class="cn">Inf</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] NaN</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a><span class="fu">is.null</span>(<span class="cn">NULL</span>)           <span class="co"># NULL：空物件</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href=""></a><span class="dv">0</span> <span class="sc">/</span> <span class="dv">0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NaN</code></pre>
+</div>
+</div>
+</section>
+<section id="null" class="slide level2">
+<h2>NULL</h2>
+<p>符號 <code>NULL</code> 永遠指向同一個特殊物件：<strong>空物件</strong>。</p>
+<ul>
+<li>常當函式引數使用，意思是「沒有提供值」；有些函式也會回傳它。</li>
+<li><code>NULL</code> 和 <code>NA</code>、<code>Inf</code>、<code>-Inf</code>、<code>NaN</code> <strong>都不同</strong>——它根本不是一個值，而是值的缺席。</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href=""></a><span class="fu">is.null</span>(<span class="cn">NULL</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
-<ul>
-<li><code>NA</code> 的意思是「未知」；多數摘要函式提供 <code>na.rm=TRUE</code> 跳過缺失值。</li>
-<li><code>NULL</code> 的意思是「什麼都沒有」——<code>x$col &lt;- NULL</code> 可以刪除一個欄位。</li>
-</ul>
+</section></section>
+<section>
+<section id="型別轉換coercion" class="title-slide slide level1 center">
+<h1>型別轉換（Coercion）</h1>
+
 </section>
-<section id="強制轉型" class="slide level2">
-<h2>強制轉型</h2>
-<p>型別不符時，R 會依固定規則<strong>強制轉型</strong>（coerce），往較一般的型別移動：</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="cn">TRUE</span>)           <span class="co"># logical -&gt; numeric</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 2 1</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="st">"three"</span>)        <span class="co"># numeric -&gt; character</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "1"     "2"     "three"</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">as.numeric</span>(<span class="st">"3.14"</span>)      <span class="co"># 明確轉型</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 3.14</code></pre>
-</div>
-</div>
+<section id="自動轉型" class="slide level2">
+<h2>自動轉型</h2>
+<p>用「不對的」型別呼叫函式，R 會嘗試<strong>轉型（coerce）</strong>讓呼叫照樣成功。兩種機制自動運作：</p>
 <ul>
-<li>隱性轉型遵循 logical → integer → numeric → character 的階層。</li>
-<li><code>as.*</code> 家族（<code>as.numeric</code>、<code>as.character</code>、<code>as.factor</code>……）可隨需轉型；<code>I()</code>（AsIs）能抑制不想要的轉換，例如建立資料框時。</li>
-</ul>
-</section>
-<section id="r-直譯器" class="slide level2">
-<h2>R 直譯器</h2>
-<p>R 是<strong>直譯式</strong>語言：運算式即時剖析、即時求值，沒有獨立的編譯步驟。</p>
-<ul>
-<li>主控台因此成為可能——也因此 R 在緊湊迴圈上比編譯語言慢（第二十四章會介紹解方，包括內建的位元組碼編譯器）。</li>
-<li>剖析（parsing）把文字變成運算式物件；求值（evaluation）走訪這些物件。兩件事你都可以自己做：</li>
+<li><strong>正式物件：</strong> 泛型函式找不到完全吻合的方法時，會尋找能把物件轉成「有方法可用」型別的轉型方法（自訂方式見第十章）；</li>
+<li><strong>內建型別：</strong> R 自動從較特定的型別轉向較一般的型別：</li>
 </ul>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href=""></a>ex <span class="ot">&lt;-</span> <span class="fu">parse</span>(<span class="at">text =</span> <span class="st">"7 * 6"</span>)[[<span class="dv">1</span>]]</span>
-<span id="cb41-2"><a href=""></a><span class="fu">eval</span>(ex)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span>
+<span id="cb62-2"><a href=""></a><span class="fu">typeof</span>(x); <span class="fu">class</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 42</code></pre>
+<pre><code>[1] "double"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "numeric"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href=""></a>x[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="st">"hat"</span>          <span class="co"># 一個字元值就把整個向量拉了過去</span></span>
+<span id="cb65-2"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "1"   "hat" "3"   "4"   "5"  </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href=""></a><span class="fu">typeof</span>(x); <span class="fu">class</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "character"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "character"</code></pre>
 </div>
 </div>
-<p>這種「程式碼即資料」的性質，支撐著 R 的公式記號、<code>quote()</code> 與大量的後設程式設計（metaprogramming）能力。</p>
+</section>
+<section id="轉型規則" class="slide level2">
+<h2>轉型規則</h2>
+<ul>
+<li>邏輯值變成數字：<code>TRUE</code> → 1、<code>FALSE</code> → 0。</li>
+<li>值會轉成<strong>足以表示全部資訊的最簡型別</strong>。</li>
+<li>順序大致是：logical &lt; integer &lt; numeric &lt; complex &lt; character &lt; list。</li>
+<li><code>raw</code> 型別不會被轉成其他型別。</li>
+<li>轉型時物件的<strong>屬性會被丟棄</strong>。</li>
+<li>想在傳引數時抑制轉型，用 <code>I()</code>（即 <code>AsIs</code> 函式）包起來——見 <code>?AsIs</code>。</li>
+</ul>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>為什麼這麼寬鬆？</strong> 強型別語言（如 Java）遇到型別不符會丟例外、不會代為轉換。S 語言的設計者 John Chambers 回憶：早期 S「盡量讓各種情況都能動」，但後期較正式的結論是——<em>不分情況</em>自動把豐富型別轉成簡單型別，會產生令人困惑、因而不可信的結果。日常實務中——同型別的數值向量——轉型很少咬人。</p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="r-直譯器" class="title-slide slide level1 center">
+<h1>R 直譯器</h1>
+
+</section>
+<section id="剖析代換求值" class="slide level2">
+<h2>剖析、代換、求值</h2>
+<p>R 是<strong>直譯式</strong>語言：直譯器直接執行你的運算式，沒有編譯步驟（不像 C、C++、Java；像 LISP、Perl、JavaScript）。對每個運算式，直譯器會：</p>
+<ol type="1">
+<li><strong>剖析（parse）</strong>：把語法糖轉譯成函式形式；</li>
+<li><strong>代換（substitute）</strong>：在適當處以物件代換符號；</li>
+<li><strong>求值（evaluate）</strong>：回傳一個物件——複雜運算式則遞迴進行。</li>
+</ol>
+<p>例：輸入 <code>x &lt;- 1</code> 會變成呼叫 <code>`&lt;-`(x, 1)</code>——在目前環境把 1 繫結給 <code>x</code>，並回傳 1。</p>
+</section>
+<section id="逐步看一個條件式" class="slide level2">
+<h2>逐步看一個條件式</h2>
+<p>設 <code>x</code> 繫結為 1，考慮：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb70-2"><a href=""></a><span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "apple"</code></pre>
+</div>
+</div>
+<p>直譯器把整行剖析成 if-then-else 結構，先評估<strong>條件</strong> <code>(x &gt; 1)</code>——為假——因此<em>從未評估</em> <code>"orange"</code>；它評估 <code>else</code> 之後的運算式並回傳 <code>"apple"</code>。在這類特殊情況下，<strong>不是所有引數都會被評估</strong>——這正是 <code>if</code> 不能是普通函式的原因。而主控台上運算式回傳的東西，一律交給 <code>print</code> 處理。</p>
+</section>
+<section id="internal-與-.primitive" class="slide level2">
+<h2>.Internal 與 .Primitive</h2>
+<p>有些功能實作在 R 系統內部：</p>
+<ul>
+<li>許多函式透過 <strong><code>.Internal</code></strong> 呼叫內部系統程式碼——例如繪圖主力：</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href=""></a>plot.xy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (xy, type, pch = par("pch"), lty = par("lty"), col = par("col"), 
+    bg = NA, cex = 1, lwd = par("lwd"), ...) 
+{
+    if (is.null(type)) 
+        type &lt;- "p"
+    type &lt;- as.character(type)
+    if (length(type) != 1L || !nzchar(type) || is.na(type)) 
+        stop(gettextf("invalid plot type"))
+    if (nchar(type) &gt; 1L) 
+        warning(gettextf("plot type '%s' will be truncated to first character", 
+            type))
+    t &lt;- substr(type, 1L, 1L)
+    if (!isTRUE(t %in% c("l", "o", "b", "c", "s", "S", "h", "p", 
+        "n"))) 
+        stop(gettextf("invalid plot type '%s'", t))
+    invisible(.External.graphics(C_plotXY, xy, t, pch, lty, col, 
+        bg, cex, lwd, ...))
+}
+&lt;bytecode: 0xc801a2200&gt;
+&lt;environment: namespace:graphics&gt;</code></pre>
+</div>
+</div>
+<ul>
+<li>連 <code>.Internal</code> 的呼叫成本都嫌高的地方，函式就完全以 <strong><code>.Primitive</code></strong> 內部實作——只保留給少數效能攸關的基本功能：</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href=""></a><span class="st">`</span><span class="at">&lt;-</span><span class="st">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>.Primitive("&lt;-")</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="觀察-r-如何運作" class="title-slide slide level1 center">
+<h1>觀察 R 如何運作</h1>
+
+</section>
+<section id="quote只剖析不求值" class="slide level2">
+<h2>quote：只剖析、不求值</h2>
+<p>因為 R 運算式就是 R 物件，你可以剖析（或部分求值）運算式並檢視結果。<code>quote()</code> 函式剖析引數但<em>不</em>求值，回傳一個<strong>語言物件（language object）</strong>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href=""></a><span class="fu">typeof</span>(<span class="fu">quote</span>(<span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "language"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href=""></a><span class="fu">quote</span>(<span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span>)   <span class="co"># 語言物件的 print 方法不太有料……</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>if (x &gt; 1) "orange" else "apple"</code></pre>
+</div>
+</div>
+</section>
+<section id="剖析樹" class="slide level2">
+<h2>剖析樹</h2>
+<p>……但把語言物件<strong>轉成串列</strong>，結構就現形了——這是運算式的剖析樹：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href=""></a><span class="fu">as</span>(<span class="fu">quote</span>(<span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span>), <span class="st">"list"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+`if`
+
+[[2]]
+x &gt; 1
+
+[[3]]
+[1] "orange"
+
+[[4]]
+[1] "apple"</code></pre>
+</div>
+</div>
+<p>對每個元素套用 <code>typeof</code>，替整棵樹貼標籤（這裡用 <code>lapply</code>——而且拜轉型之賜，<code>as</code> 其實可以省略）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href=""></a><span class="fu">lapply</span>(<span class="fu">as</span>(<span class="fu">quote</span>(<span class="cf">if</span> (x <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="st">"orange"</span> <span class="cf">else</span> <span class="st">"apple"</span>), <span class="st">"list"</span>), typeof)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+[1] "symbol"
+
+[[2]]
+[1] "language"
+
+[[3]]
+[1] "character"
+
+[[4]]
+[1] "character"</code></pre>
+</div>
+</div>
+<p>觀察：<code>else</code> 關鍵字在剖析中消失了；第一個元素是指向 <code>if</code> 函式的<strong>符號</strong>——所以連特殊語法都化成<em>函式名在前、引數在後</em>，跟任何呼叫一模一樣。常數的話，串列只有一項：<code>as.list(quote(1))</code>。</p>
+</section>
+<section id="語法糖現形以及-deparse" class="slide level2">
+<h2>語法糖現形，以及 deparse</h2>
+<p>中括號查值 <code>x[2]</code> 和它的函式雙胞胎，剖析出<em>完全相同</em>的樹：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href=""></a><span class="fu">as.list</span>(<span class="fu">quote</span>(x[<span class="dv">2</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+`[`
+
+[[2]]
+x
+
+[[3]]
+[1] 2</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href=""></a><span class="fu">as.list</span>(<span class="fu">quote</span>(<span class="st">`</span><span class="at">[</span><span class="st">`</span>(x, <span class="dv">2</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+`[`
+
+[[2]]
+x
+
+[[3]]
+[1] 2</code></pre>
+</div>
+</div>
+<p>這個轉譯不可逆——兩者塌縮成同一棵樹——但 <code>deparse</code> 能把剖析樹轉回排版正確的 R 程式碼，而且選的是漂亮寫法：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href=""></a><span class="fu">deparse</span>(<span class="fu">quote</span>(x[<span class="dv">2</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "x[2]"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href=""></a><span class="fu">deparse</span>(<span class="fu">quote</span>(<span class="st">`</span><span class="at">[</span><span class="st">`</span>(x, <span class="dv">2</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "x[2]"</code></pre>
+</div>
+</div>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>讀完全書都帶著的工具：</strong> <code>quote</code>、<code>substitute</code>、<code>typeof</code>、<code>class</code>、<code>methods</code> 讓你親眼看直譯器怎麼剖析與分派。R 的行為讓你吃驚時，它們就是你的顯微鏡。</p>
+</div>
+</div>
+</div>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

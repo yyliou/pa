@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,204 +211,385 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="從資料擠出第一批數字" class="title-slide slide level1 center">
-<h1><strong>從資料擠出第一批數字</strong></h1>
+<section id="第一輪分析" class="title-slide slide level1 center">
+<h1><strong>第一輪分析</strong></h1>
 
 </section>
-<section id="摘要統計量" class="slide level2">
-<h2>摘要統計量</h2>
-<p>描述統計的基本詞彙，每個都只差一個函式：</p>
+<section id="摘要統計量meanminmax" class="slide level2">
+<h2>摘要統計量：mean、min、max</h2>
+<p>之後一切的積木。用第十二章的 <code>dow30</code> 報價資料（收錄於 <code>nutshell</code>）：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a>x <span class="ot">&lt;-</span> dow30<span class="sc">$</span>Open</span>
-<span id="cb1-5"><a href=""></a><span class="fu">mean</span>(x); <span class="fu">median</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda"</span>,</span>
+<span id="cb1-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb1-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb1-5"><a href=""></a><span class="fu">mean</span>(dow30<span class="sc">$</span>Open); <span class="fu">min</span>(dow30<span class="sc">$</span>Open); <span class="fu">max</span>(dow30<span class="sc">$</span>Open)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 36.24574</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 30.155</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">var</span>(x); <span class="fu">sd</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 495.1713</code></pre>
+<pre><code>[1] 0.99</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 22.25245</code></pre>
+<pre><code>[1] 122.45</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">range</span>(x); <span class="fu">quantile</span>(x, <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>兩個值得背下來的引數：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="cn">NA</span>))                  <span class="co"># 一個 NA 就毒死整個結果……</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NA</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="cn">NA</span>), <span class="at">na.rm=</span><span class="cn">TRUE</span>)      <span class="co"># ……除非把它剔除</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">0</span><span class="sc">:</span><span class="dv">100</span>, <span class="dv">2000</span>))                    <span class="co"># 離群值拖著平均跑……</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 68.43689</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">mean</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">0</span><span class="sc">:</span><span class="dv">100</span>, <span class="dv">2000</span>), <span class="at">trim=</span><span class="fl">0.1</span>)          <span class="co"># ……trim 過濾掉這個比例</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 50</code></pre>
+</div>
+</div>
+</section>
+<section id="rangequantilefivenumiqr" class="slide level2">
+<h2>range、quantile、fivenum、IQR</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">range</span>(dow30<span class="sc">$</span>Open)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1]   0.99 122.45</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">quantile</span>(dow30<span class="sc">$</span>Open, <span class="at">probs=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">1.0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   25%    50%    75% 
-19.655 30.155 51.680 </code></pre>
+<pre><code>     0%     25%     50%     75%    100% 
+  0.990  19.655  30.155  51.680 122.450 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">fivenum</span>(dow30<span class="sc">$</span>Open)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]   0.990  19.650  30.155  51.680 122.450</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">IQR</span>(dow30<span class="sc">$</span>Open)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 32.025</code></pre>
 </div>
 </div>
+<p>這些函式都能與 <code>apply</code>／<code>tapply</code> 自然搭配，逐組計算統計量（第十二章）。</p>
+</section>
+<section id="summary-與-str" class="slide level2">
+<h2>summary 與 str</h2>
+<p>最方便的總覽是泛型的 <code>summary</code>——數值給四分位數＋平均、因子給高頻計數（純字元向量則沒有有意義的資訊）：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">summary</span>(dow30[, <span class="fu">c</span>(<span class="st">"Open"</span>, <span class="st">"Volume"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      Open            Volume         
+ Min.   :  0.99   Min.   :1.336e+06  
+ 1st Qu.: 19.66   1st Qu.:1.111e+07  
+ Median : 30.16   Median :1.822e+07  
+ Mean   : 36.25   Mean   :5.226e+07  
+ 3rd Qu.: 51.68   3rd Qu.:4.255e+07  
+ Max.   :122.45   Max.   :2.672e+09  </code></pre>
+</div>
+</div>
+<p>熱門替代品 <code>str</code> 顯示物件的<em>結構</em>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">str</span>(dow30)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>'data.frame':   7482 obs. of  8 variables:
+ $ symbol   : Factor w/ 30 levels "MMM","AA","AXP",..: 1 1 1 1 1 1 1 1 1 1 ...
+ $ Date     : Factor w/ 252 levels "2008-09-22","2008-09-23",..: 252 251 250 249 248 247 246 245 244 243 ...
+ $ Open     : num  73.9 75.1 75.3 74.8 74.6 ...
+ $ High     : num  74.7 75.2 75.5 75.5 74.9 ...
+ $ Low      : num  73.9 74.5 74.5 74.5 74 ...
+ $ Close    : num  74.5 74.6 74.9 75.4 74.7 ...
+ $ Volume   : num  2560400 4387900 3371500 2722500 3566900 ...
+ $ Adj.Close: num  74.5 74.6 74.9 75.4 74.7 ...</code></pre>
+</div>
+</div>
+</section>
+<section id="stem文字版直方圖" class="slide level2">
+<h2>stem：文字版直方圖</h2>
+<p><code>stem(x, scale=1, width=80, atom=1e-08)</code> 直接在主控台畫莖葉圖。2005 年 NFL <em>失手</em>射門的距離：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb25-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda"</span>,</span>
+<span id="cb25-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb25-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb25-5"><a href=""></a><span class="fu">stem</span>(<span class="fu">subset</span>(field.goals, play.type<span class="sc">==</span><span class="st">"FG no"</span>)<span class="sc">$</span>yards)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  The decimal point is at the |
+
+  20 | 0
+  22 | 
+  24 | 
+  26 | 00
+  28 | 0000000
+  30 | 0000000
+  32 | 00000000
+  34 | 000
+  36 | 0000
+  38 | 00000000000000
+  40 | 0000000000
+  42 | 0000000000000000
+  44 | 000000000000
+  46 | 000000000000000000
+  48 | 000000000000000000
+  50 | 000000000000
+  52 | 0000000000000000000
+  54 | 0000
+  56 | 000
+  58 | 00
+  60 | 00
+  62 | 0</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="相關與共變異" class="title-slide slide level1 center">
+<h1>相關與共變異</h1>
+
+</section>
+<section id="三種相關係數" class="slide level2">
+<h2>三種相關係數</h2>
+<p>相關回答「x 上升時 y 是否跟著上升、咬得多緊？」，以 −1…1 度量<strong>線性相依</strong>。三種統計量：</p>
 <ul>
-<li><code>mean(x, trim = 0.1)</code> 抵抗離群值；這裡每個函式都接受 <code>na.rm=TRUE</code>。</li>
-<li><code>fivenum()</code> 給出 Tukey 五數摘要；<code>IQR()</code> 是四分位距。</li>
+<li><strong>Pearson</strong>——Excel 的 <code>CORREL</code>；植根於常態理論，最適合近似常態的資料；</li>
+<li><strong>Spearman</strong>——無母數、不做分布假設（對<em>等級</em>做相關）；</li>
+<li><strong>Kendall 的 tau</strong>——比較<em>成對排序</em>的一致與不一致對數。</li>
 </ul>
-</section>
-<section id="無所不在的-summary" class="slide level2">
-<h2>無所不在的 summary()</h2>
-<p><code>summary()</code> 會順應它的引數——數值向量、因子、資料框、模型：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">summary</span>(dow30[, <span class="fu">c</span>(<span class="st">"Open"</span>, <span class="st">"Close"</span>, <span class="st">"Volume"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      Open            Close            Volume         
- Min.   :  0.99   Min.   :  0.75   Min.   :1.336e+06  
- 1st Qu.: 19.66   1st Qu.: 19.65   1st Qu.:1.111e+07  
- Median : 30.16   Median : 30.10   Median :1.822e+07  
- Mean   : 36.25   Mean   : 36.24   Mean   :5.226e+07  
- 3rd Qu.: 51.68   3rd Qu.: 51.58   3rd Qu.:4.255e+07  
- Max.   :122.45   Max.   :122.11   Max.   :2.672e+09  </code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">cor</span>(x, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">use =</span> <span class="st">"everything"</span>,</span>
+<span id="cb27-2"><a href=""></a>    <span class="at">method =</span> <span class="fu">c</span>(<span class="st">"pearson"</span>, <span class="st">"kendall"</span>, <span class="st">"spearman"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<p>想快速摸清任何新資料集：<code>summary(df)</code> 加 <code>str(df)</code>，兩行回答「我手上拿的是什麼？」。</p>
+<p><code>x</code>、<code>y</code> 可以是兩個向量，或一個資料框／矩陣（→ 相關<em>矩陣</em>）。<code>use</code> 處理 <code>NA</code>：<code>"all.obs"</code>（報錯）、<code>"everything"</code>（結果為 NA）、<code>"complete.obs"</code>／<code>"na.or.complete"</code>（丟不完整列）、<code>"pairwise.complete.obs"</code>（逐對丟）。</p>
 </section>
-<section id="相關與共變異" class="slide level2">
-<h2>相關與共變異</h2>
-<p>兩個序列如何一起波動？</p>
+<section id="範例孕期增重與出生體重" class="slide level2">
+<h2>範例：孕期增重與出生體重</h2>
+<p>母親增重與寶寶體重相關嗎？先清理（有效值、單胞胎、妊娠 &gt; 35 週），再看圖——十萬多點得用 <code>smoothScatter</code>、不能用 <code>plot</code>：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">cov</span>(dow30<span class="sc">$</span>Open, dow30<span class="sc">$</span>Close)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb28-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda"</span>,</span>
+<span id="cb28-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb28-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb28-5"><a href=""></a>births2006.cln <span class="ot">&lt;-</span> births2006.smpl[</span>
+<span id="cb28-6"><a href=""></a>  <span class="sc">!</span><span class="fu">is.na</span>(births2006.smpl<span class="sc">$</span>WTGAIN) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(births2006.smpl<span class="sc">$</span>DBWT) <span class="sc">&amp;</span></span>
+<span id="cb28-7"><a href=""></a>  births2006.smpl<span class="sc">$</span>DPLURAL <span class="sc">==</span> <span class="st">"1 Single"</span> <span class="sc">&amp;</span> births2006.smpl<span class="sc">$</span>ESTGEST<span class="sc">&gt;</span><span class="dv">35</span>,]</span>
+<span id="cb28-8"><a href=""></a><span class="fu">smoothScatter</span>(births2006.cln<span class="sc">$</span>WTGAIN, births2006.cln<span class="sc">$</span>DBWT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href=""></a><span class="fu">cor</span>(births2006.cln<span class="sc">$</span>WTGAIN, births2006.cln<span class="sc">$</span>DBWT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 495.3305</code></pre>
+<pre><code>[1] 0.1751866</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">cor</span>(dow30<span class="sc">$</span>Open, dow30<span class="sc">$</span>Close)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">cor</span>(births2006.cln<span class="sc">$</span>WTGAIN, births2006.cln<span class="sc">$</span>DBWT, <span class="at">method=</span><span class="st">"spearman"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.9988589</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">cor</span>(dow30[, <span class="fu">c</span>(<span class="st">"Open"</span>, <span class="st">"High"</span>, <span class="st">"Low"</span>, <span class="st">"Close"</span>)])[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>           Open      High       Low     Close
-Open  1.0000000 0.9994177 0.9993623 0.9988589
-High  0.9994177 1.0000000 0.9989249 0.9993634
-Low   0.9993623 0.9989249 1.0000000 0.9993333
-Close 0.9988589 0.9993634 0.9993333 1.0000000</code></pre>
+<pre><code>[1] 0.1776192</code></pre>
 </div>
 </div>
-<ul>
-<li><code>cor()</code> 預設 Pearson；<code>method = "spearman"</code> 或 <code>"kendall"</code> 改用等級——對離群值與非線性都更穩健。</li>
-<li>相關矩陣是迴歸（第二十章）前的標準偵察。</li>
-</ul>
-<div class="callout callout-warning callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Warning</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>相關不是因果。</strong> 它也看不見非線性結構——散佈圖永遠要一起看。</p>
-</div>
-</div>
-</div>
+<img data-src="ch16-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>兩種度量都顯示中等偏弱的相關——那團雲確實有點傾角，但只是一點。（書中用的是 320 萬筆的完整檔；我們的 10% 樣本給出幾乎相同的值。）</p>
 </section>
-<section id="主成分分析" class="slide level2">
-<h2>主成分分析</h2>
-<p>PCA 把彼此相關的變數重新表達成依解釋變異量排序的正交<strong>主成分</strong>：</p>
+<section id="共變異" class="slide level2">
+<h2>共變異</h2>
+<p><strong>共變異（covariance）</strong>就是 Pearson 公式的分子——引數與 <code>cor</code> 相同：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>pca <span class="ot">&lt;-</span> <span class="fu">prcomp</span>(USArrests, <span class="at">scale. =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb18-2"><a href=""></a><span class="fu">summary</span>(pca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a><span class="fu">cov</span>(births2006.cln<span class="sc">$</span>WTGAIN, births2006.cln<span class="sc">$</span>DBWT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1176.469</code></pre>
+</div>
+</div>
+<p>親戚：<code>cov2cor</code> 把共變異矩陣轉成相關矩陣；<code>cov.wt(x, wt=, cor=, center=, method=c("unbiased","ML"))</code> 計算<em>加權</em>共變異。</p>
+</section></section>
+<section>
+<section id="主成分分析" class="title-slide slide level1 center">
+<h1>主成分分析</h1>
+
+</section>
+<section id="prcomp-與-princomp" class="slide level2">
+<h2>prcomp 與 princomp</h2>
+<p><strong>PCA</strong> 把（可能相關的）變數改寫成互不相關的成分。兩個實作：<code>prcomp</code>（建議使用；公式法 <code>prcomp(~..., data=, subset=, na.action=)</code>，預設法有 <code>retx</code>、<code>center=TRUE</code>、<code>scale.</code>、<code>tol</code>）與 S-PLUS 相容的 <code>princomp</code>（對相關／共變異矩陣做特徵分解）——書中示範的是後者。</p>
+<p>資料：2000–2008 各隊打擊統計，從 Baseball Databank 以 SQL 取出（縮寫改成易讀的名稱），打包為 <code>team.batting.00to08</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb35-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda"</span>,</span>
+<span id="cb35-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb35-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb35-5"><a href=""></a>batting.pca <span class="ot">&lt;-</span> <span class="fu">princomp</span>(<span class="sc">~</span>singles<span class="sc">+</span>doubles<span class="sc">+</span>triples<span class="sc">+</span>homeruns<span class="sc">+</span></span>
+<span id="cb35-6"><a href=""></a>                          walks<span class="sc">+</span>hitbypitch<span class="sc">+</span>sacrificeflies<span class="sc">+</span></span>
+<span id="cb35-7"><a href=""></a>                          stolenbases<span class="sc">+</span>caughtstealing,</span>
+<span id="cb35-8"><a href=""></a>                        <span class="at">data=</span>team.batting<span class="fl">.00</span>to08)</span>
+<span id="cb35-9"><a href=""></a><span class="fu">summary</span>(batting.pca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Importance of components:
-                          PC1    PC2     PC3     PC4
-Standard deviation     1.5749 0.9949 0.59713 0.41645
-Proportion of Variance 0.6201 0.2474 0.08914 0.04336
-Cumulative Proportion  0.6201 0.8675 0.95664 1.00000</code></pre>
+                           Comp.1     Comp.2     Comp.3      Comp.4      Comp.5
+Standard deviation     74.9009809 61.8710858 31.8113983 27.98819003 23.78885885
+Proportion of Variance  0.4610727  0.3146081  0.0831687  0.06437897  0.04650949
+Cumulative Proportion   0.4610727  0.7756807  0.8588494  0.92322841  0.96973790
+                            Comp.6      Comp.7      Comp.8      Comp.9
+Standard deviation     12.88429066 9.150840397 8.283972499 7.060503344
+Proportion of Variance  0.01364317 0.006882026 0.005639904 0.004096998
+Cumulative Proportion   0.98338107 0.990263099 0.995903002 1.000000000</code></pre>
 </div>
 </div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a><span class="fu">biplot</span>(pca, <span class="at">cex =</span> <span class="fl">0.6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch16-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"><ul>
-<li><code>scale.=TRUE</code> 先標準化——單位不同時必須做。</li>
-<li>前兩個主成分常已捕捉大部分結構：替繪圖與建模內建了降維。</li>
-</ul>
+<p>兩個成分已扛起約 78% 的變異；四個約 92%。</p>
 </section>
-<section id="因素分析" class="slide level2">
-<h2>因素分析</h2>
-<p>PCA 是純粹的變異量記帳；<strong>因素分析</strong>則假設存在解釋觀測相關性的潛在變數：</p>
+<section id="loadings碎石圖雙標圖" class="slide level2">
+<h2>loadings、碎石圖、雙標圖</h2>
+<p><code>loadings</code> 顯示各變數對各成分的貢獻：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a>fa <span class="ot">&lt;-</span> <span class="fu">factanal</span>(mtcars[, <span class="fu">c</span>(<span class="st">"mpg"</span>, <span class="st">"disp"</span>, <span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"qsec"</span>, <span class="st">"drat"</span>)],</span>
-<span id="cb21-2"><a href=""></a>               <span class="at">factors =</span> <span class="dv">2</span>)</span>
-<span id="cb21-3"><a href=""></a>fa<span class="sc">$</span>loadings</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a><span class="fu">loadings</span>(batting.pca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Loadings:
-     Factor1 Factor2
-mpg  -0.842   0.376 
-disp  0.864  -0.389 
-hp    0.596  -0.698 
-wt    0.974  -0.116 
-qsec          0.962 
-drat -0.745         
+               Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6 Comp.7 Comp.8 Comp.9
+singles         0.313  0.929  0.136         0.136                            
+doubles                       0.437  0.121 -0.877                0.100       
+triples                                                  -0.424 -0.775  0.449
+homeruns       -0.235         0.383  0.825  0.324                            
+walks          -0.914  0.328 -0.150 -0.182                                   
+hitbypitch                                         0.989                     
+sacrificeflies                                           -0.321 -0.330 -0.882
+stolenbases            0.131 -0.758  0.502 -0.307         0.232              
+caughtstealing               -0.208  0.104               -0.813  0.521  0.105
 
-               Factor1 Factor2
-SS loadings      3.317   1.722
-Proportion Var   0.553   0.287
-Cumulative Var   0.553   0.840</code></pre>
+               Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6 Comp.7 Comp.8 Comp.9
+SS loadings     1.000  1.000  1.000  1.000  1.000  1.000  1.000  1.000  1.000
+Proportion Var  0.111  0.111  0.111  0.111  0.111  0.111  0.111  0.111  0.111
+Cumulative Var  0.111  0.222  0.333  0.444  0.556  0.667  0.778  0.889  1.000</code></pre>
 </div>
 </div>
-<ul>
-<li>負荷量（loadings）顯示每個觀測變數反映各潛在因素的強度。</li>
-<li>常見於心理計量與問卷研究：「這 20 題是不是其實在量 2 個潛在特質？」</li>
-</ul>
-</section>
-<section id="拔靴法重抽樣" class="slide level2">
-<h2>拔靴法重抽樣</h2>
-<p>當統計量的不確定性沒有現成公式時，就<strong>重抽</strong>：放回地抽取觀測值、重算、重複：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">library</span>(boot)</span>
-<span id="cb23-2"><a href=""></a>med.fun <span class="ot">&lt;-</span> <span class="cf">function</span>(d, i) <span class="fu">median</span>(d[i])</span>
-<span id="cb23-3"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb23-4"><a href=""></a>b <span class="ot">&lt;-</span> <span class="fu">boot</span>(dow30<span class="sc">$</span>Open, med.fun, <span class="at">R =</span> <span class="dv">1000</span>)</span>
-<span id="cb23-5"><a href=""></a>b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">plot</span>(batting.pca)                                      <span class="co"># 「碎石」圖</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch16-zh_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">biplot</span>(batting.pca, <span class="at">cex=</span><span class="fl">0.5</span>, <span class="at">col=</span><span class="fu">c</span>(<span class="st">"gray50"</span>, <span class="st">"black"</span>)) <span class="co"># 變數＋觀測</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch16-zh_files/figure-revealjs/unnamed-chunk-12-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>雙標圖把變數對成分 1–2 的貢獻<em>與</em>觀測畫在同一尺度上：一壘安打與保送主宰前兩個成分。（這份資料在第二十章的線性模型再登場。）</p>
+</section></section>
+<section>
+<section id="因素分析" class="title-slide slide level1 center">
+<h1>因素分析</h1>
+
+</section>
+<section id="factanal" class="slide level2">
+<h2>factanal</h2>
+<p>有些量觀測得到（測驗分數）、有些不行（智力）。<strong>因素分析</strong>從觀測變數推測隱藏因素——<code>stats</code> 的 <code>factanal</code>：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href=""></a><span class="fu">factanal</span>(x, factors, <span class="at">data =</span> <span class="cn">NULL</span>, <span class="at">covmat =</span> <span class="cn">NULL</span>, <span class="at">n.obs =</span> <span class="cn">NA</span>,</span>
+<span id="cb41-2"><a href=""></a>         subset, na.action, <span class="at">start =</span> <span class="cn">NULL</span>,</span>
+<span id="cb41-3"><a href=""></a>         <span class="at">scores =</span> <span class="fu">c</span>(<span class="st">"none"</span>, <span class="st">"regression"</span>, <span class="st">"Bartlett"</span>),</span>
+<span id="cb41-4"><a href=""></a>         <span class="at">rotation =</span> <span class="st">"varimax"</span>, <span class="at">control =</span> <span class="cn">NULL</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>引數</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x</code>／<code>data</code></td>
+<td>公式或數值矩陣（公式時加資料框）</td>
+</tr>
+<tr class="even">
+<td><code>factors</code></td>
+<td>要配適幾個因素</td>
+</tr>
+<tr class="odd">
+<td><code>covmat</code>／<code>n.obs</code></td>
+<td>也可給共變異矩陣（或 <code>cov.wt</code> 輸出）＋觀測數</td>
+</tr>
+<tr class="even">
+<td><code>subset</code>／<code>na.action</code>／<code>start</code></td>
+<td>老面孔</td>
+</tr>
+<tr class="odd">
+<td><code>scores</code></td>
+<td><code>"none"</code>、<code>"regression"</code>（Thompson）、<code>"Bartlett"</code>（加權最小平方）</td>
+</tr>
+<tr class="even">
+<td><code>rotation</code></td>
+<td>因素旋轉函式，預設 <code>"varimax"</code></td>
+</tr>
+</tbody>
+</table>
+</section></section>
+<section>
+<section id="拔靴重抽樣" class="title-slide slide level1 center">
+<h1>拔靴重抽樣</h1>
+
+</section>
+<section id="想法以及-boot" class="slide level2">
+<h2>想法，以及 boot</h2>
+<p>你的統計量對少數離群值敏感嗎？它的抽樣範圍多大？<strong>拔靴法（bootstrap）</strong>對<em>任意</em>統計量都能回答：反覆<strong>放回</strong>抽樣、重算統計量、觀察其散布——正式地說，是估計一個估計量的<strong>偏誤</strong>。</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a><span class="fu">library</span>(boot)</span>
+<span id="cb42-2"><a href=""></a><span class="fu">boot</span>(data, statistic, R, <span class="at">sim=</span><span class="st">"ordinary"</span>, <span class="at">stype=</span><span class="st">"i"</span>,</span>
+<span id="cb42-3"><a href=""></a>     <span class="at">strata=</span><span class="fu">rep</span>(<span class="dv">1</span>,n), <span class="at">L=</span><span class="cn">NULL</span>, <span class="at">m=</span><span class="dv">0</span>, <span class="at">weights=</span><span class="cn">NULL</span>,</span>
+<span id="cb42-4"><a href=""></a>     <span class="at">ran.gen=</span><span class="cf">function</span>(d, p) d, <span class="at">mle=</span><span class="cn">NULL</span>, <span class="at">simple=</span><span class="cn">FALSE</span>, ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>重點引數：<code>data</code>；<code>statistic</code>——一個<em>（資料, 選擇）的函式</em>，第二個引數的意義由 <code>stype</code> 決定（<code>"i"</code> 索引、<code>"f"</code> 次數、<code>"w"</code> 權重）；<code>R</code>——重抽次數；<code>sim</code>——<code>"ordinary"</code>、<code>"parametric"</code>、<code>"balanced"</code>、<code>"permutation"</code>、<code>"antithetic"</code>；多樣本問題用 <code>strata</code>；參數化模擬用 <code>ran.gen</code>／<code>mle</code>；<code>simple=TRUE</code> 以時間換記憶體。</p>
+</section>
+<section id="範例中位數有多偏" class="slide level2">
+<h2>範例：中位數有多偏？</h2>
+<p>媒體報導房價<em>中位數</em>。對 2008 年 6 月舊金山成交價拔靴：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb43-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda"</span>,</span>
+<span id="cb43-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb43-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb43-5"><a href=""></a>home.sale.prices.june2008 <span class="ot">&lt;-</span> <span class="fu">subset</span>(sanfrancisco.home.sales,</span>
+<span id="cb43-6"><a href=""></a>  <span class="fu">format</span>(date, <span class="st">"%Y-%m"</span>)<span class="sc">==</span><span class="st">"2008-06"</span>)<span class="sc">$</span>price</span>
+<span id="cb43-7"><a href=""></a><span class="fu">library</span>(boot)</span>
+<span id="cb43-8"><a href=""></a>b <span class="ot">&lt;-</span> <span class="fu">boot</span>(<span class="at">data=</span>home.sale.prices.june2008,</span>
+<span id="cb43-9"><a href=""></a>          <span class="at">statistic=</span><span class="cf">function</span>(d, i) { <span class="fu">median</span>(d[i]) },</span>
+<span id="cb43-10"><a href=""></a>          <span class="at">R=</span><span class="dv">1000</span>)</span>
+<span id="cb43-11"><a href=""></a>b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 ORDINARY NONPARAMETRIC BOOTSTRAP
 
 
 Call:
-boot(data = dow30$Open, statistic = med.fun, R = 1000)
+boot(data = home.sale.prices.june2008, statistic = function(d, 
+    i) {
+    median(d[i])
+}, R = 1000)
 
 
 Bootstrap Statistics :
     original  bias    std. error
-t1*   30.155  0.0087   0.2879809</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">boot.ci</span>(b, <span class="at">type =</span> <span class="st">"perc"</span>)<span class="sc">$</span>percent</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>     conf                          
-[1,] 0.95 25.03 975.98 29.63 30.735</code></pre>
+t1*   845000 -2696.5    22071.14</code></pre>
 </div>
 </div>
-<p>一千次重算的中位數的散布，就是抽樣分布的估計——完全不需要常態假設。</p>
-</section>
-<section id="一套工作流程" class="slide level2">
-<h2>一套工作流程</h2>
-<ol type="1">
-<li><code>str()</code> 與 <code>summary()</code>——型別、範圍、缺漏。</li>
-<li>畫圖——直方圖與散佈圖（第十三～十五章）。</li>
-<li>相關——什麼跟什麼一起動？</li>
-<li>降維——變數很多時用 PCA／因素分析。</li>
-<li>量化不確定性——有疑慮就拔靴。</li>
-</ol>
-<p>之後——也只有在之後——才輪到第十八章的正式檢定與第二十、二十一章的模型。</p>
+<p>結論：在這裡中位數是非常輕微有偏的估計量——而且我們順便拿到了它的標準誤，完全不靠常態假設。</p>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

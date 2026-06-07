@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,20 +211,203 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="objects-with-manners" class="title-slide slide level1 center">
-<h1><strong>Objects with Manners</strong></h1>
+<section id="two-object-systems" class="title-slide slide level1 center">
+<h1><strong>Two Object Systems</strong></h1>
 
 </section>
-<section id="two-systems-one-idea" class="slide level2">
-<h2>Two Systems, One Idea</h2>
-<p>R is functional at heart, but ships with object-oriented machinery — twice over:</p>
+<section id="a-functional-language-with-oop-support" class="slide level2">
+<h2>A Functional Language with OOP Support</h2>
+<p>At heart R is a <strong>functional</strong> language — and writing functional programs is fine practice. But R also supports <strong>object-oriented programming (OOP)</strong>, the dominant paradigm of Java, C#, Ruby, C++… Many R packages are built with R objects, including the core <code>stats</code> package, <code>lattice</code>, and <code>ggplot2</code>. OOP shines when representing complicated things: statistical models, charts.</p>
+<p>Two mechanisms coexist, both inherited from S:</p>
 <ul>
-<li><strong>S3</strong>: informal, lightweight, ubiquitous. A class is just a <code>class</code> attribute; dispatch is by naming convention.</li>
-<li><strong>S4</strong>: formal classes with declared slots, validity checking, and registered methods <span class="citation" data-cites="chambers2008software">(Chambers 2008)</span>.</li>
+<li><strong>S3</strong> (~1990): class attributes enabling single-argument methods. The classic modeling software uses S3, so it is everywhere.</li>
+<li><strong>S4</strong>: formal classes and methods — multiple dispatch, abstract types, sophisticated inheritance. Used by many newer packages, extensively in Bioconductor.</li>
 </ul>
+<p>The book’s advice: build <em>new</em> abstractions with <strong>S4</strong>; learn <strong>S3</strong> because you must read and extend the vast code that uses it.</p>
+</section>
+<section id="key-ideas-via-time-series" class="slide level2">
+<h2>Key Ideas, via Time Series</h2>
+<p>A time series — equally spaced measurements over time, with a start, end, frequency — makes every OOP concept concrete:</p>
+<ul>
+<li>a <strong>class</strong> is the formal definition; each actual time series is an <strong>instance</strong>; a function operating on the class is a <strong>method</strong>;</li>
+<li>hiding the storage details (data frame? vector? text?) behind methods is <strong>encapsulation</strong>;</li>
+<li>a weight-history class that <em>reuses</em> the time-series machinery, adding only what differs, exhibits <strong>inheritance</strong> — time series is the <strong>superclass</strong>, weight history the <strong>subclass</strong>;</li>
+<li>one name (<code>period</code>) doing the right thing for different classes is <strong>polymorphism</strong>;</li>
+<li>building a class out of several component classes is <strong>composition</strong> — and inheriting from more than one class is <strong>multiple inheritance</strong>, which R permits.</li>
+</ul>
+<p>(Yes, R already has a time-series class — <code>ts</code>, an S3 class in <code>stats</code>. That is deliberate: we will rebuild it the S4 way, then dissect the S3 original.)</p>
+</section></section>
+<section>
+<section id="an-s4-worked-example" class="title-slide slide level1 center">
+<h1>An S4 Worked Example</h1>
+
+</section>
+<section id="setclass-defining-timeseries" class="slide level2">
+<h2>setClass: Defining TimeSeries</h2>
+<p>Slots are where an object stores information. We represent a time series by three slots — the data, a start time, an end time (units, frequency, and period are derivable):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb1-2"><a href=""></a>  <span class="fu">representation</span>(</span>
+<span id="cb1-3"><a href=""></a>    <span class="at">data=</span><span class="st">"numeric"</span>,</span>
+<span id="cb1-4"><a href=""></a>    <span class="at">start=</span><span class="st">"POSIXct"</span>,</span>
+<span id="cb1-5"><a href=""></a>    <span class="at">end=</span><span class="st">"POSIXct"</span></span>
+<span id="cb1-6"><a href=""></a>  )</span>
+<span id="cb1-7"><a href=""></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>representation</code> names the class of object each slot holds.</p>
+</section>
+<section id="new-creating-an-instance" class="slide level2">
+<h2>new: Creating an Instance</h2>
+<p><code>new</code> is the generic constructor: first argument the class name, the rest fill the slots. The default S4 print method shows every slot:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>my.TimeSeries <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb2-2"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>),</span>
+<span id="cb2-3"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb2-4"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb2-5"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:05:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb2-6"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>))</span>
+<span id="cb2-7"><a href=""></a>my.TimeSeries</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class "TimeSeries"
+Slot "data":
+[1] 1 2 3 4 5 6
+
+Slot "start":
+[1] "2009-07-01 GMT"
+
+Slot "end":
+[1] "2009-07-01 00:05:00 GMT"</code></pre>
+</div>
+</div>
+</section>
+<section id="setvalidity-rejecting-bad-objects" class="slide level2">
+<h2>setValidity: Rejecting Bad Objects</h2>
+<p>Not all slot values make sense: <code>end</code> must not precede <code>start</code>, and both must have length 1. Register a validity function with <code>setValidity</code> and check with <code>validObject</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">setValidity</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb4-2"><a href=""></a>  <span class="cf">function</span>(object) {</span>
+<span id="cb4-3"><a href=""></a>    object<span class="sc">@</span>start <span class="sc">&lt;=</span> object<span class="sc">@</span>end <span class="sc">&amp;&amp;</span></span>
+<span id="cb4-4"><a href=""></a>    <span class="fu">length</span>(object<span class="sc">@</span>start) <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span></span>
+<span id="cb4-5"><a href=""></a>    <span class="fu">length</span>(object<span class="sc">@</span>end) <span class="sc">==</span> <span class="dv">1</span></span>
+<span id="cb4-6"><a href=""></a>  }</span>
+<span id="cb4-7"><a href=""></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Class "TimeSeries" [in ".GlobalEnv"]
+
+Slots:
+                              
+Name:     data   start     end
+Class: numeric POSIXct POSIXct</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">validObject</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>(You can also supply the validity function when calling <code>setClass</code> — see its full definition.)</p>
+</section>
+<section id="validation-in-action" class="slide level2">
+<h2>Validation in Action</h2>
+<p>From now on, <code>new</code> checks each candidate and rejects the invalid:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a>good.TimeSeries <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb8-2"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>),</span>
+<span id="cb8-3"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:06:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb8-4"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb8-5"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:11:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb8-6"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>))</span>
+<span id="cb8-7"><a href=""></a>bad.TimeSeries <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"TimeSeries"</span>,</span>
+<span id="cb8-8"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>),</span>
+<span id="cb8-9"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/2009 0:06:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb8-10"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb8-11"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"07/01/1999 0:11:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb8-12"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>))   <span class="co"># ends before it starts!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `validObject()`:
+! invalid class "TimeSeries" object: FALSE</code></pre>
+</div>
+</div>
+</section>
+<section id="a-first-method-period" class="slide level2">
+<h2>A First Method: period</h2>
+<p>A plain function that computes the period from the slots:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a>period.TimeSeries <span class="ot">&lt;-</span> <span class="cf">function</span>(object) {</span>
+<span id="cb10-2"><a href=""></a>  <span class="cf">if</span> (<span class="fu">length</span>(object<span class="sc">@</span>data) <span class="sc">&gt;</span> <span class="dv">1</span>) {</span>
+<span id="cb10-3"><a href=""></a>    (object<span class="sc">@</span>end <span class="sc">-</span> object<span class="sc">@</span>start) <span class="sc">/</span> (<span class="fu">length</span>(object<span class="sc">@</span>data) <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb10-4"><a href=""></a>  } <span class="cf">else</span> {</span>
+<span id="cb10-5"><a href=""></a>    <span class="cn">Inf</span></span>
+<span id="cb10-6"><a href=""></a>  }</span>
+<span id="cb10-7"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>@</code> operator reaches into slots — the implementer’s view. Users should get nicer verbs; enter generic functions.</p>
+</section>
+<section id="setgeneric-series" class="slide level2">
+<h2>setGeneric: series</h2>
+<p>To extract the data series from <em>any</em> suitable object — polymorphism — define a function and promote it to a <strong>generic</strong>; the old body becomes the default method:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a>series <span class="ot">&lt;-</span> <span class="cf">function</span>(object) { object<span class="sc">@</span>data }</span>
+<span id="cb11-2"><a href=""></a><span class="fu">setGeneric</span>(<span class="st">"series"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "series"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">series</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 3 4 5 6</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a><span class="fu">showMethods</span>(<span class="st">"series"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Function: series (package .GlobalEnv)
+object="ANY"
+object="TimeSeries"
+    (inherited from: object="ANY")</code></pre>
+</div>
+</div>
+<p>(In OOP terms this is <em>overloading</em> the function name.)</p>
+</section>
+<section id="setmethod-period-for-timeseries" class="slide level2">
+<h2>setMethod: period for TimeSeries</h2>
+<p>Create a generic <code>period</code>, then register <code>period.TimeSeries</code> as its method for the <code>TimeSeries</code> signature:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>period <span class="ot">&lt;-</span> <span class="cf">function</span>(object) { object<span class="sc">@</span>period }</span>
+<span id="cb17-2"><a href=""></a><span class="fu">setGeneric</span>(<span class="st">"period"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "period"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">setMethod</span>(period, <span class="at">signature=</span><span class="fu">c</span>(<span class="st">"TimeSeries"</span>), <span class="at">definition=</span>period.TimeSeries)</span>
+<span id="cb19-2"><a href=""></a><span class="fu">period</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of 1 mins</code></pre>
+</div>
+</div>
+<p>Calling the generic dispatches to the right definition by class.</p>
+</section>
+<section id="methods-for-existing-generics-even-operators" class="slide level2">
+<h2>Methods for Existing Generics — Even Operators</h2>
+<p>You can attach methods to generics that already exist, like <code>summary</code> — or to <strong>operators</strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href=""></a><span class="fu">setMethod</span>(<span class="st">"summary"</span>, <span class="at">signature=</span><span class="st">"TimeSeries"</span>,</span>
+<span id="cb21-2"><a href=""></a>  <span class="at">definition=</span><span class="cf">function</span>(object, ...) {</span>
+<span id="cb21-3"><a href=""></a>    <span class="fu">print</span>(<span class="fu">paste</span>(object<span class="sc">@</span>start, <span class="st">" to "</span>, object<span class="sc">@</span>end, <span class="at">sep=</span><span class="st">""</span>, <span class="at">collapse=</span><span class="st">""</span>))</span>
+<span id="cb21-4"><a href=""></a>    <span class="fu">print</span>(<span class="fu">paste</span>(object<span class="sc">@</span>data, <span class="at">sep=</span><span class="st">""</span>, <span class="at">collapse=</span><span class="st">","</span>))</span>
+<span id="cb21-5"><a href=""></a>  }</span>
+<span id="cb21-6"><a href=""></a>)</span>
+<span id="cb21-7"><a href=""></a><span class="fu">summary</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2009-07-01 to 2009-07-01 00:05:00"
+[1] "1,2,3,4,5,6"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">setMethod</span>(<span class="st">"["</span>, <span class="at">signature=</span><span class="fu">c</span>(<span class="st">"TimeSeries"</span>),</span>
+<span id="cb23-2"><a href=""></a>  <span class="at">definition=</span><span class="cf">function</span>(x, i, j, ..., drop) { x<span class="sc">@</span>data[i] }</span>
+<span id="cb23-3"><a href=""></a>)</span>
+<span id="cb23-4"><a href=""></a>my.TimeSeries[<span class="dv">3</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3</code></pre>
+</div>
+</div>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -234,146 +417,263 @@ Yu-You Liou (NTU)
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Key ideas.</strong> A <strong>class</strong> describes a kind of object; an object is an <strong>instance</strong> of its class. A <strong>generic function</strong> (like <code>print</code> or <code>summary</code>) decides what to do by <strong>dispatching</strong> to a class-specific <strong>method</strong>. <strong>Inheritance</strong> lets one class extend another.</p>
+<p>This works for only <em>some</em> built-ins — <code>print</code>, notably, cannot be redefined this way. <code>?S4groupGeneric</code> lists the redefinable generics; the S3 section below explains why.</p>
 </div>
 </div>
 </div>
-<p>S3 powers most of base R; S4 powers Bioconductor and code that needs rigor. We look at S4 first, then S3.</p>
 </section>
-<section id="a-running-example" class="slide level2">
-<h2>A Running Example</h2>
-<p>Suppose we track people’s body-weight history over time. A natural design:</p>
-<ul>
-<li>a <code>TimeSeries</code> class holding values plus start/end timestamps;</li>
-<li>a <code>WeightHistory</code> class that <strong>extends</strong> <code>TimeSeries</code> with a person’s name;</li>
-<li>generic operations — <code>period()</code>, <code>series()</code> — implemented per class.</li>
-</ul>
-<p>This example exercises every S4 feature in the chapter.</p>
-</section>
-<section id="defining-an-s4-class" class="slide level2">
-<h2>Defining an S4 Class</h2>
-<p><code>setClass()</code> declares the class name and its <strong>slots</strong> (typed fields):</p>
+<section id="inheritance-weighthistory" class="slide level2">
+<h2>Inheritance: WeightHistory</h2>
+<p>A weight history is a time series plus a person’s name and height. <code>contains</code> declares the superclass; the new class adds only its extra slots:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">library</span>(methods)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">setClass</span>(<span class="st">"TimeSeries"</span>,</span>
-<span id="cb1-3"><a href=""></a>  <span class="fu">representation</span>(<span class="at">data =</span> <span class="st">"numeric"</span>, <span class="at">start =</span> <span class="st">"POSIXct"</span>, <span class="at">end =</span> <span class="st">"POSIXct"</span>))</span>
-<span id="cb1-4"><a href=""></a></span>
-<span id="cb1-5"><a href=""></a>my.ts <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"TimeSeries"</span>,</span>
-<span id="cb1-6"><a href=""></a>  <span class="at">data  =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">5</span>),</span>
-<span id="cb1-7"><a href=""></a>  <span class="at">start =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-09-22 09:00:00"</span>),</span>
-<span id="cb1-8"><a href=""></a>  <span class="at">end   =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-09-22 09:04:00"</span>))</span>
-<span id="cb1-9"><a href=""></a>my.ts<span class="sc">@</span>data            <span class="co"># slots are accessed with @</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 2 1 4 5</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"WeightHistory"</span>,</span>
+<span id="cb25-2"><a href=""></a>  <span class="fu">representation</span>(<span class="at">height =</span> <span class="st">"numeric"</span>, <span class="at">name =</span> <span class="st">"character"</span>),</span>
+<span id="cb25-3"><a href=""></a>  <span class="at">contains =</span> <span class="st">"TimeSeries"</span>)</span>
+<span id="cb25-4"><a href=""></a>john.doe <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"WeightHistory"</span>,</span>
+<span id="cb25-5"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">170</span>, <span class="dv">169</span>, <span class="dv">171</span>, <span class="dv">168</span>, <span class="dv">170</span>, <span class="dv">169</span>),</span>
+<span id="cb25-6"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"02/14/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb25-7"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb25-8"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"03/28/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb25-9"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb25-10"><a href=""></a>  <span class="at">height=</span><span class="dv">72</span>, <span class="at">name=</span><span class="st">"John Doe"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-<p><code>new()</code> constructs instances; printing an S4 object lists its slots.</p>
+<p>R validates the embedded TimeSeries automatically (try an invalid one yourself).</p>
 </section>
-<section id="validity-checking" class="slide level2">
-<h2>Validity Checking</h2>
-<p>A validity function rejects malformed objects at construction time:</p>
+<section id="multiple-inheritance-person-timeseries" class="slide level2">
+<h2>Multiple Inheritance: Person + TimeSeries</h2>
+<p>A cleaner composition: define a <code>Person</code> class, then inherit from <strong>both</strong>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">setValidity</span>(<span class="st">"TimeSeries"</span>, <span class="cf">function</span>(object) {</span>
-<span id="cb3-2"><a href=""></a>  <span class="cf">if</span> (object<span class="sc">@</span>start <span class="sc">&lt;=</span> object<span class="sc">@</span>end) <span class="cn">TRUE</span></span>
-<span id="cb3-3"><a href=""></a>  <span class="cf">else</span> <span class="st">"start must precede end"</span></span>
-<span id="cb3-4"><a href=""></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"Person"</span>,</span>
+<span id="cb26-2"><a href=""></a>  <span class="fu">representation</span>(<span class="at">height =</span> <span class="st">"numeric"</span>, <span class="at">name =</span> <span class="st">"character"</span>))</span>
+<span id="cb26-3"><a href=""></a><span class="fu">setClass</span>(<span class="st">"AltWeightHistory"</span>,</span>
+<span id="cb26-4"><a href=""></a>  <span class="at">contains =</span> <span class="fu">c</span>(<span class="st">"TimeSeries"</span>, <span class="st">"Person"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Identical behavior, slightly cleaner design — and <code>AltWeightHistory</code> now inherits methods from both parents.</p>
+</section>
+<section id="virtual-classes-setclassunion" class="slide level2">
+<h2>Virtual Classes: setClassUnion</h2>
+<p>Add a <code>Cat</code> class — cats have names too. To write one <code>is.fluffy</code> method covering people <em>and</em> cats, create a <strong>virtual class</strong> above both with <code>setClassUnion</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"Cat"</span>,</span>
+<span id="cb27-2"><a href=""></a>  <span class="fu">representation</span>(<span class="at">breed =</span> <span class="st">"character"</span>, <span class="at">name =</span> <span class="st">"character"</span>))</span>
+<span id="cb27-3"><a href=""></a><span class="fu">setClassUnion</span>(<span class="st">"NamedThing"</span>, <span class="fu">c</span>(<span class="st">"Person"</span>, <span class="st">"Cat"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Methods can target <code>NamedThing</code>; objects cannot be created from it (its representation is ambiguous). A subclass method (say, <code>is.fluffy</code> for <code>Person</code>) would override the parent’s. Bonus — class membership is testable:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a>jane.doe <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"AltWeightHistory"</span>,</span>
+<span id="cb28-2"><a href=""></a>  <span class="at">data=</span><span class="fu">c</span>(<span class="dv">130</span>, <span class="dv">129</span>, <span class="dv">131</span>, <span class="dv">128</span>, <span class="dv">130</span>, <span class="dv">129</span>),</span>
+<span id="cb28-3"><a href=""></a>  <span class="at">start=</span><span class="fu">as.POSIXct</span>(<span class="st">"02/14/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb28-4"><a href=""></a>                   <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb28-5"><a href=""></a>  <span class="at">end=</span><span class="fu">as.POSIXct</span>(<span class="st">"03/28/2009 0:00:00"</span>, <span class="at">tz=</span><span class="st">"GMT"</span>,</span>
+<span id="cb28-6"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>),</span>
+<span id="cb28-7"><a href=""></a>  <span class="at">height=</span><span class="dv">67</span>, <span class="at">name=</span><span class="st">"Jane Doe"</span>)</span>
+<span id="cb28-8"><a href=""></a><span class="fu">is</span>(jane.doe, <span class="st">"NamedThing"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Class "TimeSeries" [in ".GlobalEnv"]
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a><span class="fu">is</span>(john.doe, <span class="st">"TimeSeries"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+</section></section>
+<section>
+<section id="s4-in-depth" class="title-slide slide level1 center">
+<h1>S4 in Depth</h1>
 
-Slots:
-                              
-Name:     data   start     end
-Class: numeric POSIXct POSIXct</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">new</span>(<span class="st">"TimeSeries"</span>, <span class="at">data =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">0</span>,</span>
-<span id="cb5-2"><a href=""></a>    <span class="at">start =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-01-02"</span>), <span class="at">end =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-01-01"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-error">
-<pre><code>Error in `validObject()`:
-! invalid class "TimeSeries" object: start must precede end</code></pre>
-</div>
-</div>
-<p>This is the major practical advantage of S4 over S3: the system enforces your invariants for you.</p>
 </section>
-<section id="generic-functions-and-methods-s4" class="slide level2">
-<h2>Generic Functions and Methods (S4)</h2>
-<p><code>setGeneric()</code> declares a generic; <code>setMethod()</code> registers an implementation for a class:</p>
+<section id="setclass-the-full-signature" class="slide level2">
+<h2>setClass: the Full Signature</h2>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">setGeneric</span>(<span class="st">"period"</span>, <span class="cf">function</span>(object) <span class="fu">standardGeneric</span>(<span class="st">"period"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "period"</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">setClass</span>(Class, representation, prototype, <span class="at">contains=</span><span class="fu">character</span>(),</span>
+<span id="cb32-2"><a href=""></a>         validity, access, where, version, sealed, package,</span>
+<span id="cb32-3"><a href=""></a>         <span class="at">S3methods =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">setMethod</span>(<span class="st">"period"</span>, <span class="st">"TimeSeries"</span>, <span class="cf">function</span>(object) {</span>
-<span id="cb9-2"><a href=""></a>  (object<span class="sc">@</span>end <span class="sc">-</span> object<span class="sc">@</span>start) <span class="sc">/</span> (<span class="fu">length</span>(object<span class="sc">@</span>data) <span class="sc">-</span> <span class="dv">1</span>)</span>
-<span id="cb9-3"><a href=""></a>})</span>
-<span id="cb9-4"><a href=""></a><span class="fu">period</span>(my.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Time difference of 1 mins</code></pre>
-</div>
-</div>
-<p>You can also add methods for <em>existing</em> generics — e.g., a <code>summary</code> method for <code>TimeSeries</code> — and R will dispatch automatically.</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Class</code></td>
+<td>name of the new class (the only required argument)</td>
+</tr>
+<tr class="even">
+<td><code>representation</code></td>
+<td>named list of slots and their classes (<code>"ANY"</code> allows anything)</td>
+</tr>
+<tr class="odd">
+<td><code>prototype</code></td>
+<td>object holding default slot values</td>
+</tr>
+<tr class="even">
+<td><code>contains</code></td>
+<td>names of superclasses this class extends</td>
+</tr>
+<tr class="odd">
+<td><code>validity</code></td>
+<td>validity-checking function (default: none; changeable via <code>setValidity</code>)</td>
+</tr>
+<tr class="even">
+<td><code>where</code></td>
+<td>environment to store the definition (default: where <code>setClass</code> was called)</td>
+</tr>
+<tr class="odd">
+<td><code>sealed</code></td>
+<td>may the class be redefined by another <code>setClass</code>?</td>
+</tr>
+<tr class="even">
+<td><code>package</code></td>
+<td>package name for the class</td>
+</tr>
+<tr class="odd">
+<td><code>S3methods</code></td>
+<td>may S3 methods be written for this class? (default <code>FALSE</code>)</td>
+</tr>
+<tr class="even">
+<td><code>access</code>, <code>version</code></td>
+<td>unused; S-PLUS compatibility</td>
+</tr>
+</tbody>
+</table>
+<p>Helpers <code>representation()</code> and <code>prototype()</code> (in <code>methods</code>) ease definitions that extend a basic type, have several superclasses, or mix both.</p>
 </section>
-<section id="inheritance-s4" class="slide level2">
-<h2>Inheritance (S4)</h2>
-<p><code>contains=</code> makes one class extend another; the child inherits slots, validity, and methods:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">setClass</span>(<span class="st">"WeightHistory"</span>,</span>
-<span id="cb11-2"><a href=""></a>  <span class="at">contains =</span> <span class="st">"TimeSeries"</span>,</span>
-<span id="cb11-3"><a href=""></a>  <span class="fu">representation</span>(<span class="at">name =</span> <span class="st">"character"</span>))</span>
-<span id="cb11-4"><a href=""></a></span>
-<span id="cb11-5"><a href=""></a>kim <span class="ot">&lt;-</span> <span class="fu">new</span>(<span class="st">"WeightHistory"</span>,</span>
-<span id="cb11-6"><a href=""></a>  <span class="at">data  =</span> <span class="fu">c</span>(<span class="dv">63</span>, <span class="fl">62.5</span>, <span class="dv">62</span>),</span>
-<span id="cb11-7"><a href=""></a>  <span class="at">start =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-01-01"</span>), <span class="at">end =</span> <span class="fu">as.POSIXct</span>(<span class="st">"2026-03-01"</span>),</span>
-<span id="cb11-8"><a href=""></a>  <span class="at">name  =</span> <span class="st">"Kim"</span>)</span>
-<span id="cb11-9"><a href=""></a><span class="fu">period</span>(kim)        <span class="co"># inherited method just works</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Time difference of 29.5 days</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a>kim<span class="sc">@</span>name</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "Kim"</code></pre>
-</div>
-</div>
-<p>A class can inherit from several parents; method dispatch picks the most specific match.</p>
-</section>
-<section id="s3-classes-by-convention" class="slide level2">
-<h2>S3: Classes by Convention</h2>
-<p>In S3, the “class” is nothing but an attribute, and a method is nothing but a function named <code>generic.class</code>:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>cat_record <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">name =</span> <span class="st">"Mochi"</span>, <span class="at">weight =</span> <span class="fl">4.2</span>)</span>
-<span id="cb15-2"><a href=""></a><span class="fu">class</span>(cat_record) <span class="ot">&lt;-</span> <span class="st">"cat"</span></span>
-<span id="cb15-3"><a href=""></a></span>
-<span id="cb15-4"><a href=""></a>print.cat <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
-<span id="cb15-5"><a href=""></a>  <span class="fu">cat</span>(<span class="st">"Cat:"</span>, x<span class="sc">$</span>name, <span class="st">"—"</span>, x<span class="sc">$</span>weight, <span class="st">"kg</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb15-6"><a href=""></a>}</span>
-<span id="cb15-7"><a href=""></a><span class="fu">print</span>(cat_record)        <span class="co"># print() dispatches to print.cat</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Cat: Mochi — 4.2 kg</code></pre>
-</div>
-</div>
-<p>No declarations, no validation — convention all the way down. <code>UseMethod()</code> inside a function makes it a generic.</p>
-</section>
-<section id="how-s3-dispatch-works" class="slide level2">
-<h2>How S3 Dispatch Works</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a>describe <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">UseMethod</span>(<span class="st">"describe"</span>)</span>
-<span id="cb17-2"><a href=""></a>describe.default <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="st">"some object"</span></span>
-<span id="cb17-3"><a href=""></a>describe.numeric <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">paste</span>(<span class="st">"numbers, mean ="</span>, <span class="fu">mean</span>(x))</span>
-<span id="cb17-4"><a href=""></a><span class="fu">describe</span>(letters)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "some object"</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href=""></a><span class="fu">describe</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "numbers, mean = 2"</code></pre>
-</div>
-</div>
+<section id="slot-rules-.data-and-friends" class="slide level2">
+<h2>Slot Rules, .Data, and Friends</h2>
 <ul>
-<li>The <code>class()</code> vector is searched left to right for a matching <code>generic.class</code> function; <code>.default</code> is the fallback.</li>
-<li><code>methods("describe")</code> lists available methods; <code>inherits(x, "cat")</code> tests class membership.</li>
+<li><strong>Forbidden slot names</strong> — reserved for attributes: <code>class</code>, <code>comment</code>, <code>dim</code>, <code>dimnames</code>, <code>names</code>, <code>row.names</code>, <code>tsp</code>. (Objects can have both slots <em>and</em> attributes.)</li>
+<li>Extending a <strong>basic type</strong> (the table later in this chapter) yields a <code>.Data</code> slot holding the basic part — code written for the built-in type keeps working, acting on <code>.Data</code>.</li>
+<li><code>setIs(class1, class2, ...)</code> declares inheritance explicitly — an alternative to <code>contains</code>.</li>
+<li>On creation, R runs the class’s <strong><code>initialize</code></strong> method if defined — typically to compute derived slots.</li>
+<li><code>setClassUnion(name, members, where)</code> creates the virtual superclass seen earlier.</li>
 </ul>
 </section>
-<section id="s3-and-s4-compared" class="slide level2">
-<h2>S3 and S4 Compared</h2>
+<section id="new-objects-and-slot-access" class="slide level2">
+<h2>New Objects and Slot Access</h2>
+<ul>
+<li><code>new(c, ...)</code> — the <strong>constructor</strong>: named arguments fill slots; an <code>initialize</code> method (if any) runs afterward.</li>
+<li>Reading slots: <code>object@slotname</code>, or equivalently <code>slot(object, "slotname")</code>.</li>
+<li>Writing slots uses ordinary assignment, with validity checked by default:</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href=""></a>birthdate<span class="sc">@</span>month <span class="ot">&lt;-</span> <span class="st">"June"</span></span>
+<span id="cb33-2"><a href=""></a><span class="fu">slot</span>(birthdate, <span class="st">"month"</span>) <span class="ot">&lt;-</span> <span class="st">"June"</span></span>
+<span id="cb33-3"><a href=""></a><span class="fu">slot</span>(birthdate, <span class="st">"month"</span>, <span class="at">check=</span><span class="cn">FALSE</span>) <span class="ot">&lt;-</span> <span class="st">"June"</span>   <span class="co"># skip validation: usually unwise</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="working-with-objects-and-coercion" class="slide level2">
+<h2>Working with Objects, and Coercion</h2>
+<p>Object inspection vocabulary:</p>
+<ul>
+<li><code>is(o, c)</code> — is object <code>o</code> a member of class <code>c</code>? <code>extends(c1, c2)</code> — does class <code>c1</code> extend <code>c2</code>?</li>
+<li><code>slotNames(o)</code> / <code>slotNames(c)</code> — slot names of an object / class; <code>getSlots(c)</code> — the <em>classes</em> of each slot (nonintuitively).</li>
+</ul>
+<p>Conversion: <code>as(o, c)</code> coerces object <code>o</code> to class <code>c</code>. For your own classes, register coercion methods with <strong><code>setAs</code></strong>:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>from</code>, <code>to</code></td>
+<td>class names of input and output</td>
+</tr>
+<tr class="even">
+<td><code>def</code></td>
+<td>function performing the conversion</td>
+</tr>
+<tr class="odd">
+<td><code>replace</code></td>
+<td>function for the replacement form (when <code>as</code> is assigned into)</td>
+</tr>
+<tr class="even">
+<td><code>where</code></td>
+<td>environment for the definition</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="setgeneric-and-setmethod-full-signatures" class="slide level2">
+<h2>setGeneric and setMethod: Full Signatures</h2>
+<p><code>setGeneric(name, def=, group=list(), valueClass=character(), where=, package=, signature=, useAsDefault=, ...)</code> — key arguments:</p>
+<ul>
+<li><code>name</code> / <code>def</code> — name and optional defining function; <code>group</code> — group generic (see <code>?S4groupGeneric</code>);</li>
+<li><code>valueClass</code> — class(es) the return value must belong to; <code>signature</code> — formal-argument names and classes (<code>"ANY"</code> = anything);</li>
+<li><code>useAsDefault</code> — which function becomes the default method.</li>
+</ul>
+<p><code>setMethod(f, signature=character(), definition, where=, valueClass=NULL, sealed=FALSE)</code>:</p>
+<ul>
+<li><code>f</code> — generic (or its name); <code>signature</code> — argument classes to match; <code>definition</code> — the function to call; <code>sealed</code> — prevent redefinition.</li>
+</ul>
+</section>
+<section id="managing-generics-and-methods" class="slide level2">
+<h2>Managing Generics and Methods</h2>
+<p>Bookkeeping functions from the <code>methods</code> package:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isGeneric</code> / <code>isGroup</code></td>
+<td>does a generic / group generic of this name exist?</td>
+</tr>
+<tr class="even">
+<td><code>removeGeneric</code> / <code>removeMethods</code></td>
+<td>remove a generic with its methods / just the methods</td>
+</tr>
+<tr class="odd">
+<td><code>getMethod</code>, <code>selectMethod</code></td>
+<td>fetch the method for a function + signature</td>
+</tr>
+<tr class="even">
+<td><code>existsMethod</code>, <code>hasMethod</code></td>
+<td>does such a method exist?</td>
+</tr>
+<tr class="odd">
+<td><code>findMethod</code></td>
+<td>which package(s) contain it?</td>
+</tr>
+<tr class="even">
+<td><code>showMethods</code></td>
+<td>display all methods of an S4 generic</td>
+</tr>
+<tr class="odd">
+<td><code>dumpMethod</code> / <code>dumpMethods</code></td>
+<td>dump one / all methods to code</td>
+</tr>
+<tr class="even">
+<td><code>findFunction</code></td>
+<td>where on the search list a function is defined</td>
+</tr>
+</tbody>
+</table>
+<p>More help: <code>library(help="methods")</code>.</p>
+</section>
+<section id="basic-classes" class="slide level2">
+<h2>Basic Classes</h2>
+<p>Classes of the built-in types — everything is built on these, and you may write methods for them:</p>
 <table class="caption-top">
 <colgroup>
 <col style="width: 33%">
@@ -382,44 +682,167 @@ Class: numeric POSIXct POSIXct</code></pre>
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Aspect</th>
-<th style="text-align: left;">S3</th>
-<th style="text-align: left;">S4</th>
+<th>Category</th>
+<th>Object type</th>
+<th>Class</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Class definition</td>
-<td style="text-align: left;"><code>class(x) &lt;- "name"</code></td>
-<td style="text-align: left;"><code>setClass()</code> with typed slots</td>
+<td>Vectors</td>
+<td><code>integer</code> / <code>double</code> / <code>complex</code> / <code>character</code> / <code>logical</code> / <code>raw</code></td>
+<td><code>integer</code> / <code>numeric</code> / <code>complex</code> / <code>character</code> / <code>logical</code> / <code>raw</code></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Field access</td>
-<td style="text-align: left;"><code>x$field</code></td>
-<td style="text-align: left;"><code>x@slot</code></td>
+<td>Compound</td>
+<td><code>list</code> / <code>pairlist</code> / <code>environment</code></td>
+<td><code>list</code> / <code>pairlist</code> / <code>environment</code></td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Method</td>
-<td style="text-align: left;">function named <code>generic.class</code></td>
-<td style="text-align: left;"><code>setMethod()</code></td>
+<td>Special</td>
+<td><code>NULL</code></td>
+<td><code>NULL</code></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Validation</td>
-<td style="text-align: left;">none</td>
-<td style="text-align: left;"><code>setValidity()</code></td>
+<td>Language</td>
+<td><code>symbol</code> / <code>language</code> / <code>expression</code></td>
+<td><code>name</code> / <code>call</code> / <code>expression</code></td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Cost</td>
-<td style="text-align: left;">minimal</td>
-<td style="text-align: left;">ceremony</td>
+<td>Functions</td>
+<td><code>closure</code> / <code>special</code> / <code>builtin</code></td>
+<td><code>function</code></td>
+</tr>
+<tr class="even">
+<td>Other</td>
+<td><code>externalptr</code></td>
+<td><code>externalptr</code></td>
 </tr>
 </tbody>
 </table>
+<p>The six vector classes all extend the virtual class <code>vector</code>.</p>
+</section></section>
+<section>
+<section id="old-school-oop-s3" class="title-slide slide level1 center">
+<h1>Old-School OOP: S3</h1>
+
+</section>
+<section id="s3-classes-are-just-attributes" class="slide level2">
+<h2>S3 Classes Are Just Attributes</h2>
+<p>An S3 object is a primitive object wearing extra attributes — one of them named <code>class</code>. No formal definition exists; you can change the attributes by hand. (S3 resembles prototype-based languages like JavaScript.) Dissecting the built-in <code>ts</code> class:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href=""></a>my.ts <span class="ot">&lt;-</span> <span class="fu">ts</span>(<span class="at">data=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>), <span class="at">start=</span><span class="fu">c</span>(<span class="dv">2009</span>, <span class="dv">2</span>), <span class="at">frequency=</span><span class="dv">12</span>)</span>
+<span id="cb34-2"><a href=""></a>my.ts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     Feb Mar Apr May Jun
+2009   1   2   3   4   5</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href=""></a><span class="fu">attributes</span>(my.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$tsp
+[1] 2009.083 2009.417   12.000
+
+$class
+[1] "ts"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href=""></a><span class="fu">typeof</span>(my.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "double"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">unclass</span>(my.ts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1 2 3 4 5
+attr(,"tsp")
+[1] 2009.083 2009.417   12.000</code></pre>
+</div>
+</div>
+<p>A <code>ts</code> is a double vector plus <code>class</code> and <code>tsp</code> attributes. And S4 tools don’t apply:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>my.ts<span class="sc">@</span>tsp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `my.ts@tsp`:
+! no applicable method for `@` applied to an object of class "ts"</code></pre>
+</div>
+</div>
+<p>S3 inheritance is informal — a class attribute with several elements means the first is the class, the rest are “inherited” classes, making inheritance a property of <em>objects</em>, not classes. Encapsulation is unenforced; parametric polymorphism is absent. Simple polymorphism, however, works — via S3 generics.</p>
+</section>
+<section id="s3-methods-naming-convention-usemethod" class="slide level2">
+<h2>S3 Methods: Naming Convention + UseMethod</h2>
+<p>S3 generics dispatch <strong>by naming convention</strong>, not registration:</p>
+<ol type="1">
+<li>pick a generic name, say <code>gname</code>;</li>
+<li>define <code>gname</code> with body <code>UseMethod("gname")</code>;</li>
+<li>for each class, define <code>gname.classname</code> whose first argument is such an object.</li>
+</ol>
+<p>The real thing:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a>plot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y, ...) 
+UseMethod("plot")
+&lt;bytecode: 0x73860fd20&gt;
+&lt;environment: namespace:base&gt;</code></pre>
+</div>
+</div>
+<p><code>UseMethod</code> walks the object’s class vector looking for <code>plot.class</code>; failing everything, it tries <code>plot.default</code>. (<code>NextMethod</code>, callable inside a method, hands off to the next available method.)</p>
+</section>
+<section id="adding-an-s3-method-to-our-s4-class" class="slide level2">
+<h2>Adding an S3 Method to Our S4 Class</h2>
+<p>Give <code>TimeSeries</code> a plot method by <em>merely naming a function correctly</em>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href=""></a>plot.TimeSeries <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
+<span id="cb46-2"><a href=""></a>  <span class="fu">plot</span>(x<span class="sc">@</span>data, ...)</span>
+<span id="cb46-3"><a href=""></a>}</span>
+<span id="cb46-4"><a href=""></a><span class="fu">plot</span>(my.TimeSeries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch10_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><code>plot(my.TimeSeries)</code> quietly becomes <code>plot.TimeSeries(my.TimeSeries)</code>.</p>
+</section>
+<section id="s3-inside-s4-setoldclass" class="slide level2">
+<h2>S3 Inside S4: setOldClass</h2>
+<p>S4 slots cannot hold an S3 class directly — first wrap it with <code>setOldClass(Classes, prototype, where, test=FALSE, S4Class)</code>:</p>
 <ul>
-<li>Use <strong>S3</strong> for everyday work and quick polymorphism; it is what <code>lm</code>, <code>data.frame</code>, and most of CRAN use.</li>
-<li>Use <strong>S4</strong> when correctness matters more than brevity — large systems, complex hierarchies, Bioconductor.</li>
-<li>Newer systems exist (R5 reference classes, R6, S7), all built on the same attribute machinery.</li>
+<li><code>Classes</code> — name(s) of the old-style class;</li>
+<li><code>prototype</code> — default object for the S4 class;</li>
+<li><code>test</code> — set <code>TRUE</code> if there can be multiple inheritance;</li>
+<li><code>S4Class</code> — an S4 class definition to base the new class on.</li>
 </ul>
+</section>
+<section id="finding-hidden-s3-methods" class="slide level2">
+<h2>Finding Hidden S3 Methods</h2>
+<p>Package authors may <strong>hide</strong> individual methods to push you toward the generic — encapsulation by obscurity:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href=""></a><span class="fu">library</span>(lattice)</span>
+<span id="cb47-2"><a href=""></a><span class="fu">methods</span>(histogram)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] histogram.data.frame* histogram.factor*     histogram.formula*   
+[4] histogram.numeric*   
+see '?methods' for accessing help and source code</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href=""></a><span class="fu">histogram.factor</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in `histogram.factor()`:
+! could not find function "histogram.factor"</code></pre>
+</div>
+</div>
+<p>To read the hidden code anyway:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href=""></a><span class="fu">getS3method</span>(<span class="at">f=</span><span class="st">"histogram"</span>, <span class="at">class=</span><span class="st">"formula"</span>)</span>
+<span id="cb51-2"><a href=""></a><span class="fu">getAnywhere</span>(histogram.formula)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Modern footnote.</strong> Today’s ecosystem adds further systems — <code>R6</code> for mutable reference objects and <code>S7</code> as the planned successor unifying S3/S4. The concepts you just learned (classes, methods, dispatch, inheritance) transfer directly.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

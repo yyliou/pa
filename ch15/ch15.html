@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,180 +211,406 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="a-grammar-of-graphics" class="title-slide slide level1 center">
-<h1><strong>A Grammar of Graphics</strong></h1>
+<section id="the-grammar-of-graphics" class="title-slide slide level1 center">
+<h1><strong>The Grammar of Graphics</strong></h1>
 
 </section>
-<section id="the-third-system" class="slide level2">
-<h2>The Third System</h2>
-<p><code>ggplot2</code> <span class="citation" data-cites="wickham2016ggplot2">(Wickham 2016)</span> implements Wilkinson’s <strong>grammar of graphics</strong> <span class="citation" data-cites="wilkinson2011grammar">(Wilkinson 2005)</span>: instead of choosing from a menu of chart types, you <em>compose</em> a chart from independent parts —</p>
+<section id="a-short-introduction" class="slide level2">
+<h2>A Short Introduction</h2>
+<p>Hadley Wickham’s <strong>ggplot2</strong> became one of R’s most popular packages — not just for pretty output, but because it speaks a <em>language</em> for describing plots: the <strong>grammar of graphics</strong>. You describe <strong>what</strong> you want to show, not <strong>how</strong> to draw it. The toy data (lattice’s, with renamed variables):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>d <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">a=</span><span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>), <span class="at">b=</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>), <span class="at">c=</span><span class="fu">c</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"Odd"</span>, <span class="st">"Even"</span>), <span class="at">times=</span><span class="dv">5</span>)))</span>
+<span id="cb1-2"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-1-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>We specified an x, a y, and a data set — never the words “scatter plot.” (<code>qplot</code> = quick plot; deprecated in recent ggplot2 but still working — the full <code>ggplot()</code> style follows shortly.)</p>
+</section>
+<section id="plot-objects" class="slide level2">
+<h2>Plot Objects</h2>
+<p>Like lattice, ggplot2 functions <strong>return an object</strong>; printing draws it. Inside functions and scripts: <code>print</code> it yourself.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>first.ggplot2.example <span class="ot">&lt;-</span> <span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d)</span>
+<span id="cb2-2"><a href=""></a><span class="fu">summary</span>(first.ggplot2.example)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>data: a, b, c [10x3]
+mapping:  x = ~a, y = ~b
+faceting:  &lt;empty&gt; 
+-----------------------------------
+geom_point: na.rm = FALSE
+stat_identity: na.rm = FALSE
+position_identity </code></pre>
+</div>
+</div>
+<p>The summary lays the plot’s anatomy bare: the data, the <strong>mapping</strong> (x = a, y = b), the faceting, and the layer (<code>geom_point</code> + <code>stat_identity</code> + identity position).</p>
+</section>
+<section id="facets-and-colors" class="slide level2">
+<h2>Facets and Colors</h2>
+<p>Panels (lattice’s conditioning) are <strong>facets</strong>, specified by formula; group-by-color is just another mapping:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">facets=</span><span class="sc">~</span>c)     <span class="co"># panels left-right</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-3-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">facets=</span>c<span class="sc">~</span>.)    <span class="co"># panels top-bottom — easy to flip!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-3-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">color=</span>c)       <span class="co"># color instead of panels</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-3-3.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>(Hadley’s preferred spelling of the first: <code>qplot(x=a, y=b, data=d) + facet_wrap(~c)</code>.)</p>
+</section>
+<section id="one-variable-histogram-and-density" class="slide level2">
+<h2>One Variable: Histogram and Density</h2>
+<p>With only <code>x</code> supplied, <code>qplot</code> defaults to a histogram; ask for another <strong>geom</strong> by name:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">set.seed</span>(<span class="dv">123456789</span>)</span>
+<span id="cb7-2"><a href=""></a>e <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">f=</span><span class="fu">rnorm</span>(<span class="dv">1000</span>))</span>
+<span id="cb7-3"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>f, <span class="at">data=</span>e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>f, <span class="at">data=</span>e, <span class="at">geom=</span><span class="st">"density"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-4-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="the-grammars-components" class="slide level2">
+<h2>The Grammar’s Components</h2>
+<p>Drawing a chart means doing many things at once; the grammar names each one, and ggplot2’s functions mirror the names:</p>
 <ul>
-<li><strong>data</strong> and <strong>aesthetic mappings</strong> (which variable drives position, color, size, shape);</li>
-<li><strong>geoms</strong> (points, lines, bars — the visible marks);</li>
-<li><strong>stats</strong> (transformations like binning or smoothing);</li>
-<li><strong>scales</strong>, <strong>coordinates</strong>, <strong>facets</strong>, and <strong>themes</strong>.</li>
+<li><strong>Data</strong> — what is visualized;</li>
+<li><strong>Mappings</strong> — variables → chart components;</li>
+<li><strong>Geometric objects (geom)</strong> — points, bars, lines… (<code>geom_point</code>, <code>geom_bar</code>, …);</li>
+<li><strong>Aesthetic properties (aes)</strong> — how it looks: sizes, labels, ticks;</li>
+<li><strong>Scales</strong> — how variables map to aesthetics;</li>
+<li><strong>Coordinates</strong> — Cartesian (<code>coord_cartesian</code>), polar (<code>coord_polar</code>), map projections (<code>coord_map</code>);</li>
+<li><strong>Statistical transformations (stat)</strong> — summaries: <code>stat_bin</code> for histograms, <code>stat_boxplot</code>…;</li>
+<li><strong>Facets</strong> — partitioning into subplots;</li>
+<li><strong>Positional adjustments</strong> — fine placement (stack, dodge, jitter…).</li>
 </ul>
-<p>This is the system our companion textbook (and the <code>da</code> course) is devoted to; here we meet its essentials.</p>
+<p><code>summary</code> of any plot object reports every component — your map when tuning a chart.</p>
+</section></section>
+<section>
+<section id="a-more-complex-example-medicare-data" class="title-slide slide level1 center">
+<h1>A More Complex Example: Medicare Data</h1>
+
+</section>
+<section id="the-data" class="slide level2">
+<h2>The Data</h2>
+<p>Real, complicated data: US <strong>Medicare</strong> cost and outcome measures, packaged three ways — <code>outcome.of.care.measures.national</code> (national mortality/readmission rates for heart attack, heart failure, pneumonia), <code>medicare.payments</code> (average payment per hospital × 70 conditions; 140,722 records), <code>medicare.payments.by.state</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
-<span id="cb1-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda"</span>, temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
-<span id="cb1-3"><a href=""></a><span class="fu">load</span>(temp)</span>
-<span id="cb1-4"><a href=""></a>hitters <span class="ot">&lt;-</span> <span class="fu">subset</span>(batting<span class="fl">.2008</span>, AB <span class="sc">&gt;</span> <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb9-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/outcome.of.care.measures.national.rda"</span>,</span>
+<span id="cb9-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb9-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb9-5"><a href=""></a>outcome.of.care.measures.national</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      Condition     Measure Rate
+1  Heart Attack   Mortality 15.9
+2 Heart Failure   Mortality 11.3
+3     Pneumonia   Mortality 11.9
+4  Heart Attack Readmission 19.8
+5 Heart Failure Readmission 24.8
+6     Pneumonia Readmission 18.4</code></pre>
+</div>
 </div>
 </section>
-<section id="anatomy-of-a-ggplot-call" class="slide level2">
-<h2>Anatomy of a ggplot Call</h2>
+<section id="bar-charts-facets" class="slide level2">
+<h2>Bar Charts: Facets…</h2>
+<p>One categorical x, so a univariate plot with bar heights from <code>weight=Rate</code>; facet by Measure, fill by Measure:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">ggplot</span>(hitters, <span class="fu">aes</span>(<span class="at">x =</span> AB, <span class="at">y =</span> H)) <span class="sc">+</span></span>
-<span id="cb2-2"><a href=""></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>Condition, <span class="at">data=</span>outcome.of.care.measures.national,</span>
+<span id="cb11-2"><a href=""></a>      <span class="at">geom=</span><span class="st">"bar"</span>, <span class="at">weight=</span>Rate, <span class="at">facets=</span>Measure<span class="sc">~</span>., <span class="at">fill=</span>Measure)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><ul>
-<li><code>ggplot(data, aes(...))</code> establishes the data and mappings;</li>
-<li><code>+ geom_*()</code> adds a layer that draws them;</li>
-<li>further <code>+</code> terms refine scales, labels, facets, and themes.</li>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section id="or-dodging" class="slide level2">
+<h2>…or Dodging</h2>
+<p>Drop the facets, set <code>position="dodge"</code> to place bars side by side. The book wrote <code>qplot(..., position="dodge")</code>, but modern ggplot2 has removed <code>qplot</code>’s <code>position</code> argument — position adjustments now belong to the <em>layer</em>, so we write it the full-grammar way:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href=""></a><span class="fu">ggplot</span>(outcome.of.care.measures.national,</span>
+<span id="cb12-2"><a href=""></a>       <span class="fu">aes</span>(<span class="at">x=</span>Condition, <span class="at">weight=</span>Rate, <span class="at">fill=</span>Measure)) <span class="sc">+</span></span>
+<span id="cb12-3"><a href=""></a>  <span class="fu">geom_bar</span>(<span class="at">position=</span><span class="st">"dodge"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Both work — <em>differently</em>: faceting invites comparing conditions within each measure; dodging invites comparing measures within each condition. The display is an argument.</p>
+</section>
+<section id="payments-vs.-volume" class="slide level2">
+<h2>Payments vs.&nbsp;Volume</h2>
+<p>Question: do hospitals treating more cases charge Medicare more or less? Restrict to the three heart-failure diagnosis groups and plot payment vs.&nbsp;case count, colored by diagnosis:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb13-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/medicare.payments.rda"</span>,</span>
+<span id="cb13-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb13-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb13-5"><a href=""></a>heart.failure <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Heart failure and shock w/o CC/MCC"</span>,</span>
+<span id="cb13-6"><a href=""></a>                   <span class="st">"Heart failure and shock w MCC"</span>,</span>
+<span id="cb13-7"><a href=""></a>                   <span class="st">"Heart failure and shock w CC"</span>)</span>
+<span id="cb13-8"><a href=""></a>payment.plot <span class="ot">&lt;-</span> <span class="fu">qplot</span>(<span class="at">x=</span>Number.Of.Cases, <span class="at">y=</span>Medicare.Average.Payment,</span>
+<span id="cb13-9"><a href=""></a>  <span class="at">data=</span><span class="fu">subset</span>(medicare.payments, Diagnosis.Related.Group <span class="sc">%in%</span> heart.failure),</span>
+<span id="cb13-10"><a href=""></a>  <span class="at">color=</span>Diagnosis.Related.Group)</span>
+<span id="cb13-11"><a href=""></a>payment.plot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Unreadable — everything clumps left. (Small counts are censored by HIPAA.)</p>
+</section>
+<section id="fixing-the-plot-by-adding-layers" class="slide level2">
+<h2>Fixing the Plot by Adding Layers</h2>
+<p>Recipe: log x-scale, semi-opaque points (<code>alpha=I(1/10)</code>), a smoothing line, trimmed y. The elegant route <strong>adds components with <code>+</code></strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a>payment.plot.alpha <span class="ot">&lt;-</span> <span class="fu">qplot</span>(<span class="at">x=</span>Number.Of.Cases, <span class="at">y=</span>Medicare.Average.Payment,</span>
+<span id="cb14-2"><a href=""></a>  <span class="at">data=</span><span class="fu">subset</span>(medicare.payments, Diagnosis.Related.Group <span class="sc">%in%</span> heart.failure),</span>
+<span id="cb14-3"><a href=""></a>  <span class="at">color=</span>Diagnosis.Related.Group, <span class="at">alpha=</span><span class="fu">I</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">10</span>), <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">20000</span>))</span>
+<span id="cb14-4"><a href=""></a>payment.plot.scaled <span class="ot">&lt;-</span> payment.plot.alpha <span class="sc">+</span> <span class="fu">scale_x_log10</span>() <span class="sc">+</span> <span class="fu">geom_smooth</span>()</span>
+<span id="cb14-5"><a href=""></a>payment.plot.scaled</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><code>summary</code> of this object now shows <strong>two</strong> geom/stat/position triples — one per layer — with the alpha aesthetic threaded through.</p>
+</section>
+<section id="reordering-factors-for-dot-plots" class="slide level2">
+<h2>Reordering Factors for Dot Plots</h2>
+<p>Costs rise with volume — geography, perhaps? State-level data, with <code>State</code> levels <strong>reordered by payment</strong> (sorting the <em>levels</em>, not the rows) before a dot plot:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">".rda"</span>)</span>
+<span id="cb15-2"><a href=""></a><span class="fu">download.file</span>(<span class="st">"https://raw.githubusercontent.com/cran/nutshell/master/data/medicare.payments.by.state.rda"</span>,</span>
+<span id="cb15-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
+<span id="cb15-4"><a href=""></a><span class="fu">load</span>(temp)</span>
+<span id="cb15-5"><a href=""></a>medicare.payments.by.state.hf <span class="ot">&lt;-</span> <span class="fu">subset</span>(medicare.payments.by.state,</span>
+<span id="cb15-6"><a href=""></a>  Diagnosis.Related.Group <span class="sc">%in%</span> heart.failure)</span>
+<span id="cb15-7"><a href=""></a>medicare.payments.by.state.hf<span class="sc">$</span>State <span class="ot">&lt;-</span> <span class="fu">with</span>(medicare.payments.by.state.hf,</span>
+<span id="cb15-8"><a href=""></a>  <span class="fu">reorder</span>(State, Medicare.Average.Payment.Maximum, mean))</span>
+<span id="cb15-9"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>Medicare.Average.Payment.Maximum, <span class="at">y=</span>State,</span>
+<span id="cb15-10"><a href=""></a>      <span class="at">data=</span>medicare.payments.by.state.hf,</span>
+<span id="cb15-11"><a href=""></a>      <span class="at">color=</span>Diagnosis.Related.Group)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Top of the list: Northern Mariana Islands, Alaska, Virgin Islands — remote and expensive — then NY, MD, CA: high cost of living <em>and</em> big hospitals. Cheapest: Puerto Rico, American Samoa. Cost and volume are both correlated <strong>with geography</strong>.</p>
+</section>
+<section id="a-choropleth-map" class="slide level2">
+<h2>A Choropleth Map</h2>
+<p>Are adjacent states similar? Merge payments with state polygons (<code>maps</code> package) and fill by payment — <code>geom="polygon"</code> plus a repositioned legend:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href=""></a><span class="fu">library</span>(maps)</span>
+<span id="cb16-2"><a href=""></a>states <span class="ot">&lt;-</span> <span class="fu">map_data</span>(<span class="st">"state"</span>)</span>
+<span id="cb16-3"><a href=""></a>state.name.map <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">abb=</span>state.abb, <span class="at">region=</span><span class="fu">tolower</span>(state.name),</span>
+<span id="cb16-4"><a href=""></a>                             <span class="at">stringsAsFactors=</span><span class="cn">FALSE</span>)</span>
+<span id="cb16-5"><a href=""></a>states <span class="ot">&lt;-</span> <span class="fu">merge</span>(states, state.name.map, <span class="at">by=</span><span class="st">"region"</span>)</span>
+<span id="cb16-6"><a href=""></a>toplot <span class="ot">&lt;-</span> <span class="fu">merge</span>(states, medicare.payments.by.state,</span>
+<span id="cb16-7"><a href=""></a>                <span class="at">by.x=</span><span class="st">"abb"</span>, <span class="at">by.y=</span><span class="st">"State"</span>)</span>
+<span id="cb16-8"><a href=""></a>toplot <span class="ot">&lt;-</span> toplot[<span class="fu">order</span>(toplot<span class="sc">$</span>order), ]</span>
+<span id="cb16-9"><a href=""></a><span class="fu">qplot</span>(long, lat,</span>
+<span id="cb16-10"><a href=""></a>      <span class="at">data=</span><span class="fu">subset</span>(toplot,</span>
+<span id="cb16-11"><a href=""></a>        Diagnosis.Related.Group<span class="sc">==</span><span class="st">"Heart failure and shock w/o CC/MCC"</span>),</span>
+<span id="cb16-12"><a href=""></a>      <span class="at">group=</span>group, <span class="at">fill=</span>Medicare.Average.Payment.Maximum,</span>
+<span id="cb16-13"><a href=""></a>      <span class="at">geom=</span><span class="st">"polygon"</span>) <span class="sc">+</span></span>
+<span id="cb16-14"><a href=""></a>  <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">"bottom"</span>, <span class="at">legend.direction=</span><span class="st">"vertical"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>(The book wrote <code>opts(...)</code> — long since replaced by <code>theme()</code>.)</p>
+</section></section>
+<section>
+<section id="quick-plot-and-the-full-grammar" class="title-slide slide level1 center">
+<h1>Quick Plot and the Full Grammar</h1>
+
+</section>
+<section id="qplot-arguments" class="slide level2">
+<h2>qplot: Arguments</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href=""></a><span class="fu">qplot</span>(x, y, ..., data, facets, margins, geom, stat,</span>
+<span id="cb17-2"><a href=""></a>      position, xlim, ylim, log, main, xlab, ylab, asp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>x</code>, <code>y</code>, <code>data</code></td>
+<td>values and (optional) data frame</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>facets</code></td>
+<td>facet formula: one-sided → <code>facet_wrap</code>, two-sided → <code>facet_grid</code></td>
+<td><code>NULL</code></td>
+</tr>
+<tr class="odd">
+<td><code>geom</code></td>
+<td>geoms as character vector</td>
+<td><code>"auto"</code>: point (x,y) / histogram (x)</td>
+</tr>
+<tr class="even">
+<td><code>stat</code> / <code>position</code></td>
+<td>statistics / position adjustments</td>
+<td><code>list(NULL)</code></td>
+</tr>
+<tr class="odd">
+<td><code>xlim</code>, <code>ylim</code>, <code>log</code></td>
+<td>limits; <code>log</code> = <code>""</code>/<code>"x"</code>/<code>"y"</code>/<code>"xy"</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>main</code>, <code>xlab</code>, <code>ylab</code>, <code>asp</code></td>
+<td>titles, labels, aspect</td>
+<td>deparsed expressions</td>
+</tr>
+<tr class="odd">
+<td><code>...</code></td>
+<td>other aesthetics passed to layers</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="ggplot-layers-the-verbose-flexible-way" class="slide level2">
+<h2>ggplot + Layers: the Verbose, Flexible Way</h2>
+<p>Beyond <code>qplot</code>: create the object with <code>ggplot(data, mapping=aes(...))</code>, then <strong>add layers and options with <code>+</code></strong>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href=""></a>plt <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data=</span>d, <span class="at">mapping=</span><span class="fu">aes</span>(<span class="at">x=</span>a, <span class="at">y=</span>b)) <span class="sc">+</span> <span class="fu">geom_point</span>()</span>
+<span id="cb18-2"><a href=""></a><span class="fu">summary</span>(plt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>data: a, b, c [10x3]
+mapping:  x = ~a, y = ~b
+faceting:  &lt;empty&gt; 
+-----------------------------------
+geom_point: na.rm = FALSE
+stat_identity: na.rm = FALSE
+position_identity </code></pre>
+</div>
+</div>
+<ul>
+<li><code>aes(x, y, ...)</code> declares the mappings (relatives: <code>aes_string</code>, <code>aes_auto</code> in the book’s era).</li>
+<li>A bare <code>ggplot(...)</code> object has no layers — printing it errors (“No layers in plot”).</li>
+<li>The generic <code>layer(...)</code> adds a layer by geom short-name (<code>layer("point")</code>); in practice the <code>geom_*</code> convenience functions do this.</li>
 </ul>
 </section>
-<section id="aesthetic-mappings" class="slide level2">
-<h2>Aesthetic Mappings</h2>
-<p>Map a third variable to color and the legend writes itself:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">ggplot</span>(hitters, <span class="fu">aes</span>(<span class="at">x =</span> AB, <span class="at">y =</span> H, <span class="at">color =</span> HR)) <span class="sc">+</span></span>
-<span id="cb3-2"><a href=""></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb3-3"><a href=""></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"At-bats"</span>, <span class="at">y =</span> <span class="st">"Hits"</span>, <span class="at">color =</span> <span class="st">"Home runs"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-3-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:62.0%"><div class="callout callout-note callout-titled callout-style-default">
+<section id="the-geom-vocabulary" class="slide level2">
+<h2>The geom Vocabulary</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><code>geom_abline</code> line by slope+intercept</td>
+<td><code>geom_errorbar(h)</code> error bars</td>
+<td><code>geom_polygon</code> polygons</td>
+</tr>
+<tr class="even">
+<td><code>geom_area</code> area plot</td>
+<td><code>geom_freqpoly</code> frequency polygon</td>
+<td><code>geom_quantile</code> quantile-regression lines</td>
+</tr>
+<tr class="odd">
+<td><code>geom_bar</code> bars</td>
+<td><code>geom_hex</code> hexagonal binning</td>
+<td><code>geom_rect</code> rectangles</td>
+</tr>
+<tr class="even">
+<td><code>geom_bin2d</code> 2-D bin heatmap</td>
+<td><code>geom_histogram</code> histogram</td>
+<td><code>geom_ribbon</code> ribbons (à la Minard)</td>
+</tr>
+<tr class="odd">
+<td><code>geom_blank</code> nothing</td>
+<td><code>geom_hline</code> / <code>geom_vline</code> h/v lines</td>
+<td><code>geom_rug</code> rug</td>
+</tr>
+<tr class="even">
+<td><code>geom_boxplot</code> box plots</td>
+<td><code>geom_jitter</code> jittered points</td>
+<td><code>geom_segment</code> segments</td>
+</tr>
+<tr class="odd">
+<td><code>geom_contour</code> contours</td>
+<td><code>geom_line</code> / <code>geom_path</code> lines/paths</td>
+<td><code>geom_smooth</code> smoothed mean</td>
+</tr>
+<tr class="even">
+<td><code>geom_crossbar</code> boxless boxes</td>
+<td><code>geom_linerange</code> vertical intervals</td>
+<td><code>geom_step</code> steps</td>
+</tr>
+<tr class="odd">
+<td><code>geom_density(2d)</code> densities</td>
+<td><code>geom_point</code> / <code>geom_pointrange</code></td>
+<td><code>geom_text</code> text</td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+<td><code>geom_tile</code> tiles</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="stats-scales-coords-facets-positions" class="slide level2">
+<h2>stats, scales, coords, facets, positions</h2>
+<ul>
+<li><strong>stat_</strong>: <code>bin</code>, <code>bin2d</code>, <code>binhex</code>, <code>boxplot</code>, <code>contour</code>, <code>density</code>, <code>density2d</code>, <code>function</code>, <code>identity</code>, <code>qq</code>, <code>quantile</code>, <code>smooth</code>, <code>spoke</code>, <code>sum</code>, <code>summary</code>, <code>unique</code>, plus line helpers <code>abline</code>/<code>hline</code>/<code>vline</code> (modern ggplot2 folds these into geoms).</li>
+<li><strong>scale_</strong>: <code>alpha</code>, <code>brewer</code> (ColorBrewer), <code>continuous</code>, <code>date</code>/<code>datetime</code>, <code>discrete</code>, <code>gradient</code>/<code>gradient2</code>/<code>gradientn</code>, <code>grey</code>, <code>hue</code>, <code>identity</code>, <code>linetype</code>, <code>manual</code>, <code>shape</code>, <code>size</code> (today spelled e.g.&nbsp;<code>scale_color_brewer</code>, <code>scale_x_continuous</code>).</li>
+<li><strong>coord_</strong>: <code>cartesian</code>, <code>equal</code>, <code>flip</code>, <code>map</code>, <code>polar</code>, <code>trans</code>.</li>
+<li><strong>facet_</strong>: <code>facet_grid</code> (grid layout) and <code>facet_wrap</code> (wrapped 1-D list).</li>
+<li><strong>position_</strong>: <code>dodge</code>, <code>fill</code>, <code>identity</code>, <code>jitter</code>, <code>stack</code>.</li>
+</ul>
+</section>
+<section id="learning-more" class="slide level2">
+<h2>Learning More</h2>
+<ul>
+<li>Hadley Wickham’s book <em>ggplot2: Elegant Graphics for Data Analysis</em> — the definitive treatment.</li>
+<li>The official documentation site (now <a href="https://ggplot2.tidyverse.org" class="uri">https://ggplot2.tidyverse.org</a>) and the <em>R Graphics Cookbook</em>.</li>
+</ul>
+<div class="callout callout-tip callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<p><strong>Note</strong></p>
+<p><strong>Tip</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Mapping vs.&nbsp;setting.</strong> <code>aes(color = HR)</code> <em>maps</em> data to color (legend, scale); <code>geom_point(color = "red")</code> <em>sets</em> a constant. Mixing these up is the classic ggplot beginner error.</p>
+<p><strong>Course note on API drift.</strong> Since the book: <code>opts()</code> → <code>theme()</code>; <code>qplot</code> is soft-deprecated in favor of <code>ggplot() + geom_*()</code>; scales are written <code>scale_&lt;aesthetic&gt;_&lt;type&gt;</code>. The grammar itself — data, mapping, geom, stat, scale, coord, facet, position — is unchanged, which is exactly the point of having a grammar.</p>
 </div>
 </div>
 </div>
-</section>
-<section id="histograms-and-densities" class="slide level2">
-<h2>Histograms and Densities</h2>
-<p>Each geom implies a default stat — <code>geom_histogram()</code> bins for you:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">ggplot</span>(hitters, <span class="fu">aes</span>(<span class="at">x =</span> H <span class="sc">/</span> AB)) <span class="sc">+</span></span>
-<span id="cb4-2"><a href=""></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" style="width:62.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">ggplot</span>(hitters, <span class="fu">aes</span>(<span class="at">x =</span> H <span class="sc">/</span> AB)) <span class="sc">+</span></span>
-<span id="cb5-2"><a href=""></a>  <span class="fu">geom_density</span>(<span class="at">fill =</span> <span class="st">"steelblue"</span>, <span class="at">alpha =</span> <span class="fl">0.3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center" style="width:62.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="smoothing-layers" class="slide level2">
-<h2>Smoothing Layers</h2>
-<p>Layers stack — raw data underneath, a model on top:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">ggplot</span>(hitters, <span class="fu">aes</span>(<span class="at">x =</span> AB, <span class="at">y =</span> H)) <span class="sc">+</span></span>
-<span id="cb6-2"><a href=""></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
-<span id="cb6-3"><a href=""></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p><code>geom_smooth()</code> defaults to loess with a confidence ribbon; <code>method = "lm"</code> fits a straight line.</p>
-</section>
-<section id="bars-and-boxes" class="slide level2">
-<h2>Bars and Boxes</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a>team.hr <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(HR <span class="sc">~</span> teamID, <span class="at">data =</span> batting<span class="fl">.2008</span>, sum)</span>
-<span id="cb7-2"><a href=""></a>top8 <span class="ot">&lt;-</span> <span class="fu">head</span>(team.hr[<span class="fu">order</span>(<span class="sc">-</span>team.hr<span class="sc">$</span>HR), ], <span class="dv">8</span>)</span>
-<span id="cb7-3"><a href=""></a><span class="fu">ggplot</span>(top8, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(teamID, <span class="sc">-</span>HR), <span class="at">y =</span> HR)) <span class="sc">+</span></span>
-<span id="cb7-4"><a href=""></a>  <span class="fu">geom_col</span>() <span class="sc">+</span></span>
-<span id="cb7-5"><a href=""></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Team home runs (top 8)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p><code>geom_boxplot()</code>, <code>geom_violin()</code>, and <code>geom_jitter()</code> cover the distribution-by-group cases of Chapter 13 in grammar form.</p>
-</section>
-<section id="faceting" class="slide level2">
-<h2>Faceting</h2>
-<p>The lattice trick, grammar style:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href=""></a><span class="fu">ggplot</span>(hitters, <span class="fu">aes</span>(<span class="at">x =</span> AB, <span class="at">y =</span> H)) <span class="sc">+</span></span>
-<span id="cb8-2"><a href=""></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
-<span id="cb8-3"><a href=""></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> bats) <span class="sc">+</span></span>
-<span id="cb8-4"><a href=""></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Hits vs. at-bats by batting side"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:70.0%"><p><code>facet_wrap(~ g)</code> wraps panels into a grid; <code>facet_grid(rows ~ cols)</code> crosses two factors.</p>
-</section>
-<section id="scales-and-themes" class="slide level2">
-<h2>Scales and Themes</h2>
-<p>Every mapping has a scale you may replace; themes control the non-data ink:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">ggplot</span>(hitters, <span class="fu">aes</span>(<span class="at">x =</span> AB, <span class="at">y =</span> H, <span class="at">color =</span> HR)) <span class="sc">+</span></span>
-<span id="cb9-2"><a href=""></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb9-3"><a href=""></a>  <span class="fu">scale_color_gradient</span>(<span class="at">low =</span> <span class="st">"grey80"</span>, <span class="at">high =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb9-4"><a href=""></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
-<span id="cb9-5"><a href=""></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
-<span id="cb9-6"><a href=""></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Hits vs. at-bats"</span>, <span class="at">subtitle =</span> <span class="st">"color = home runs"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-
-</div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center r-stretch" style="width:65.0%"><p><code>theme_bw()</code>, <code>theme_classic()</code>, and the <code>theme()</code> function (for surgical adjustments) round out the toolkit; <code>ggsave("fig.pdf")</code> writes the last plot to disk.</p>
-</section>
-<section id="three-systems-side-by-side" class="slide level2">
-<h2>Three Systems Side by Side</h2>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th style="text-align: left;"></th>
-<th style="text-align: left;">Base</th>
-<th style="text-align: left;">Lattice</th>
-<th style="text-align: left;">ggplot2</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">Model</td>
-<td style="text-align: left;">ink on paper</td>
-<td style="text-align: left;">conditioned panels</td>
-<td style="text-align: left;">grammar of layers</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Composition</td>
-<td style="text-align: left;">sequential calls</td>
-<td style="text-align: left;">one formula</td>
-<td style="text-align: left;"><code>+</code> pipeline</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Legends</td>
-<td style="text-align: left;">manual</td>
-<td style="text-align: left;">mostly automatic</td>
-<td style="text-align: left;">automatic</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Extensibility</td>
-<td style="text-align: left;">low-level</td>
-<td style="text-align: left;">panel functions</td>
-<td style="text-align: left;">new geoms/stats</td>
-</tr>
-</tbody>
-</table>
-<p>All three live happily in one analysis. For this course: base for quick looks, lattice for conditioning, <code>ggplot2</code> for publication figures — and the dedicated Data Analysis course for everything deeper.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

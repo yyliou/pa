@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-07">
+  <meta name="dcterms.date" content="2026-06-08">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,132 +211,122 @@
     </div>
 </div>
 
-  <p class="date">2026-06-07</p>
+  <p class="date">2026-06-08</p>
 </section>
 <section>
-<section id="規模化的-r" class="title-slide slide level1 center">
-<h1><strong>規模化的 R</strong></h1>
+<section id="用-r-處理大數據" class="title-slide slide level1 center">
+<h1><strong>用 R 處理大數據</strong></h1>
 
 </section>
-<section id="當資料大過一台機器" class="slide level2">
-<h2>當資料大過一台機器</h2>
-<p>至此一切都假設資料塞得進一台電腦的記憶體。塞不下時——數 TB 的日誌、數十億筆記錄——運算必須<strong>分散</strong>到一個叢集上。<strong>Hadoop</strong> 是處理這件事的經典開源平台，由兩個部分構成：</p>
-<ul>
-<li><strong>HDFS</strong>——分散式檔案系統，把資料切成區塊複製到許多機器上；</li>
-<li><strong>MapReduce</strong>——一種程式模型，在資料所在之處就近平行處理它。</li>
-</ul>
-<p>本章解釋這個模型以及 R 如何接上它；程式碼用以說明概念，而非在本機執行。</p>
-</section>
-<section id="mapreduce-模型" class="slide level2">
-<h2>MapReduce 模型</h2>
-<p>許多運算可以拆成兩階段：</p>
-<div class="callout callout-note callout-titled callout-style-default">
+<section id="為什麼用-hadoop" class="slide level2">
+<h2>為什麼用 Hadoop</h2>
+<p>有些問題大到單機處理不來。解法：<strong>把工作拆成片段、平行求解、再合併</strong>——洗衣比喻：十台洗衣機洗十堆，跟一台洗一堆一樣快。許多統計方法天生可平行——bagging、boosting、隨機森林（第二十、二十一章）各自獨立配每棵樹。</p>
+<p>書中年代，<strong>Hadoop</strong> 是大數據的事實標準：儲存龐大資料集、跨叢集運算、容忍機器故障。本章示範如何從 R 駕馭 Hadoop。</p>
+<div class="callout callout-warning callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<p><strong>Note</strong></p>
+<p><strong>Warning</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>Map</strong> 對每筆記錄獨立套用函式，發出<strong>鍵–值</strong>對。<strong>Reduce</strong> 收集共享同一鍵的所有值並加以合併。中間最難的部分——分配資料、依鍵排序、從故障中復原——交給框架處理。</p>
+<p><strong>這是 2012 年的快照。</strong> Hadoop 的主導地位已淡去——今日的大數據工作偏向 <strong>Spark</strong>（R 介面 <code>sparklyr</code>）、雲端資料倉儲，以及在單機處理超出記憶體資料的 <code>arrow</code>／<code>duckdb</code>。但下面的<em>概念</em>——Map/Reduce、分散式儲存——仍是基石，其中數項至今仍支撐著現代系統。</p>
 </div>
 </div>
 </div>
-<p>經典範例——字數統計——就濃縮了整個想法：把每行 map 成 <code>(word, 1)</code> 對；reduce 時把每個字的 1 加總。</p>
+</section></section>
+<section>
+<section id="hadoop-怎麼運作" class="title-slide slide level1 center">
+<h1>Hadoop 怎麼運作</h1>
+
 </section>
-<section id="偽-r-的字數統計" class="slide level2">
-<h2>偽 R 的字數統計</h2>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="co"># MAP：為一行中每個字發出 (word, 1)</span></span>
-<span id="cb1-2"><a href=""></a>map_fn <span class="ot">&lt;-</span> <span class="cf">function</span>(key, line) {</span>
-<span id="cb1-3"><a href=""></a>  words <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(<span class="fu">tolower</span>(line), <span class="st">"</span><span class="sc">\\</span><span class="st">W+"</span>)[[<span class="dv">1</span>]]</span>
-<span id="cb1-4"><a href=""></a>  <span class="fu">lapply</span>(words, <span class="cf">function</span>(w) <span class="fu">keyval</span>(w, <span class="dv">1</span>))</span>
-<span id="cb1-5"><a href=""></a>}</span>
-<span id="cb1-6"><a href=""></a></span>
-<span id="cb1-7"><a href=""></a><span class="co"># REDUCE：為每個相異字加總計數</span></span>
-<span id="cb1-8"><a href=""></a>reduce_fn <span class="ot">&lt;-</span> <span class="cf">function</span>(word, counts) {</span>
-<span id="cb1-9"><a href=""></a>  <span class="fu">keyval</span>(word, <span class="fu">sum</span>(<span class="fu">unlist</span>(counts)))</span>
-<span id="cb1-10"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>由於每個 map 跑一筆記錄、每個 reduce 跑一個鍵，框架能在叢集上平行執行成千上萬個——程式設計師從不撰寫排程或網路程式碼。</p>
+<section id="mapreduce" class="slide level2">
+<h2>Map/Reduce</h2>
+<p>Hadoop 的程式模型把每個工作拆成兩步：</p>
+<ul>
+<li><strong>Map</strong>——獨立處理每筆紀錄，產出鍵–值對。（剖析每行網頁日誌；產出 <code>(地點, 1)</code>。）</li>
+<li><strong>Reduce</strong>——蒐集每個鍵的所有值並合併。（按地點加總計數。）</li>
+</ul>
+<p>因為每個 map 獨立執行，工作能散到你擁有的所有機器上。書中的經典範例：<strong>網頁流量報表</strong>、<strong>按地點的流量</strong>、<strong>預測使用者行為</strong>——全都能表達成先 map 後 reduce。</p>
+</section>
+<section id="兩大支柱" class="slide level2">
+<h2>兩大支柱</h2>
+<p>Map/Reduce 之外，Hadoop 還提供：</p>
+<ul>
+<li><strong>分散式資料儲存——HDFS</strong>（Hadoop Distributed File System）：把檔案切成區塊、跨機器複製以容錯，並呈現為單一邏輯檔案系統。</li>
+<li><strong>叢集管理</strong>——跨伺服器排程工作、重啟失敗的任務、把運算搬到資料所在處。</li>
+</ul>
+<p>框架本身以 Java 寫成，但你不必寫 Java——R 能驅動它。</p>
+</section></section>
+<section>
+<section id="從-r-駕馭-hadoop" class="title-slide slide level1 center">
+<h1>從 R 駕馭 Hadoop</h1>
+
+</section>
+<section id="三條路" class="slide level2">
+<h2>三條路</h2>
+<p>書中介紹三種從 R 使用 Hadoop 的方式：</p>
+<ul>
+<li><strong>RHadoop</strong>——最成熟、整合最好的 R 套件組；</li>
+<li><strong>Segue</strong>——在 Amazon Elastic MapReduce 上跑 R 的 <code>lapply</code> 式工作；</li>
+<li><strong>Hadoop streaming</strong>——透過標準輸入輸出，把任意 R 腳本當 mapper／reducer 餵給 Hadoop。</li>
+</ul>
 </section>
 <section id="rhadoop" class="slide level2">
 <h2>RHadoop</h2>
-<p><strong>RHadoop</strong> 是一組套件，讓你用 R 而非 Java 撰寫 MapReduce 工作：</p>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th style="text-align: left;">套件</th>
-<th style="text-align: left;">角色</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><code>rhdfs</code></td>
-<td style="text-align: left;">從 R 讀寫 HDFS</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>rmr2</code></td>
-<td style="text-align: left;">以 R 撰寫 MapReduce 工作（<code>mapreduce()</code>）</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>rhbase</code></td>
-<td style="text-align: left;">存取 HBase 資料庫</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>plyrmr</code></td>
-<td style="text-align: left;">在 Hadoop 上做 dplyr 風格的資料操作</td>
-</tr>
-</tbody>
-</table>
+<p>RHadoop 是三個套件：</p>
+<ul>
+<li><strong><code>rmr</code></strong>——核心：<em>用 R</em> 寫 Map/Reduce 工作、進出資料；</li>
+<li><strong><code>rhdfs</code></strong>——從 R 管理 HDFS 上的檔案（多數一般檔案操作）；</li>
+<li><strong><code>rhbase</code></strong>——介接 Hadoop 的資料庫 HBase。</li>
+</ul>
+<p>先設定、再下工作（<code>rmr</code> 語法，以未執行形式呈現——它需要 Hadoop 叢集）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(rmr2)</span>
-<span id="cb2-2"><a href=""></a>wordcount <span class="ot">&lt;-</span> <span class="fu">mapreduce</span>(</span>
-<span id="cb2-3"><a href=""></a>  <span class="at">input    =</span> <span class="st">"hdfs://input/books"</span>,</span>
-<span id="cb2-4"><a href=""></a>  <span class="at">map      =</span> map_fn,</span>
-<span id="cb2-5"><a href=""></a>  <span class="at">reduce   =</span> reduce_fn)</span>
-<span id="cb2-6"><a href=""></a><span class="fu">from.dfs</span>(wordcount)        <span class="co"># 把（很小的）結果拉回 R</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">library</span>(rmr2)</span>
+<span id="cb1-2"><a href=""></a><span class="co"># 按性別計數死亡：一個 map 步、一個 reduce 步，皆為 R 函式</span></span>
+<span id="cb1-3"><a href=""></a>result <span class="ot">&lt;-</span> <span class="fu">mapreduce</span>(</span>
+<span id="cb1-4"><a href=""></a>  <span class="at">input =</span> <span class="st">"deaths.csv"</span>,</span>
+<span id="cb1-5"><a href=""></a>  <span class="at">map    =</span> <span class="cf">function</span>(k, v) <span class="fu">keyval</span>(v<span class="sc">$</span>sex, <span class="dv">1</span>),</span>
+<span id="cb1-6"><a href=""></a>  <span class="at">reduce =</span> <span class="cf">function</span>(sex, counts) <span class="fu">keyval</span>(sex, <span class="fu">sum</span>(counts)))</span>
+<span id="cb1-7"><a href=""></a><span class="fu">from.dfs</span>(result)                 <span class="co"># 把結果拉回 R</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>書中的四節點範例統計 2009 年美國各性別死亡數——一個跨叢集平行執行的工作。<code>to.dfs</code>／<code>from.dfs</code> 在 R 與 HDFS 間搬資料。</p>
+</section>
+<section id="雲端上的-hadoop" class="slide level2">
+<h2>雲端上的 Hadoop</h2>
+<p>不必自己擁有叢集——用租的。書中走過 <strong>Amazon Elastic MapReduce（EMR）</strong>：啟動叢集、用範本設定、跑工作、拆掉——只付用掉的分鐘數。<strong>Segue</strong> 把這套包起來，讓 R 使用者幾乎不必懂 Hadoop 就能在 EMR 上跑平行 <code>lapply</code>。</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="co"># Segue 風格：在租來的叢集上做平行 lapply（概念示意）</span></span>
+<span id="cb2-2"><a href=""></a><span class="fu">library</span>(segue)</span>
+<span id="cb2-3"><a href=""></a>cluster <span class="ot">&lt;-</span> <span class="fu">createCluster</span>(<span class="at">numInstances=</span><span class="dv">4</span>)</span>
+<span id="cb2-4"><a href=""></a>results <span class="ot">&lt;-</span> <span class="fu">emrlapply</span>(cluster, my.list, my.function)</span>
+<span id="cb2-5"><a href=""></a><span class="fu">stopCluster</span>(cluster)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="模式先化簡再拉回" class="slide level2">
-<h2>模式：先化簡，再拉回</h2>
-<p>跨大資料工具反覆出現的策略：</p>
-<ol type="1">
-<li><strong>把運算推向資料</strong>——在區塊所在之處跑 map/reduce，避免透過網路搬動數 TB 資料。</li>
-<li><strong>在叢集上縮小</strong>——彙總、過濾、摘要把大資料壓成小結果。</li>
-<li><strong>把摘要拉進 R</strong>——資料一小，第十三～二十三章的一切便照常適用。</li>
-</ol>
-<p><code>from.dfs()</code> 與 <code>to.dfs()</code> 在 R 記憶體與 HDFS 間搬資料；你只帶回塞得下的部分。</p>
-</section>
-<section id="現代地景" class="slide level2">
-<h2>現代地景</h2>
-<p>Hadoop MapReduce 是先驅；如今的生態系已往前走，但<em>原則</em>不變：</p>
-<ul>
-<li><strong>Apache Spark</strong> 搭配 <code>sparklyr</code> 套件——記憶體內分散式運算，遠快於以磁碟為基礎的 MapReduce，附 <code>dplyr</code> 前端與內建機器學習。</li>
-<li><strong><code>arrow</code> / <code>duckdb</code></strong>——在單機上有效率地查詢大過記憶體的資料，常常根本免去叢集的需要。</li>
-<li><strong>雲端資料倉儲</strong>（BigQuery、Snowflake）透過 DBI 從 R 查詢——把 SQL 推給倉儲，取回摘要。</li>
-</ul>
-<p>決策法則與第十一章相同：在資料所在之處做粗重工作，只帶回答案。</p>
-</section>
-<section id="課程總結" class="slide level2">
-<h2>課程總結</h2>
-<p>二十六章一路從 <code>1 + 1</code> 走到分散式運算：</p>
-<ul>
-<li><strong>第一、二部分</strong>——安裝 R 與語言結構；</li>
-<li><strong>第三部分</strong>——把真實資料讀進來並清理；</li>
-<li><strong>第四部分</strong>——三套繪圖系統；</li>
-<li><strong>第五部分</strong>——統計工具箱，從 t 檢定到隨機森林到 ARIMA；</li>
-<li><strong>第六部分</strong>——效能與規模。</li>
-</ul>
-<p>同一套語言貫穿全程。從這裡開始，深度來自練習與後續的專題課程——而這些講義裡的每一份資料集，只要 <code>download.file()</code> 加 <code>load()</code> 兩行就能隨時拿來實驗。</p>
+<section id="把它放進脈絡" class="slide level2">
+<h2>把它放進脈絡</h2>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>歷久彌新的教訓。</strong> Hadoop 這個產品在退場，但它的想法無所不在：(1) <strong>切分</strong>資料與運算；(2) 把工作表達成 <strong>map</strong>（獨立、平行）後 <strong>reduce</strong>（合併）；(3) <strong>把運算搬向資料</strong>，而非反過來；(4) 在雲端<strong>租用</strong>彈性算力。現代 R 透過 <code>sparklyr</code>、<code>arrow</code>、<code>duckdb</code>，以及平行化的 <code>future</code>／<code>furrr</code> 觸及大數據——但你會在它們之中都認出 Map/Reduce。</p>
+</div>
+</div>
+</div>
+<p>本章為《R in a Nutshell》收尾——從安裝 R（第一章）到讓它跨叢集執行。貫穿全書的主軸：同一種語言、同一套物件、同一批函式，從一個主控台一路擴展到數千台機器。</p>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>
