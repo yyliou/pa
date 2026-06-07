@@ -23,8 +23,18 @@ menu:
 
 ## Question 1
 
+:::{.callout-warning}
+## Addition
 Evaluate $1 + 1$ in R.
+
+:::
+
+---
 
 ## Question 2
 
+:::{.callout-warning}
+## Multiplication
 Evaluate $3 \times 4$ in R.
+
+:::
