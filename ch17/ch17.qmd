@@ -38,110 +38,113 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **The d-p-q-r System**
+# **d, p, q, r**
 
-## Four Letters, Every Distribution
+## Why Distributions Matter Here
 
-For each distribution `xxx`, R supplies four functions:
+Many statistical tests compute a test statistic, then compare it to a value from a **theoretical distribution** — exactly what Chapter 18 will do. R supplies, for every common distribution, functions to calculate **densities**, **distribution functions** (cumulative probabilities), **quantiles**, and **random draws**. This chapter walks through the normal distribution in detail, then catalogs the whole family.
 
-| Prefix | Function | Question answered |
-|:---|:---|:------|
-| `d` | density / mass | how likely is the value $x$? |
-| `p` | cumulative distribution | $P(X \le q)$? |
-| `q` | quantile | which value has probability $p$ below it? |
-| `r` | random generation | give me $n$ draws |
+# The Normal Distribution
 
-```{r,echo=TRUE}
-dnorm(0)              # standard normal density at 0
-pnorm(1.96)           # P(Z <= 1.96)
-qnorm(0.975)          # the famous 1.96, recovered
-set.seed(1); rnorm(3) # three random normals
-```
-
-## The Normal Distribution
+## dnorm: the Density
 
 $$f(x) = \frac{1}{\sigma\sqrt{2\pi}}\, e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
 
-```{r,echo=TRUE,out.width="65%"}
-x <- seq(-4, 4, length.out = 200)
-plot(x, dnorm(x), type = "l", lwd = 2, ylab = "density")
-lines(x, dnorm(x, sd = 1.5), lty = 2)
-legend("topright", c("sd = 1", "sd = 1.5"), lty = 1:2)
-```
-
-`mean=` and `sd=` shift and stretch; defaults give the standard normal.
-
-## Visualizing p and q
-
-The shaded area *is* `pnorm()`; `qnorm()` runs the lookup backwards:
-
-```{r,echo=TRUE,out.width="65%"}
-x <- seq(-4, 4, length.out = 200)
-plot(x, dnorm(x), type = "l", lwd = 2, ylab = "density")
-xs <- seq(-4, qnorm(0.975), length.out = 120)
-polygon(c(xs, rev(xs)), c(dnorm(xs), rep(0, 120)),
-        col = "lightsteelblue", border = NA)
-abline(v = qnorm(0.975), lty = 2)
-text(2.6, 0.1, "97.5%")
-```
-
-## Continuous Families
-
-The same four-letter pattern covers every classic continuous family:
+`dnorm(x, mean=0, sd=1, log=FALSE)` evaluates the density at `x` (`log=TRUE` returns its logarithm). Plotting it is one line:
 
 ```{r,echo=TRUE}
-punif(0.5)                  # uniform on [0,1]
-pexp(1, rate = 1)           # exponential
-pt(2.086, df = 20)          # Student's t
-pchisq(3.84, df = 1)        # chi-squared
-pf(4.35, df1 = 2, df2 = 20) # F
+plot(dnorm, -3, 3, main = "Normal Distribution")
 ```
 
-- `t`, `chisq`, and `f` are the workhorses of Chapter 18's tests — their `q` functions generate the critical-value tables you once looked up in appendices.
-- Also available: `lnorm`, `gamma`, `beta`, `weibull`, `cauchy`, and more.
+## pnorm: the Distribution Function
 
-## Discrete Families
+`pnorm(q, mean=0, sd=1, lower.tail=TRUE, log.p=FALSE)` returns $p = \Pr(x \le q)$ — the probability that a random value falls at or below `q`. `lower.tail=FALSE` flips to $\Pr(x > q)$; `log.p=TRUE` returns $\log(p)$:
 
 ```{r,echo=TRUE}
-dbinom(7, size = 10, prob = 0.5)   # exactly 7 heads in 10 tosses
-pbinom(7, size = 10, prob = 0.5)   # at most 7
-dpois(3, lambda = 2)               # Poisson: 3 events when mean is 2
-dgeom(2, prob = 0.2)               # first success on 3rd trial
-dhyper(2, m = 4, n = 8, k = 3)     # sampling without replacement
+pnorm(0)          # symmetric around 0, so exactly .5
+pnorm(-1)         # below one sd under the mean
+pnorm(1.96) - pnorm(-1.96)   # within 1.96 sd: the famous 95%
+plot(pnorm, -3, 3, main = "Cumulative Normal Distribution")
 ```
 
-```{r,echo=TRUE,out.width="60%"}
-barplot(dbinom(0:10, 10, 0.5), names.arg = 0:10,
-        main = "Binomial(10, 0.5)")
-```
+## qnorm: the Quantile Function
 
-## Random Numbers and Reproducibility
+`qnorm(p, mean=0, sd=1, lower.tail=TRUE, log.p=FALSE)` is `pnorm`'s inverse: it returns the `q` for which $p = \Pr(x \le q)$:
 
 ```{r,echo=TRUE}
-set.seed(2026)
-rbinom(5, size = 10, prob = 0.3)
-sample(c("H", "T"), 5, replace = TRUE)
+qnorm(0.5)                     # the median
+qnorm(log(0.5), log.p=TRUE)
+qnorm(pnorm(-1))               # inverse, demonstrated
+c(qnorm(.025), qnorm(.975))    # both ends of a 95% confidence interval
+```
+
+## rnorm: Random Draws
+
+`rnorm(n, mean=0, sd=1)` generates `n` random values — for testing functions, simulations, sampling methods:
+
+```{r,echo=TRUE}
+hist(rnorm(10000), breaks=50)
+```
+
+# The Naming System
+
+## Four Prefixes, Shared Arguments
+
+Nearly every distribution follows one convention:
+
+- **`d`** — probability density function (for discrete distributions, technically the probability *mass* function);
+- **`p`** — distribution function;
+- **`q`** — quantile function;
+- **`r`** — random number generator.
+
+And shared arguments by type: density functions take `x`, `log`; distribution functions take `q`, `lower.tail`, `log.p`; quantile functions take `p`, `lower.tail`, `log.p`; random generators take `n` (renamed `nn` for the hypergeometric, whose parameters claimed the letter). Knowing the system, you can usually *guess* the function you need.
+
+# Distribution Function Families
+
+## Continuous Distributions
+
+| Family | R functions | Family arguments |
+|---|---|---|
+| Beta | `dbeta` `pbeta` `qbeta` `rbeta` | `shape1`, `shape2`, `ncp=0` |
+| Cauchy | `dcauchy` `pcauchy` `qcauchy` `rcauchy` | `location`, `scale` |
+| Chi-squared | `dchisq` `pchisq` `qchisq` `rchisq` | `df`, `ncp=0` |
+| Exponential | `dexp` `pexp` `qexp` `rexp` | `rate` |
+| F | `df` `pf` `qf` `rf` | `df1`, `df2`, `ncp` |
+| Gamma | `dgamma` `pgamma` `qgamma` `rgamma` | `shape`, `rate=1`, `scale=1/rate` |
+| Log-normal | `dlnorm` `plnorm` `qlnorm` `rlnorm` | `meanlog`, `sdlog` |
+| Logistic | `dlogis` `plogis` `qlogis` `rlogis` | `location`, `scale` |
+| Normal | `dnorm` `pnorm` `qnorm` `rnorm` | `mean`, `sd` |
+| Student's t | `dt` `pt` `qt` `rt` | `df`, `ncp` |
+| Uniform | `dunif` `punif` `qunif` `runif` | `min`, `max` |
+| Weibull | `dweibull` `pweibull` `qweibull` `rweibull` | `shape`, `scale` |
+
+## Discrete and Special Distributions
+
+| Family | R functions | Family arguments |
+|---|---|---|
+| Binomial | `dbinom` `pbinom` `qbinom` `rbinom` | `size`, `prob` |
+| Birthday (coincidences) | `pbirthday` `qbirthday` | `classes`, `coincident` |
+| Geometric | `dgeom` `pgeom` `qgeom` `rgeom` | `prob` |
+| Hypergeometric | `dhyper` `phyper` `qhyper` `rhyper` | `m`, `n`, `k` (random's count is `nn`!) |
+| Multinomial | `dmultinom` `rmultinom` | `size`, `prob` |
+| Negative binomial | `dnbinom` `pnbinom` `qnbinom` `rnbinom` | `size`, `prob`, `mu` |
+| Poisson | `dpois` `ppois` `qpois` `rpois` | `lambda` |
+| Studentized range | `ptukey` `qtukey` | `nmeans`, `df`, `nranges` |
+| Wilcoxon rank sum | `dwilcox` `pwilcox` `qwilcox` `rwilcox` | `m`, `n` |
+| Wilcoxon signed rank | `dsignrank` `psignrank` `qsignrank` `rsignrank` | `n` |
+
+```{r,echo=TRUE}
+dbinom(3, size=10, prob=0.5)    # exactly 3 heads in 10 fair flips
+ppois(2, lambda=4)              # at most 2 events when 4 are expected
+qbirthday(0.5)                  # people needed for a 50% shared birthday
 ```
 
 ::: {.callout-tip}
-**Always `set.seed()` in homework and reports.** Pseudo-random sequences restart identically from a seed, so your graders — and your future self — can reproduce every simulation exactly.
+**The d-p-q-r grid is your map.** Test statistics (Chapter 18) live in `pt`/`pf`/`pchisq`; confidence intervals in `qt`/`qnorm`; simulations in `r*`. Whenever a formula says "compare to the χ² distribution with k degrees of freedom," the R translation is one `pchisq` call.
 :::
-
-## Simulation as a Tool
-
-When theory gets hard, simulate. What is the chance that the maximum of five dice is 6?
-
-```{r,echo=TRUE}
-set.seed(7)
-sims <- replicate(10000, max(sample(1:6, 5, replace = TRUE)))
-mean(sims == 6)
-1 - (5/6)^5          # exact answer, for comparison
-```
-
-`replicate()` plus the `r` functions turn probability puzzles into ten-second experiments — the same pattern that powers the bootstrap (Chapter 16) and power analysis (Chapter 19).
 
 ## Copyright Notice
 

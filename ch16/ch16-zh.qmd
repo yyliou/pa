@@ -38,113 +38,213 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **從資料擠出第一批數字**
+# **第一輪分析**
 
-## 摘要統計量
+## 摘要統計量：mean、min、max
 
-描述統計的基本詞彙，每個都只差一個函式：
+之後一切的積木。用第十二章的 `dow30` 報價資料（收錄於 `nutshell`）：
 
-```{r,echo=TRUE,cache=TRUE}
+```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda",
+              temp, mode = "wb")
 load(temp)
-x <- dow30$Open
-mean(x); median(x)
-var(x); sd(x)
-range(x); quantile(x, c(0.25, 0.5, 0.75))
+mean(dow30$Open); min(dow30$Open); max(dow30$Open)
 ```
 
-- `mean(x, trim = 0.1)` 抵抗離群值；這裡每個函式都接受 `na.rm=TRUE`。
-- `fivenum()` 給出 Tukey 五數摘要；`IQR()` 是四分位距。
-
-## 無所不在的 summary()
-
-`summary()` 會順應它的引數——數值向量、因子、資料框、模型：
+兩個值得背下來的引數：
 
 ```{r,echo=TRUE}
-summary(dow30[, c("Open", "Close", "Volume")])
+mean(c(1, 2, 3, 4, 5, NA))                  # 一個 NA 就毒死整個結果……
+mean(c(1, 2, 3, 4, 5, NA), na.rm=TRUE)      # ……除非把它剔除
+mean(c(-1, 0:100, 2000))                    # 離群值拖著平均跑……
+mean(c(-1, 0:100, 2000), trim=0.1)          # ……trim 過濾掉這個比例
 ```
 
-想快速摸清任何新資料集：`summary(df)` 加 `str(df)`，兩行回答「我手上拿的是什麼？」。
-
-## 相關與共變異
-
-兩個序列如何一起波動？
+## range、quantile、fivenum、IQR
 
 ```{r,echo=TRUE}
-cov(dow30$Open, dow30$Close)
-cor(dow30$Open, dow30$Close)
-cor(dow30[, c("Open", "High", "Low", "Close")])[1:4, 1:4]
+range(dow30$Open)
+quantile(dow30$Open, probs=c(0, 0.25, 0.5, 0.75, 1.0))
+fivenum(dow30$Open)
+IQR(dow30$Open)
 ```
 
-- `cor()` 預設 Pearson；`method = "spearman"` 或 `"kendall"` 改用等級——對離群值與非線性都更穩健。
-- 相關矩陣是迴歸（第二十章）前的標準偵察。
+這些函式都能與 `apply`／`tapply` 自然搭配，逐組計算統計量（第十二章）。
 
-::: {.callout-warning}
-**相關不是因果。** 它也看不見非線性結構——散佈圖永遠要一起看。
-:::
+## summary 與 str
 
-## 主成分分析
-
-PCA 把彼此相關的變數重新表達成依解釋變異量排序的正交**主成分**：
+最方便的總覽是泛型的 `summary`——數值給四分位數＋平均、因子給高頻計數（純字元向量則沒有有意義的資訊）：
 
 ```{r,echo=TRUE}
-pca <- prcomp(USArrests, scale. = TRUE)
-summary(pca)
+summary(dow30[, c("Open", "Volume")])
 ```
 
-```{r,echo=TRUE,out.width="60%"}
-biplot(pca, cex = 0.6)
-```
-
-- `scale.=TRUE` 先標準化——單位不同時必須做。
-- 前兩個主成分常已捕捉大部分結構：替繪圖與建模內建了降維。
-
-## 因素分析
-
-PCA 是純粹的變異量記帳；**因素分析**則假設存在解釋觀測相關性的潛在變數：
+熱門替代品 `str` 顯示物件的*結構*：
 
 ```{r,echo=TRUE}
-fa <- factanal(mtcars[, c("mpg", "disp", "hp", "wt", "qsec", "drat")],
-               factors = 2)
-fa$loadings
+str(dow30)
 ```
 
-- 負荷量（loadings）顯示每個觀測變數反映各潛在因素的強度。
-- 常見於心理計量與問卷研究：「這 20 題是不是其實在量 2 個潛在特質？」
+## stem：文字版直方圖
 
-## 拔靴法重抽樣
+`stem(x, scale=1, width=80, atom=1e-08)` 直接在主控台畫莖葉圖。2005 年 NFL *失手*射門的距離：
 
-當統計量的不確定性沒有現成公式時，就**重抽**：放回地抽取觀測值、重算、重複：
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda",
+              temp, mode = "wb")
+load(temp)
+stem(subset(field.goals, play.type=="FG no")$yards)
+```
 
-```{r,echo=TRUE,message=FALSE}
+# 相關與共變異
+
+## 三種相關係數
+
+相關回答「x 上升時 y 是否跟著上升、咬得多緊？」，以 −1…1 度量**線性相依**。三種統計量：
+
+- **Pearson**——Excel 的 `CORREL`；植根於常態理論，最適合近似常態的資料；
+- **Spearman**——無母數、不做分布假設（對*等級*做相關）；
+- **Kendall 的 tau**——比較*成對排序*的一致與不一致對數。
+
+```{r,eval=FALSE,echo=TRUE}
+cor(x, y = NULL, use = "everything",
+    method = c("pearson", "kendall", "spearman"))
+```
+
+`x`、`y` 可以是兩個向量，或一個資料框／矩陣（→ 相關*矩陣*）。`use` 處理 `NA`：`"all.obs"`（報錯）、`"everything"`（結果為 NA）、`"complete.obs"`／`"na.or.complete"`（丟不完整列）、`"pairwise.complete.obs"`（逐對丟）。
+
+## 範例：孕期增重與出生體重
+
+母親增重與寶寶體重相關嗎？先清理（有效值、單胞胎、妊娠 > 35 週），再看圖——十萬多點得用 `smoothScatter`、不能用 `plot`：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda",
+              temp, mode = "wb")
+load(temp)
+births2006.cln <- births2006.smpl[
+  !is.na(births2006.smpl$WTGAIN) & !is.na(births2006.smpl$DBWT) &
+  births2006.smpl$DPLURAL == "1 Single" & births2006.smpl$ESTGEST>35,]
+smoothScatter(births2006.cln$WTGAIN, births2006.cln$DBWT)
+cor(births2006.cln$WTGAIN, births2006.cln$DBWT)
+cor(births2006.cln$WTGAIN, births2006.cln$DBWT, method="spearman")
+```
+
+兩種度量都顯示中等偏弱的相關——那團雲確實有點傾角，但只是一點。（書中用的是 320 萬筆的完整檔；我們的 10% 樣本給出幾乎相同的值。）
+
+## 共變異
+
+**共變異（covariance）**就是 Pearson 公式的分子——引數與 `cor` 相同：
+
+```{r,echo=TRUE}
+cov(births2006.cln$WTGAIN, births2006.cln$DBWT)
+```
+
+親戚：`cov2cor` 把共變異矩陣轉成相關矩陣；`cov.wt(x, wt=, cor=, center=, method=c("unbiased","ML"))` 計算*加權*共變異。
+
+# 主成分分析
+
+## prcomp 與 princomp
+
+**PCA** 把（可能相關的）變數改寫成互不相關的成分。兩個實作：`prcomp`（建議使用；公式法 `prcomp(~..., data=, subset=, na.action=)`，預設法有 `retx`、`center=TRUE`、`scale.`、`tol`）與 S-PLUS 相容的 `princomp`（對相關／共變異矩陣做特徵分解）——書中示範的是後者。
+
+資料：2000–2008 各隊打擊統計，從 Baseball Databank 以 SQL 取出（縮寫改成易讀的名稱），打包為 `team.batting.00to08`：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda",
+              temp, mode = "wb")
+load(temp)
+batting.pca <- princomp(~singles+doubles+triples+homeruns+
+                          walks+hitbypitch+sacrificeflies+
+                          stolenbases+caughtstealing,
+                        data=team.batting.00to08)
+summary(batting.pca)
+```
+
+兩個成分已扛起約 78% 的變異；四個約 92%。
+
+## loadings、碎石圖、雙標圖
+
+`loadings` 顯示各變數對各成分的貢獻：
+
+```{r,echo=TRUE}
+loadings(batting.pca)
+```
+
+```{r,echo=TRUE}
+plot(batting.pca)                                      # 「碎石」圖
+biplot(batting.pca, cex=0.5, col=c("gray50", "black")) # 變數＋觀測
+```
+
+雙標圖把變數對成分 1–2 的貢獻*與*觀測畫在同一尺度上：一壘安打與保送主宰前兩個成分。（這份資料在第二十章的線性模型再登場。）
+
+# 因素分析
+
+## factanal
+
+有些量觀測得到（測驗分數）、有些不行（智力）。**因素分析**從觀測變數推測隱藏因素——`stats` 的 `factanal`：
+
+```{r,eval=FALSE,echo=TRUE}
+factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
+         subset, na.action, start = NULL,
+         scores = c("none", "regression", "Bartlett"),
+         rotation = "varimax", control = NULL, ...)
+```
+
+| 引數 | 說明 |
+|---|---|
+| `x`／`data` | 公式或數值矩陣（公式時加資料框） |
+| `factors` | 要配適幾個因素 |
+| `covmat`／`n.obs` | 也可給共變異矩陣（或 `cov.wt` 輸出）＋觀測數 |
+| `subset`／`na.action`／`start` | 老面孔 |
+| `scores` | `"none"`、`"regression"`（Thompson）、`"Bartlett"`（加權最小平方） |
+| `rotation` | 因素旋轉函式，預設 `"varimax"` |
+
+# 拔靴重抽樣
+
+## 想法，以及 boot
+
+你的統計量對少數離群值敏感嗎？它的抽樣範圍多大？**拔靴法（bootstrap）**對*任意*統計量都能回答：反覆**放回**抽樣、重算統計量、觀察其散布——正式地說，是估計一個估計量的**偏誤**。
+
+```{r,eval=FALSE,echo=TRUE}
 library(boot)
-med.fun <- function(d, i) median(d[i])
-set.seed(1)
-b <- boot(dow30$Open, med.fun, R = 1000)
-b
-boot.ci(b, type = "perc")$percent
+boot(data, statistic, R, sim="ordinary", stype="i",
+     strata=rep(1,n), L=NULL, m=0, weights=NULL,
+     ran.gen=function(d, p) d, mle=NULL, simple=FALSE, ...)
 ```
 
-一千次重算的中位數的散布，就是抽樣分布的估計——完全不需要常態假設。
+重點引數：`data`；`statistic`——一個*（資料, 選擇）的函式*，第二個引數的意義由 `stype` 決定（`"i"` 索引、`"f"` 次數、`"w"` 權重）；`R`——重抽次數；`sim`——`"ordinary"`、`"parametric"`、`"balanced"`、`"permutation"`、`"antithetic"`；多樣本問題用 `strata`；參數化模擬用 `ran.gen`／`mle`；`simple=TRUE` 以時間換記憶體。
 
-## 一套工作流程
+## 範例：中位數有多偏？
 
-1. `str()` 與 `summary()`——型別、範圍、缺漏。
-2. 畫圖——直方圖與散佈圖（第十三～十五章）。
-3. 相關——什麼跟什麼一起動？
-4. 降維——變數很多時用 PCA／因素分析。
-5. 量化不確定性——有疑慮就拔靴。
+媒體報導房價*中位數*。對 2008 年 6 月舊金山成交價拔靴：
 
-之後——也只有在之後——才輪到第十八章的正式檢定與第二十、二十一章的模型。
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda",
+              temp, mode = "wb")
+load(temp)
+home.sale.prices.june2008 <- subset(sanfrancisco.home.sales,
+  format(saledate, "%Y-%m")=="2008-06")$price
+library(boot)
+b <- boot(data=home.sale.prices.june2008,
+          statistic=function(d, i) { median(d[i]) },
+          R=1000)
+b
+```
+
+結論：在這裡中位數是非常輕微有偏的估計量——而且我們順便拿到了它的標準誤，完全不靠常態假設。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

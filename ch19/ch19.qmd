@@ -43,91 +43,119 @@ knitr::opts_chunk$set(fig.align = "center")
 
 # **Designing Experiments**
 
-## Power: the Missing Quantity
+## How Much Data Do You Need?
 
-A test can fail two ways: rejecting a true $H_0$ (**Type I error**, probability $\alpha$) or missing a real effect (**Type II error**, probability $\beta$).
+Before collecting data, two questions decide an experiment's fate:
 
-::: {.callout-note}
-**Power** $= 1 - \beta$: the probability of detecting an effect that truly exists. Four quantities are locked together — sample size $n$, significance level $\alpha$, effect size, and power. Fix any three and the fourth is determined.
+- how much data is needed for a statistically significant result?
+- given the data you *can* collect, how strong a result is even detectable?
+
+R's `power.*` family answers both. The vocabulary: **significance level** = Type I error probability (false positive); **power** = 1 − Type II error probability (1 − false negative). Each function computes whichever parameter you leave as `NULL`.
+
+## A Worked Example: Designing a Drug Trial
+
+Testing an antidepressant, with depression measured on the HAMD scale (0–48). Assume sd = 8.9 (from FDA materials), significance 0.05, desired power 0.95. With 25 subjects per arm, what group difference would be detectable?
+
+```{r,echo=TRUE}
+power.t.test(power=.95, sig.level=.05, sd=8.9, n=25)
+```
+
+A difference of at least **9.26** HAMD points. Double the subjects:
+
+```{r,echo=TRUE}
+power.t.test(power=.95, sig.level=.05, sd=8.9, n=50)
+```
+
+Now **6.48** suffices. This is experiment design in action: trade sample size against detectable effect *before* spending a dollar on data collection.
+
+# t-Test Design
+
+## power.t.test
+
+```{r,eval=FALSE,echo=TRUE}
+power.t.test(n = NULL, delta = NULL, sd = 1, sig.level = 0.05,
+             power = NULL,
+             type = c("two.sample", "one.sample", "paired"),
+             alternative = c("two.sided", "one.sided"),
+             strict = FALSE)
+```
+
+| Argument | Description |
+|---|---|
+| `n` | observations *per group* |
+| `delta` | true difference in means |
+| `sd` | true standard deviation |
+| `sig.level` | significance level (Type I error probability) |
+| `power` | 1 − Type II error probability |
+| `type` | two-sample / one-sample / paired |
+| `alternative` | two-sided or one-sided |
+| `strict` | strict interpretation in the two-sided case |
+
+Supply **four** of `n`, `delta`, `sd`, `sig.level`, `power`; leave the fifth `NULL` — that's what gets computed.
+
+# Proportion Test Design
+
+## power.prop.test
+
+For experiments measured with `prop.test`:
+
+```{r,eval=FALSE,echo=TRUE}
+power.prop.test(n = NULL, p1 = NULL, p2 = NULL, sig.level = 0.05,
+                power = NULL,
+                alternative = c("two.sided", "one.sided"),
+                strict = FALSE)
+```
+
+`p1`/`p2` are the success probabilities in the two groups; the rest as before. Again: four of `n`, `p1`, `p2`, `sig.level`, `power` given, the `NULL` one computed.
+
+## Are Situational Baseball Stats Nonsense?
+
+ESPN flashes stats like "3-for-10 with two on and two out." Suppose a batter hits .300 in some situation but .260 otherwise — how many situational at-bats make .300 significant (α = 0.05, power 0.95, one-sided)?
+
+```{r,echo=TRUE}
+power.prop.test(p1=.260, p2=.300, sig.level=0.05,
+                power=.95, alternative="one.sided")
+```
+
+**Over 2,724 at-bats** — per group. Flip the question: with n = 10, what's achievable?
+
+```{r,echo=TRUE}
+power.prop.test(n=10, p1=.260, p2=.300, power=.95,
+                sig.level=NULL, alternative="one.sided")$sig.level
+power.prop.test(n=10, p1=.260, p2=.300, power=NULL,
+                sig.level=.05, alternative="one.sided")$power
+```
+
+Significance level 0.93, or power 0.07. The book's verdict: most situational statistics are nonsense — now you can prove it.
+
+# ANOVA Test Design
+
+## power.anova.test
+
+For multi-group designs analyzed with ANOVA:
+
+```{r,eval=FALSE,echo=TRUE}
+power.anova.test(groups = NULL, n = NULL,
+                 between.var = NULL, within.var = NULL,
+                 sig.level = 0.05, power = NULL)
+```
+
+| Argument | Description |
+|---|---|
+| `groups` | number of groups |
+| `n` | observations per group |
+| `between.var` / `within.var` | variance between / within groups |
+| `sig.level` / `power` | as before |
+
+Here **six** of the seven parameters must be specified; the remaining `NULL` argument is calculated.
+
+```{r,echo=TRUE}
+power.anova.test(groups=4, between.var=1, within.var=3, power=.80)
+```
+
+::: {.callout-tip}
+**Habit for every empirical project:** run the power calculation *before* the experiment. It converts wishful thinking ("we'll see if it's significant") into design ("we need n per group to detect the effect we care about").
 :::
-
-Power analysis answers the planning question every experiment faces: **how many observations do I need?**
-
-## power.t.test()
-
-Sample size for detecting a 5-unit difference (sd = 10) with 80% power:
-
-```{r,echo=TRUE}
-power.t.test(delta = 5, sd = 10, sig.level = 0.05, power = 0.80)
-```
-
-About 64 subjects *per group*. Leave out any one argument and R solves for it:
-
-```{r,echo=TRUE}
-power.t.test(n = 30, delta = 5, sd = 10)$power
-```
-
-With only 30 per group, power falls below 50% — a coin flip's chance of finding the effect.
-
-## power.prop.test()
-
-Comparing two proportions — does a change lift conversion from 10% to 12%?
-
-```{r,echo=TRUE}
-power.prop.test(p1 = 0.10, p2 = 0.12, power = 0.80)
-```
-
-Thousands of observations per arm: small effects on small baselines are *expensive*. This single calculation prevents the most common A/B-testing mistake — calling a test after too few visitors.
-
-## power.anova.test()
-
-For comparing several group means:
-
-```{r,echo=TRUE}
-power.anova.test(groups = 4,
-                 between.var = 1, within.var = 9,
-                 power = 0.80)
-```
-
-- `between.var` / `within.var` encode the effect size: how far apart the group means are relative to the noise.
-- More groups at fixed total $n$ means fewer observations per group — and less power.
-
-## Effect Sizes and Curves
-
-Effect size is the input you must *guess* — from pilot data, past studies, or the smallest difference that would matter. Plot power across the plausible range:
-
-```{r,echo=TRUE,out.width="65%"}
-deltas <- seq(1, 10, 0.5)
-pw <- sapply(deltas, function(d)
-  power.t.test(n = 50, delta = d, sd = 10)$power)
-plot(deltas, pw, type = "l", lwd = 2,
-     xlab = "True difference", ylab = "Power (n = 50/group)")
-abline(h = 0.8, lty = 2)
-```
-
-## Power by Simulation
-
-When no canned formula fits your design, simulate it (Chapter 17 toolkit):
-
-```{r,echo=TRUE}
-set.seed(9)
-one_run <- function(n, delta) {
-  t.test(rnorm(n), rnorm(n, mean = delta))$p.value < 0.05
-}
-mean(replicate(2000, one_run(64, 5/10 * 10)))   # matches power.t.test
-```
-
-Replace `rnorm()` with your actual design — unequal groups, skewed errors, clustered data — and the same loop still measures power.
-
-## Planning Checklist
-
-1. Decide $\alpha$ (usually 0.05) and target power (usually 0.80+).
-2. Specify the **smallest effect worth detecting** — a scientific judgment, not a statistical one.
-3. Estimate the noise (sd or baseline proportion).
-4. Compute $n$ with `power.*.test()` or simulation.
-5. Add margin for dropouts — then collect data *before* peeking at p-values.
-
-Underpowered studies waste effort coming and going: they miss real effects, and their occasional "significant" findings exaggerate them.
 
 ## Copyright Notice
 

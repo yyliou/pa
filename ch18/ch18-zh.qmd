@@ -38,138 +38,312 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **向資料提出是非題**
+# **假設受審**
 
-## 檢定的邏輯
+## 本章的形狀
 
-每個古典檢定都遵循同一套劇本：設定**虛無假設** $H_0$，計算一個在 $H_0$ 下分布已知（第十七章）的統計量，回報 **p 值**——若 $H_0$ 為真，出現至少這麼極端結果的機率。
+「新藥贏過安慰劑嗎？」「改版賣得更多嗎？」「這個策略勝過指數嗎？」——立假設、設計實驗、收資料、做檢定。兩大半場：
 
-::: {.callout-note}
-**怎麼讀 p 值。** p 很小（慣例上 $< 0.05$）代表資料在 $H_0$ 下很令人意外，因此拒絕它。p 很大永遠不能*證明* $H_0$，只能說資料與它相容。
+- **連續資料**——常態理論檢定，以及無母數對應版本；
+- **離散資料**——比例、二項試驗、列聯表。
+
+::: {.callout-warning}
+**書中的免責聲明在此同樣適用：** 本講義提醒你*何時*、*如何*在 R 裡跑各個檢定——但取代不了一門正規的統計課：公式從哪來、何時可安全使用。
 :::
 
-以下每個檢定都回傳 `htest` 類別的物件——同樣的結構，同一套閱讀技巧。
+```{r,echo=TRUE,results='hide'}
+# 本章用到的資料集
+for (d in c("tires.sus", "field.goals", "SPECint2006",
+            "mort06.smpl", "births2006.smpl")) {
+  temp <- tempfile(fileext = ".rda")
+  download.file(paste0("https://raw.githubusercontent.com/cran/nutshell/",
+                       "master/data/", d, ".rda"), temp, mode = "wb")
+  load(temp, envir = globalenv())
+}
+```
 
-## 單樣本 t 檢定
+# 連續資料：常態理論檢定
 
-某型輪胎的失效時間平均值是否異於基準？
+## t.test：單樣本對假設平均
 
-```{r,echo=TRUE,cache=TRUE}
+`t.test(x, y=NULL, alternative=c("two.sided","less","greater"), mu=0, paired=FALSE, var.equal=FALSE, conf.level=0.95)`——`y=NULL` 時把單一向量與 `mu` 比較；`var.equal` 在合併變異數與 Welch 法之間選擇。假設 H 型輪胎「應該」撐 9 小時：
+
+```{r,echo=TRUE}
+times.to.failure.h <- subset(tires.sus,
+  Tire_Type=="H" & Speed_At_Failure_km_h==160)$Time_To_Failure
+mean(times.to.failure.h)
+t.test(times.to.failure.h, mu=9)
+```
+
+解讀：統計量 `t`、自由度、**p 值 0.4684**——對立假設（「真實平均 ≠ 9」）*不*成立；證據不足以說平均偏離 9。報表以 95% 信賴區間與樣本平均收尾。
+
+## t.test：雙樣本
+
+三種輪胎共享速度等級 S——理應壽命相同。先比 E 與 D、再比 E 與 B：
+
+```{r,echo=TRUE}
+times.to.failure.e <- subset(tires.sus,
+  Tire_Type=="E" & Speed_At_Failure_km_h==180)$Time_To_Failure
+times.to.failure.d <- subset(tires.sus,
+  Tire_Type=="D" & Speed_At_Failure_km_h==180)$Time_To_Failure
+times.to.failure.b <- subset(tires.sus,
+  Tire_Type=="B" & Speed_At_Failure_km_h==180)$Time_To_Failure
+t.test(times.to.failure.e, times.to.failure.d)
+t.test(times.to.failure.e, times.to.failure.b)$p.value
+```
+
+E 對 D：95% 下顯著（p = 0.034）。E 對 B：不顯著（p = 0.164）——注意 R 從不替你*說*「顯著」，p 值要自己讀。
+
+## t.test：公式介面
+
+資料在資料框、組別在因子時：`t.test(formula, data, subset, na.action)`。球評老說戶外踢球更難——成功射門的距離有差嗎？
+
+```{r,echo=TRUE}
+good <- transform(
+  field.goals[field.goals$play.type=="FG good", c("yards","stadium.type")],
+  outside=(stadium.type=="Out"))
+bad <- transform(
+  field.goals[field.goals$play.type=="FG no", c("yards","stadium.type")],
+  outside=(stadium.type=="Out"))
+t.test(yards~outside, data=good)
+```
+
+室內平均長約一碼——不顯著（p = 0.26）。失手的（`data=bad`）：p = 0.23。整體嘗試：p = 0.12。球評們依舊拿不出證據。
+
+## 成對資料
+
+每個受試者兩筆觀測（前／後）就用**成對 t 檢定**：`paired=TRUE`。SPEC 的 CPU 基準測試替每台機器報告*基準*與*最佳化*兩個成績——按機器成對。單晶片雙核心系統：
+
+```{r,echo=TRUE}
+t.test(subset(SPECint2006, Num.Chips==1 & Num.Cores==2)$Baseline,
+       subset(SPECint2006, Num.Chips==1 & Num.Cores==2)$Result,
+       paired=TRUE)
+```
+
+壓倒性顯著——不意外：調校有用，而且交最佳化成績是自願的（調不好的多半就不交了）。
+
+## 比較變異數：var.test 與 bartlett.test
+
+- **`var.test(x, y, ratio=1, alternative=, conf.level=)`**（或公式形式）對兩個常態母體的變異數做 **F 檢定**。
+- **`bartlett.test(x, g)`**（或公式）檢驗各組變異數是否同質。
+
+```{r,echo=TRUE}
+field.goals.inout <- transform(field.goals, outside=(stadium.type=="Out"))
+var.test(yards~outside, data=field.goals.inout)
+bartlett.test(yards~outside, data=field.goals.inout)
+```
+
+兩個 p 值都約 0.03：室內外的變異數差異*顯著*——平均沒差，散布有差。
+
+## ANOVA：比較多組平均
+
+**變異數分析**比較多組的平均（名字來自方法、不是結果！）。快速工具是 `aov(formula, data, projections=, qr=, contrasts=)`。2006 年美國死亡年齡按死因（`mort06.smpl`，作者從 CDC 檔案重編碼）：
+
+```{r,echo=TRUE}
+aov(age~Cause, data=mort06.smpl)
+```
+
+`model.tables(aov(...))` 印出各水準效果（意外事故比總平均少 21.4 歲、他殺少 40.1、阿茲海默多 13.8……）。更微妙的例子——孕期增重按出生月份：
+
+```{r,echo=TRUE}
+births2006.cln <- births2006.smpl[births2006.smpl$WTGAIN<99 &
+                                  !is.na(births2006.smpl$WTGAIN),]
+aov(WTGAIN~DOB_MM, births2006.cln)
+```
+
+## anova(lm(...))、oneway.test 與同伴
+
+通常更好的路：先 `lm` 配適、再用 `anova` 取表——F 統計量與 p 值都在（大模型用 `update` 修改更省事；第二十章）：
+
+```{r,echo=TRUE}
+mort06.smpl.lm <- lm(age~Cause, data=mort06.smpl)
+anova(mort06.smpl.lm)
+```
+
+- 變異數不等？`oneway.test(formula, data, var.equal=FALSE)`——Welch 思想的推廣。
+- `aov` 的其他配件：`proj`（投影）、`TukeyHSD`（成對水準差的信賴區間）、`se.contrast`（對比的標準誤）。
+
+## 成對 t 檢定
+
+想知道*哪些*組不同、不只*有沒有*不同：`pairwise.t.test(x, g, p.adjust.method=, pool.sd=, paired=, alternative=)` 跑所有配對並校正多重檢定（預設 Holm 法）：
+
+```{r,echo=TRUE}
+pairwise.t.test(tires.sus$Time_To_Failure, tires.sus$Tire_Type)
+```
+
+C–L、D–L、D–E 無顯著差異；B–H、C–H、E–L 等則非常顯著……
+
+## 檢驗常態性：shapiro.test
+
+射門距離常態嗎？先用眼睛、再用 **Shapiro-Wilk 檢定**：
+
+```{r,echo=TRUE}
+par(mfcol=c(1, 2), ps=6.5)
+hist(field.goals$yards, breaks=25)
+qqnorm(field.goals$yards, pch=".")
+par(mfcol=c(1, 1))
+shapiro.test(field.goals$yards)
+```
+
+鐘形有了、Q-Q 也大致直線——但 p ≈ 10⁻¹²：很可能*不*常態。眼睛會騙人；檢定給數字。
+
+## 任意分布：ks.test
+
+**Kolmogorov-Smirnov 檢定**把向量與*任何*分布比較（`y` ＝資料向量、分布名稱或函數），或比較兩個向量：
+
+```{r,echo=TRUE,warning=TRUE}
+ks.test(field.goals$yards, pnorm)
+ks.test(jitter(subset(SPECint2006, Num.Chips==1&Num.Cores==2)$Baseline),
+        jitter(subset(SPECint2006, Num.Chips==1&Num.Cores==2)$Result))
+```
+
+「有同值」的警告本身就是線索——真常態的值幾乎不會撞值。（第二個檢定加 `jitter` 把警告壓掉。）基準與最佳化成績：不太可能來自同一分布（p = 0.012）。
+
+## 相關檢定：cor.test
+
+第十六章的 `cor` 給數字；`cor.test(x, y, alternative=, method=, exact=, conf.level=)`（或公式形式）給**顯著性**：
+
+```{r,echo=TRUE}
+cor.test(c(1,2,3,4,5,6,7,8), c(0,2,4,6,8,10,11,14))$p.value
+cor.test(c(1,2,3,4,5,6,7,8), c(5,3,8,1,7,0,0,3))$p.value
+```
+
+把第十三章「毒物與肺癌」的關係送審：
+
+```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda",
+              temp, mode = "wb")
 load(temp)
-spd <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "E"]
-t.test(spd, mu = 8)
+with(toxins.and.cancer, cor.test(air_on_site/Surface_Area,
+                                 deaths_lung/Population))
 ```
 
-輸出打包了統計量、自由度、p 值、信賴區間與樣本平均——可用 `$p.value`、`$conf.int` 取出。
+顯著的正相關（p = 0.0015）——但別跳到因果：工業州可能同時在收入、醫療、吸菸率，甚至死因填寫習慣上不同。
 
-## 雙樣本與成對 t 檢定
+# 連續資料：無母數檢定
+
+## wilcox.test
+
+常態性可疑時，**等級式**檢定用一點檢定力換取穩健。Wilcoxon 檢定是 t 檢定的對應：統計量數遍所有配對中 y[j] < x[i] 的次數（分布相同時約一半）——沒有「單樣本對假設平均」的版本：
+
+```{r,echo=TRUE,warning=TRUE}
+wilcox.test(times.to.failure.e, times.to.failure.d)
+wilcox.test(yards~outside, data=good)
+```
+
+對照 t 檢定的結果：E 對 D 在這裡*差一點點*不顯著（p = 0.0505）。有同值時改用常態近似（所以有警告）。
+
+## kruskal.test 與 fligner.test
+
+- **Kruskal-Wallis 等級和檢定**——無母數版 ANOVA：`kruskal.test(formula, data)`；
+- **Fligner-Killeen（中位數）檢定**——無母數的變異數比較：`fligner.test(formula, data)`。
 
 ```{r,echo=TRUE}
-b <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "B"]
-d <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "D"]
-t.test(b, d)                      # 預設為 Welch 雙樣本
+kruskal.test(age~Cause, data=mort06.smpl)
+fligner.test(age~Cause, data=mort06.smpl)
 ```
+
+- 尺度參數的差異：**`ansari.test(x, y, ...)`**（Ansari-Bradley）與 **`mood.test(x, y, ...)`**（Mood）——皆有公式版。
+
+# 離散資料
+
+## prop.test：比較比例
+
+`prop.test(x, n, p=NULL, alternative=, conf.level=, correct=)` 檢驗各組成功比例是否相同（或等於給定值）。射門*成功率*室內外一樣嗎？先建成功／失敗表（剔除 8 次中止與 24 次被攔阻）、轉置、送檢：
 
 ```{r,echo=TRUE}
-before <- c(198, 201, 210, 185, 192)
-after  <- before - c(3, 7, 2, 9, 1)
-t.test(before, after, paired = TRUE)
+field.goals.goodbad <- field.goals[field.goals$play.type=="FG good" |
+                                   field.goals$play.type=="FG no", ]
+field.goals.table <- table(field.goals.goodbad$play.type,
+                           field.goals.goodbad$stadium.type)
+field.goals.table.t <- t(field.goals.table[3:4,])
+field.goals.table.t
+prop.test(field.goals.table.t)
 ```
 
-配對消除了個體間差異——測量天然成對時，務必說出來。
+p = 0.31：Both／In／Out 三組成功率無顯著差異。
 
-## 比較變異數與多組平均
+## binom.test：白努利試驗
+
+一串只有兩種結果的相同試驗（丟硬幣）服從**二項**分布。`binom.test(x, n, p=0.5, alternative=, conf.level=)` 檢驗觀測到的成功次數。David Ortiz 2008 年打擊率 .264（416 打數 110 安）——若他「真實」是 .300 打者，打出 .264 以下的機率多大？
 
 ```{r,echo=TRUE}
-var.test(b, d)                    # 變異數相等的 F 檢定
+binom.test(x=110, n=416, p=0.3, alternative="less")
 ```
 
-超過兩組時，單因子**變異數分析（ANOVA）**推廣了 t 檢定：
+p = 0.062：約 6%。注意：這個 p 值是「至少偏到這麼遠（往指定方向）」的機率——`alternative` 要讀仔細。
+
+## fisher.test：精確的獨立性檢定
+
+列聯表的假設是兩變數**獨立**。小表用 **Fisher 精確檢定**最好。引數：`x`（矩陣或因子）、`y`（`x` 為因子時的因子）、`workspace`、`hybrid`（>2×2 時用近似）、`or`（假設的勝算比）、`alternative`、`conf.int`／`conf.level`、`simulate.p.value`／`B`（蒙地卡羅）。2006 年 7 月的生產方式×性別：
 
 ```{r,echo=TRUE}
-fit <- aov(Time_To_Failure ~ Tire_Type, data = tires.sus)
-summary(fit)
+births.july.2006 <- births2006.smpl[births2006.smpl$DMETH_REC!="Unknown" &
+                                    births2006.smpl$DOB_MM==7, ]
+method.and.sex <- table(births.july.2006$SEX,
+  as.factor(as.character(births.july.2006$DMETH_REC)))
+method.and.sex
+fisher.test(method.and.sex)
 ```
 
-p 值小代表*某些*平均不同；接著用 `TukeyHSD(fit)` 找出是*哪幾對*。
+p 值極小：拒絕獨立——剖腹產率因性別而異（各性別中佔 46.7% 對 49.2%……更精確地說，勝算比 ≈ 0.91）。
 
-## 常態性與分布檢定
+## 雙胞胎的 fisher.test；chisq.test
+
+只看雙胞胎，劇情反轉：
 
 ```{r,echo=TRUE}
-set.seed(3); z <- rnorm(100)
-shapiro.test(z)                       # H0：資料為常態
-ks.test(z, "pnorm")                   # 對照任何具名分布
+twins.2006 <- births2006.smpl[births2006.smpl$DPLURAL=="2 Twin" &
+                              births2006.smpl$DMETH_REC != "Unknown",]
+method.and.sex.twins <- table(twins.2006$SEX,
+  as.factor(as.character(twins.2006$DMETH_REC)))
+fisher.test(method.and.sex.twins)$p.value
 ```
 
-```{r,echo=TRUE,out.width="55%"}
-qqnorm(z); qqline(z)
-```
-
-Q–Q 圖是視覺搭檔：點貼著直線支持常態——還能看出偏離發生在*哪裡*。
-
-## 無母數檢定
-
-常態性可疑或資料是等級時，換上不依賴分布的對應檢定：
-
-| 母數 | 無母數 |
-|:---|:---|
-| 單／雙樣本 t | `wilcox.test()` |
-| 單因子 ANOVA | `kruskal.test()` |
-| 成對 t | `wilcox.test(..., paired = TRUE)` |
+p = 0.67：獨立是合理的。Fisher 檢定在大表上很昂貴——主力替代品是**卡方檢定**：把樣本與假設的機率比較（`chisq.test(x, y=, correct=, p=, rescale.p=, simulate.p.value=, B=)`）：
 
 ```{r,echo=TRUE}
-wilcox.test(b, d)
-kruskal.test(Time_To_Failure ~ Tire_Type, data = tires.sus)
+chisq.test(method.and.sex.twins)
+chisq.test(twins.2006$DMETH_REC, twins.2006$SEX)$p.value   # 直接給因子也行
 ```
 
-用一點檢定力換來大量穩健性。
+## chisq.test：適合度與高維表
 
-## 比例與二項檢定
-
-射門員 974 次嘗試成功 787 次。真實成功率是 80% 嗎？
+按星期幾的出生數——若每天等可能（預設的 `p`），週末的短缺可能是巧合嗎？
 
 ```{r,echo=TRUE}
-prop.test(787, 974, p = 0.80)
-binom.test(787, 974, p = 0.80)     # 精確版本
+births2006.byday <- table(births2006.smpl$DOB_WK)
+births2006.byday
+chisq.test(births2006.byday)
 ```
 
-給 `prop.test()` 兩組計數就是比較兩個比例——一行完成 A/B 測試。
-
-## 表格資料：卡方與夥伴
-
-兩個類別變數有關聯嗎？
+斷然不是巧合（當然，樣本這麼大，*什麼*都顯著）。多維表也行——星期×月份：
 
 ```{r,echo=TRUE}
-tbl <- matrix(c(45, 15, 30, 40), nrow = 2,
-              dimnames = list(group = c("treat", "control"),
-                              outcome = c("yes", "no")))
-tbl
-chisq.test(tbl)
-fisher.test(tbl)        # 精確檢定；小格子也安全
+chisq.test(table(births2006.smpl$DOB_WK, births2006.smpl$DOB_MM))
 ```
 
-- 經驗法則：期望次數低於 5 → 改用 `fisher.test()`。
-- `mcnemar.test()` 處理成對的類別資料（同一群受試者的前後比較）。
+- 三方交互作用：**`mantelhaen.test(x, y, z, ...)`**（Cochran-Mantel-Haenszel）。
+- 二維表的對稱性：**`mcnemar.test(x, y, correct=)`**。
 
-## 選擇檢定的地圖
+## friedman.test
 
-1. **單一數值樣本**對照基準：`t.test(x, mu=)`；非常態 → `wilcox.test`。
-2. **兩個數值樣本**：獨立 → `t.test(x, y)`；成對 → `paired=TRUE`；非常態 → `wilcox.test`。
-3. **三組以上**：`aov()` → `TukeyHSD()`；非常態 → `kruskal.test`。
-4. **比例**：`prop.test` / `binom.test`。
-5. **兩個類別變數**：`chisq.test` / `fisher.test`。
+**Friedman 等級和檢定**是雙因子 ANOVA 的無母數對應——`friedman.test(y, groups, blocks)`，或公式／表格形式：
 
-在相信 p 值*之前*先檢查假設（常態、等變異、獨立）——並記住統計顯著不等於實務重要。
+```{r,echo=TRUE}
+friedman.test(method.and.sex.twins)
+```
+
+與卡方的判決一致：兩個分布很可能獨立。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

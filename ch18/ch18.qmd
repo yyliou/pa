@@ -38,133 +38,307 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **Asking Yes/No Questions of Data**
+# **Hypotheses on Trial**
 
-## The Logic of a Test
+## The Shape of the Chapter
 
-Every classical test follows one script: state a **null hypothesis** $H_0$, compute a statistic whose distribution under $H_0$ is known (Chapter 17), and report a **p-value** — the probability of a result at least this extreme if $H_0$ were true.
+"Does the new drug beat the placebo?" "Does the redesign sell more?" "Does this strategy beat the index?" — formulate a hypothesis, design an experiment, collect data, test. Two halves:
 
-::: {.callout-note}
-**Reading a p-value.** Small $p$ (conventionally $< 0.05$) means the data are surprising under $H_0$, so we reject it. A large $p$ never *proves* $H_0$; it only says the data are compatible with it.
+- **continuous data** — normal-theory tests, then nonparametric counterparts;
+- **discrete data** — proportions, binomial trials, contingency tables.
+
+::: {.callout-warning}
+**The book's own disclaimer applies here too:** these slides remind you *when* and *how* to run each test in R — they are no substitute for a proper statistics course on where the formulas come from and when they're safe.
 :::
 
-Every test below returns an object of class `htest` — same structure, same reading skills.
+```{r,echo=TRUE,results='hide'}
+# data sets used throughout this chapter
+for (d in c("tires.sus", "field.goals", "SPECint2006",
+            "mort06.smpl", "births2006.smpl")) {
+  temp <- tempfile(fileext = ".rda")
+  download.file(paste0("https://raw.githubusercontent.com/cran/nutshell/",
+                       "master/data/", d, ".rda"), temp, mode = "wb")
+  load(temp, envir = globalenv())
+}
+```
 
-## One-Sample t-Test
+# Continuous Data: Normal-Theory Tests
 
-Is the mean tire-test score different from a benchmark?
+## t.test: One Sample Against a Hypothesized Mean
 
-```{r,echo=TRUE,cache=TRUE}
+`t.test(x, y=NULL, alternative=c("two.sided","less","greater"), mu=0, paired=FALSE, var.equal=FALSE, conf.level=0.95)` — `y=NULL` compares one vector against `mu`; `var.equal` chooses pooled variance vs. the Welch method. Suppose type-H tires "should" last 9 hours:
+
+```{r,echo=TRUE}
+times.to.failure.h <- subset(tires.sus,
+  Tire_Type=="H" & Speed_At_Failure_km_h==160)$Time_To_Failure
+mean(times.to.failure.h)
+t.test(times.to.failure.h, mu=9)
+```
+
+Reading it: statistic `t`, degrees of freedom, **p-value 0.4684** — the alternative ("true mean ≠ 9") is *not* supported; the evidence does not imply the mean differs from 9. The 95% CI and sample mean close the report.
+
+## t.test: Two Samples
+
+Three tire types shared speed rating S — equal lifetimes expected. E vs. D, then E vs. B:
+
+```{r,echo=TRUE}
+times.to.failure.e <- subset(tires.sus,
+  Tire_Type=="E" & Speed_At_Failure_km_h==180)$Time_To_Failure
+times.to.failure.d <- subset(tires.sus,
+  Tire_Type=="D" & Speed_At_Failure_km_h==180)$Time_To_Failure
+times.to.failure.b <- subset(tires.sus,
+  Tire_Type=="B" & Speed_At_Failure_km_h==180)$Time_To_Failure
+t.test(times.to.failure.e, times.to.failure.d)
+t.test(times.to.failure.e, times.to.failure.b)$p.value
+```
+
+E vs. D: significant at 95% (p = 0.034). E vs. B: not (p = 0.164) — and note R never *says* "significant"; you read the p-value yourself.
+
+## t.test: the Formula Interface
+
+With data in a frame and groups in a factor: `t.test(formula, data, subset, na.action)`. TV pundits insist outdoor kicking is harder — do successful field goals differ in distance?
+
+```{r,echo=TRUE}
+good <- transform(
+  field.goals[field.goals$play.type=="FG good", c("yards","stadium.type")],
+  outside=(stadium.type=="Out"))
+bad <- transform(
+  field.goals[field.goals$play.type=="FG no", c("yards","stadium.type")],
+  outside=(stadium.type=="Out"))
+t.test(yards~outside, data=good)
+```
+
+A yard longer indoors on average — not significant (p = 0.26). Misses (`data=bad`): p = 0.23. Attempts overall: p = 0.12. The pundits remain unvindicated.
+
+## Paired Data
+
+Two observations per subject (before/after) call for a **paired t-test**: `paired=TRUE`. SPEC's CPU benchmarks report a *baseline* and an *optimized* result per system — paired by machine. Single-chip dual-core systems:
+
+```{r,echo=TRUE}
+t.test(subset(SPECint2006, Num.Chips==1 & Num.Cores==2)$Baseline,
+       subset(SPECint2006, Num.Chips==1 & Num.Cores==2)$Result,
+       paired=TRUE)
+```
+
+Resoundingly significant — no shock: tuning helps, and submitting optimized results is voluntary.
+
+## Comparing Variances: var.test and bartlett.test
+
+- **`var.test(x, y, ratio=1, alternative=, conf.level=)`** (or formula form) runs an **F-test** on two normal-population variances.
+- **`bartlett.test(x, g)`** (or formula) tests homogeneity of variance across groups.
+
+```{r,echo=TRUE}
+field.goals.inout <- transform(field.goals, outside=(stadium.type=="Out"))
+var.test(yards~outside, data=field.goals.inout)
+bartlett.test(yards~outside, data=field.goals.inout)
+```
+
+Both p-values ≈ 0.03: the indoor/outdoor variance difference *is* significant — the means weren't, the spreads are.
+
+## ANOVA: Comparing Many Means
+
+**Analysis of variance** compares means across multiple groups (named for the method, not the result!). The quick tool is `aov(formula, data, projections=, qr=, contrasts=)`. Age at death by cause, US 2006 (`mort06.smpl`, recoded by the author from CDC files):
+
+```{r,echo=TRUE}
+aov(age~Cause, data=mort06.smpl)
+```
+
+`model.tables(aov(...))` prints per-level effects (Accidents −21.4 years vs. overall, Homicide −40.1, Alzheimer's +13.8...). A subtler example — weight gain by birth month:
+
+```{r,echo=TRUE}
+births2006.cln <- births2006.smpl[births2006.smpl$WTGAIN<99 &
+                                  !is.na(births2006.smpl$WTGAIN),]
+aov(WTGAIN~DOB_MM, births2006.cln)
+```
+
+## anova(lm(...)), oneway.test, and Friends
+
+The often-better route: fit with `lm`, extract the table with `anova` — F-statistic and p-value included (and `update` modifies big models cheaply; Chapter 20):
+
+```{r,echo=TRUE}
+mort06.smpl.lm <- lm(age~Cause, data=mort06.smpl)
+anova(mort06.smpl.lm)
+```
+
+- Variances unequal? `oneway.test(formula, data, var.equal=FALSE)` — the Welch idea, generalized.
+- More `aov` accessories: `proj` (projections), `TukeyHSD` (CIs on pairwise level differences), `se.contrast` (standard errors of contrasts).
+
+## Pairwise t-Tests
+
+Want *which* groups differ, not just *whether*: `pairwise.t.test(x, g, p.adjust.method=, pool.sd=, paired=, alternative=)` runs all pairs with multiple-testing correction (default: Holm):
+
+```{r,echo=TRUE}
+pairwise.t.test(tires.sus$Time_To_Failure, tires.sus$Tire_Type)
+```
+
+No significant difference for C–L, D–L, D–E; very significant for B–H, C–H, E–L...
+
+## Testing Normality: shapiro.test
+
+Are field-goal distances normal? Eyeball first, then the **Shapiro-Wilk test**:
+
+```{r,echo=TRUE}
+par(mfcol=c(1, 2), ps=6.5)
+hist(field.goals$yards, breaks=25)
+qqnorm(field.goals$yards, pch=".")
+par(mfcol=c(1, 1))
+shapiro.test(field.goals$yards)
+```
+
+Bell-ish shape, roughly linear Q-Q — yet p ≈ 10⁻¹²: quite likely *not* normal. Eyes deceive; tests quantify.
+
+## Arbitrary Distributions: ks.test
+
+The **Kolmogorov-Smirnov test** compares a vector to *any* distribution (`y` = data vector, distribution name, or function), or two vectors to each other:
+
+```{r,echo=TRUE,warning=TRUE}
+ks.test(field.goals$yards, pnorm)
+ks.test(jitter(subset(SPECint2006, Num.Chips==1&Num.Cores==2)$Baseline),
+        jitter(subset(SPECint2006, Num.Chips==1&Num.Cores==2)$Result))
+```
+
+The ties warning is itself informative — true normal values almost never tie. (We `jitter` the second test to silence it.) Baseline and optimized results: unlikely to share a distribution (p = 0.012).
+
+## Correlation Tests: cor.test
+
+Chapter 16's `cor` gives a number; `cor.test(x, y, alternative=, method=, exact=, conf.level=)` (or formula form) gives **significance**:
+
+```{r,echo=TRUE}
+cor.test(c(1,2,3,4,5,6,7,8), c(0,2,4,6,8,10,11,14))$p.value
+cor.test(c(1,2,3,4,5,6,7,8), c(5,3,8,1,7,0,0,3))$p.value
+```
+
+The Chapter 13 toxins-and-lung-cancer relationship, tested:
+
+```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda",
+              temp, mode = "wb")
 load(temp)
-spd <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "E"]
-t.test(spd, mu = 8)
+with(toxins.and.cancer, cor.test(air_on_site/Surface_Area,
+                                 deaths_lung/Population))
 ```
 
-The output bundles the statistic, df, p-value, confidence interval, and sample mean — extract pieces with `$p.value`, `$conf.int`.
+Significant positive correlation (p = 0.0015) — but resist the causal leap: industrial states may differ in income, healthcare, smoking, or even death-certificate habits.
 
-## Two-Sample and Paired t-Tests
+# Continuous Data: Nonparametric Tests
+
+## wilcox.test
+
+When normality is doubtful, **rank-based** tests trade some power for robustness. The Wilcoxon test is the t-test's counterpart: its statistic counts, over all pairs, how often y[j] < x[i] (about half if the distributions match) — no one-sample-vs-mean version exists:
+
+```{r,echo=TRUE,warning=TRUE}
+wilcox.test(times.to.failure.e, times.to.failure.d)
+wilcox.test(yards~outside, data=good)
+```
+
+Note the contrast with the t-test: E vs. D *barely misses* significance here (p = 0.0505). Ties trigger a normal approximation (hence the warning).
+
+## kruskal.test and fligner.test
+
+- **Kruskal-Wallis rank-sum test** — nonparametric ANOVA: `kruskal.test(formula, data)`;
+- **Fligner-Killeen (median) test** — nonparametric variance comparison: `fligner.test(formula, data)`.
 
 ```{r,echo=TRUE}
-b <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "B"]
-d <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "D"]
-t.test(b, d)                      # Welch two-sample by default
+kruskal.test(age~Cause, data=mort06.smpl)
+fligner.test(age~Cause, data=mort06.smpl)
 ```
+
+- Scale-parameter differences: **`ansari.test(x, y, ...)`** (Ansari-Bradley) and **`mood.test(x, y, ...)`** (Mood) — both with formula variants.
+
+# Discrete Data
+
+## prop.test: Comparing Proportions
+
+`prop.test(x, n, p=NULL, alternative=, conf.level=, correct=)` tests whether success proportions differ across groups (or equal given values). Is field-goal *success* equal indoors and out? Build a successes/failures table (dropping the 8 aborted and 24 blocked kicks), transpose, test:
 
 ```{r,echo=TRUE}
-before <- c(198, 201, 210, 185, 192)
-after  <- before - c(3, 7, 2, 9, 1)
-t.test(before, after, paired = TRUE)
+field.goals.goodbad <- field.goals[field.goals$play.type=="FG good" |
+                                   field.goals$play.type=="FG no", ]
+field.goals.table <- table(field.goals.goodbad$play.type,
+                           field.goals.goodbad$stadium.type)
+field.goals.table.t <- t(field.goals.table[3:4,])
+field.goals.table.t
+prop.test(field.goals.table.t)
 ```
 
-Pairing removes between-subject variation — when measurements come in natural pairs, always say so.
+p = 0.31: no significant difference in success rates among Both/In/Out.
 
-## Comparing Variances and Many Means
+## binom.test: Bernoulli Trials
+
+A series of identical two-outcome trials (coin flips) follows the **binomial** distribution. `binom.test(x, n, p=0.5, alternative=, conf.level=)` tests an observed success count. David Ortiz hit .264 (110/416) in 2008 — if he were "truly" a .300 hitter, how likely is hitting .264 or worse?
 
 ```{r,echo=TRUE}
-var.test(b, d)                    # F test for equal variances
+binom.test(x=110, n=416, p=0.3, alternative="less")
 ```
 
-For more than two groups, one-way **ANOVA** generalizes the t-test:
+p = 0.062: about a 6% chance. Notable: this p-value is the probability of being *at least as far* in the stated direction — read `alternative` carefully.
+
+## fisher.test: Exact Independence Testing
+
+For contingency tables, the hypothesis is **independence** of the two variables. For small tables, **Fisher's exact test** is best. Arguments: `x` (matrix or factor), `y` (factor when `x` is), `workspace`, `hybrid` (approximate for >2×2), `or` (hypothesized odds ratio), `alternative`, `conf.int`/`conf.level`, `simulate.p.value`/`B` (Monte Carlo). Delivery method × sex, July 2006:
 
 ```{r,echo=TRUE}
-fit <- aov(Time_To_Failure ~ Tire_Type, data = tires.sus)
-summary(fit)
+births.july.2006 <- births2006.smpl[births2006.smpl$DMETH_REC!="Unknown" &
+                                    births2006.smpl$DOB_MM==7, ]
+method.and.sex <- table(births.july.2006$SEX,
+  as.factor(as.character(births.july.2006$DMETH_REC)))
+method.and.sex
+fisher.test(method.and.sex)
 ```
 
-A small p-value says *some* means differ; `TukeyHSD(fit)` then reports *which* pairs.
+Tiny p-value: reject independence — C-section rates differ by sex (46.7% vs. 49.2% of each sex's births... or rather, the odds ratio ≈ 0.91).
 
-## Normality and Distribution Tests
+## fisher.test on Twins; chisq.test
+
+For twins only, the story reverses:
 
 ```{r,echo=TRUE}
-set.seed(3); z <- rnorm(100)
-shapiro.test(z)                       # H0: data are normal
-ks.test(z, "pnorm")                   # against any named distribution
+twins.2006 <- births2006.smpl[births2006.smpl$DPLURAL=="2 Twin" &
+                              births2006.smpl$DMETH_REC != "Unknown",]
+method.and.sex.twins <- table(twins.2006$SEX,
+  as.factor(as.character(twins.2006$DMETH_REC)))
+fisher.test(method.and.sex.twins)$p.value
 ```
 
-```{r,echo=TRUE,out.width="55%"}
-qqnorm(z); qqline(z)
-```
-
-The Q–Q plot is the visual companion: points hugging the line support normality — and it shows *where* departures occur.
-
-## Non-Parametric Tests
-
-When normality is doubtful or data are ranks, swap in distribution-free analogues:
-
-| Parametric | Non-parametric |
-|:---|:---|
-| one/two-sample t | `wilcox.test()` |
-| one-way ANOVA | `kruskal.test()` |
-| paired t | `wilcox.test(..., paired = TRUE)` |
+p = 0.67: independence is plausible. Fisher's test gets expensive for large tables — the workhorse alternative is the **chi-squared test**, which compares the sample to hypothesized probabilities (`chisq.test(x, y=, correct=, p=, rescale.p=, simulate.p.value=, B=)`):
 
 ```{r,echo=TRUE}
-wilcox.test(b, d)
-kruskal.test(Time_To_Failure ~ Tire_Type, data = tires.sus)
+chisq.test(method.and.sex.twins)
+chisq.test(twins.2006$DMETH_REC, twins.2006$SEX)$p.value   # same, from factors
 ```
 
-They trade a little power for a lot of robustness.
+## chisq.test: Goodness of Fit, Higher Dimensions
 
-## Proportion and Binomial Tests
-
-Field-goal kickers succeeded 787 times in 974 attempts. Is the true success rate 80%?
+Births by weekday — could the weekend deficit be chance, if every day were equally likely (the default `p`)?
 
 ```{r,echo=TRUE}
-prop.test(787, 974, p = 0.80)
-binom.test(787, 974, p = 0.80)     # exact version
+births2006.byday <- table(births2006.smpl$DOB_WK)
+births2006.byday
+chisq.test(births2006.byday)
 ```
 
-`prop.test()` with two counts compares two proportions — the A/B test in one line.
-
-## Tabular Data: Chi-Squared and Friends
-
-Do two categorical variables associate?
+Emphatically not chance (though with n this big, *everything* is significant). Multidimensional tables work too — day × month:
 
 ```{r,echo=TRUE}
-tbl <- matrix(c(45, 15, 30, 40), nrow = 2,
-              dimnames = list(group = c("treat", "control"),
-                              outcome = c("yes", "no")))
-tbl
-chisq.test(tbl)
-fisher.test(tbl)        # exact; safe for small cells
+chisq.test(table(births2006.smpl$DOB_WK, births2006.smpl$DOB_MM))
 ```
 
-- Rule of thumb: expected counts below 5 → prefer `fisher.test()`.
-- `mcnemar.test()` handles paired categorical data (before/after on the same subjects).
+- Three-way interactions: **`mantelhaen.test(x, y, z, ...)`** (Cochran-Mantel-Haenszel).
+- Symmetry of a 2-D table: **`mcnemar.test(x, y, correct=)`**.
 
-## Choosing a Test: a Map
+## friedman.test
 
-1. **One numeric sample** vs. a reference: `t.test(x, mu=)`; non-normal → `wilcox.test`.
-2. **Two numeric samples**: independent → `t.test(x, y)`; paired → `paired=TRUE`; non-normal → `wilcox.test`.
-3. **3+ groups**: `aov()` → `TukeyHSD()`; non-normal → `kruskal.test`.
-4. **Proportions**: `prop.test` / `binom.test`.
-5. **Two categorical variables**: `chisq.test` / `fisher.test`.
+The **Friedman rank-sum test** is the nonparametric counterpart of two-way ANOVA — `friedman.test(y, groups, blocks)` or the formula/table forms:
 
-Check assumptions (normality, equal variance, independence) *before* trusting p-values — and remember that statistical significance is not practical importance.
+```{r,echo=TRUE}
+friedman.test(method.and.sex.twins)
+```
+
+Agreeing with the chi-squared verdict: the two distributions are very likely independent.
 
 ## Copyright Notice
 

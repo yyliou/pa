@@ -43,96 +43,124 @@ knitr::opts_chunk$set(fig.align = "center")
 
 # **設計實驗**
 
-## 檢定力：被遺忘的量
+## 你需要多少資料？
 
-檢定有兩種失敗方式：拒絕了為真的 $H_0$（**型一錯誤**，機率 $\alpha$），或漏掉真實存在的效果（**型二錯誤**，機率 $\beta$）。
+收資料之前，兩個問題決定實驗的命運：
 
-::: {.callout-note}
-**檢定力** $= 1 - \beta$：偵測到真實效果的機率。四個量彼此鎖死——樣本數 $n$、顯著水準 $\alpha$、效果量、檢定力。固定其中三個，第四個就被決定。
+- 要多少資料才能得到統計顯著的結果？
+- 給定你*收得到*的資料量，偵測得到多強的效果？
+
+R 的 `power.*` 家族兩者都能回答。詞彙：**顯著水準** ＝ 型一錯誤機率（偽陽性）；**檢定力（power）** ＝ 1 − 型二錯誤機率（1 − 偽陰性）。每個函式都會計算你留成 `NULL` 的那個參數。
+
+## 實作範例：設計藥物試驗
+
+測試抗憂鬱藥，以 HAMD 量表（0–48）度量憂鬱程度。假設標準差 8.9（出自 FDA 資料）、顯著水準 0.05、目標檢定力 0.95。每組 25 名受試者時，偵測得到多大的組間差異？
+
+```{r,echo=TRUE}
+power.t.test(power=.95, sig.level=.05, sd=8.9, n=25)
+```
+
+至少 **9.26** 分的 HAMD 差距。受試者加倍：
+
+```{r,echo=TRUE}
+power.t.test(power=.95, sig.level=.05, sd=8.9, n=50)
+```
+
+**6.48** 分就夠了。這就是實驗設計的實況：在花一毛錢收資料*之前*，先在樣本數與可偵測效果之間權衡。
+
+# t 檢定設計
+
+## power.t.test
+
+```{r,eval=FALSE,echo=TRUE}
+power.t.test(n = NULL, delta = NULL, sd = 1, sig.level = 0.05,
+             power = NULL,
+             type = c("two.sample", "one.sample", "paired"),
+             alternative = c("two.sided", "one.sided"),
+             strict = FALSE)
+```
+
+| 引數 | 說明 |
+|---|---|
+| `n` | *每組*觀測數 |
+| `delta` | 真實的平均差 |
+| `sd` | 真實標準差 |
+| `sig.level` | 顯著水準（型一錯誤機率） |
+| `power` | 1 − 型二錯誤機率 |
+| `type` | 雙樣本／單樣本／成對 |
+| `alternative` | 雙尾或單尾 |
+| `strict` | 雙尾時採嚴格詮釋 |
+
+`n`、`delta`、`sd`、`sig.level`、`power` 五者**給四個**；留 `NULL` 的第五個就是被計算的對象。
+
+# 比例檢定設計
+
+## power.prop.test
+
+供以 `prop.test` 度量的實驗使用：
+
+```{r,eval=FALSE,echo=TRUE}
+power.prop.test(n = NULL, p1 = NULL, p2 = NULL, sig.level = 0.05,
+                power = NULL,
+                alternative = c("two.sided", "one.sided"),
+                strict = FALSE)
+```
+
+`p1`／`p2` 是兩組的成功機率；其餘同前。一樣：`n`、`p1`、`p2`、`sig.level`、`power` 給四個、算 `NULL` 的那個。
+
+## 棒球的情境數據是不是鬼扯？
+
+ESPN 愛閃「兩出局二壘有人時 10 打數 3 安打」這種數據。假設某打者在某情境打 .300、其他情境打 .260——要多少情境打數才能讓 .300 顯著（α ＝ 0.05、檢定力 0.95、單尾）？
+
+```{r,echo=TRUE}
+power.prop.test(p1=.260, p2=.300, sig.level=0.05,
+                power=.95, alternative="one.sided")
+```
+
+**超過 2,724 個打數**——還是每組。反過來問：n ＝ 10 時能做到什麼？
+
+```{r,echo=TRUE}
+power.prop.test(n=10, p1=.260, p2=.300, power=.95,
+                sig.level=NULL, alternative="one.sided")$sig.level
+power.prop.test(n=10, p1=.260, p2=.300, power=NULL,
+                sig.level=.05, alternative="one.sided")$power
+```
+
+顯著水準 0.93，或檢定力 0.07。書中判決：多數情境數據是鬼扯——現在你能證明了。
+
+# ANOVA 檢定設計
+
+## power.anova.test
+
+供以 ANOVA 分析的多組設計使用：
+
+```{r,eval=FALSE,echo=TRUE}
+power.anova.test(groups = NULL, n = NULL,
+                 between.var = NULL, within.var = NULL,
+                 sig.level = 0.05, power = NULL)
+```
+
+| 引數 | 說明 |
+|---|---|
+| `groups` | 組數 |
+| `n` | 每組觀測數 |
+| `between.var`／`within.var` | 組間／組內變異數 |
+| `sig.level`／`power` | 同前 |
+
+這裡七個參數要**給六個**；留 `NULL` 的那個被計算。
+
+```{r,echo=TRUE}
+power.anova.test(groups=4, between.var=1, within.var=3, power=.80)
+```
+
+::: {.callout-tip}
+**每個實證專案都該養成的習慣：** 實驗*之前*先跑檢定力計算。它把一廂情願（「做完看看顯不顯著」）變成設計（「要偵測我們在乎的效果，每組需要 n 筆」）。
 :::
-
-檢定力分析回答每個實驗都要面對的規劃問題：**我需要多少觀測值？**
-
-## power.t.test()
-
-要以 80% 檢定力偵測 5 單位的差異（sd = 10），需要多少樣本？
-
-```{r,echo=TRUE}
-power.t.test(delta = 5, sd = 10, sig.level = 0.05, power = 0.80)
-```
-
-*每組*約 64 人。少給任何一個引數，R 就解出它：
-
-```{r,echo=TRUE}
-power.t.test(n = 30, delta = 5, sd = 10)$power
-```
-
-每組只有 30 人時，檢定力跌破五成——找到效果的機會跟擲銅板差不多。
-
-## power.prop.test()
-
-比較兩個比例——某改版能把轉換率從 10% 拉到 12% 嗎？
-
-```{r,echo=TRUE}
-power.prop.test(p1 = 0.10, p2 = 0.12, power = 0.80)
-```
-
-每組需要數千筆觀測：小基準上的小效果*很貴*。這一個計算就能避免 A/B 測試最常見的錯誤——訪客太少就急著下結論。
-
-## power.anova.test()
-
-比較多組平均時：
-
-```{r,echo=TRUE}
-power.anova.test(groups = 4,
-                 between.var = 1, within.var = 9,
-                 power = 0.80)
-```
-
-- `between.var` / `within.var` 編碼了效果量：各組平均相對於雜訊拉得多開。
-- 總樣本數固定時，組數越多、每組越少——檢定力越低。
-
-## 效果量與檢定力曲線
-
-效果量是你必須*猜*的輸入——根據前導研究、過往文獻，或「值得在意的最小差異」。在合理範圍內畫出檢定力曲線：
-
-```{r,echo=TRUE,out.width="65%"}
-deltas <- seq(1, 10, 0.5)
-pw <- sapply(deltas, function(d)
-  power.t.test(n = 50, delta = d, sd = 10)$power)
-plot(deltas, pw, type = "l", lwd = 2,
-     xlab = "True difference", ylab = "Power (n = 50/group)")
-abline(h = 0.8, lty = 2)
-```
-
-## 用模擬算檢定力
-
-當設計超出現成公式的範圍，就模擬它（第十七章的工具箱）：
-
-```{r,echo=TRUE}
-set.seed(9)
-one_run <- function(n, delta) {
-  t.test(rnorm(n), rnorm(n, mean = delta))$p.value < 0.05
-}
-mean(replicate(2000, one_run(64, 5/10 * 10)))   # 與 power.t.test 相符
-```
-
-把 `rnorm()` 換成你真正的設計——不等組、偏態誤差、群聚資料——同一個迴圈照樣能量出檢定力。
-
-## 規劃檢查清單
-
-1. 決定 $\alpha$（通常 0.05）與目標檢定力（通常 0.80 以上）。
-2. 指明**值得偵測的最小效果**——這是科學判斷，不是統計判斷。
-3. 估計雜訊（標準差或基準比例）。
-4. 用 `power.*.test()` 或模擬算出 $n$。
-5. 為流失留餘裕——然後在偷看 p 值*之前*把資料收完。
-
-檢定力不足的研究兩頭賠：漏掉真效果，而偶爾「顯著」的發現又會誇大效果。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

@@ -38,108 +38,208 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **First Numbers from the Data**
+# **First Analyses**
 
-## Summary Statistics
+## Summary Statistics: mean, min, max
 
-The basic vocabulary of description, each one function away:
+The building blocks for everything that follows. With the `dow30` quote data from Chapter 12 (packaged in `nutshell`):
 
-```{r,echo=TRUE,cache=TRUE}
+```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda",
+              temp, mode = "wb")
 load(temp)
-x <- dow30$Open
-mean(x); median(x)
-var(x); sd(x)
-range(x); quantile(x, c(0.25, 0.5, 0.75))
+mean(dow30$Open); min(dow30$Open); max(dow30$Open)
 ```
 
-- `mean(x, trim = 0.1)` resists outliers; every function here accepts `na.rm=TRUE`.
-- `fivenum()` gives Tukey's five-number summary; `IQR()` the interquartile range.
-
-## summary() Everywhere
-
-`summary()` adapts to its argument — numeric vectors, factors, data frames, models:
+Two arguments worth memorizing:
 
 ```{r,echo=TRUE}
-summary(dow30[, c("Open", "Close", "Volume")])
+mean(c(1, 2, 3, 4, 5, NA))                  # any NA poisons the result...
+mean(c(1, 2, 3, 4, 5, NA), na.rm=TRUE)      # ...unless you remove it
+mean(c(-1, 0:100, 2000))                    # outliers drag the mean...
+mean(c(-1, 0:100, 2000), trim=0.1)          # ...trim filters that fraction
 ```
 
-For a fast all-in-one look at any new data set: `summary(df)` plus `str(df)` answers "what am I holding?" in two lines.
-
-## Correlation and Covariance
-
-How do two series move together?
+## range, quantile, fivenum, IQR
 
 ```{r,echo=TRUE}
-cov(dow30$Open, dow30$Close)
-cor(dow30$Open, dow30$Close)
-cor(dow30[, c("Open", "High", "Low", "Close")])[1:4, 1:4]
+range(dow30$Open)
+quantile(dow30$Open, probs=c(0, 0.25, 0.5, 0.75, 1.0))
+fivenum(dow30$Open)
+IQR(dow30$Open)
 ```
 
-- `cor()` defaults to Pearson; `method = "spearman"` or `"kendall"` ranks instead — robust to outliers and nonlinearity.
-- A correlation matrix is the standard reconnaissance before regression (Chapter 20).
+All of these combine naturally with `apply`/`tapply` for per-group statistics (Chapter 12).
 
-::: {.callout-warning}
-**Correlation is not causation.** It is also blind to nonlinear structure — always look at the scatter plot too.
-:::
+## summary and str
 
-## Principal Components Analysis
-
-PCA re-expresses correlated variables as orthogonal **components** ordered by explained variance:
+The most convenient overview is generic `summary` — quartiles + mean for numerics, top counts for factors (nothing meaningful for plain character vectors):
 
 ```{r,echo=TRUE}
-pca <- prcomp(USArrests, scale. = TRUE)
-summary(pca)
+summary(dow30[, c("Open", "Volume")])
 ```
 
-```{r,echo=TRUE,out.width="60%"}
-biplot(pca, cex = 0.6)
-```
-
-- `scale.=TRUE` standardizes first — essential when units differ.
-- The first two components often capture most of the structure: a built-in dimensionality reduction for plotting and modeling.
-
-## Factor Analysis
-
-Where PCA is pure variance bookkeeping, **factor analysis** posits latent variables that explain observed correlations:
+The popular alternative `str` displays an object's *structure*:
 
 ```{r,echo=TRUE}
-fa <- factanal(mtcars[, c("mpg", "disp", "hp", "wt", "qsec", "drat")],
-               factors = 2)
-fa$loadings
+str(dow30)
 ```
 
-- Loadings show how strongly each observed variable reflects each hidden factor.
-- Common in psychometrics and survey research: "do these 20 questions measure 2 underlying traits?"
+## stem: a Text Histogram
 
-## Bootstrap Resampling
+`stem(x, scale=1, width=80, atom=1e-08)` draws a stem-and-leaf plot right in the console. Distances of *missed* NFL field goals, 2005:
 
-When no formula exists for a statistic's uncertainty, **resample**: draw observations with replacement, recompute, repeat:
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda",
+              temp, mode = "wb")
+load(temp)
+stem(subset(field.goals, play.type=="FG no")$yards)
+```
 
-```{r,echo=TRUE,message=FALSE}
+# Correlation and Covariance
+
+## Three Correlation Measures
+
+Correlation answers "when x rises, does y rise — and how tightly?", measuring **linear dependence** on a −1...1 scale. Three statistics:
+
+- **Pearson** — Excel's `CORREL`; rooted in normal-distribution theory, best for normal-ish data;
+- **Spearman** — nonparametric, no distributional assumptions (correlates the *ranks*);
+- **Kendall's tau** — compares concordant vs. discordant *pairs of rankings*.
+
+```{r,eval=FALSE,echo=TRUE}
+cor(x, y = NULL, use = "everything",
+    method = c("pearson", "kendall", "spearman"))
+```
+
+`x`,`y` may be two vectors, or one data frame/matrix (→ a correlation *matrix*). `use` handles `NA`s: `"all.obs"` (error), `"everything"` (NA result), `"complete.obs"` / `"na.or.complete"` (drop incomplete rows), `"pairwise.complete.obs"` (drop per pair).
+
+## Example: Weight Gain and Birth Weight
+
+Does the mother's weight gain correlate with the baby's weight? Clean first (valid values, single births, gestation > 35 weeks), then look — 100k+ points need `smoothScatter`, not `plot`:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda",
+              temp, mode = "wb")
+load(temp)
+births2006.cln <- births2006.smpl[
+  !is.na(births2006.smpl$WTGAIN) & !is.na(births2006.smpl$DBWT) &
+  births2006.smpl$DPLURAL == "1 Single" & births2006.smpl$ESTGEST>35,]
+smoothScatter(births2006.cln$WTGAIN, births2006.cln$DBWT)
+cor(births2006.cln$WTGAIN, births2006.cln$DBWT)
+cor(births2006.cln$WTGAIN, births2006.cln$DBWT, method="spearman")
+```
+
+A modest correlation by either measure — the blob is angled, just barely. (The book used the full 3.2M-record file; our 10% sample gives near-identical values.)
+
+## Covariance
+
+**Covariance** is the Pearson numerator — same arguments as `cor`:
+
+```{r,echo=TRUE}
+cov(births2006.cln$WTGAIN, births2006.cln$DBWT)
+```
+
+Relatives: `cov2cor` converts a covariance matrix to a correlation matrix; `cov.wt(x, wt=, cor=, center=, method=c("unbiased","ML"))` computes *weighted* covariance.
+
+# Principal Components Analysis
+
+## prcomp and princomp
+
+**PCA** rewrites possibly-correlated variables as uncorrelated components. Two implementations: `prcomp` (preferred; formula method `prcomp(~..., data=, subset=, na.action=)`, default method with `retx`, `center=TRUE`, `scale.`, `tol`) and the S-PLUS-compatible `princomp` (eigendecomposition of the correlation/covariance matrix) — the book demonstrates the latter.
+
+Data: team batting statistics 2000–2008, extracted from the Baseball Databank by SQL (renamed to readable play names) and packaged as `team.batting.00to08`:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda",
+              temp, mode = "wb")
+load(temp)
+batting.pca <- princomp(~singles+doubles+triples+homeruns+
+                          walks+hitbypitch+sacrificeflies+
+                          stolenbases+caughtstealing,
+                        data=team.batting.00to08)
+summary(batting.pca)
+```
+
+Two components already carry ~78% of the variance; four carry ~92%.
+
+## loadings, Scree Plot, Biplot
+
+`loadings` shows each variable's contribution to each component:
+
+```{r,echo=TRUE}
+loadings(batting.pca)
+```
+
+```{r,echo=TRUE}
+plot(batting.pca)                                      # "scree" plot
+biplot(batting.pca, cex=0.5, col=c("gray50", "black")) # variables + observations
+```
+
+The biplot draws variable contributions to components 1–2 *and* the observations on one scale: singles and walks dominate the first two components. (This data returns for linear modeling in Chapter 20.)
+
+# Factor Analysis
+
+## factanal
+
+Some quantities are observable (test scores); some are not (intelligence). **Factor analysis** infers hidden factors from observed variables — `factanal` in `stats`:
+
+```{r,eval=FALSE,echo=TRUE}
+factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
+         subset, na.action, start = NULL,
+         scores = c("none", "regression", "Bartlett"),
+         rotation = "varimax", control = NULL, ...)
+```
+
+| Argument | Description |
+|---|---|
+| `x` / `data` | formula or numeric matrix (+ data frame for the formula) |
+| `factors` | how many factors to fit |
+| `covmat` / `n.obs` | alternatively: a covariance matrix (or `cov.wt` output) + observation count |
+| `subset` / `na.action` / `start` | the usual suspects |
+| `scores` | `"none"`, `"regression"` (Thompson), `"Bartlett"` (weighted least squares) |
+| `rotation` | factor rotation function, default `"varimax"` |
+
+# Bootstrap Resampling
+
+## The Idea, and boot
+
+Is your statistic sensitive to a few outliers? What's its sampling range? **Bootstrapping** answers for *any* statistic: repeatedly resample observations **with replacement**, recompute the statistic, study the spread — formally, an estimate of an estimator's **bias**.
+
+```{r,eval=FALSE,echo=TRUE}
 library(boot)
-med.fun <- function(d, i) median(d[i])
-set.seed(1)
-b <- boot(dow30$Open, med.fun, R = 1000)
-b
-boot.ci(b, type = "perc")$percent
+boot(data, statistic, R, sim="ordinary", stype="i",
+     strata=rep(1,n), L=NULL, m=0, weights=NULL,
+     ran.gen=function(d, p) d, mle=NULL, simple=FALSE, ...)
 ```
 
-The spread of the 1,000 recomputed medians estimates the sampling distribution — no normality assumption required.
+Key arguments: `data`; `statistic` — a *function of (data, selection)* where `stype` defines the second argument (`"i"` indices, `"f"` frequencies, `"w"` weights); `R` — number of replicates; `sim` — `"ordinary"`, `"parametric"`, `"balanced"`, `"permutation"`, `"antithetic"`; `strata` for multisample problems; `ran.gen`/`mle` for parametric simulation; `simple=TRUE` trades time for memory.
 
-## A Workflow
+## Example: How Biased Is the Median?
 
-1. `str()` and `summary()` — types, ranges, missingness.
-2. Plots — histograms and scatter plots (Chapters 13–15).
-3. Correlations — what moves together?
-4. Reduce — PCA/factors if there are many variables.
-5. Quantify uncertainty — bootstrap when in doubt.
+Media report *median* home prices. Bootstrapping June 2008 San Francisco sale prices:
 
-Then, and only then, the formal tests of Chapter 18 and the models of Chapters 20–21.
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda",
+              temp, mode = "wb")
+load(temp)
+home.sale.prices.june2008 <- subset(sanfrancisco.home.sales,
+  format(saledate, "%Y-%m")=="2008-06")$price
+library(boot)
+b <- boot(data=home.sale.prices.june2008,
+          statistic=function(d, i) { median(d[i]) },
+          R=1000)
+b
+```
+
+Verdict: the median is a very slightly biased estimator here — and now we also know its standard error, free of any normality assumption.
 
 ## Copyright Notice
 

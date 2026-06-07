@@ -38,172 +38,224 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
-# **Modeling Relationships**
+# **Predicting Continuous Values**
 
-## A Question to Model
+## What Regression Is For
 
-How many runs does a baseball team score, given its hitting statistics? Team batting data for 2000–2008, loaded the course way:
+A **regression model** relates a continuous **response** (dependent variable) to a set of **predictors** (independent/stimulus variables). Three uses:
 
-```{r,echo=TRUE,cache=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda", temp, mode = "wb")
-load(temp)
-names(team.batting.00to08)
-```
+- **prediction** — a warfarin dose from a patient's weight; a credit customer's balance;
+- **explanation** — how weight relates to food intake, *adjusting for* age, exercise, genetics;
+- **inference** — visualizing trends, ANOVA, testing variable significance.
 
-The linear model assumes
+This chapter starts with the simplest model — **linear regression by ordinary least squares (OLS)** — then builds, evaluates, refines it, and surveys richer model types. Classification waits for Chapter 21.
 
-$$\text{runs} = c_0 + c_1 x_1 + \cdots + c_n x_n + \varepsilon,$$
+# A Simple Linear Model
 
-and `lm()` estimates the coefficients by least squares.
+## The Data and the Question
 
-## Fitting a Model
+Which batting metrics predict a team's runs? Team batting 2000–2008 (extracted by SQL in Chapter 16, packaged as `team.batting.00to08`):
 
 ```{r,echo=TRUE}
-runs.mdl <- lm(runs ~ singles + doubles + triples + homeruns +
-                 walks + hitbypitch + sacrificeflies +
-                 stolenbases + caughtstealing,
-               data = team.batting.00to08)
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda",
+              temp, mode = "wb")
+load(temp)
+```
+
+A lattice scatter of runs against each variable hints at importance — home runs and *walks* both track runs strongly:
+
+```{r,echo=TRUE,fig.height=3.6}
+library(lattice)
+attach(team.batting.00to08)
+forplot <- make.groups(
+  singles=data.frame(value=singles, runs), doubles=data.frame(value=doubles, runs),
+  triples=data.frame(value=triples, runs), homeruns=data.frame(value=homeruns, runs),
+  walks=data.frame(value=walks, runs))
+detach(team.batting.00to08)
+xyplot(runs~value|which, data=forplot, scales=list(relation="free"),
+       pch=19, cex=.2, layout=c(5,1))
+```
+
+## lm: Fitting
+
+`lm` fits a linear model by OLS. Note: in formulas `+ * - ^` are *special*; wrap literal arithmetic in `I()`, and generate polynomial terms with `poly(x, degree=)`.
+
+```{r,echo=TRUE}
+runs.mdl <- lm(
+  formula=runs~singles+doubles+triples+homeruns+
+            walks+hitbypitch+sacrificeflies+
+            stolenbases+caughtstealing,
+  data=team.batting.00to08)
 runs.mdl
 ```
 
-Each coefficient reads "extra runs per extra unit, holding the rest fixed" — a home run is worth roughly three times a single.
+R prints almost nothing on fitting — **information comes from helper functions** (a deliberate contrast with SAS/SPSS).
 
-## Evaluating the Fit
+## Inspecting a Model: summary
 
 ```{r,echo=TRUE}
 summary(runs.mdl)
 ```
 
-Read in this order: residual spread, coefficient significance (stars), then $R^2$ — the share of variance explained.
+The report: residual distribution; a **coefficient table** (estimate, std. error, t-value, p-value, significance stars); and fit statistics — **R² = 0.914**, adjusted R² = 0.911, an overwhelmingly significant F-statistic. Singles, doubles, triples, home runs, walks, HBP, sac flies all matter; stolen bases and caught-stealing do not.
+
+## Model Accessors
+
+Beyond `summary`, a family of extractors:
+
+```{r,echo=TRUE}
+formula(runs.mdl)          # the formula used
+coef(runs.mdl)[1:4]        # coefficients (alias: coefficients)
+head(residuals(runs.mdl))  # residuals; fitted() gives fitted values
+confint(runs.mdl)[1:4, ]   # confidence intervals for coefficients
+```
+
+Others: `effects` (orthogonal effects), `vcov` (variance-covariance matrix), `deviance`, `influence` / `influence.measures`, `anova` (ANOVA table).
+
+## Predicting New Values
+
+`predict(object, newdata, interval=c("none","confidence","prediction"), level=0.95, ...)` applies the model to fresh data — optionally with intervals:
+
+```{r,echo=TRUE}
+newdata <- team.batting.00to08[1, ]
+predict(runs.mdl, newdata, interval="confidence")
+```
+
+`anova(model1, model2, ...)` compares nested models; `update(model, formula)` refits after a formula change — far cheaper than building from scratch on large data.
 
 ## Diagnostic Plots
 
-`plot(model)` produces the standard panel:
+`plot(lm.object)` draws the standard diagnostics — residuals vs. fitted, a normal Q-Q of residuals, scale-location, and residuals vs. leverage:
 
-```{r,echo=TRUE,out.width="72%"}
-par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
+```{r,echo=TRUE,fig.height=4.5}
+par(mfrow=c(2,2))
 plot(runs.mdl)
-par(mfrow = c(1, 1))
+par(mfrow=c(1,1))
 ```
 
-Look for: curvature in *Residuals vs. Fitted* (nonlinearity), departures in the *Q–Q plot* (non-normal errors), funnels in *Scale–Location* (heteroskedasticity), and influential points in *Leverage*.
+Look for: structure in residuals (nonlinearity), departures from the Q-Q line (non-normality), a fanning scale-location (heteroscedasticity), and high-leverage outliers.
 
-## Refining the Model
-
-Drop weak terms and compare nested models:
-
-```{r,echo=TRUE}
-runs.mdl2 <- update(runs.mdl, . ~ . - caughtstealing - stolenbases)
-anova(runs.mdl2, runs.mdl)
-AIC(runs.mdl, runs.mdl2)
-```
-
-- `update()` edits a formula without retyping it.
-- `anova()` tests whether the extra terms earn their keep; `AIC`/`BIC` balance fit against complexity.
-- `step(runs.mdl)` automates the search by AIC.
-
-## Details of lm
-
-Useful arguments and extractors:
+## lm in Detail
 
 ```{r,eval=FALSE,echo=TRUE}
-lm(formula, data, subset = year > 2003,   # fit on a subset
-   weights = w, na.action = na.exclude)
+lm(formula, data, subset, weights, na.action,
+   method = "qr", model = TRUE, x = FALSE, y = FALSE,
+   qr = TRUE, singular.ok = TRUE, contrasts = NULL, offset, ...)
 ```
 
-```{r,echo=TRUE}
-coef(runs.mdl2)[1:4]
-head(residuals(runs.mdl2), 3)
-predict(runs.mdl2, newdata = team.batting.00to08[1:2, ],
-        interval = "prediction")
-```
+The model is $y = c_0 + c_1 x_1 + \cdots + c_n x_n + \varepsilon$; OLS chooses the $c_i$ minimizing the sum of squared **residuals**. Key arguments: `formula` (required); `data`, `subset`, `weights`, `na.action`; `contrasts` controls factor coding (treatment, Helmert, ...); `weights` gives weighted least squares. Companions `glm`, `nls`, `loess`, `rlm` share many of these argument names.
 
-`confint()`, `fitted()`, `model.matrix()` complete the extraction toolkit.
+# When OLS Isn't Enough
+
+## Assumptions and Their Tests
+
+OLS is technically valid only under assumptions — yet often predicts well even when they're bent:
+
+- **linearity** of the response in the predictors;
+- **constant error variance** (homoscedasticity) — test with `car::ncvTest` (non-constant variance score test);
+- predictors not collinear (singular fits);
+- normally distributed, independent errors.
+
+When they fail badly, reach for the alternatives below.
 
 ## Robust and Resistant Regression
 
-Outliers can drag least squares anywhere. Robust alternatives down-weight them:
+Outliers wreck OLS. Two defenses (package `MASS`):
 
-```{r,echo=TRUE,message=FALSE}
+- **Resistant regression** — `lqs` (least trimmed squares, least median of squares): fits using a *subset* of points, ignoring extreme ones;
+- **Robust regression** — `rlm`: M-estimation, down-weighting (rather than discarding) large residuals iteratively.
+
+```{r,eval=FALSE,echo=TRUE}
 library(MASS)
-runs.rlm <- rlm(runs ~ singles + doubles + triples + homeruns + walks,
-                data = team.batting.00to08)
-round(coef(runs.rlm), 3)
+lqs(runs~homeruns+walks, data=team.batting.00to08)   # resistant
+rlm(runs~homeruns+walks, data=team.batting.00to08)   # robust
 ```
-
-- `rlm()` — M-estimation (`MASS`); `lqs()` — resistant fits like least trimmed squares.
-- If robust and ordinary fits disagree sharply, investigate the influential observations before trusting either.
 
 ## Subset Selection and Shrinkage
 
-With many correlated predictors, three strategies tame variance:
+Too many predictors? Three remedies:
 
-- **Subset selection**: `step()`, or exhaustive search via the `leaps` package.
-- **Ridge regression**: keep all terms, shrink coefficients ($L_2$ penalty) — `lm.ridge()` in `MASS`.
-- **Lasso**: shrink *and* select ($L_1$ penalty) — the `glmnet` package fits whole regularization paths efficiently.
+- **Stepwise selection** — `step` (and `MASS::stepAIC`, wider model range) add/drop terms by AIC.
+- **Ridge regression** — `MASS::lm.ridge(formula, data, lambda=)` shrinks coefficients toward zero (L2 penalty), taming collinearity.
+- **Lasso / least angle regression** — `lars::lars(x, y, type=c("lasso","lar","forward.stagewise","stepwise"))` (L1 penalty) shrinks *and* selects, zeroing some coefficients; it computes the entire path at once.
+
+Ridge and lasso are both **penalized regression**; the modern unified tool is `glmnet`.
 
 ```{r,eval=FALSE,echo=TRUE}
-library(glmnet)
-fit <- glmnet(x = as.matrix(predictors), y = runs, alpha = 1)  # lasso
-cv  <- cv.glmnet(as.matrix(predictors), runs)   # pick lambda by CV
+step(runs.mdl)                          # stepwise by AIC
+MASS::lm.ridge(runs~., team.batting.00to08, lambda=seq(0,1,0.1))
 ```
 
-Principal-components and partial-least-squares regression (`pls` package) are the projection-based cousins.
+## Principal Components and PLS Regression
 
-## Generalized Linear Models
+When predictors are many and correlated, regress on *components* instead — package `pls`, both via `mvr` (aliases `pcr`, `plsr`):
 
-`glm()` extends the linear model through a **link function** and an error **family** — one interface for counts, rates, and probabilities:
+- **Principal components regression (`pcr`)** — regress on the leading principal components of the predictors;
+- **Partial least squares (`plsr`)** — components chosen to also correlate with the response.
 
-```{r,echo=TRUE}
-counts <- data.frame(events = c(2, 1, 4, 7, 9, 14),
-                     exposure = 1:6)
-fit.pois <- glm(events ~ exposure, family = poisson, data = counts)
-coef(summary(fit.pois))
+# Generalized and Nonlinear Models
+
+## glm: Generalized Linear Models
+
+`glm` extends linear models to non-normal responses via a **family** and a **link function** — predicting the link of the expected response:
+
+```{r,eval=FALSE,echo=TRUE}
+glm(formula, family = gaussian, data, weights, subset,
+    na.action, start = NULL, ...)
 ```
 
-- `gaussian` reproduces `lm()`; `poisson` models counts; `binomial` gives logistic regression (Chapter 21).
-- Coefficients live on the link scale — exponentiate Poisson/logit coefficients to interpret.
+| Family | Typical link | Use |
+|---|---|---|
+| `gaussian` | identity | ordinary linear regression |
+| `binomial` | logit | binary / proportion outcomes (Chapter 21) |
+| `poisson` | log | counts |
+| `Gamma` | inverse | positive continuous, skewed |
+| `inverse.gaussian` | 1/μ² | |
 
-## Nonlinear and Smooth Models
+(`glmnet` also fits *penalized* GLMs — `family`, `lambda`, `alpha` choosing ridge↔lasso.)
 
-When the relationship is genuinely curved:
+## Nonlinear Models
 
-```{r,echo=TRUE,out.width="60%",message=FALSE}
-fit.lo <- loess(dist ~ speed, data = cars)
-plot(cars, pch = 19)
-lines(seq(4, 25), predict(fit.lo, data.frame(speed = seq(4, 25))),
-      col = "red", lwd = 2)
-```
+When the relationship isn't linear in the parameters:
 
-- `nls()` fits parametric nonlinear curves (you supply the formula and starting values).
-- `loess()` fits local polynomials; `smooth.spline()` penalized splines; `mgcv::gam()` full generalized additive models.
+- **`nls(formula, data, start, ...)`** — nonlinear least squares; you supply the functional form and starting values.
+- **Survival models** — `survival::survreg` (parametric) and `coxph` (Cox proportional hazards), reporting Wald tests on coefficients.
 
-## Survival Models
-
-Time-to-event data with censoring use the `survival` package:
-
-```{r,echo=TRUE,message=FALSE,out.width="60%"}
+```{r,eval=FALSE,echo=TRUE}
+nls(y ~ a * exp(b * x), data=d, start=list(a=1, b=0.1))
 library(survival)
-fit.km <- survfit(Surv(time, status) ~ x, data = aml)
-plot(fit.km, lty = 1:2, xlab = "Weeks", ylab = "Survival")
-legend("topright", c("Maintained", "Nonmaintained"), lty = 1:2)
+coxph(Surv(time, status) ~ age + sex, data=lung)
 ```
 
-- `survfit()` — Kaplan–Meier curves; `survdiff()` — log-rank test; `coxph()` — Cox proportional hazards regression.
-- The `Surv(time, status)` object encodes censoring; ignoring censoring biases everything.
+## Smoothing: Splines, Surfaces, Kernels
 
-## A Modeling Recipe
+For flexible, nonparametric trends:
 
-1. Plot first (Chapters 13–15); guess the functional form.
-2. Fit the simplest plausible model with `lm()`/`glm()`.
-3. Diagnose: `plot(model)`, residuals, influence.
-4. Refine: transform, add/drop terms, or regularize.
-5. Validate on held-out data (Chapter 22's discipline).
-6. Report effect sizes with `confint()`, not just stars [@hastie2009elements].
+- **Splines** — `smooth.spline`, and `splines::ns`/`bs` for use inside formulas;
+- **Polynomial surfaces** — `loess` (local regression) fits a smooth surface from local polynomial fits;
+- **Kernel smoothing** — `ksmooth`, `density`.
+
+```{r,echo=TRUE,fig.height=3.4}
+plot(cars$speed, cars$dist)
+lines(smooth.spline(cars$speed, cars$dist), col="blue")
+lines(loess.smooth(cars$speed, cars$dist), col="red")
+```
+
+## Machine-Learning Regression
+
+The chapter closes by previewing tree-based regression (full treatment: Chapters 21–22):
+
+- **`rpart`** — recursive partitioning (regression trees);
+- **bagging**, **boosting** (`gbm`), **random forests** (`randomForest`) — ensembles of trees, each highly parallelizable (Chapter 26);
+- **PRIM** (patient rule induction method) — bump hunting.
+
+::: {.callout-tip}
+**A workflow, not a function.** Fit with `lm`, *read* `summary`, *look* at `plot`, then iterate with `update` — adding, dropping, or transforming terms. Reach for robust/penalized/nonlinear tools only when the diagnostics demand it.
+:::
 
 ## Copyright Notice
 
