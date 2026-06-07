@@ -246,7 +246,7 @@ Yu-You Liou (NTU)
 </div>
 <ul>
 <li>R is maintained by an international core team of developers and distributed through <strong>CRAN</strong> (the Comprehensive R Archive Network).</li>
-<li>Because the source code is open, anyone can inspect how a method is implemented — and port R to new platforms.</li>
+<li>Because the source code is open, anyone can inspect how a method is implemented — and anyone can port R to a new platform. That openness is precisely why binaries exist for every major desktop system.</li>
 <li>Everything you need for this course costs exactly zero dollars.</li>
 </ul>
 </section></section>
@@ -258,10 +258,17 @@ Yu-You Liou (NTU)
 <section id="the-release-cycle" class="slide level2">
 <h2>The Release Cycle</h2>
 <ul>
-<li>The R Core Team publishes official releases on a regular schedule: a major <code>x.y.0</code> release each spring, followed by patch releases (<code>x.y.1</code>, <code>x.y.2</code>, …) that fix bugs.</li>
+<li>The R Core Team publishes official releases on a regular schedule: historically twice a year (spring and autumn in the book’s era); today, one major <code>x.y.0</code> release each spring, followed by patch releases (<code>x.y.1</code>, <code>x.y.2</code>, …) that fix bugs.</li>
 <li>Version numbers follow the pattern <strong>major.minor.patch</strong>, e.g., <code>4.4.2</code>.</li>
-<li>The language itself is very stable. Release-to-release changes are mostly bug fixes, performance work, and a handful of new functions, so code written for one recent version almost always runs unchanged on another.</li>
-<li>The textbook was written against a much older release (2.15.1); essentially every example still behaves the same way today. Where modern R differs, the slides use the modern behavior.</li>
+<li>A typical release brings bug fixes, performance improvements, and a few new functions. Genuine changes to the <em>language</em> are rare and usually touch only obscure corners (the book’s example: the type of <code>NA</code> in partially initialized arrays changed back in R 2.5).</li>
+</ul>
+</section>
+<section id="version-stability-why-you-should-not-worry" class="slide level2">
+<h2>Version Stability: Why You Should Not Worry</h2>
+<ul>
+<li>The textbook’s code was checked against R <strong>2.15.1</strong> (2012). Because the language is so stable, essentially every example still behaves the same way today; where modern R differs, these slides use the modern behavior.</li>
+<li>The same logic applies to download links: filenames embed the version number (<code>R-4.4.2-win.exe</code>), so the exact name you see will always be newer than any screenshot or book. <strong>Just take the latest one.</strong></li>
+<li>Code you write against one recent version will almost always run unchanged on another. Results across nearby versions should be virtually identical.</li>
 </ul>
 </section>
 <section id="which-version-should-you-use" class="slide level2">
@@ -285,39 +292,28 @@ Yu-You Liou (NTU)
 <h1>Getting and Installing R Binaries</h1>
 
 </section>
-<section id="where-to-download" class="slide level2">
-<h2>Where to Download</h2>
-<p>R has been ported to every major desktop platform, and prebuilt installers (“binaries”) are the easiest way to get it:</p>
+<section id="binaries-and-where-to-find-them" class="slide level2">
+<h2>Binaries, and Where to Find Them</h2>
+<p>A <strong>binary</strong> is a precompiled, ready-to-run build of R — the easiest installation route on every desktop platform. To get one:</p>
 <ol type="1">
-<li>Visit the official site: <a href="https://cran.r-project.org" class="uri">https://cran.r-project.org</a>.</li>
-<li>CRAN is replicated on <strong>mirror sites</strong> around the world. Any mirror works; a geographically close one is usually fastest. The default “0-Cloud” mirror automatically routes you to a good server.</li>
-<li>Pick the download link matching your operating system and run the installer.</li>
+<li>Visit the official site: <a href="https://cran.r-project.org" class="uri">https://cran.r-project.org</a> and follow the <em>Download</em> link.</li>
+<li>The download link leads to a list of <strong>mirror sites</strong>, organized by country. CRAN is replicated worldwide; a geographically close mirror is usually also close on the network, hence fast. The modern “0-Cloud” mirror automatically routes you to a good server, so it is a safe default.</li>
+<li>Pick the installer matching your operating system and run it.</li>
 </ol>
-<div class="callout callout-tip callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Tip</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>Filenames contain version numbers.</strong> Links look like <code>R-4.4.2-win.exe</code> — the exact number will have moved on by the time you look. Always just take the newest one.</p>
-</div>
-</div>
-</div>
+<p>A few platform-specific notes follow — Windows and macOS users normally download and run installers themselves, while Linux users are better served by a package manager.</p>
 </section>
 <section id="windows" class="slide level2">
 <h2>Windows</h2>
 <ul>
 <li>Click <em>Download R for Windows</em> → <em>base</em> → run the <code>.exe</code> installer.</li>
-<li>The default settings are fine: R installs under <code>C:\Program Files\R\</code> and appears in the Start menu.</li>
-<li>Both the installer and R itself are 64-bit on any modern machine; no choices need to be made.</li>
+<li>Installation works like any other Windows program: easy <strong>if you have the right permissions</strong>, awkward if you do not (common on corporate or lab machines).
+<ul>
+<li>Simplest fix: install R as a standard user <strong>into your own file space</strong> (e.g., under your user directory).</li>
+<li>Alternatively, install — and later install packages — as an Administrator account.</li>
+</ul></li>
+<li>The default location is under <code>%ProgramFiles%\R</code> (usually <code>C:\Program Files\R\</code>), with a Start-menu entry in the group <em>R</em>.</li>
+<li>In the book’s day, CRAN shipped only 32-bit Windows builds; today both the installer and R itself are 64-bit on any modern machine, so no choices need to be made.</li>
 </ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="co"># After installing, launch "R x.y.z" from the Start menu,</span></span>
-<span id="cb3-2"><a href=""></a><span class="co"># or better: install RStudio (Chapter 2) and launch that instead.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
 </section>
 <section id="macos" class="slide level2">
 <h2>macOS</h2>
@@ -327,33 +323,63 @@ Yu-You Liou (NTU)
 <li><strong>Apple Silicon</strong> (M-series chips): the <code>arm64</code> package.</li>
 <li><strong>Intel</strong> Macs: the <code>x86_64</code> package.</li>
 </ul></li>
-<li>The <code>.pkg</code> installer places an application called <strong>R</strong> in your Applications folder and a command-line <code>R</code> on your path.</li>
-<li>If you mix the two builds up, R will refuse to start — when in doubt, check <em>About This Mac</em>.</li>
+<li>The <code>.pkg</code> installer places an application called <strong>R</strong> in your Applications folder and a command-line <code>R</code> on your path: download, double-click, follow the prompts.</li>
+<li>As with any application, you need adequate permissions on the machine — on your personal laptop that just means remembering your password; on a managed computer you may need the administrator’s help.</li>
+<li>Older hardware or operating systems? CRAN keeps <strong>legacy builds</strong> of earlier R versions that may suit older systems better. (The book’s era offered separate universal binaries for OS X 10.4/10.5 — the same idea, two decades earlier.)</li>
+<li>If you grab the wrong build for your chip, R will refuse to start — when in doubt, check <em>About This Mac</em>.</li>
 </ul>
 </section>
 <section id="linux-and-unix-package-managers" class="slide level2">
 <h2>Linux and Unix: Package Managers</h2>
-<p>On Linux, the cleanest route is your distribution’s package-management system, which also keeps R updated automatically:</p>
+<p>On Linux, the cleanest route is the distribution’s <strong>package-management system</strong>: it fetches R, resolves every other piece of software R needs, and makes later upgrades a one-line affair. Before you start, make sure you know the root password or have <code>sudo</code> privileges; otherwise you will need the system administrator.</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href=""></a><span class="co"># Debian / Ubuntu</span></span>
-<span id="cb4-2"><a href=""></a><span class="fu">sudo</span> apt-get update</span>
-<span id="cb4-3"><a href=""></a><span class="fu">sudo</span> apt-get install r-base r-base-dev</span>
-<span id="cb4-4"><a href=""></a></span>
-<span id="cb4-5"><a href=""></a><span class="co"># Fedora / Red Hat</span></span>
-<span id="cb4-6"><a href=""></a><span class="fu">sudo</span> dnf install R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href=""></a><span class="co"># Debian / Ubuntu</span></span>
+<span id="cb3-2"><a href=""></a><span class="fu">sudo</span> apt-get update</span>
+<span id="cb3-3"><a href=""></a><span class="fu">sudo</span> apt-get install r-base r-base-dev</span>
+<span id="cb3-4"><a href=""></a></span>
+<span id="cb3-5"><a href=""></a><span class="co"># Fedora / Red Hat (the book's era used: sudo yum install R.x86_64)</span></span>
+<span id="cb3-6"><a href=""></a><span class="fu">sudo</span> dnf install R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <ul>
+<li>Updating later is equally simple: <code>sudo apt-get upgrade</code> or <code>sudo dnf update R</code> brings you to the newest packaged version.</li>
 <li>CRAN maintains its own repositories with newer builds than most distributions ship; instructions for adding them are on the CRAN Linux pages.</li>
 <li><code>r-base-dev</code> (or the equivalent) is worth installing too — it provides the compilers needed to build contributed packages from source.</li>
 </ul>
 </section>
-<section id="linux-and-unix-installing-from-files" class="slide level2">
-<h2>Linux and Unix: Installing from Files</h2>
-<p>If no package manager is available, two alternatives remain:</p>
+<section id="linux-and-unix-installing-from-downloaded-files" class="slide level2">
+<h2>Linux and Unix: Installing from Downloaded Files</h2>
+<p>If you prefer (or a package manager is unavailable), you can download the files and install manually:</p>
 <ul>
-<li><strong>Precompiled binaries</strong> for several distributions can be downloaded from CRAN and installed manually (e.g., with <code>dpkg</code> or <code>rpm</code>).</li>
-<li><strong>Building from source</strong>: download the source tarball from CRAN and run the classic sequence:</li>
+<li>CRAN provides <strong>precompiled packages</strong> for several distributions — Debian, Ubuntu, Fedora/Red Hat, SUSE — plus builds for Solaris.</li>
+<li>On Red Hat–style systems the tool is RPM. The book’s example: having downloaded <code>R-2.15.1.fc10.i386.rpm</code> into <code>~/Downloads</code>, install it with:</li>
 </ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href=""></a><span class="ex">rpm</span> <span class="at">-i</span> ~/Downloads/R-2.15.1.fc10.i386.rpm</span>
+<span id="cb4-2"><a href=""></a><span class="co"># Debian-style equivalent:</span></span>
+<span id="cb4-3"><a href=""></a><span class="co"># sudo dpkg -i r-base-core_*.deb</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li><strong>Other Unix systems</strong> often have their own channels — for instance, R is available through the FreeBSD Ports collection. Consult your system’s documentation for installing third-party software.</li>
+</ul>
+</section></section>
+<section>
+<section id="building-r-from-source" class="title-slide slide level1 center">
+<h1>Building R from Source</h1>
+
+</section>
+<section id="should-you-build-your-own-r" class="slide level2">
+<h2>Should You Build Your Own R?</h2>
+<p>It is standard practice to build R from source on Linux/Unix — but <strong>not</strong> on Windows or macOS, where it is tricky and yields little benefit for ordinary users:</p>
+<ul>
+<li>it will not save <strong>space</strong> — the build pulls in large supporting tools (LaTeX among them);</li>
+<li>it will not save <strong>time</strong> — unless you already have every tool and a glacial network connection;</li>
+<li>the one real payoff is squeezing out extra <strong>performance</strong>, which in practice is rarely the bottleneck, even on large data sets.</li>
+</ul>
+<p>The fact that you <em>can</em> build R anywhere is, however, exactly how R reaches unusual platforms — a direct benefit of open source.</p>
+</section>
+<section id="the-classic-build-sequence" class="slide level2">
+<h2>The Classic Build Sequence</h2>
+<p>For the curious, building on a Unix-like system follows the time-honored ritual:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href=""></a><span class="fu">tar</span> <span class="at">-xzf</span> R-4.4.2.tar.gz</span>
 <span id="cb5-2"><a href=""></a><span class="bu">cd</span> R-4.4.2</span>
@@ -361,7 +387,15 @@ Yu-You Liou (NTU)
 <span id="cb5-4"><a href=""></a><span class="fu">make</span></span>
 <span id="cb5-5"><a href=""></a><span class="fu">sudo</span> make install</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>This is rarely necessary on a desktop, but it is how R reaches unusual platforms — a direct benefit of R being open source.</p>
+<ul>
+<li><code>configure</code> inspects your system and prepares the build; <code>make</code> compiles; <code>make install</code> copies the result into place.</li>
+<li>The textbook defers details to its later chapter on R internals; for the definitive treatment see the manual <em>R Installation and Administration</em> on CRAN.</li>
+</ul>
+</section></section>
+<section>
+<section id="wrapping-up" class="title-slide slide level1 center">
+<h1>Wrapping Up</h1>
+
 </section>
 <section id="checking-your-installation" class="slide level2">
 <h2>Checking Your Installation</h2>
@@ -377,6 +411,19 @@ Yu-You Liou (NTU)
 </div>
 </div>
 <p>If you see sensible output, your installation works and you are ready for Chapter 2, where we tour the user interface.</p>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Keep R current.</strong> When a new version appears (CRAN announces them on the front page), upgrading follows exactly the same steps as installing — and on Linux, your package manager does it for you.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

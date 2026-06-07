@@ -41,139 +41,404 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **Objects with Manners**
+# **Two Object Systems**
 
-## Two Systems, One Idea
+## A Functional Language with OOP Support
 
-R is functional at heart, but ships with object-oriented machinery — twice over:
+At heart R is a **functional** language — and writing functional programs is fine practice. But R also supports **object-oriented programming (OOP)**, the dominant paradigm of Java, C#, Ruby, C++... Many R packages are built with R objects, including the core `stats` package, `lattice`, and `ggplot2`. OOP shines when representing complicated things: statistical models, charts.
 
-- **S3**: informal, lightweight, ubiquitous. A class is just a `class` attribute; dispatch is by naming convention.
-- **S4**: formal classes with declared slots, validity checking, and registered methods [@chambers2008software].
+Two mechanisms coexist, both inherited from S:
+
+- **S3** (~1990): class attributes enabling single-argument methods. The classic modeling software uses S3, so it is everywhere.
+- **S4**: formal classes and methods — multiple dispatch, abstract types, sophisticated inheritance. Used by many newer packages, extensively in Bioconductor.
+
+The book's advice: build *new* abstractions with **S4**; learn **S3** because you must read and extend the vast code that uses it.
+
+## Key Ideas, via Time Series
+
+A time series — equally spaced measurements over time, with a start, end, frequency — makes every OOP concept concrete:
+
+- a **class** is the formal definition; each actual time series is an **instance**; a function operating on the class is a **method**;
+- hiding the storage details (data frame? vector? text?) behind methods is **encapsulation**;
+- a weight-history class that *reuses* the time-series machinery, adding only what differs, exhibits **inheritance** — time series is the **superclass**, weight history the **subclass**;
+- one name (`period`) doing the right thing for different classes is **polymorphism**;
+- building a class out of several component classes is **composition** — and inheriting from more than one class is **multiple inheritance**, which R permits.
+
+(Yes, R already has a time-series class — `ts`, an S3 class in `stats`. That is deliberate: we will rebuild it the S4 way, then dissect the S3 original.)
+
+# An S4 Worked Example
+
+## setClass: Defining TimeSeries
+
+Slots are where an object stores information. We represent a time series by three slots — the data, a start time, an end time (units, frequency, and period are derivable):
+
+```{r,echo=TRUE}
+setClass("TimeSeries",
+  representation(
+    data="numeric",
+    start="POSIXct",
+    end="POSIXct"
+  )
+)
+```
+
+The `representation` names the class of object each slot holds.
+
+## new: Creating an Instance
+
+`new` is the generic constructor: first argument the class name, the rest fill the slots. The default S4 print method shows every slot:
+
+```{r,echo=TRUE}
+my.TimeSeries <- new("TimeSeries",
+  data=c(1, 2, 3, 4, 5, 6),
+  start=as.POSIXct("07/01/2009 0:00:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("07/01/2009 0:05:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"))
+my.TimeSeries
+```
+
+## setValidity: Rejecting Bad Objects
+
+Not all slot values make sense: `end` must not precede `start`, and both must have length 1. Register a validity function with `setValidity` and check with `validObject`:
+
+```{r,echo=TRUE}
+setValidity("TimeSeries",
+  function(object) {
+    object@start <= object@end &&
+    length(object@start) == 1 &&
+    length(object@end) == 1
+  }
+)
+validObject(my.TimeSeries)
+```
+
+(You can also supply the validity function when calling `setClass` — see its full definition.)
+
+## Validation in Action
+
+From now on, `new` checks each candidate and rejects the invalid:
+
+```{r,error=TRUE,echo=TRUE}
+good.TimeSeries <- new("TimeSeries",
+  data=c(7, 8, 9, 10, 11, 12),
+  start=as.POSIXct("07/01/2009 0:06:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("07/01/2009 0:11:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"))
+bad.TimeSeries <- new("TimeSeries",
+  data=c(7, 8, 9, 10, 11, 12),
+  start=as.POSIXct("07/01/2009 0:06:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("07/01/1999 0:11:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"))   # ends before it starts!
+```
+
+## A First Method: period
+
+A plain function that computes the period from the slots:
+
+```{r,echo=TRUE}
+period.TimeSeries <- function(object) {
+  if (length(object@data) > 1) {
+    (object@end - object@start) / (length(object@data) - 1)
+  } else {
+    Inf
+  }
+}
+```
+
+The `@` operator reaches into slots — the implementer's view. Users should get nicer verbs; enter generic functions.
+
+## setGeneric: series
+
+To extract the data series from *any* suitable object — polymorphism — define a function and promote it to a **generic**; the old body becomes the default method:
+
+```{r,echo=TRUE}
+series <- function(object) { object@data }
+setGeneric("series")
+series(my.TimeSeries)
+showMethods("series")
+```
+
+(In OOP terms this is *overloading* the function name.)
+
+## setMethod: period for TimeSeries
+
+Create a generic `period`, then register `period.TimeSeries` as its method for the `TimeSeries` signature:
+
+```{r,echo=TRUE}
+period <- function(object) { object@period }
+setGeneric("period")
+setMethod(period, signature=c("TimeSeries"), definition=period.TimeSeries)
+period(my.TimeSeries)
+```
+
+Calling the generic dispatches to the right definition by class.
+
+## Methods for Existing Generics — Even Operators
+
+You can attach methods to generics that already exist, like `summary` — or to **operators**:
+
+```{r,echo=TRUE}
+setMethod("summary", signature="TimeSeries",
+  definition=function(object, ...) {
+    print(paste(object@start, " to ", object@end, sep="", collapse=""))
+    print(paste(object@data, sep="", collapse=","))
+  }
+)
+summary(my.TimeSeries)
+setMethod("[", signature=c("TimeSeries"),
+  definition=function(x, i, j, ..., drop) { x@data[i] }
+)
+my.TimeSeries[3]
+```
 
 ::: {.callout-note}
-**Key ideas.** A **class** describes a kind of object; an object is an **instance** of its class. A **generic function** (like `print` or `summary`) decides what to do by **dispatching** to a class-specific **method**. **Inheritance** lets one class extend another.
+This works for only *some* built-ins — `print`, notably, cannot be redefined this way. `?S4groupGeneric` lists the redefinable generics; the S3 section below explains why.
 :::
 
-S3 powers most of base R; S4 powers Bioconductor and code that needs rigor. We look at S4 first, then S3.
+## Inheritance: WeightHistory
 
-## A Running Example
-
-Suppose we track people's body-weight history over time. A natural design:
-
-- a `TimeSeries` class holding values plus start/end timestamps;
-- a `WeightHistory` class that **extends** `TimeSeries` with a person's name;
-- generic operations — `period()`, `series()` — implemented per class.
-
-This example exercises every S4 feature in the chapter.
-
-## Defining an S4 Class
-
-`setClass()` declares the class name and its **slots** (typed fields):
-
-```{r,echo=TRUE}
-library(methods)
-setClass("TimeSeries",
-  representation(data = "numeric", start = "POSIXct", end = "POSIXct"))
-
-my.ts <- new("TimeSeries",
-  data  = c(1, 2, 1, 4, 5),
-  start = as.POSIXct("2026-09-22 09:00:00"),
-  end   = as.POSIXct("2026-09-22 09:04:00"))
-my.ts@data            # slots are accessed with @
-```
-
-`new()` constructs instances; printing an S4 object lists its slots.
-
-## Validity Checking
-
-A validity function rejects malformed objects at construction time:
-
-```{r,echo=TRUE,error=TRUE}
-setValidity("TimeSeries", function(object) {
-  if (object@start <= object@end) TRUE
-  else "start must precede end"
-})
-new("TimeSeries", data = 1:3 + 0,
-    start = as.POSIXct("2026-01-02"), end = as.POSIXct("2026-01-01"))
-```
-
-This is the major practical advantage of S4 over S3: the system enforces your invariants for you.
-
-## Generic Functions and Methods (S4)
-
-`setGeneric()` declares a generic; `setMethod()` registers an implementation for a class:
-
-```{r,echo=TRUE}
-setGeneric("period", function(object) standardGeneric("period"))
-setMethod("period", "TimeSeries", function(object) {
-  (object@end - object@start) / (length(object@data) - 1)
-})
-period(my.ts)
-```
-
-You can also add methods for *existing* generics — e.g., a `summary` method for `TimeSeries` — and R will dispatch automatically.
-
-## Inheritance (S4)
-
-`contains=` makes one class extend another; the child inherits slots, validity, and methods:
+A weight history is a time series plus a person's name and height. `contains` declares the superclass; the new class adds only its extra slots:
 
 ```{r,echo=TRUE}
 setClass("WeightHistory",
-  contains = "TimeSeries",
-  representation(name = "character"))
-
-kim <- new("WeightHistory",
-  data  = c(63, 62.5, 62),
-  start = as.POSIXct("2026-01-01"), end = as.POSIXct("2026-03-01"),
-  name  = "Kim")
-period(kim)        # inherited method just works
-kim@name
+  representation(height = "numeric", name = "character"),
+  contains = "TimeSeries")
+john.doe <- new("WeightHistory",
+  data=c(170, 169, 171, 168, 170, 169),
+  start=as.POSIXct("02/14/2009 0:00:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("03/28/2009 0:00:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"),
+  height=72, name="John Doe")
 ```
 
-A class can inherit from several parents; method dispatch picks the most specific match.
+R validates the embedded TimeSeries automatically (try an invalid one yourself).
 
-## S3: Classes by Convention
+## Multiple Inheritance: Person + TimeSeries
 
-In S3, the "class" is nothing but an attribute, and a method is nothing but a function named `generic.class`:
+A cleaner composition: define a `Person` class, then inherit from **both**:
 
 ```{r,echo=TRUE}
-cat_record <- list(name = "Mochi", weight = 4.2)
-class(cat_record) <- "cat"
+setClass("Person",
+  representation(height = "numeric", name = "character"))
+setClass("AltWeightHistory",
+  contains = c("TimeSeries", "Person"))
+```
 
-print.cat <- function(x, ...) {
-  cat("Cat:", x$name, "—", x$weight, "kg\n")
+Identical behavior, slightly cleaner design — and `AltWeightHistory` now inherits methods from both parents.
+
+## Virtual Classes: setClassUnion
+
+Add a `Cat` class — cats have names too. To write one `is.fluffy` method covering people *and* cats, create a **virtual class** above both with `setClassUnion`:
+
+```{r,echo=TRUE}
+setClass("Cat",
+  representation(breed = "character", name = "character"))
+setClassUnion("NamedThing", c("Person", "Cat"))
+```
+
+Methods can target `NamedThing`; objects cannot be created from it (its representation is ambiguous). A subclass method (say, `is.fluffy` for `Person`) would override the parent's. Bonus — class membership is testable:
+
+```{r,echo=TRUE}
+jane.doe <- new("AltWeightHistory",
+  data=c(130, 129, 131, 128, 130, 129),
+  start=as.POSIXct("02/14/2009 0:00:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("03/28/2009 0:00:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"),
+  height=67, name="Jane Doe")
+is(jane.doe, "NamedThing")
+is(john.doe, "TimeSeries")
+```
+
+# S4 in Depth
+
+## setClass: the Full Signature
+
+```{r,eval=FALSE,echo=TRUE}
+setClass(Class, representation, prototype, contains=character(),
+         validity, access, where, version, sealed, package,
+         S3methods = FALSE)
+```
+
+| Argument | Description |
+|---|---|
+| `Class` | name of the new class (the only required argument) |
+| `representation` | named list of slots and their classes (`"ANY"` allows anything) |
+| `prototype` | object holding default slot values |
+| `contains` | names of superclasses this class extends |
+| `validity` | validity-checking function (default: none; changeable via `setValidity`) |
+| `where` | environment to store the definition (default: where `setClass` was called) |
+| `sealed` | may the class be redefined by another `setClass`? |
+| `package` | package name for the class |
+| `S3methods` | may S3 methods be written for this class? (default `FALSE`) |
+| `access`, `version` | unused; S-PLUS compatibility |
+
+Helpers `representation()` and `prototype()` (in `methods`) ease definitions that extend a basic type, have several superclasses, or mix both.
+
+## Slot Rules, .Data, and Friends
+
+- **Forbidden slot names** — reserved for attributes: `class`, `comment`, `dim`, `dimnames`, `names`, `row.names`, `tsp`. (Objects can have both slots *and* attributes.)
+- Extending a **basic type** (the table later in this chapter) yields a `.Data` slot holding the basic part — code written for the built-in type keeps working, acting on `.Data`.
+- `setIs(class1, class2, ...)` declares inheritance explicitly — an alternative to `contains`.
+- On creation, R runs the class's **`initialize`** method if defined — typically to compute derived slots.
+- `setClassUnion(name, members, where)` creates the virtual superclass seen earlier.
+
+## New Objects and Slot Access
+
+- `new(c, ...)` — the **constructor**: named arguments fill slots; an `initialize` method (if any) runs afterward.
+- Reading slots: `object@slotname`, or equivalently `slot(object, "slotname")`.
+- Writing slots uses ordinary assignment, with validity checked by default:
+
+```{r,eval=FALSE,echo=TRUE}
+birthdate@month <- "June"
+slot(birthdate, "month") <- "June"
+slot(birthdate, "month", check=FALSE) <- "June"   # skip validation: usually unwise
+```
+
+## Working with Objects, and Coercion
+
+Object inspection vocabulary:
+
+- `is(o, c)` — is object `o` a member of class `c`? `extends(c1, c2)` — does class `c1` extend `c2`?
+- `slotNames(o)` / `slotNames(c)` — slot names of an object / class; `getSlots(c)` — the *classes* of each slot (nonintuitively).
+
+Conversion: `as(o, c)` coerces object `o` to class `c`. For your own classes, register coercion methods with **`setAs`**:
+
+| Argument | Description |
+|---|---|
+| `from`, `to` | class names of input and output |
+| `def` | function performing the conversion |
+| `replace` | function for the replacement form (when `as` is assigned into) |
+| `where` | environment for the definition |
+
+## setGeneric and setMethod: Full Signatures
+
+`setGeneric(name, def=, group=list(), valueClass=character(), where=, package=, signature=, useAsDefault=, ...)` — key arguments:
+
+- `name` / `def` — name and optional defining function; `group` — group generic (see `?S4groupGeneric`);
+- `valueClass` — class(es) the return value must belong to; `signature` — formal-argument names and classes (`"ANY"` = anything);
+- `useAsDefault` — which function becomes the default method.
+
+`setMethod(f, signature=character(), definition, where=, valueClass=NULL, sealed=FALSE)`:
+
+- `f` — generic (or its name); `signature` — argument classes to match; `definition` — the function to call; `sealed` — prevent redefinition.
+
+## Managing Generics and Methods
+
+Bookkeeping functions from the `methods` package:
+
+| Function | Description |
+|---|---|
+| `isGeneric` / `isGroup` | does a generic / group generic of this name exist? |
+| `removeGeneric` / `removeMethods` | remove a generic with its methods / just the methods |
+| `getMethod`, `selectMethod` | fetch the method for a function + signature |
+| `existsMethod`, `hasMethod` | does such a method exist? |
+| `findMethod` | which package(s) contain it? |
+| `showMethods` | display all methods of an S4 generic |
+| `dumpMethod` / `dumpMethods` | dump one / all methods to code |
+| `findFunction` | where on the search list a function is defined |
+
+More help: `library(help="methods")`.
+
+## Basic Classes
+
+Classes of the built-in types — everything is built on these, and you may write methods for them:
+
+| Category | Object type | Class |
+|---|---|---|
+| Vectors | `integer` / `double` / `complex` / `character` / `logical` / `raw` | `integer` / `numeric` / `complex` / `character` / `logical` / `raw` |
+| Compound | `list` / `pairlist` / `environment` | `list` / `pairlist` / `environment` |
+| Special | `NULL` | `NULL` |
+| Language | `symbol` / `language` / `expression` | `name` / `call` / `expression` |
+| Functions | `closure` / `special` / `builtin` | `function` |
+| Other | `externalptr` | `externalptr` |
+
+The six vector classes all extend the virtual class `vector`.
+
+# Old-School OOP: S3
+
+## S3 Classes Are Just Attributes
+
+An S3 object is a primitive object wearing extra attributes — one of them named `class`. No formal definition exists; you can change the attributes by hand. (S3 resembles prototype-based languages like JavaScript.) Dissecting the built-in `ts` class:
+
+```{r,echo=TRUE}
+my.ts <- ts(data=c(1, 2, 3, 4, 5), start=c(2009, 2), frequency=12)
+my.ts
+attributes(my.ts)
+typeof(my.ts)
+unclass(my.ts)
+```
+
+A `ts` is a double vector plus `class` and `tsp` attributes. And S4 tools don't apply:
+
+```{r,error=TRUE,echo=TRUE}
+my.ts@tsp
+```
+
+S3 inheritance is informal — a class attribute with several elements means the first is the class, the rest are "inherited" classes, making inheritance a property of *objects*, not classes. Encapsulation is unenforced; parametric polymorphism is absent. Simple polymorphism, however, works — via S3 generics.
+
+## S3 Methods: Naming Convention + UseMethod
+
+S3 generics dispatch **by naming convention**, not registration:
+
+1. pick a generic name, say `gname`;
+2. define `gname` with body `UseMethod("gname")`;
+3. for each class, define `gname.classname` whose first argument is such an object.
+
+The real thing:
+
+```{r,echo=TRUE}
+plot
+```
+
+`UseMethod` walks the object's class vector looking for `plot.class`; failing everything, it tries `plot.default`. (`NextMethod`, callable inside a method, hands off to the next available method.)
+
+## Adding an S3 Method to Our S4 Class
+
+Give `TimeSeries` a plot method by *merely naming a function correctly*:
+
+```{r,echo=TRUE}
+plot.TimeSeries <- function(x, ...) {
+  plot(x@data, ...)
 }
-print(cat_record)        # print() dispatches to print.cat
+plot(my.TimeSeries)
 ```
 
-No declarations, no validation — convention all the way down. `UseMethod()` inside a function makes it a generic.
+`plot(my.TimeSeries)` quietly becomes `plot.TimeSeries(my.TimeSeries)`.
 
-## How S3 Dispatch Works
+## S3 Inside S4: setOldClass
 
-```{r,echo=TRUE}
-describe <- function(x) UseMethod("describe")
-describe.default <- function(x) "some object"
-describe.numeric <- function(x) paste("numbers, mean =", mean(x))
-describe(letters)
-describe(c(1, 2, 3))
+S4 slots cannot hold an S3 class directly — first wrap it with `setOldClass(Classes, prototype, where, test=FALSE, S4Class)`:
+
+- `Classes` — name(s) of the old-style class;
+- `prototype` — default object for the S4 class;
+- `test` — set `TRUE` if there can be multiple inheritance;
+- `S4Class` — an S4 class definition to base the new class on.
+
+## Finding Hidden S3 Methods
+
+Package authors may **hide** individual methods to push you toward the generic — encapsulation by obscurity:
+
+```{r,error=TRUE,echo=TRUE}
+library(lattice)
+methods(histogram)
+histogram.factor()
 ```
 
-- The `class()` vector is searched left to right for a matching `generic.class` function; `.default` is the fallback.
-- `methods("describe")` lists available methods; `inherits(x, "cat")` tests class membership.
+To read the hidden code anyway:
 
-## S3 and S4 Compared
+```{r,eval=FALSE,echo=TRUE}
+getS3method(f="histogram", class="formula")
+getAnywhere(histogram.formula)
+```
 
-| Aspect | S3 | S4 |
-|:---|:---|:---|
-| Class definition | `class(x) <- "name"` | `setClass()` with typed slots |
-| Field access | `x$field` | `x@slot` |
-| Method | function named `generic.class` | `setMethod()` |
-| Validation | none | `setValidity()` |
-| Cost | minimal | ceremony |
-
-- Use **S3** for everyday work and quick polymorphism; it is what `lm`, `data.frame`, and most of CRAN use.
-- Use **S4** when correctness matters more than brevity — large systems, complex hierarchies, Bioconductor.
-- Newer systems exist (R5 reference classes, R6, S7), all built on the same attribute machinery.
+::: {.callout-tip}
+**Modern footnote.** Today's ecosystem adds further systems — `R6` for mutable reference objects and `S7` as the planned successor unifying S3/S4. The concepts you just learned (classes, methods, dispatch, inheritance) transfer directly.
+:::
 
 ## Copyright Notice
 

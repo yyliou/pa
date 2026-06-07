@@ -41,11 +41,22 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **Your First Half Hour in R**
+# **Learning by Typing**
 
-## Basic Operations
+## How to Use This Chapter
 
-Type an expression at the prompt; R evaluates it and prints the value. Arithmetic works exactly as you would hope, with the usual precedence rules:
+This chapter is a hands-on tour of R, packed with examples. The best way to learn is to **start R and type along**:
+
+- enter exactly what the slides show — or change it slightly and see what happens (the book's suggestion: if the example says `3 + 4`, try `3 - 4`);
+- everything happens at the console, so if terms like *prompt* or *expression* feel foreign, revisit Chapter 2 first.
+
+By the end you will have touched every major idea in the course: vectors, functions, variables, data structures, classes, models, charts, and the help system.
+
+# Basic Operations in R
+
+## Expressions and Evaluation
+
+Type an expression at the console, press Enter, and R **evaluates** it and prints the result (if there is one). Simple math works exactly as expected, including operator precedence and parentheses:
 
 ```{r,echo=TRUE}
 1 + 2 + 3
@@ -53,249 +64,564 @@ Type an expression at the prompt; R evaluates it and prints the value. Arithmeti
 (1 + 2) * 3
 ```
 
-The `[1]` in front of each answer is a hint about R's deepest design decision: **every number is a vector**. The bracketed number is the index of the first element printed on that row — here each result is a vector of length one.
+The interactive interpreter automatically prints whatever object an expression returns — that is why you see the answers without asking for them.
 
-## Vectors
+## The Mysterious `[1]`: Everything Is a Vector
 
-A vector is an ordered collection of values. Build one with `c()` ("combine"), or generate integer sequences with the colon operator:
+Why does every answer start with `[1]`? Because **any number you type is a vector** — an ordered collection of numbers. The bracketed number is the *index of the first element shown on that row*. Each result above is a vector with a single element, hence `[1]`.
+
+Longer vectors are built with the `c(...)` function (*c* for **combine**):
 
 ```{r,echo=TRUE}
-c(0, 1, 1, 2, 3, 5, 8)
+c(0, 1, 1, 2, 3, 5, 8)   # first seven Fibonacci numbers
+```
+
+## Indices Across Multiple Lines
+
+The **sequence operator** `:` produces consecutive integers — handy for seeing how row labels work when output wraps:
+
+```{r,echo=TRUE}
 1:50
 ```
 
-With a long vector, the leading `[23]`-style labels show the index of the first element of each printed row.
+Each row begins with the index of its first element (e.g., `[23]`, `[45]`), so you can locate any element at a glance.
 
-## Vector Arithmetic
+## Vector Arithmetic Is Pairwise
 
-Operations between two vectors are applied **element by element**:
+Operations on two vectors are matched **element by element**, returning a new vector:
 
 ```{r,echo=TRUE}
 c(1, 2, 3, 4) + c(10, 20, 30, 40)
 c(1, 2, 3, 4) * c(10, 20, 30, 40)
+c(1, 2, 3, 4) - c(1, 1, 1, 1)
 ```
 
-If the lengths differ, the shorter vector is **recycled** — repeated until it covers the longer one:
+This is the single most characteristic habit of R: you rarely loop over elements — you operate on whole vectors at once.
+
+## Recycling: Unequal Lengths
+
+When the vectors differ in length, R **recycles** the shorter one, repeating it as many times as needed:
 
 ```{r,echo=TRUE,warning=TRUE}
 c(1, 2, 3, 4) + 1
+1 / c(1, 2, 3, 4, 5)
 c(1, 2, 3, 4) + c(10, 100)
 c(1, 2, 3, 4, 5) + c(10, 100)
 ```
 
-R warns you when the longer length is not a multiple of the shorter — usually the sign of a bug.
+::: {.callout-warning}
+**Watch the warning.** If the longer length is not a multiple of the shorter, R still computes an answer but warns you — usually a sign of a mistake in your code.
+:::
 
-## Character Vectors and Comments
+## Character Vectors
 
-Text values are **character vectors**; what other languages call a "string" is a single character value in R:
+Expressions can involve text too:
 
 ```{r,echo=TRUE}
 "Hello world."
 c("Hello world", "Hello R interpreter")
 ```
 
-Anything after a `#` on a line is a comment and is ignored by the interpreter:
+- A quoted string is a **character vector** of length 1; combining two gives length 2.
+- Terminology alert for C programmers: in C, a "character" is a single letter and an ordered set is a "string"; in R, what C calls a string is a single **character value**.
+
+## Comments
+
+Anything after a pound sign (`#`) on a line is ignored — even mid-expression:
 
 ```{r,echo=TRUE}
-1 + 2 + # comments can even sit mid-expression
+# a comment at the beginning of a line
+1 + 2 + # and one in the middle
   3
 ```
 
-## Functions
+Comment generously: your future self is the most frequent reader of your code.
 
-Work in R is done by **functions**, called in the familiar mathematical form `f(argument1, argument2, ...)`:
+# Functions
+
+## Calling Functions
+
+In R, the operations that do the work are **functions** — just like math class. Most calls take the form `f(argument1, argument2, ...)`:
 
 ```{r,echo=TRUE}
 exp(1)
-cos(pi)
+cos(3.141593)
 log2(1)
 ```
 
-Arguments can be matched **by name** or **by position**:
+Each of these takes a single argument. Many functions take several.
+
+## Named and Positional Arguments
+
+Arguments can be supplied **by name**, or **by position** when given in the default order:
 
 ```{r,echo=TRUE}
 log(x = 64, base = 4)
 log(64, 4)
 ```
 
-::: {.callout-note}
-**Operators are functions too.** Symbols like `+`, `^`, and `==` are translated into function calls by the interpreter. `2 ^ 10` and `"^"(2, 10)` are the same computation.
-:::
+Both calls are identical. Named arguments shine when a function has many parameters and you want to set only a few.
+
+## Operators Are Functions Too
+
+Not every function looks like `f(...)`. Some appear as **operators**:
 
 ```{r,echo=TRUE}
+17 + 2
 2 ^ 10
 3 == 4
 ```
 
-## Variables
+- `+` is ordinary addition; `^` is exponentiation (note: *not* commutative); `==` tests equality and returns a **Boolean** (`TRUE`/`FALSE`) — yes, R has a logical data type.
+- Under the hood, the interpreter translates every operator into an equivalent function call — a fact we exploit in Chapter 5.
 
-Assign a value to a name with the arrow operator `<-`, then reuse it:
+# Variables
+
+## Assignment: `x <- 1`, Read "x gets 1"
+
+R lets you attach names to values. The assignment operator is `<-`, pronounced **"gets"** — pleasingly close to algorithm pseudocode:
 
 ```{r,echo=TRUE}
 x <- 1
-y <- c(2, 4, 6)
-x + y
+y <- 2
+z <- c(x, y)
+z
 ```
 
-- Names are case-sensitive: `x` and `X` are different variables.
-- Variables can hold any object — vectors, functions, model results, entire data sets.
-- `ls()` lists the variables currently defined; `rm(x)` removes one.
-- `=` also assigns at the top level, but `<-` is the universal R convention and the one we use.
+## Substitution Happens at Assignment Time
 
-# Data Structures
-
-## Arrays and Matrices
-
-An **array** is a vector that carries a `dim` attribute describing its shape; a **matrix** is the two-dimensional special case:
+The value is substituted **when the assignment is made**, not when the variable is later evaluated. Change `y` after building `z`, and `z` is unmoved:
 
 ```{r,echo=TRUE}
-a <- array(1:12, dim = c(3, 4))
-a
-m <- matrix(1:12, nrow = 3, ncol = 4)
-a[2, 2]
+y <- 4
+z
 ```
 
-Arrays may have three or more dimensions:
+The subtleties of how variables are evaluated (environments, lazy evaluation) wait until Chapter 8.
+
+## Indexing a Vector by Position
+
+R offers several ways to refer to members of a vector:
+
+```{r,echo=TRUE}
+b <- c(1,2,3,4,5,6,7,8,9,10,11,12)
+b[7]          # the 7th item
+b[1:6]        # items 1 through 6
+b[c(1,6,11)]  # items 1, 6, and 11
+b[c(8,4,9)]   # out of order: returned in the order referenced
+```
+
+The index vector can be any integer vector — contiguous, scattered, even shuffled.
+
+## Indexing with a Logical Vector
+
+You can also select elements with a vector of `TRUE`/`FALSE` values. Example: keep only multiples of 3, i.e., elements congruent to 0 (mod 3):
+
+```{r,echo=TRUE}
+b %% 3 == 0          # the logical mask
+b[b %% 3 == 0]       # apply it
+```
+
+This *filter by condition* idiom is the workhorse of data analysis in R — you will use it constantly.
+
+## Two More Assignment Operators
+
+- **`=` also assigns**, left to right, like most languages. Use it if you prefer — but the book (and these slides) stick with `<-` for readability. Never confuse `=` (assign) with `==` (test equality):
+
+```{r,echo=TRUE}
+one <- 1; two <- 2
+one = two    # assigns! one is now 2
+one
+one <- 1; two <- 2
+one == two   # compares
+```
+
+- **`->` assigns to the right** — occasionally handy when you typed a long expression and only then remembered to save it:
+
+```{r,echo=TRUE}
+3 -> three
+three
+```
+
+::: {.callout-warning}
+Inside a function call, `f(x <- 3)` assigns `x` in your workspace *and then* passes the value — almost never what you intend. Use `=` to bind arguments: `f(x = 3)`.
+:::
+
+## Functions Are Objects with Names
+
+A function is just another object bound to a symbol. Define your own and call it like a built-in:
+
+```{r,echo=TRUE}
+f <- function(x, y) { c(x + 1, y + 1) }
+f(1, 2)
+```
+
+A useful trick follows: typing the *name alone* (no parentheses) prints the function's source code:
+
+```{r,echo=TRUE}
+f
+```
+
+This works on most built-in functions too — R is open source all the way down.
+
+# Introduction to Data Structures
+
+## Arrays
+
+An **array** is a multidimensional vector. Internally, vectors and arrays are stored identically — an array is simply a vector wearing a dimension attribute — but arrays display and index differently:
+
+```{r,echo=TRUE}
+a <- array(c(1,2,3,4,5,6,7,8,9,10,11,12), dim = c(3, 4))
+a
+a[2, 2]      # row 2, column 2
+```
+
+Compare the same contents as a plain vector:
+
+```{r,echo=TRUE}
+v <- c(1,2,3,4,5,6,7,8,9,10,11,12)
+v
+```
+
+## Matrices and Higher Dimensions
+
+A **matrix** is just a two-dimensional array:
+
+```{r,echo=TRUE}
+m <- matrix(data = c(1,2,3,4,5,6,7,8,9,10,11,12), nrow = 3, ncol = 4)
+m
+```
+
+Arrays may have more than two dimensions:
 
 ```{r,echo=TRUE}
 w <- array(1:18, dim = c(3, 3, 2))
-w[1, 1, 2]
+w[1, 1, 1]
 ```
 
-## Indexing
+(Printed in full, `w` appears as two 3×3 slices labeled `, , 1` and `, , 2`.)
 
-R's subscript notation is concise: one index per dimension, separated by commas, with an empty slot meaning "everything":
+## Slicing Arrays
+
+R's indexing syntax for parts of an array is clean: one index per dimension, separated by commas — and **omitting an index selects everything** in that dimension:
 
 ```{r,echo=TRUE}
-a[1, ]          # first row
-a[, 1]          # first column
-a[1:2, 1:2]     # a sub-block
-a[c(1, 3), ]    # noncontiguous rows
+a[1, 2]        # single cell
+a[1:2, 1:2]    # submatrix
+a[1, ]         # first row only
+a[, 1]         # first column only
+a[1:2, ]       # a range of rows
+a[c(1, 3), ]   # even a noncontiguous set of rows
 ```
 
-## Lists
+## Lists: Mixing Types
 
-Vectors and arrays hold a single type. A **list** can mix types freely, with optionally named components reachable by name or position:
+Everything so far held a single data type. **Lists** hold a heterogeneous collection of objects, with optionally named components — subtly different from "lists" in other languages:
 
 ```{r,echo=TRUE}
-e <- list(thing = "hat", size = 8.25)
-e$thing
-e[[2]]
+e <- list(thing = "hat", size = "8.25")
+e
 ```
 
-Lists are the workhorse container of R: model results, parsed files, and most complex objects are lists underneath.
+Items are accessible by name or by position — note the three distinct forms:
+
+```{r,echo=TRUE}
+e$thing    # by name: the element itself
+e[1]       # single bracket: a sublist
+e[[1]]     # double bracket: the element itself
+```
+
+## Lists Inside Lists
+
+A list can even contain other lists:
+
+```{r,echo=TRUE}
+g <- list("this list references another list", e)
+g
+```
+
+This nesting ability is what lets R represent arbitrarily complex objects — fitted models, for instance, are big nested lists.
 
 ## Data Frames
 
-A **data frame** is a list of equal-length vectors displayed as a table — the standard representation of a data set, with one row per observation and one column per variable:
+A **data frame** is a list of named vectors, all the same length — think *spreadsheet* or *database table*. It is the natural container for experimental data. The book's example: 2008 win/loss records of the National League East:
 
 ```{r,echo=TRUE}
-teams <- data.frame(
-  team   = c("PHI", "NYM", "FLA", "ATL", "WSN"),
-  wins   = c(92, 88, 84, 72, 59),
-  losses = c(70, 74, 78, 90, 102)
-)
-teams
-teams$wins
+teams <- c("PHI","NYM","FLA","ATL","WSN")
+w <- c(92, 89, 94, 72, 59)
+l <- c(70, 73, 77, 90, 102)
+nleast <- data.frame(teams, w, l)
+nleast
 ```
 
-## Objects and Classes
+## Picking Values Out of a Data Frame
 
-Every value in R is an **object**, and every object has a **class** that describes what it is:
+Columns are reached with the `$` operator (just like list components):
 
 ```{r,echo=TRUE}
-class(c(1, 2, 3))
-class("hello")
+nleast$w
+```
+
+To find a specific value — say, losses by the Florida Marlins — build a logical vector and use it as a filter:
+
+```{r,echo=TRUE}
+nleast$teams == "FLA"
+nleast$l[nleast$teams == "FLA"]
+```
+
+Chapter 11 shows how to import data frames from files and databases; beyond lists, R also offers formal class definitions via **S4 objects** for heterogeneous data.
+
+# Objects and Classes
+
+## Every Object Has a Class
+
+R is an object-oriented language: every object has a type and belongs to a **class**. We have met several classes already — query them with `class()`:
+
+```{r,echo=TRUE}
 class(teams)
-class(sin)
+class(w)
+class(nleast)
+class(class)
 ```
 
-Generic functions such as `print()` and `summary()` inspect the class of their argument and dispatch to an appropriate method — which is why `summary()` of a vector and `summary()` of a regression look completely different. Chapter 10 examines this machinery in depth.
+Note the last line: a *function* is an object of class `function`.
 
-# Models and Graphics
+## Methods and Generic Functions
 
-## Models and Formulas
+- Functions tied to a specific class are called **methods**. (R's class system is far less formal than Java's — not every function belongs to a class.)
+- Methods for different classes may share one name: such names are **generic functions**. They buy you two things:
+  1. easy guessing — the function name you know probably works on the new class;
+  2. code reuse — one piece of code can handle many types.
 
-Statistical relationships are written in R's **formula notation**: `y ~ x1 + x2` reads "model `y` as a function of `x1` and `x2`." For a linear model
+Example: `+` is generic. It adds numbers, but also knows what to do with a date and a number:
 
-$$y = c_0 + c_1 x_1 + c_2 x_2 + \cdots + c_n x_n + \varepsilon,$$
+```{r,echo=TRUE}
+17 + 6
+as.Date("2009-09-08") + 7
+```
 
-we fit with `lm()`. The classic `cars` data set (1920s stopping distances) is built in:
+## The Hidden `print` Call
+
+When you evaluate an expression at the console, the interpreter silently calls the generic function `print` on the result:
+
+```{r,echo=TRUE}
+x <- 1 + 2 + 3 + 4
+x          # actually runs print(x)
+```
+
+- Define a new class, define a `print` method for it, and you control how its objects display.
+- Some packages exploit this: **lattice** plotting functions *return* objects without drawing; the console's automatic `print` is what plots them. Call a lattice function inside another function or script and nothing appears unless you `print` it explicitly — a classic gotcha.
+
+Objects return in depth in Chapter 7; classes in Chapter 10.
+
+# Models and Formulas
+
+## What Is a Model?
+
+To statisticians, a **model** concisely describes a set of data, usually via a mathematical formula. Two typical goals:
+
+- **predictive** — train on data, predict new values;
+- **descriptive** — understand the data better.
+
+For a linear model predicting $y$ from $x_1, x_2, \ldots, x_n$ (the **dependent** and **independent** variables):
+
+$$y = c_0 + c_1 x_1 + c_2 x_2 + \cdots + c_n x_n + \varepsilon$$
+
+R expresses the relationship as `y ~ x1 + x2 + ... + xn` — a **formula object**.
+
+## Fitting a Linear Model: `lm`
+
+The `cars` data set (in the base distribution, collected in the 1920s) records car speeds and stopping distances. Assume stopping distance is a linear function of speed; the formula is `dist ~ speed`, and `lm` estimates the parameters:
 
 ```{r,echo=TRUE}
 cars.lm <- lm(formula = dist ~ speed, data = cars)
 cars.lm
 ```
 
-## Inspecting a Model
+Printing an `lm` object shows the original call (so you can see data and formula) and the estimated coefficients.
 
-Printing shows only the call and coefficients; `summary()` reports residuals, standard errors, $t$-statistics, $p$-values, and $R^2$:
+## More Detail: `summary`
 
 ```{r,echo=TRUE}
 summary(cars.lm)
 ```
 
-The fitted object is itself data — you can extract coefficients, residuals, and predictions from it. Part V of the course is devoted to models like this.
+The summary reports the call, the residual distribution, the coefficient table (estimates, standard errors, $t$-values, $p$-values), and fit statistics ($R^2$, $F$-statistic).
 
-## Loading the Course Data Sets
+## To Name or Not to Name?
 
-The textbook ships its example data in a `nutshell` package and loads it with `library(nutshell); data(...)`. That package is no longer on CRAN, so **this course uses a simpler convention**: download each data set from the CRAN GitHub mirror to a temporary file, then load it.
+You may also fit-and-inspect in one breath, without saving the model:
+
+```{r,eval=FALSE,echo=TRUE}
+lm(dist ~ speed, data = cars)
+summary(lm(dist ~ speed, data = cars))
+```
+
+Convenient — but naming the model is usually wiser:
+
+- follow-up analyses (residual plots, extra statistics, adding/dropping variables) need the object;
+- refitting a complex model on big data is slow; a saved object spares you;
+- named objects make code easier to read and modify.
+
+# Charts and Graphics
+
+## The Graphics Toolbox
+
+R ships several visualization systems: **graphics** (the classic base system), **grid**, and **lattice** — with `graphics` and `lattice` the most used in the book's era (and **ggplot2**, Chapter 15, dominating today).
+
+- Everything Excel can draw — column, bar, line, pie, scatter — R draws too, with far better automation and customization.
+- And then hundreds of chart types Excel never dreamed of.
+
+To make this concrete, the book uses real data: every field goal attempted in the NFL in 2005. (A field goal: kicking the ball between the goalposts for 3 points; a miss hands possession to the other team at the spot of the kick.)
+
+## Loading the Example Data
+
+The book loads data with `library(nutshell)`; that package has left CRAN, so this course fetches the same data sets from the CRAN GitHub mirror:
 
 ```{r,echo=TRUE}
-# book style (do not use):  library(nutshell); data(field.goals)
-# course style:
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda",
+              temp, mode = "wb")
 load(temp)
 names(field.goals)
 ```
 
-::: {.callout-tip}
-**Pattern to remember.** Replace `xxx` with the data set name:
-`temp <- tempfile(fileext = ".rda")`
-`download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/xxx.rda", temp, mode = "wb")`
-`load(temp)`
-:::
+`names()` lists the columns: home and away team, week, quarter, offense, defense, play type, yards, stadium type, player.
 
-## Charts and Graphics
+## A First Histogram
 
-The `field.goals` data records every NFL field-goal attempt in 2005 (a kick worth 3 points; `yards` is the attempt distance). A histogram takes one line:
+The `hist` function shows a distribution in one line:
 
-```{r,echo=TRUE,out.width="70%"}
+```{r,echo=TRUE}
 hist(field.goals$yards)
 ```
 
-## Refining a Chart
+(Your colors may differ from the book's — the author tweaked graphical parameters for print.)
 
-More bins reveal more structure — most attempts cluster between 20 and 50 yards:
+## Tuning the Histogram: `breaks`
 
-```{r,echo=TRUE,out.width="70%"}
+Wanting more detail at different distances, increase the number of bins via the `breaks` argument:
+
+```{r,echo=TRUE}
 hist(field.goals$yards, breaks = 35)
 ```
 
-## Tables and Strip Charts
+A single argument transforms the picture — typical of base graphics: sensible defaults, endless knobs.
 
-`table()` tabulates a categorical variable; a strip chart draws one point per observation — here, the distances of blocked kicks:
+## Tabulating and Strip Charts
 
-```{r,echo=TRUE,out.width="65%"}
+How many kicks were blocked? The `table` function tabulates a categorical variable:
+
+```{r,echo=TRUE}
 table(field.goals$play.type)
-stripchart(field.goals[field.goals$play.type == "FG blocked", "yards"],
+```
+
+A **strip chart** plots one point per observation along an axis. Select only blocked kicks, jitter the points so they don't overprint, and restyle them with `pch`:
+
+```{r,echo=TRUE}
+stripchart(field.goals[field.goals$play.type == "FG blocked", ]$yards,
            pch = 19, method = "jitter")
 ```
 
-## Getting Help
+## Scatterplots: the `cars` Data Again
 
-Three tools answer most questions without leaving R:
+The `cars` data set has 50 observations of speed and stopping distance:
 
-```{r,eval=FALSE,echo=TRUE}
-?hist              # help page for a known function
-help.search("regression")   # search installed documentation
-example(hist)      # run a function's examples
+```{r,echo=TRUE}
+dim(cars)
+names(cars)
+summary(cars)
 ```
 
-- Help pages document every argument and end with runnable examples.
-- `??topic` is shorthand for `help.search("topic")`.
-- Online: the R manuals on CRAN, and the enormous archive of answered questions on Stack Overflow.
+Plot the relationship, with labeled axes:
+
+```{r,echo=TRUE}
+plot(cars, xlab = "Speed (mph)", ylab = "Stopping distance (ft)",
+     las = 1, xlim = c(0, 25))
+```
+
+At a glance: stopping distance grows roughly in proportion to speed.
+
+## Lattice Graphics and Factors
+
+**Lattice** excels at comparing groups. It is not loaded by default — calling a lattice function first requires:
+
+```{r,echo=TRUE}
+library(lattice)
+```
+
+The example data: American food consumption, 1980–2005, in the `consumption` data set (48 observations: `Amount` consumed, `Food` type, `Year`, in 5-year steps).
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/consumption.rda",
+              temp, mode = "wb")
+load(temp)
+```
+
+Two columns are numeric (`Amount`, `Year`); two are a new type: **factors** — R's compact representation of categorical values, created with `factor()` and central to modeling functions.
+
+## A Conditioned Dot Plot
+
+We want `Amount` against `Year`, drawn *separately for each* `Food` — lattice expresses this with the formula `Amount ~ Year | Food`:
+
+```{r,eval=FALSE,echo=TRUE}
+dotplot(Amount ~ Year | Food, consumption)   # default settings
+```
+
+The book's author found the defaults hard to read (labels too big, shared scales, awkward stacking) and tuned two options:
+
+```{r,echo=TRUE}
+dotplot(Amount ~ Year | Food, data = consumption,
+        aspect = "xy", scales = list(relation = "sliced", cex = .4))
+```
+
+- `aspect` adjusts panel aspect ratios so changes bank toward 45° (easiest to perceive);
+- `scales` controls axis drawing — `"sliced"` gives each panel its own slice of the range.
+
+Chapter 14 treats lattice in full.
+
+# Getting Help
+
+## The Help System
+
+R documents every function in every installed package:
+
+```{r,eval=FALSE,echo=TRUE}
+help(glm)      # full help page for glm
+?glm           # exactly equivalent shorthand
+?`+`           # operators need backquotes
+example(glm)   # auto-run the examples from a help file
+```
+
+## Searching for Help
+
+Can't remember the function's name? Search by topic:
+
+```{r,eval=FALSE,echo=TRUE}
+help.search("regression")   # list relevant topics
+??regression                # shorthand for the same
+```
+
+For a whole package's documentation, the `help` option of `library` is more complete than a single page:
+
+```{r,eval=FALSE,echo=TRUE}
+library(help = "grDevices")
+```
+
+## Vignettes
+
+Some packages — especially from Bioconductor — include **vignettes**: short documents that walk through using the package, examples included.
+
+```{r,eval=FALSE,echo=TRUE}
+vignette("affy")        # view a specific vignette (if installed)
+vignette(all = FALSE)   # vignettes in attached packages
+vignette(all = TRUE)    # vignettes in all installed packages
+```
+
+::: {.callout-tip}
+**Habit to build now:** when a function surprises you, read `?fun` *before* searching the web — R's built-in documentation is unusually good, and the examples actually run.
+:::
 
 ## Copyright Notice
 
@@ -304,3 +630,4 @@ example(hist)      # run a function's examples
 - **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
 
 - **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.
+               

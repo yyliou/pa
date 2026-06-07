@@ -41,153 +41,470 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **資料進，資料出**
+# **資料的進與出**
 
-## 在 R 內輸入資料
+## 本章地圖
 
-小型資料集用第二部分學過的建構函式就夠了：
+分析需要資料。本章涵蓋整條管線：
+
+- 在 R 內**輸入**資料（指令、資料編輯器）；
+- **儲存與載入** R 物件；
+- **匯入**外部檔案——分隔文字、定寬文字、其他軟體的格式；
+- **匯出**資料成文字檔；
+- **資料庫**——RODBC 與 DBI。
+
+# 在 R 內輸入資料
+
+## 用 R 指令輸入
+
+觀測值不多時，主控台就夠用：`c` 建向量、`data.frame` 組裝。書中範例——2008 年 NFL 五大高薪：
 
 ```{r,echo=TRUE}
-salary <- c(18700000, 14626720, 14137500)
-position <- c("QB", "QB", "DE")
-top.contracts <- data.frame(position, salary)
-top.contracts
+salary <- c(18700000, 14626720, 14137500, 13980000, 12916666)
+position <- c("QB", "QB", "DE", "QB", "QB")
+team <- c("Colts", "Patriots", "Panthers", "Bengals", "Giants")
+name.last <- c("Manning", "Brady", "Pepper", "Palmer", "Manning")
+name.first <- c("Peyton", "Tom", "Julius", "Carson", "Eli")
+top.5.salaries <- data.frame(name.last, name.first, team, position, salary)
+top.5.salaries
 ```
 
-- `rbind()` 增加列；`cbind()` 增加欄。
-- `scan()` 可互動式逐筆輸入——快速實驗很方便。
+## 資料編輯器：edit 與 fix
 
-## 編輯 GUI
-
-R 內建一個陽春的試算表式編輯器：
+一句一句輸入，超過幾列就嫌煩。R 的**資料編輯器**提供 GUI 來編輯表格物件：
 
 ```{r,eval=FALSE,echo=TRUE}
-top.contracts <- edit(top.contracts)  # edit 回傳「新的」物件
-fix(top.contracts)                    # fix 會自己把結果存回去
+top.5.salaries <- edit(top.5.salaries)   # 必須指派，否則編輯全失！
+fix(top.5.salaries)                      # edit ＋ 指派回去，一步完成
+```
+
+- `edit` 開啟編輯器並*回傳*編輯後的物件——忘了指派，心血就蒸發。`fix` 替你呼叫 `edit` 並指派回原符號。
+- 為資料框與矩陣設計；用在向量、函式、串列上會退回文字編輯器。
+- 各平台風味：**Windows**——點儲存格編輯、點欄名改名或改型別、在空格輸入即可擴增表格（也可從 *Edit → Data Editor* 進入）。**macOS**——工具列按鈕增刪列與欄；欄的型別與名稱*不能*改。**Linux（X11）**——類似 Windows，另有 Copy／Paste／Quit 按鈕。
+
+## 編輯器 vs. 試算表
+
+::: {.callout-warning}
+**檢視可以，正式輸入免談。** 書中的三個理由：R 資料編輯器**沒有復原／重做**；**沒有儲存按鈕**（得關閉、存檔、重開——彆扭又容易出錯）；而試算表或桌面資料庫有**輸入表單**，輸入複雜紀錄友善得多。大量資料請在別處輸入，再匯進 R。
+:::
+
+# 儲存與載入 R 物件
+
+## save 與 load
+
+最簡單的持久化：`save` 把物件寫進檔案，`load` 取回——
+
+```{r,echo=TRUE}
+target <- file.path(tempdir(), "top.5.salaries.RData")
+save(top.5.salaries, file = target)
+rm(top.5.salaries)
+load(target)
+top.5.salaries[1, ]
+```
+
+- 檔案路徑一律用**正斜線**——連 Windows 也是（`"C:/Documents and Settings/..."`）。
+- `file` 引數**必須具名**（書的作者十次有九次忘記）。
+- 存出的檔案**跨平台通用**：macOS 寫的，Windows、Linux 都能載入。
+- 想存多個物件就並列列出；想存*全部*用 `save.image()`——退出 R 時的「要儲存工作空間嗎？」做的正是這件事。
+
+## save 完整簽名
+
+```{r,eval=FALSE,echo=TRUE}
+save(..., list =, file =, ascii =, version =, envir =,
+     compress =, eval.promises =, precheck = )
+```
+
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `...`／`list` | 要存的物件：以符號列出／以字元向量指定 | |
+| `file` | 檔名或連線 | |
+| `ascii` | 存成可讀文字而非二進位？ | `FALSE` |
+| `version` | 檔案格式版本（R 1.4.0 起為 2） | 2 |
+| `envir` | 去哪個環境找物件 | 呼叫端環境 |
+| `compress` | gzip 壓縮？ | 二進位時 `TRUE` |
+| `eval.promises` | 存檔前強制求值 promise？ | `TRUE` |
+| `precheck` | 寫入前確認物件存在？ | `TRUE` |
+
+預設值處處合理：壓縮的二進位格式，不會誤毀你的物件。
+
+# 匯入外部檔案
+
+## 文字資料檔的解剖
+
+多數資料文字檔長相類似：一行一筆**觀測**，每行放該筆觀測的各**變數**——以**分隔字元（delimiter）**隔開，或靠行內的固定位置區分。分隔檔範例 `top.5.salaries.csv`：
+
+```
+name.last,name.first,team,position,salary
+"Manning","Peyton","Colts","QB",18700000
+"Brady","Tom","Patriots","QB",14626720
+...
+```
+
+讀出三個特徵：第一列是**欄名**；文字欄位包著**引號**；欄位之間以**逗號**分隔。
+
+## read.table
+
+主力匯入函式，回傳資料框——一列一觀測、一欄一變數。針對上面的檔案：有標題列、逗號分隔、雙引號包字串：
+
+```{r,include=FALSE}
+csvfile <- file.path(tempdir(), "top.5.salaries.csv")
+writeLines(c('name.last,name.first,team,position,salary',
+ '"Manning","Peyton","Colts","QB",18700000',
+ '"Brady","Tom","Patriots","QB",14626720',
+ '"Pepper","Julius","Panthers","DE",14137500',
+ '"Palmer","Carson","Bengals","QB",13980000',
+ '"Manning","Eli","Giants","QB",12916666'), csvfile)
+```
+
+```{r,echo=TRUE,eval=FALSE}
+top.5.salaries <- read.table("top.5.salaries.csv",
+                             header=TRUE, sep=",", quote="\"")
+```
+
+```{r,include=FALSE}
+top.5.salaries <- read.table(csvfile, header=TRUE, sep=",", quote="\"")
+```
+
+```{r,echo=TRUE}
+top.5.salaries
+```
+
+## read.table 引數（一）
+
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `file` | 檔名、連線或 **URL**（唯一必填） | |
+| `header` | 第一列是變數名？ | `FALSE` |
+| `sep` | 欄位分隔字元（`""` ＝任何空白） | `""` |
+| `quote` | 文字的引號字元 | `"` 與 `'` |
+| `dec` | 小數點字元 | `.` |
+| `row.names`／`col.names` | 列名／欄名 | |
+| `as.is` | 逐欄指定：不要轉因子 | `!stringsAsFactors` |
+| `na.strings` | 視為 `NA` 的字串 | `"NA"` |
+| `colClasses` | 各欄指定的類別 | `NA` |
+| `nrows` | 讀入的列數 | `-1` |
+
+## read.table 引數（二）
+
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `skip` | 開讀前跳過的列數 | 0 |
+| `check.names` | 檢查欄名是合法符號？ | `TRUE` |
+| `fill` | 短列補空欄？ | `!blank.lines.skip` |
+| `strip.white` | 修掉字元欄前後空白？ | `FALSE` |
+| `blank.lines.skip` | 忽略空白列？ | `TRUE` |
+| `comment.char` | 註解列起始字元 | `"#"` |
+| `allowEscapes` | 解讀 `\n` 等跳脫？ | `FALSE` |
+| `flush` | 欄位讀齊後跳過該行其餘？ | `FALSE` |
+| `stringsAsFactors` | 文字轉因子？ | R 4.0 起 `FALSE` |
+| `encoding` | 來源檔編碼 | `"unknown"` |
+
+幾乎每次都要面對的兩個：**`sep`** 與 **`header`**。
+
+## 便利家族
+
+包裝函式預設好常見組合：
+
+| 函式 | header | sep | dec |
+|---|---|---|---|
+| `read.table` | `FALSE` | 空白 | `.` |
+| `read.csv` | `TRUE` | `,` | `.` |
+| `read.csv2` | `TRUE` | `;` | `,` |
+| `read.delim` | `TRUE` | tab | `.` |
+| `read.delim2` | `TRUE` | tab | `,` |
+
+實務上 `read.csv` 與 `read.delim` 不加選項就能應付多數檔案（`2` 系列服務歐洲的逗號小數慣例）。
+
+## 從 URL 讀取
+
+`file` 接受 URL，網路資料直接載入。書中從 Yahoo! Finance 一口氣抓了十年的 S&P 500 月線：
+
+```{r,eval=FALSE,echo=TRUE}
+sp500 <- read.csv(paste("http://ichart.finance.yahoo.com/table.csv?",
+  "s=%5EGSPC&a=03&b=1&c=1999&d=03&e=1&f=2009&g=m&ignore=.csv", sep=""))
+sp500[1:5, ]
+##         Date   Open   High    Low  Close      Volume Adj.Close
+## 1 2009-04-01 793.59 813.62 783.32 811.08 12068280000    811.08
+## 2 2009-03-02 729.57 832.98 666.79 797.87  7633306300    797.87
+## ...
 ```
 
 ::: {.callout-warning}
-**`edit()` 不會就地修改。** 忘記把它的結果指派回去是經典的資料遺失時刻；`fix()` 的存在正是為了避免這件事。
+**API 已死。** Yahoo! 多年前就關閉了這個服務——此網址已無回應。但*技巧*（任何接受檔名之處都可放 URL）完全有效；今日的金融資料請改用 `quantmod` 或 `tidyquant` 套件。
 :::
 
-- 編輯器外觀依平台而異（Windows 表格、macOS 表單、X11 視窗），但函式完全相同。
-- 真正的資料輸入用試算表軟體更舒服——編輯器最適合快速檢視與修一兩個儲存格。
+## 匯入實務訣竅
 
-## 儲存物件
+- **先用小樣本測試。** 載入 15 分鐘才發現分隔符指定錯，很傷；實驗階段加上 `nrows=20`。
+- **從 Excel 來：** 匯出 CSV 或 tab 分隔的 TXT，行尾盡量用 Unix 式（`\n`）而非 MS-DOS 式（`\n\r`）。CSV 在 Windows 點兩下就開進 Excel，很方便——但文字含逗號就必須加引號、引號內的引號還得跳脫；tab 在文字中較罕見，TXT 檔較少出意外。
+- **從資料庫來：** 用 GUI 工具查詢再匯出，勝過脆弱的命令列腳本；書中點名 Toad for Data Analysts、MySQL Query Browser、Oracle SQL Developer（今日：DBeaver 與各家現行工具）。
 
-`save()` 把任意一組 R 物件寫成可攜的二進位檔；`load()` 連名稱一起還原：
+## 定寬檔案：read.fwf
 
-```{r,echo=TRUE}
-tmp <- tempfile(fileext = ".RData")
-save(top.contracts, file = tmp)       # `file =` 必須具名
-rm(top.contracts)
-load(tmp)
-top.contracts[1, ]
-```
-
-- 檔案跨平台通用；預設開啟壓縮。
-- `save.image()` 快照整個工作空間（離開時的「Save workspace?」就是它）。
-- `saveRDS()`/`readRDS()` 儲存*單一*物件且不含名稱——程式化使用往往更乾淨。
-
-## 從網路載入：課程慣例
-
-`download.file()` 把任何 URL 上的檔案抓到磁碟（二進位檔要用 `mode = "wb"`）；接著用 `load()` 還原。本課程所有資料集正是這樣載入的：
-
-```{r,echo=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/top.bacon.searching.cities.rda", temp, mode = "wb")
-load(temp)
-top.bacon.searching.cities
-```
-
-課本的 `library(nutshell); data(...)` 一律以這三行模式取代。
-
-## 匯入文字檔
-
-`read.table()` 家族把分隔文字剖析成資料框：
+當變數由位置而非分隔符決定時：
 
 ```{r,eval=FALSE,echo=TRUE}
-df  <- read.table("file.txt", header = TRUE, sep = "\t")
-csv <- read.csv("file.csv")             # 逗號分隔
-eu  <- read.csv2("file.csv")            # ; 分隔、, 小數點
-fwf <- read.fwf("file.dat", widths = c(8, 4, 4))
+read.fwf(file, widths, header = , sep = , skip = ,
+         row.names, col.names, n = , buffersize = , ...)
 ```
 
-值得背起來的引數：`header`、`sep`、`na.strings`、`stringsAsFactors`、`skip`、`colClasses`（大檔案的速度利器）。
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `file` | 檔名或連線（必填） | |
+| `widths` | 各欄寬度的整數向量——一筆紀錄跨多行時改用向量的*串列*（必填） | |
+| `header` | 第一行是欄名（以 `sep` 分隔）？ | `FALSE` |
+| `sep` | 標題列欄名的分隔字元 | tab |
+| `skip`／`n` | 跳過的行數／讀入的紀錄數 | 0／`-1` |
+| `row.names`／`col.names` | 列名／欄名 | |
+| `buffersize` | 每批讀入的行數（效能旋鈕） | 2000 |
 
-```{r,echo=TRUE}
-# readLines 顯示原始文字行——剖析前一定先看檔案長相
-readLines(textConnection("a,b\n1,2\n3,4"))
-```
+`read.fwf` 也接受 `read.table` 的引數，如 `as.is`、`na.strings`、`colClasses`、`strip.white`。
 
-## 其他軟體與試算表
+## 大型定寬檔：先預處理
 
-- `foreign` 套件可讀傳統統計軟體格式：SAS（`read.xport`）、SPSS（`read.spss`）、Stata（`read.dta`）等。
-- Excel 檔：`readxl` 套件（`read_excel("book.xlsx")`）不需安裝 Excel；`openxlsx` 還能寫出。
-- 土法煉鋼依然有效：先把工作表匯出成 CSV，再 `read.csv()`。
+::: {.callout-note}
+**CDC 死亡檔案的警世故事。** 美國 CDC 以定寬格式公布每一筆死亡紀錄——2006 年的檔案 1.1 GB。理論上一個巨大的 `read.fwf` 呼叫（書中列出全部 43 個寬度與欄名）就能載入子集；實際上慢得要命：R 解析文字不快，而單字元的類別代碼在記憶體中從 1 位元組膨脹成 4 位元組整數。書中的對策：用腳本語言預處理——它的 Perl 腳本逐行 `unpack`、輸出精簡的 CSV，再用 `read.csv` 收尾。（作者習慣在 Excel 裡擬好寬度／欄名清單，用公式生成程式碼。）現代對策：`readr::read_fwf` 或 `data.table::fread`，快上一大截。
+:::
+
+## 逐行讀取：readLines
+
+觀測跨多行、或格式讓 `read.table` 無能為力時，往下一層。`readLines` 一行回傳一個字元值——也能讀互動輸入：
 
 ```{r,eval=FALSE,echo=TRUE}
-library(readxl)
-roster <- read_excel("stu/roster.xlsx", sheet = 1)
+readLines(con = stdin(), n = -1L, ok = TRUE, warn = TRUE,
+          encoding = "unknown")
 ```
 
-## 匯出資料
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `con` | 檔案、URL 或連線 | `stdin()` |
+| `n` | 讀入行數（負值＝全部） | `-1L` |
+| `ok` | 行數不足 `n` 也不報錯？ | `TRUE` |
+| `warn` | 檔尾缺換行時警告？ | `TRUE` |
+| `encoding` | 輸入編碼 | `"unknown"` |
 
-每個匯入函式都有鏡像：
+## 低階結構化讀取：scan
+
+`scan` 透過 `what` 把內容讀進*指定的結構*——單一型別，或型別串列（得到欄位串列）：
 
 ```{r,eval=FALSE,echo=TRUE}
-write.csv(top.contracts, "contracts.csv", row.names = FALSE)
-write.table(top.contracts, "contracts.txt", sep = "\t")
-saveRDS(top.contracts, "contracts.rds")
+scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
+     quote = , dec = ".", skip = 0, nlines = 0, na.strings = "NA",
+     flush = FALSE, fill = FALSE, strip.white = FALSE, quiet = FALSE,
+     blank.lines.skip = TRUE, multi.line = TRUE, comment.char = "",
+     allowEscapes = FALSE, encoding = "unknown")
 ```
 
-- `row.names = FALSE` 可避免那個讓試算表使用者一頭霧水的多餘首欄。
-- 與其他語言交換資料，CSV 仍是通用語；R 對 R，請用 `.rds`。
+重點：`what`——目標型別（`logical`、`integer`、`numeric`、`complex`、`character`、`raw`，或串列）；`nmax`／`n`——讀幾個值或幾筆紀錄；`multi.line`——`what` 是串列時允許紀錄跨行；`flush`——讀完該行所需欄位後丟棄其餘（可在行尾寫註解）；`quiet`——關掉「Read n items」訊息。其餘與 `read.table` 對應。
 
-## 從資料庫匯入
+## 其他軟體的檔案
 
-三種策略，整合度遞增：
+`foreign` 套件（與同伴）直接讀取其他系統的原生檔：
 
-1. **先匯出再匯入**：在資料庫工具中把查詢結果倒成 CSV，再 `read.csv()`。粗糙但可靠。
-2. **RODBC**：透過 ODBC 驅動程式連線——幾乎所有有驅動程式的資料庫都行。
-3. **DBI**：R 原生的資料庫介面，依引擎搭配後端套件（`RSQLite`、`RPostgres`、`RMariaDB`……）。
+| 格式 | 讀取 | 寫出 |
+|---|---|---|
+| ARFF（Weka） | `read.arff` | `write.arff` |
+| DBF | `read.dbf` | `write.dbf` |
+| Stata | `read.dta` | `write.dta` |
+| Epi Info | `read.epiinfo` | |
+| Minitab | `read.mtp` | |
+| Octave | `read.octave` | |
+| S3 二進位／`data.dump` | `read.S` | |
+| SPSS | `read.spss` | |
+| SAS 永久資料集 | `read.ssd` | |
+| Systat | `read.systat` | |
+| SAS XPORT | `read.xport` | |
 
-## RODBC 速覽
+（現代替代：SPSS／Stata／SAS 用 `haven`，Excel 用 `readxl`。）
+
+# 匯出資料
+
+## write.table 與親戚
+
+匯出是反向旅程——`write.table`，以及為試算表預設好的 `write.csv`／`write.csv2`：
+
+```{r,eval=FALSE,echo=TRUE}
+write.table(x, file = "", append = FALSE, quote = TRUE, sep = " ",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"))
+write.csv(top.5.salaries, file = "salaries.csv", row.names = FALSE)
+```
+
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `x`／`file` | 要匯出的物件／檔名或連線 | |
+| `append` | 附加而非覆寫？ | `FALSE` |
+| `quote` | 字元欄加引號（或以數值向量指定哪些欄）？ | `TRUE` |
+| `sep`／`eol` | 欄位分隔／行尾字元 | `" "`／`"\n"` |
+| `na`／`dec` | `NA` 的寫法／小數字元 | `"NA"`／`"."` |
+| `row.names`／`col.names` | 是否輸出（或另行指定）？ | `TRUE` |
+| `qmethod` | 內嵌引號用 `\` 跳脫或加倍 | `"escape"` |
+
+# 從資料庫匯入
+
+## 策略：先匯出再匯入，或直接連線
+
+大型組織把資料放在關聯式資料庫。進 R 有兩條路：
+
+- **匯出成文字、再匯入。** 對很大的擷取（1 GB 以上），書中經驗是文字檔載入*比*資料庫連線快——一次性撈取的最佳解。
+- **直接連線。** 當 R 要產出例行報表或重複分析時更好：免去每次手動匯出。
+
+兩套連線框架：
+
+- **RODBC**——透過 ODBC（跨程式的標準介面）取數；
+- **DBI**——統一的資料庫抽象層，使用原生或 JDBC 驅動，每種資料庫一個附加套件。
+
+怎麼選：Windows／Linux 上 ODBC 驅動好找（macOS 歷來較難；JDBC 各平台都有）；原生驅動可能更快、更能發揮產品特性；不是每個套件都支援每個平台；DBI 以 S4 打造，有助寫出更好的程式。
+
+## 貫穿範例：SQLite
+
+**SQLite** 用一個 C 函式庫把整個資料庫裝進單一檔案——零安裝、零設定，最適合練習。書中把 *Baseball Databank* 資料庫做成 `nutshell` 套件裡的 `bb.db`，取用方式：
+
+```{r,eval=FALSE,echo=TRUE}
+system.file("extdata", "bb.db", package = "nutshell")
+```
+
+::: {.callout-note}
+**課程備註。** `nutshell` 已下架 CRAN，請從 GitHub 鏡像抓同一個檔案、存在本機重複使用：
+
+```{r,eval=FALSE,echo=TRUE}
+download.file(paste0("https://raw.githubusercontent.com/cran/nutshell/",
+                     "master/inst/extdata/bb.db"), "bb.db", mode = "wb")
+```
+
+以下資料庫程式碼皆以未執行形式呈現——安裝相關套件（ODBC 還需設定驅動）後即可自行執行。
+:::
+
+## RODBC 安裝設定
+
+三個一次性步驟：
+
+1. **裝套件：** `install.packages("RODBC")`；以 `library(RODBC)` 確認。
+2. **裝 ODBC 驅動**（若尚未安裝）。各家廠商與第三方（MySQL、Oracle、PostgreSQL、Microsoft、Data Direct、Easysoft、Actual Technologies、OpenLink、Christian Werner 的 SQLite ODBC……）為主要平台提供驅動。
+3. **設定 DSN**（database source name）。書中示範 SQLite ODBC：macOS 上自行編譯（`configure; make; sudo make install`），再到 ODBC Administrator 註冊驅動並建立名為 `bbdb` 的 DSN（關鍵字 `Database` ＝ `bb.db` 的路徑）；Windows 上跑安裝程式，再到 ODBC 資料來源管理員新增 User／System DSN、瀏覽選取檔案。
+
+測試成果：
+
+```{r,eval=FALSE,echo=TRUE}
+bbdb <- odbcConnect("bbdb")
+odbcGetInfo(bbdb)    # DBMS 名稱／版本、驅動、路徑……
+```
+
+## RODBC：開啟通道、四處看看
+
+`odbcConnect(dsn, uid="", pwd="", ...)` 回傳 `RODBC` 物件——稱為**通道（channel）**。探索工具：
 
 ```{r,eval=FALSE,echo=TRUE}
 library(RODBC)
-ch <- odbcConnect("dsn_name", uid = "user", pwd = "pass")
-df <- sqlQuery(ch, "SELECT player, yards FROM kicks WHERE good = 1")
-sqlTables(ch)              # 列出資料表
-close(ch)
+bbdb <- odbcConnect("bbdb")
+sqlTables(bbdb)               # 可讀資料表的資料框：Allstar、
+                              #   Batting、Master、Teams、Salaries……
+sqlColumns(bbdb, "Allstar")   # 欄名、型別、大小、可否為空
+# sqlPrimaryKeys(bbdb, ...)   # 資料表的主鍵
 ```
 
-- `sqlFetch(ch, "tbl")` 抓整張表；`sqlSave()` 把資料框寫回去。
-- ODBC 的設定發生在 R *之外*（驅動程式＋資料來源名稱），實務上那才是主要工作量。
+## RODBC：取資料
 
-## DBI 速覽
+`sqlFetch(channel, sqtable, ..., colnames=, rownames=)` 把整張表拉成資料框；之後就是普通的 R：
 
-```{r,echo=TRUE,message=FALSE}
-library(DBI)
-con <- dbConnect(RSQLite::SQLite(), ":memory:")   # 用完即丟的資料庫
-dbWriteTable(con, "contracts", top.contracts)
-dbGetQuery(con, "SELECT position, MAX(salary) AS top FROM contracts GROUP BY position")
+```{r,eval=FALSE,echo=TRUE}
+teams <- sqlFetch(bbdb, "Teams")
+dim(teams)
+## [1] 2595   48
+subset(teams, subset=(teams$yearID==2008 & teams$lgID=="AL"),
+       select=c("teamID", "W", "L"))
+```
+
+任意 SQL——SELECT 之外，INSERT／UPDATE／DELETE 與 CREATE／DROP／ALTER 也行——走 `sqlQuery`：
+
+```{r,eval=FALSE,echo=TRUE}
+sqlQuery(bbdb,
+  "SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'")
+```
+
+（寫回去：`sqlSave` 把資料框存成表、`sqlUpdate` 更新表。）
+
+## RODBC：分批結果與收尾
+
+結果太大就分批取：呼叫 `sqlQuery`／`sqlFetch` 時設 `max=n`，餘下用 `sqlGetResults`（或 `sqlFetchMore`）。`sqlQuery`／`sqlGetResults` 的重點引數：`errors`（出錯時停止或回 −1，預設 `TRUE`）；`max`（0＝不設上限）；`rows_at_time`（驅動每次抓取的批量——現代驅動可試 1024）；`as.is`、`stringsAsFactors`（因子轉換）；`buffsize`、`believeNRows`（效能）；`nullstring`、`na.strings`、`dec`（值的對應）。
+
+- 還有一組低階表親——`odbcQuery`、`odbcTables`、`odbcColumns`、`odbcPrimaryKeys` 回傳 C 風格的整數狀態碼，`odbcFetchResults` 回傳串列，`odbcGetErrMsg` 取錯誤訊息——控制更細、便利更少。
+- 用完了？`odbcClose(bbdb)`——或 `odbcCloseAll()`——同時釋放本地與資料庫端的資源。
+
+## DBI：驅動與連線
+
+**DBI** 是框架：核心套件加上每種資料庫一個驅動套件——`RMySQL`、`RSQLite`、`ROracle`、`RPostgreSQL`、`RJDBC`（任何有 JDBC 的）。全部以 S4 打造。以 SQLite 為例：
+
+```{r,eval=FALSE,echo=TRUE}
+install.packages("RSQLite")
+library(RSQLite)          # 連 DBI 一起載入
+drv <- dbDriver("SQLite")
+con <- dbConnect(drv, dbname = "bb.db")
+```
+
+可以跳過明確的驅動物件（`dbConnect("SQLite", ...)`），但留著它可以查詢開啟中的連線、日後釋放資源。連線引數（`dbname`、帳號……）依資料庫而異——請讀該驅動的說明。
+
+## DBI：檢視連線
+
+```{r,eval=FALSE,echo=TRUE}
+class(con)                 # "SQLiteConnection"——有意義的 S4 類別
+dbListConnections(drv)     # 隸屬某驅動的連線
+dbGetInfo(con)             # 主機、使用者、dbname、伺服器版本……
+dbListTables(con)          # "Allstar" "Batting" ... "Teams" ...
+dbListFields(con, "Allstar")
+## [1] "playerID" "yearID"   "lgID"
+```
+
+## DBI：查詢
+
+`dbGetQuery(con, sql)` 執行敘述、回傳資料框：
+
+```{r,eval=FALSE,echo=TRUE}
+wlrecords.2008 <- dbGetQuery(con,
+  "SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'")
+batting.2008 <- dbGetQuery(con,
+  paste("SELECT m.nameLast, m.nameFirst, m.weight, m.height, ",
+        "m.bats, m.throws, m.debut, m.birthYear, b.* ",
+        "from Master m inner join Batting b ",
+        "on m.playerID=b.playerID where b.yearID=2008"))
+dim(batting.2008)
+## [1] 1384   31
+```
+
+這份連結後的資料集全書反覆登場（也以 `batting.2008` 之名收錄在 `nutshell` 裡）。
+
+## DBI：送查詢／取結果、錯誤、整張表
+
+分開送出與取回，控制更細：
+
+```{r,eval=FALSE,echo=TRUE}
+res <- dbSendQuery(con,
+  "SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'")
+wlrecords.2008 <- fetch(res)       # n ＝最多取幾列；省略或 -1 ＝全部
+dbClearResult(res)                 # 丟棄未取完的結果
+dbGetException(con)                # 最近的錯誤代碼＋訊息
+batters <- dbReadTable(con, "Batting")   # 一整張表
+# dbWriteTable／dbExistsTable／dbRemoveTable：寫入、檢查、刪除
+```
+
+收尾與開場對稱：
+
+```{r,eval=FALSE,echo=TRUE}
 dbDisconnect(con)
+dbUnloadDriver(drv)
 ```
 
-- 一套泛用 API——`dbConnect`、`dbGetQuery`、`dbWriteTable`、`dbDisconnect`——背後是可互換的引擎。
-- 預備敘述（prepared statements）與分批擷取（`dbSendQuery` + `dbFetch`）能處理塞不進記憶體的結果集。
+## TSDBI 與 Hadoop
 
-## 更大的管線
+收尾的兩個指引：
 
-- **TSDBI** 提供時間序列專用的資料庫介面。
-- 存放在 **Hadoop**／分散式儲存的資料是第二十六章的主題——常見模式是先在叢集上化簡，再把摘要拉進 R。
-- 經驗法則：把吃重的過濾與合併推給資料庫（`WHERE`、`GROUP BY`），只把分析真正需要的部分帶進 R。
+- **TSDBI**——*專為時間序列*設計的資料庫介面，按資料庫分套件：`TSMySQL`、`TSSQLite`、`TSFame`、`TSPostgreSQL`，以及任何 ODBC 資料庫適用的 `TSODBC`。
+- **Hadoop**——書中年代的大數據平台；其第二十六章介紹操作 HDFS 與 HBase 的 R 套件。（今日的版圖偏向以 `sparklyr` 連 Spark，或透過 DBI 對話的雲端資料倉儲。）
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

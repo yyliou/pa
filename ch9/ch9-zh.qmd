@@ -41,143 +41,258 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **打造自己的工具**
+# **主力工人**
 
 ## function 關鍵字
 
-`function` 關鍵字建立函式物件；指派給名稱與否都可以：
+函式評估輸入引數、回傳輸出值。定義語法是
 
-```{r,echo=TRUE}
-square <- function(x) x ^ 2
-square(12)
+```{r,eval=FALSE,echo=TRUE}
+function(arguments) body
 ```
 
-多個運算式的主體需要大括號；函式的值是最後求值的那個運算式：
+其中 *arguments* 是一組在主體內可用的符號名稱（可附預設值），*body* 是一個 R 運算式。大括號是慣例、不是必須——單一運算式可省略，以下兩種寫法等價：
 
 ```{r,echo=TRUE}
-zscore <- function(v) {
-  m <- mean(v)
-  s <- sd(v)
-  (v - m) / s
+f <- function(x, y) x + y
+f <- function(x, y) { x + y }
+```
+
+# 引數
+
+## 預設值讓引數變成可選
+
+給引數預設值，呼叫者就可以省略它；省略*必要*引數，錯誤要等函式真正**用到**它才出現：
+
+```{r,error=TRUE,echo=TRUE}
+f <- function(x, y) { x + y }
+f(1, 2)
+g <- function(x, y = 10) { x + y }
+g(1)
+g(1, 2)     # 覆寫預設值
+f(1)        # 少了 y：等 `+` 需要它時才報錯
+```
+
+::: {.callout-note}
+一個從不碰未初始化引數的函式可以正常執行。你甚至能自行偵測引數是否缺席——例如檢查 `as.list(match.call())` 裡對應項是否為 `NULL`——但實務上，**把預設值寫進簽名**：函式才清楚易讀。
+:::
+
+## 可變長度引數列：...
+
+刪節號 `...` 的意思是「其餘所有引數」。兩大用途。其一，**把多餘引數轉傳**給另一個函式——這裡 `x` 之後的一切都流進 `summary`：
+
+```{r,echo=TRUE}
+v <- c(sqrt(1:100))
+f <- function(x, ...) { print(x); summary(...) }
+f("Here is the summary for v.", v, digits = 2)
+```
+
+（回想第七章：`...` 是特殊物件型別，*只能*在函式主體內操作。）
+
+## 讀取 ... 裡的引數
+
+其二，你可以自己**消化**這些可變引數：把 `...` 轉成串列。一個把所有引數加總的函式：
+
+```{r,echo=TRUE}
+addemup <- function(x, ...) {
+  args <- list(...)
+  for (a in args) x <- x + a
+  x
 }
-round(zscore(c(2, 4, 6, 8)), 2)
+addemup(1, 1)
+addemup(1, 2, 3, 4, 5)
 ```
 
-## 引數與預設值
-
-```{r,echo=TRUE}
-trim_mean <- function(v, trim = 0.1, digits = 2) {
-  round(mean(v, trim = trim), digits)
-}
-trim_mean(c(1, 2, 3, 100))            # 使用預設值
-trim_mean(c(1, 2, 3, 100), trim = 0.25)
-```
-
-- 引數比對順序：先精確名稱、再部分名稱、最後位置。
-- 沒有預設值又沒被提供的引數，**只有主體真的用到它時**才會報錯——又是惰性求值。
-- 預設值可以引用其他引數：`function(x, n = length(x))`。
-
-## 點點點引數
-
-省略號 `...` 吸收所有多出來的引數，並可原樣轉交：
-
-```{r,echo=TRUE}
-loud_plot_summary <- function(v, ...) {
-  cat("n =", length(v), "\n")
-  summary(v, ...)
-}
-loud_plot_summary(c(1, 5, 9, NA), na.rm = TRUE)
-```
-
-包裝函式（wrapper）正是靠這一招，把選項一路傳給 `plot()`、`mean()` 等函式，而不必逐一列舉。
+個別項目也能直接用 `..1`、`..2`……到 `..9` 取得。具名引數在主體內就是有效的符號（作用域：第八章）。
 
 ## 回傳值
 
-```{r,echo=TRUE}
-sign_word <- function(x) {
-  if (x > 0) return("positive")     # 明確的提早回傳
-  if (x < 0) return("negative")
-  "zero"                            # 隱含：最後的值
-}
-sign_word(-3); sign_word(0)
-```
-
-- `return()` 立即離開函式——適合寫前置防衛判斷。
-- 否則最後求值的運算式就是回傳值；道地的 R 寫法仰賴這一點。
-- `invisible(x)` 回傳值但不在主控台列印——`assign()` 與繪圖函式就是這麼做的。
-
-## 函式作為引數
-
-高階函式以函式為輸入。`sapply`/`lapply` 家族把函式套用到向量或串列上：
+明確的 `return` 跟其他語言一樣可用——但 R 本來就回傳**最後評估的運算式**，所以 `return` 常被省略：
 
 ```{r,echo=TRUE}
-sapply(1:5, sqrt)
-lapply(list(a = 1:3, b = 4:6), mean)
+f <- function(x) { return(x^2 + 3) }
+f(3)
+f <- function(x) { x^2 + 3 }
+f(3)
 ```
 
-`apply()` 沿矩陣的邊作用（1 = 列，2 = 欄）：
+當明確寫出能讓程式更乾淨時（例如提早退出）再用它。
+
+# 函式作為引數
+
+## 高階函式：sapply
+
+許多 R 函式接受*其他函式*當引數（例如建模函式接受「如何處理缺失值」的函式）。經典範例是 `sapply`：把函式套用到向量的每個元素：
 
 ```{r,echo=TRUE}
-m <- matrix(1:6, nrow = 2)
-apply(m, 1, sum)     # 列總和
-apply(m, 2, max)     # 欄最大值
+a <- 1:7
+sapply(a, sqrt)
 ```
 
-`mapply()` 則把多個向量並行送進同一個函式。
+玩具範例——`sqrt(1:7)` 也辦得到——但許多有用的函式不接受多元素向量，`sapply` 能優雅地擴充它們。（整個摘要家族的親戚：第十二章。）
 
 ## 匿名函式
 
-只用一次的輔助函式，不必命名：
+函式是物件，所以不一定需要名字。沒被命名就直接傳遞的函式叫**匿名函式**。最小示範——把引數函式套用在數字 3 上：
 
 ```{r,echo=TRUE}
-sapply(1:5, function(i) i * (i + 1) / 2)
-
-# 定義完當場套用
-(function(x) x ^ x)(3)
+apply.to.three <- function(f) { f(3) }
+apply.to.three(function(x) { x * 7 })
 ```
 
-R 4.1 起有更精簡的反斜線縮寫：
+直譯器怎麼讀：`f` 繫結到匿名的 `function(x) {x * 7}`；評估 `f(3)` 時 `x` 繫結到 3；主體回傳 `3 * 7 = 21`。
+
+## 匿名函式配 sapply
+
+日常用法：把一次性函式傳給 apply 家族：
 
 ```{r,echo=TRUE}
-sapply(1:5, \(i) i ^ 2)
+a <- c(1, 2, 3, 4, 5)
+sapply(a, function(x) { x + 1 })
 ```
 
-匿名函式讓一次性的邏輯留在使用它的地方。
-
-## 函式的性質
-
-函式物件可以拆解成三部分：
+這個家族是**控制結構的真正替代品**。用迴圈逐元素平方 vs. 用 apply：
 
 ```{r,echo=TRUE}
-args(trim_mean)        # 可讀的簽名
-formals(trim_mean)     # 引數與預設值（串列形式）
-body(zscore)           # 程式碼
-environment(zscore)    # 定義它的環境
+v <- 1:20
+w <- NULL
+for (i in 1:length(v)) { w[i] <- v[i]^2 }
+w
+w <- sapply(v, function(i) { i^2 })
+w
 ```
 
-這些零件甚至可以用程式*修改*——`body(f) <- ...`——偶爾有用，而且在聚會上永遠很炫。
+第二版直接道出意圖——把這個函式套到每個元素——而且還更快（第二十四章）。
 
-## 引數驗證
+## 直接套用匿名函式
 
-健壯的函式會及早檢查輸入，並給出有用的錯誤訊息：
+匿名函式可以定義完當場呼叫——但函式物件**必須包在小括號裡**：
 
-```{r,echo=TRUE,error=TRUE}
-safe_log <- function(x) {
-  stopifnot(is.numeric(x), all(x > 0))
-  log(x)
+```{r,echo=TRUE}
+(function(x) { x + 1 })(1)
+```
+
+為什麼？函式呼叫 `f(arguments)` 的結合力極強。不加括號的 `function(x) {x+1}(1)` 會默默定義出一個*主體*為 `{x+1}(1)` 的函式——而且不報錯，因為主體尚未被評估。是合法的 R，但幾乎肯定不是你想寫的。
+
+# 函式的性質
+
+## args 與 formals
+
+想看函式接受哪些引數，`args` 回傳一個主體為 `NULL` 的函式物件：
+
+```{r,echo=TRUE}
+args(sin)
+args(args)
+args(lm)
+```
+
+想用程式*操作*引數列，用 `formals`：它回傳一個 **pairlist**——每個引數一對，沒有預設值的對應 `NULL`。（`formals` 只適用於 closure，不適用於內建函式。）
+
+```{r,echo=TRUE}
+f <- function(x, y=1, z=2) { x + y + z }
+f.formals <- formals(f)
+f.formals
+f.formals$y
+```
+
+## 修改引數：formals<- 與 alist
+
+`formals` 也能放在指派的**左邊**——就地修改預設值：
+
+```{r,echo=TRUE}
+f.formals$y <- 3
+formals(f) <- f.formals
+args(f)
+```
+
+便利函式 `alist` 用「定義函式的語法」建構引數列（注意：沒有預設值的引數仍要寫等號）：
+
+```{r,echo=TRUE}
+formals(f) <- alist(x=, y=100, z=200)
+f
+```
+
+## body
+
+主體同樣可讀可寫——它的型別是 `expression`，所以要指派 expression：
+
+```{r,echo=TRUE}
+body(f)
+body(f) <- expression({x * y * z})
+f
+```
+
+函式徹頭徹尾是資料：引數和主體都能被普通的 R 程式碼檢視與改寫。
+
+# 引數順序與具名引數
+
+## 提供引數的三種方式
+
+函式內部以定義時的名稱存取引數：
+
+```{r,echo=TRUE}
+addTheLog <- function(first, second) { first + log(second) }
+```
+
+呼叫者有三種指定方式，按優先序比對：
+
+```{r,echo=TRUE}
+addTheLog(second=exp(4), first=1)   # 1. 完整名稱（最先比對）
+addTheLog(s=exp(4), f=1)            # 2. 部分相符的名稱
+addTheLog(1, exp(4))                # 3. 位置順序
+```
+
+一個限制：呼叫泛型函式時，攜帶分派物件的那個引數不能指名——其他引數照樣可以。
+
+## 用完整名稱；部分比對會咬人
+
+完整名稱多打幾個字，換來可讀性與零歧義。部分比對被**列為不建議**其來有自：
+
+```{r,error=TRUE,echo=TRUE}
+f <- function(arg1=10, arg2=20) {
+  print(paste("arg1:", arg1))
+  print(paste("arg2:", arg2))
 }
-safe_log(c(1, 10))
-safe_log(-5)
+f(arg=1)            # 歧義：報錯
+f(arg=1, arg2=2)    # 現在 "arg" 只能指 arg1……
+f(arg=1, arg1=2)    # ……轉眼它又變成指 arg2！
 ```
 
-- `stop("message")` 拋出錯誤；`warning()` 發出警告但繼續執行。
-- `missing(arg)` 檢查呼叫者是否提供了某個引數。
-- `match.arg()` 對照固定選項集合驗證引數。
+同一個前綴，因為其他引數的有無而落在不同引數上——無聲臭蟲的配方。
+
+# 副作用
+
+## 回傳值之外
+
+每個函式都回傳值；有些*還*會改動其他環境的變數、繪圖、讀寫檔案、存取網路。這些額外行為叫**副作用（side effects）**。
+
+最關鍵的副作用運算子是 `<<-`。`var <<- value` 會先在目前環境找 `var`，再到父環境、一路遞迴向上；若到達全域環境仍沒找到，指派就發生**在全域環境**：
+
+```{r,error=TRUE,echo=TRUE}
+rm(list = ls())
+doesnt.assign.x <- function(i) { x <- i }
+doesnt.assign.x(4)
+x                                   # <- 留在局部：找不到
+assigns.x <- function(i) { x <<- i }
+assigns.x(4)
+x                                   # <<- 逃到了全域環境
+```
+
+## 輸入輸出與繪圖
+
+另外兩個副作用家族補完全貌：
+
+- **輸入／輸出。** 從檔案或網路載入資料、把資料存檔——這些都是「回傳物件」之外的行為。完整討論在第十一章。
+- **繪圖。** 繪圖函式可能回傳物件，但重點是畫出來的圖——在螢幕上或檔案裡。第十三、十四章詳述。
+
+::: {.callout-tip}
+**設計習慣：** 讓大多數函式保持*純粹*（無副作用），把副作用集中在少數命名清楚的地方。純函式更容易測試、重用與平行化。
+:::
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

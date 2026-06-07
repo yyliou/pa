@@ -38,146 +38,382 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 library(lattice)
 ```
 
-# **R 的格狀圖**
+# **Trellis 繪圖**
 
-## 歷史與理念
+## 歷史與強項
 
-`lattice` 套件 [@sarkar2008lattice] 實作了 **trellis 繪圖**——Cleveland 為*條件化*資料設計的視覺化框架 [@cleveland1993visualizing]：對資料的每個子集重複同一種面板，排成網格以便即時比較。
+1990 年代初，貝爾實驗室的 Richard Becker 與 William Cleveland 打造了 **Trellis graphics**，立基於 Cleveland 對人類如何感知資訊的研究。**lattice** 套件是它的 R 實作（有些函式名仍留著「trellis」字樣）。
 
-- 公式介面：`y ~ x | condition` 讀作「y 對 x，condition 的每個水準一個面板」。
-- lattice 函式**回傳物件**；物件被列印時圖才出現——在腳本與函式中務必記得這點。
+lattice 的真本事：用條件或分組變數把圖**拆成多個面板**（網格排列）或**分組**（不同顏色／符號）——而且預設輸出乾淨易讀。熟面孔（散布、長條、直方）與新朋友（點圖、帶狀圖、Q-Q 圖）一應俱全。
 
-```{r,echo=TRUE,cache=TRUE}
+## Lattice 怎麼運作
+
+詞彙表：矩形繪圖區叫**面板（panel）**；送進面板的資料叫**封包（packet）**；實際作畫的是**面板函式（panel function）**。生命週期：
+
+1. 你呼叫高階 lattice 函式；
+2. 它組裝並*回傳*一個 lattice 物件（class 是 `"trellis"`——所以方法叫 `print.trellis`、`plot.trellis`）；
+3. 列印物件（主控台會自動做）才真正畫圖；
+4. `plot.trellis` 排好面板矩陣、分配封包，再對每個面板呼叫**面板函式**。
+
+::: {.callout-warning}
+**在函式或腳本裡，不明確 `print` 物件，lattice 什麼都不畫**——經典陷阱（第三章初次見面）。
+:::
+
+## 簡單範例：公式、條件、分組
+
+lattice 的引數很一致：先放**公式**（用位置傳——它的名字改過！），再放 `data`。同一份玩具資料三種畫法：
+
+```{r,echo=TRUE}
+d <- data.frame(x=c(0:9), y=c(1:10), z=c(rep(c("a", "b"), times=5)))
+xyplot(y~x, data=d)
+xyplot(y~x|z, data=d)            # 條件：依 z 拆面板
+xyplot(y~x, groups=z, data=d)    # 分組：依 z 變色／變符號
+```
+
+`y~x|z` 唸作「y 對 x，以 z 為條件」。
+
+## graphics 對 lattice 字典
+
+| graphics 函式 | lattice 函式 | 圖型 |
+|---|---|---|
+| `barplot` | `barchart` | 長條／直條圖 |
+| `dotchart` | `dotplot` | Cleveland 點圖 |
+| `hist` | `histogram` | 直方圖 |
+| `density`+`plot` | `densityplot` | 核密度圖 |
+| `stripchart` | `stripplot` | 帶狀圖 |
+| `qqnorm`（stats） | `qqmath` | 理論 Q-Q 圖 |
+| `plot` | `xyplot` | 散布圖 |
+| `qqplot`（stats） | `qq` | 雙樣本 Q-Q 圖 |
+| `pairs` | `splom` | 散布圖矩陣 |
+| `image` | `levelplot` | 影像圖 |
+| `contour` | `contourplot` | 等高線圖 |
+| `persp` | `cloud`、`wireframe` | 3D 透視 |
+
+多數函式接受公式＋資料框；許多也直接吃陣列、矩陣、表格或向量（例如 `barchart` 很樂意吃 `table`）。
+
+## 自訂面板函式
+
+想疊加額外元素，就替換**面板函式**——典型寫法是包一層：先加東西、再委派回原函式：
+
+```{r,echo=TRUE}
+xyplot(y~x|z, data=d,
+  panel=function(...){
+    panel.abline(a=1, b=1)
+    panel.xyplot(...)
+  })
+```
+
+# 單變量 Trellis 圖
+
+## 出生資料
+
+貫穿範例：2006 年美國的每一筆出生（CDC 出生檔——原始 3.1 GB；書中作者以 Perl `unpack` 腳本預處理、在 R 重編因子，抽 10% 成 `births2006.smpl`）。變數包括 `DOB_MM`／`DOB_WK`（出生月／星期）、`MAGER`（母親年齡）、`WTGAIN`、`SEX`、`APGAR5`、`DMEDUC`、`UPREVIS`、`ESTGEST`、`DMETH_REC`（生產方式）、`DPLURAL`（單胞胎／雙胞胎……）、`DBWT`（出生體重，公克）：
+
+```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda",
+              temp, mode = "wb")
 load(temp)
 dim(births2006.smpl)
 ```
 
-## 簡單範例
+## barchart
 
-2006 年美國出生資料（10% 抽樣）：出生體重與生產方式有什麼關係？
+各星期幾的出生數（1＝週日）：
 
-```{r,echo=TRUE,out.width="70%"}
-histogram(~ DBWT | DMETH_REC, data = births2006.smpl,
-          xlab = "Birth weight (g)")
+```{r,echo=TRUE}
+births.dow <- table(births2006.smpl$DOB_WK)
+barchart(births.dow)
 ```
 
-一條公式產出三個對齊的面板——不用迴圈就完成條件化。
+平日的寶寶遠多於週末——意外吧！是*生產方式*造成的嗎？按星期×方式列表（剔除未知）：
 
-## 使用 lattice 函式
+```{r,echo=TRUE}
+births2006.dm <- transform(
+  births2006.smpl[births2006.smpl$DMETH_REC != "Unknown",],
+  DMETH_REC=as.factor(as.character(DMETH_REC)))
+dob.dm.tbl <- table(WK=births2006.dm$DOB_WK, MM=births2006.dm$DMETH_REC)
+barchart(dob.dm.tbl)            # 預設：堆疊分組、沒有圖例
+```
 
-所有高階 lattice 函式共享同一套解剖構造：
+## 迭代逼近正確的呈現
+
+先解開堆疊、加圖例；還是難比較——乾脆放棄顏色分組，改成**兩個面板**的直條：
+
+```{r,echo=TRUE}
+barchart(dob.dm.tbl, stack=FALSE, auto.key=TRUE)
+barchart(dob.dm.tbl, horizontal=FALSE, groups=FALSE)
+```
+
+現在一目了然：自然產週末降約 25–30%，**剖腹產掉 50–60%**。lattice 的快速迭代——堆疊／解開、分組／分面板、翻轉——正是逼近真相的方法。
+
+## dotplot
+
+Cleveland **點圖**一個類別一個點——比長條安靜，適合較大的表。週間型態有季節性嗎？按週×月×方式列表再畫：
+
+```{r,echo=TRUE}
+dob.dm.tbl.alt <- table(WEEK=births2006.dm$DOB_WK,
+                        MONTH=births2006.dm$DOB_MM,
+                        METHOD=births2006.dm$DMETH_REC)
+dotplot(dob.dm.tbl.alt, stack=FALSE, auto.key=TRUE, groups=TRUE)
+```
+
+季節間略有起伏；週間型態整年不變。
+
+## dotplot：輪胎失效資料
+
+NHTSA 2003 年的「逐級加速至失效」測試（Firestone 召回案之後，選在炎熱的鳳凰城進行）：輪胎以遞增速度運轉直到失效。六種輪胎（B–L，各種尺寸／品牌）。變數：`Time_To_Failure`、`Speed_At_Failure_km_h`（階梯值——當因子處理！）、`Tire_Type`：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda",
+              temp, mode = "wb")
+load(temp)
+dotplot(as.factor(Speed_At_Failure_km_h)~Time_To_Failure|Tire_Type,
+        data=tires.sus)
+```
+
+D 型胎在 180 km/h 全數速死；某些 H 型胎撐得很久。（第十八章再會。）
+
+## histogram
+
+出生體重按胎數分——注意面板按字母序排列（所以水準名前面加了數字），且預設以方形面板填滿空間：
+
+```{r,echo=TRUE}
+histogram(~DBWT|DPLURAL, data=births2006.smpl)
+```
+
+用 `layout` 疊直行，方便比較：
+
+```{r,echo=TRUE,fig.height=5}
+histogram(~DBWT|DPLURAL, data=births2006.smpl, layout=c(1, 5))
+```
+
+各組內大致常態；平均體重隨胎數遞減。（其他引數：`type` ＝ `"percent"`／`"count"`／`"density"`，分組距用 `nint`／`breaks`／`endpoints`／`equal.widths`。）
+
+## densityplot
+
+一條平滑曲線取代長條——而且能疊。42.7 萬筆觀測，關掉逐點帶狀（`plot.points=FALSE`）：
+
+```{r,echo=TRUE,fig.height=5}
+densityplot(~DBWT|DPLURAL, data=births2006.smpl,
+            layout=c(1,5), plot.points=FALSE)
+```
+
+密度圖*疊加*得很優雅——把條件變數改成分組變數：
+
+```{r,echo=TRUE}
+densityplot(~DBWT, groups=DPLURAL, data=births2006.smpl,
+            plot.points=FALSE, auto.key=TRUE)
+```
+
+## stripplot
+
+**帶狀圖**是一維散布圖——一個類別許多值（點圖則是一值），最適合*小*資料。四胞胎以上的體重（44 筆），加抖動：
+
+```{r,echo=TRUE}
+stripplot(~DBWT, data=births2006.smpl,
+          subset=(DPLURAL=="5 Quintuplet or higher" |
+                  DPLURAL=="4 Quadruplet"),
+          jitter.data=TRUE)
+```
+
+## qqmath
+
+`qqmath` 把樣本分位數對理論分布作圖（預設常態 `qnorm`；另有 `f.value`、`distribution`、`qtype`）。先用真常態數驗證，再看出生資料：
+
+```{r,echo=TRUE}
+qqmath(rnorm(100000))
+qqmath(~DBWT|DPLURAL,
+       data=births2006.smpl[sample(1:nrow(births2006.smpl), 50000), ],
+       pch=19, cex=0.25,
+       subset=(DPLURAL != "5 Quintuplet or higher"))
+```
+
+出生體重：不太常態。
+
+## 舊金山房屋銷售資料
+
+第二個貫穿範例：3,281 筆舊金山房屋成交，2008-02-13 至 2009-07-14，作者從報紙彙整、地理編碼、再用 `sp`／`maptools` 與 `point.in.polygon` 連結 Zillow 街區圖資。變數：`street`、`city`、`zip`、`saledate`、`price`、`bedrooms`、`squarefeet`、`lotsize`、`yearbuilt`、`condolike`、`latitude`／`longitude`、`neighborhood`。真實資料——不完美、有缺值：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda",
+              temp, mode = "wb")
+load(temp)
+```
+
+## 房價的 qqmath：發現對數常態
+
+價格從 10 萬到 950 萬美元——直覺上就不會常態：
+
+```{r,echo=TRUE}
+qqmath(~price, data=sanfrancisco.home.sales)
+qqmath(~log(price), data=sanfrancisco.home.sales)
+```
+
+取對數後漂亮地拉直了。再按房間數分組——以平滑線取代散點（`type="smooth"`，這個引數會流進面板函式），用明確的子集讓圖例乾淨：
+
+```{r,echo=TRUE}
+qqmath(~log(price), groups=bedrooms,
+       data=subset(sanfrancisco.home.sales,
+                   !is.na(bedrooms) & bedrooms > 0 & bedrooms < 7),
+       auto.key=TRUE, drop.unused.levels=TRUE, type="smooth")
+```
+
+線各自分離、房間越多越高——同一招也適用於坪數六分位（`Hmisc::cut2(squarefeet, g=6)` 當 `groups`）與街區。
+
+# 雙變量 Trellis 圖
+
+## xyplot
+
+價格 vs. 坪數——先天真地畫，再修剪（價格 < 400 萬、< 6,000 平方英尺）並按郵遞區號分面板、自訂 strip：
+
+```{r,echo=TRUE}
+xyplot(price~squarefeet, data=sanfrancisco.home.sales)
+trellis.par.set(fontsize=list(text=7))
+xyplot(price~squarefeet|zip, data=sanfrancisco.home.sales,
+       subset=(zip!=94100 & zip!=94104 & zip!=94108 &
+               zip!=94111 & zip!=94133 & zip!=94158 &
+               price < 4000000 &
+               ifelse(is.na(squarefeet), FALSE, squarefeet < 6000)),
+       strip=strip.custom(strip.levels=TRUE))
+trellis.par.set(fontsize=list(text=12))
+```
+
+分區之後線性關係鮮明許多——按街區分（`price~squarefeet|neighborhood`，配 `pch=19, cex=.2`）標籤更好讀、故事相同。
+
+## bwplot：按月的盒鬚圖
+
+價格分布隨時間的變化——用 `cut` 把日期取整到月。原始嘗試被離群值淹沒；取對數、轉直、旋轉標籤：
+
+```{r,echo=TRUE}
+bwplot(log(price)~cut(saledate, "month"),
+       data=sanfrancisco.home.sales,
+       scales=list(x=list(rot=90)))
+```
+
+中位數動得不少；四分位距動得較少；高價端明顯萎縮——但分布的基本形狀逐月穩定。（量的提醒：資料始於 2 月中、止於 7 月中——那兩個月別過度解讀。）
+
+## splom 與 qq
+
+- **`splom(x, data, ...)`**——散布圖矩陣（lattice 版 `pairs`）；面板由 `panel.splom` 畫、矩陣由 `superpanel=panel.pairs` 統籌、軸細節用 `pscales`、變數名用 `varnames`。
+- **`qq(x, data, ...)`**——*雙樣本*分位數圖，比較兩個觀測分布（公式寫法 `factor ~ value`）。
+
+# 三變量圖
+
+## levelplot
+
+平面網格、第三維上色（由 `panel.levelplot` 繪製；重點引數 `at`、`cuts=15`、`region`、`colorkey`、`col.regions`、`contour`）。座標太精細不能直接畫——先 `cut` 分箱再 `table`：
+
+```{r,echo=TRUE}
+attach(sanfrancisco.home.sales)
+levelplot(table(cut(longitude, breaks=40), cut(latitude, breaks=40)),
+          scales=list(y=list(cex=.5), x=list(rot=90, cex=.5)))
+```
+
+想看各區平均*價格*？把 `table` 換成 `tapply`：
+
+```{r,echo=TRUE}
+levelplot(tapply(price,
+                 INDEX=list(cut(longitude, breaks=40),
+                            cut(latitude, breaks=40)),
+                 FUN=mean),
+          scales=list(draw=FALSE))
+```
+
+## 帶條件的 levelplot；contourplot
+
+第三個因子變成面板——按（封頂的）房間數看成交地點：
+
+```{r,echo=TRUE}
+bedrooms.capped <- ifelse(bedrooms < 5, bedrooms, 5)
+levelplot(table(cut(longitude, breaks=25),
+                cut(latitude, breaks=25),
+                bedrooms.capped),
+          scales=list(draw=FALSE))
+detach(sanfrancisco.home.sales)
+```
+
+**`contourplot`** 是地形圖式的手足（`cuts=7`、`labels`、`contour=TRUE`、`region=FALSE`）。
+
+## cloud 與 wireframe
+
+- **`cloud`**——3D 點雲（3D 點投影到 2D）；引數含 `aspect=c(1,1)`、`panel.aspect`，繪製交給 `panel.cloud` → `panel.3dscatter`。
+- **`wireframe`**——3D 曲面，lattice 版 `persp`（底層 `panel.3dwire`）。
+- 其他值得認識的 lattice 圖：**`rfs`**（模型的殘差與配適散布圖，可配 `distribution=qnorm`）與 **`parallel`**（平行座標圖）。
+
+# 客製化 Lattice 圖形
+
+## 高階函式的共同引數
+
+各高階函式共享：
+
+| 引數 | 說明 |
+|---|---|
+| `x`（公式）、`data` | 畫什麼、變數在哪 |
+| `allow.multiple`、`outer` | `y1+y2~x` 公式的處理：疊加或分面板 |
+| `groups`／`subset`／`subscripts` | 分組變數；列篩選；把索引交給面板 |
+| `panel` | 面板函式——*最重要的*客製化掛勾 |
+| `aspect` | 面板長寬比（`"fill"`、`"xy"` 45° banking、數值） |
+| `auto.key` | 快速圖例（邏輯值或串列） |
+| `prepanel` | 決定各面板空間／範圍的函式 |
+| `strip` | strip 繪製函式（如 `strip.custom`）；左側用 `strip.left` |
+| `xlab`、`ylab`、`main`、`sub`、`xlim`、`ylim` | 註記與範圍 |
+| `scales` | 座標軸控制（下一張） |
+| `layout`、`between`、`skip` | 面板排列與間距 |
+| `drop.unused.levels`、`default.scales`、`lattice.options` | 長尾（經 `trellis.skeleton` 傳遞） |
+
+## 控制座標軸：scales
+
+`scales` 是一個串列（可再分 `x`、`y` 子串列）：
+
+- `relation`——`"same"`（共用範圍）、`"free"`（各自）、`"sliced"`（等長切片）；
+- `draw`、`alternating`、`tick.number`、`at`、`labels`、`cex`、`rot`、`font`、`col`、`log`、`abbreviate`……
+
+前面已經用過：`scales=list(x=list(rot=90))` 旋轉月份標籤、`scales=list(draw=FALSE)` 讓地圖閉嘴。
+
+## 參數：trellis.par.get／set
+
+lattice 不理會 `par`；它的設定住在一個深層參數串列裡：
+
+```{r,echo=TRUE}
+trellis.par.get("axis.text")
+```
 
 ```{r,eval=FALSE,echo=TRUE}
-xyplot(y ~ x | g,            # 公式，條件化可選
-       data = df,            # 變數所在
-       groups = h,           # 面板內的分組疊加
-       layout = c(3, 1),     # 面板排列
-       main = "...", xlab = "...", ylab = "...")
+trellis.par.set(list(axis.text = list(cex = 0.5)))
+show.settings()                    # 目前設定的視覺總覽
+names(trellis.par.get())           # 30 多組、約 380 個參數
 ```
 
-- `groups=` 在面板*內*區分子集（配 `auto.key=TRUE` 出圖例）；`|` 在面板*間*區分子集。
-- 回傳的 `"trellis"` 物件可以儲存、用 `update()` 修改、之後再列印。
+參數組包括 `superpose.symbol`／`superpose.line`（分組）、`plot.polygon`（長條／直方）、`box.rectangle`／`box.umbrella`（bwplot）、`plot.line`／`plot.symbol`（xyplot 等）、`reference.line`、`regions` 與 `shade.colors`（levelplot／wireframe）、`strip.background`／`strip.shingle`、`fontsize`、`par.main.text` 等。
 
-## 單變量圖：直方圖與密度圖
+## plot.trellis、strip.default、simpleKey
 
-```{r,echo=TRUE,out.width="68%"}
-densityplot(~ DBWT | DPLURAL, data = births2006.smpl,
-            plot.points = FALSE, layout = c(1, 5),
-            xlab = "Birth weight (g)")
-```
+- **`plot.trellis`**——控制繪製的引數：`position`／`split`／`more`（同頁畫多個 trellis 物件）、`panel.height`／`panel.width`、`packet.panel`（哪個封包進哪個面板；預設 `packet.panel.default`）、`panel.error`。
+- **`strip.default(which.given, which.panel, var.name, factor.levels, shingle.intervals, strip.names, strip.levels, style, bg, fg, par.strip.text)`**——strip 如何顯示條件水準；用 `strip.custom` 客製。
+- **`simpleKey(text, points=TRUE, rectangles=FALSE, lines=FALSE, col, cex, ...)`**——`auto.key` 背後的圖例建構者。
 
-把面板直向堆疊（每種胎數一格：單胞胎、雙胞胎、三胞胎……）讓 x 軸對齊——多胞胎體重較輕，整個故事一欄講完。
+## 低階與面板函式
 
-## 單變量圖：點條與分位數
+以 grid 為底的繪圖原語對應 base graphics：`llines`／`panel.lines`、`lpoints`／`panel.points`、`ltext`／`panel.text`、`lsegments`／`panel.segments`、`lpolygon`／`panel.polygon`、`larrows`／`panel.arrows`、`lrect`／`panel.rect`，外加 `panel.axis` 與 `panel.superpose`。
 
-- `stripplot()`——一筆觀測一個點，小群組的理想選擇；
-- `qqmath()`——樣本分位數對理論分布；
-- `bwplot()`——盒鬚圖，`boxplot()` 的 lattice 表親：
+現成的面板小幫手，可組進自訂面板：
 
-```{r,echo=TRUE,out.width="68%"}
-bwplot(DBWT ~ factor(APGAR5), data = births2006.smpl,
-       xlab = "5-minute Apgar score", ylab = "Birth weight (g)")
-```
-
-體重與 Apgar 分數同升——二十個盒子一眼看盡。
-
-## 雙變量圖
-
-`xyplot()` 是條件化散佈圖。各星期幾的平均出生體重，依生產方式分面板：
-
-```{r,echo=TRUE,out.width="70%"}
-wt <- aggregate(DBWT ~ DOB_WK + DMETH_REC, data = births2006.smpl, mean)
-xyplot(DBWT ~ DOB_WK | DMETH_REC, data = wt, type = "h",
-       layout = c(3, 1), xlab = "Day of week", ylab = "Mean weight (g)")
-```
-
-其他雙變量夥伴：`barchart()`、`dotplot()`（Cleveland 點圖——常是圓餅圖與長條圖的最佳替代品）。
-
-## 三變量圖
-
-三個數值維度時：
-
-```{r,echo=TRUE,out.width="62%"}
-x <- seq(-2, 2, length.out = 40)
-grid <- expand.grid(x = x, y = x)
-grid$z <- with(grid, exp(-(x^2 + y^2)))
-levelplot(z ~ x * y, data = grid)
-```
-
-- `levelplot()`——彩色磚塊；`contourplot()`——帶標籤的等高線；
-- `cloud()`——3D 點雲；`wireframe()`——3D 曲面。
-
-## 自訂面板函式
-
-面板函式決定每個方格內畫什麼。包住預設函式再往上加：
-
-```{r,echo=TRUE,out.width="65%"}
-xyplot(DBWT ~ WTGAIN | SEX,
-       data = births2006.smpl[sample(nrow(births2006.smpl), 2000), ],
-       alpha = 0.2,
-       panel = function(x, y, ...) {
-         panel.xyplot(x, y, ...)
-         panel.lmline(x, y, col = "red", lwd = 2)
-       },
-       xlab = "Maternal weight gain (lb)", ylab = "Birth weight (g)")
-```
-
-`panel.lmline`、`panel.loess`、`panel.abline`、`panel.grid` 都是現成的積木。
-
-## 自訂 lattice 外觀
-
-- `trellis.par.get()` / `trellis.par.set()` 全域調整主題（顏色、字型、符號）。
-- `show.settings()` 一眼展示目前主題。
-- 單張圖：`par.settings=` 把主題調整注入單一呼叫；
-- `update(plot_object, ...)` 修改既有的 trellis 物件——潤飾存好的圖而不必重算。
-
-```{r,eval=FALSE,echo=TRUE}
-my.theme <- trellis.par.get()
-my.theme$plot.symbol$pch <- 19
-trellis.par.set(my.theme)
-```
-
-## Lattice 與基礎繪圖的比較
-
-| | 基礎繪圖 | Lattice |
-|:---|:---|:---|
-| 條件化 | 手動迴圈＋`par(mfrow)` | 公式裡的 `| g` |
-| 回傳值 | 無（筆墨上紙） | trellis 物件 |
-| 圖例 | 手動 `legend()` | `auto.key = TRUE` |
-| 面板間一致性 | 自己負責 | 自動 |
-
-當問題是「這個模式*在每個子群內*都成立嗎？」時，lattice 正是利器——第十五章將介紹 `ggplot2`，第三套建立在完整文法上的系統。
+- `panel.abline`、`panel.curve`、`panel.rug`、`panel.grid`、`panel.fill`；
+- `panel.mathdensity`（疊理論密度）、`panel.average`；
+- `panel.loess`（平滑線）、`panel.lmline`（迴歸線）；
+- 以及各高階函式的 `panel.*`（如 `panel.xyplot`、`panel.barchart`、`panel.histogram`）供委派——正是我們第一個自訂面板的寫法。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

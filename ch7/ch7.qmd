@@ -41,166 +41,462 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **The Object Catalog**
+# **The Building Blocks**
 
-## Primitive Object Types
+## Types and Classes
 
-Every R object has an underlying **type**, visible with `typeof()`. The catalog falls into natural families:
+All objects in R rest on a basic set of built-in objects:
 
-- **Basic vectors**: `logical`, `integer`, `double`, `complex`, `character`, `raw`;
-- **Compound objects**: `list` and everything built on lists;
-- **Language objects**: `symbol`, `call`, `expression`;
-- **Functions**: `closure` (R-level), `builtin` and `special` (implemented in C);
-- **Special objects**: `NULL`, environments, and a few internals.
+- an object's **type** defines how it is *stored*;
+- its **class** defines what information it *contains* and how it may be *used*.
+
+This chapter covers the built-in objects themselves — the object-oriented machinery (class definitions, inheritance, methods) waits until Chapter 10. Note that "object-oriented programming" means more than "programming with objects"!
+
+## A Map of the Primitive Types
+
+The built-in object types sort into a few categories:
+
+- **Basic vectors** — single-type collections: integers, doubles, complex, character, logical, raw.
+- **Compound objects** — containers of named objects: lists, pairlists, S4 objects, environments.
+- **Special objects** — `any`, `NULL`, `...`: each means something important in context, but you never create one yourself.
+- **R language objects** — objects representing R code, evaluable to other objects.
+- **Functions** — the workhorses: take arguments, return outputs, sometimes cause side effects (plots, files, network).
+- **Internal / bytecode** — types defined by R but normally invisible to user-level code.
+
+## Primitive Types (1): Basic Vectors
+
+| Type | Description | Example |
+|---|---|---|
+| `integer` | Whole numbers; produced naturally by sequences | `5:5`, `integer(5)` |
+| `double` | Floating-point (8 bytes on modern platforms); the default for numeric values | `1`, `-1`, `2^50` |
+| `complex` | Complex numbers; both parts must be written, even a zero real part | `2+3i`, `exp(0+1i*pi)` |
+| `character` | Text strings (a "string" in other languages) | `"Hello world."` |
+| `logical` | Boolean values | `TRUE`, `FALSE` |
+| `raw` | Raw bytes; for encoding objects from outside R | `raw(8)`, `charToRaw("Hello")` |
+
+## Primitive Types (2): Compound Objects
+
+| Type | Description | Example |
+|---|---|---|
+| `list` | A possibly heterogeneous, optionally named collection; data frames are built on lists | `list(1, 2, "hat")` |
+| `pairlist` | Name–value pairs, mainly internal; deprecated in user code (plain lists are as efficient and more flexible) | `.Options` |
+| `S4` | Objects supporting modern OO: inheritance, methods (Chapter 10) | — |
+| `environment` | The set of symbol–value pairs in a context, plus a pointer to an enclosing environment | `.GlobalEnv`, `new.env()` |
+
+## Primitive Types (3): Special and Language
+
+| Type | Description | Example |
+|---|---|---|
+| `any` | "Any type is OK" — prevents coercion; used in S4 slots and generic signatures | `representation(data="ANY")` |
+| `NULL` | "There is no object"; can have no attributes | `NULL` |
+| `...` | Variable-length argument lists, especially arguments passed through to other functions | — |
+| `symbol` | A language object referring to another object | `as.name("x")`, `quote(x)` |
+| `promise` | Evaluated on *first use*, not creation; implements delayed loading in packages | `delayedAssign("v", c(x,y,z))` |
+| `language` | Objects representing R code itself | `quote(function(x) {x+1})` |
+| `expression` | An unevaluated expression; create with `expression()`, run with `eval()` | `expression(1 + 2)` |
+
+## Primitive Types (4): Functions and Internal
+
+| Type | Description | Example |
+|---|---|---|
+| `closure` | Functions written in R: user-defined, most of base R, most packages | `function(x) {x+1}`, `print` |
+| `special` | Internal functions whose arguments are *not necessarily evaluated* | `if`, `[` |
+| `builtin` | Internal functions that evaluate their arguments | `+`, `^` |
+| `bytecode` | Compiled R functions from the `compiler` package | `cmpfun(function(x) {x^2})` |
+| `char` | Scalar "string"; character vectors are made of these (users never touch them) | — |
+| `externalptr` | External pointer, used in C code | — |
+| `weakref` | Weak reference (internal only) | — |
+
+# Vectors
+
+## Building Vectors: c and Coercion
+
+The six basic vector types appear constantly. The simplest constructor is `c`, which **combines** its arguments — and coerces them all to a single type:
 
 ```{r,echo=TRUE}
-typeof(1.5); typeof(1L); typeof("a"); typeof(list()); typeof(mean)
-```
-
-## Vectors
-
-Vectors are R's atoms: ordered, homogeneous collections. `c()` flattens its arguments recursively:
-
-```{r,echo=TRUE}
-v <- c(1, 2, c(3, 4, c(5)))
+v <- c(.295, .300, .250, .287, .215)
 v
-length(v)
+v <- c(.295, .300, .250, .287, "zilch")   # one character value...
+v                                          # ...and everything is character
 ```
 
-Names can travel with the elements:
+## Recursive Combination
+
+`c` can assemble a vector from nested structures with `recursive=TRUE` — but beware: a *list* argument without it gives you back a list:
 
 ```{r,echo=TRUE}
-prices <- c(apple = 30, banana = 12, cherry = 95)
-prices["banana"]
+v <- c(.295, .300, .250, .287, list(.102, .200, .303), recursive=TRUE)
+v
+typeof(v)
+v <- c(.295, .300, .250, .287, list(1, 2, 3))
+typeof(v)
+class(v)
 ```
 
-## Lists
+## Sequences and the length Attribute
 
-Lists are heterogeneous containers, the backbone of every complex structure in R:
+Two more vector builders — the `:` operator and the more flexible `seq`:
 
 ```{r,echo=TRUE}
-rec <- list(name = "Kim", scores = c(88, 92), pass = TRUE)
-rec$scores
-rec[["name"]]
-rec[1]          # single brackets return a (sub)list
+1:10
+seq(from=5, to=25, by=5)
 ```
 
-::: {.callout-note}
-**`[ ]` vs. `[[ ]]`.** Single brackets *slice* a list and return a list; double brackets *extract* one component and return the component itself. Confusing the two is the most common list error.
-:::
-
-## Matrices and Arrays
-
-A matrix is a vector with a `dim` attribute of length 2; arrays generalize to any number of dimensions:
+A vector's length can be manipulated *directly* — shrinking discards, expanding fills with `NA`:
 
 ```{r,echo=TRUE}
-m <- matrix(1:6, nrow = 2)
+w <- 1:10
+length(w) <- 5
+w
+length(w) <- 10
+w
+```
+
+# Lists
+
+## Ordered, Optionally Named, Heterogeneous
+
+A list is an ordered collection of objects, indexable by position — recall the `[` vs. `[[` distinction:
+
+```{r,echo=TRUE}
+l <- list(1, 2, 3, 4, 5)
+l[1]      # a sublist
+l[[1]]    # the element
+```
+
+Named elements model real things naturally. A physical parcel — destination New York, 2×6×9 inches, $12.95 postage — mixes three data types in one object:
+
+```{r,echo=TRUE}
+parcel <- list(destination="New York", dimensions=c(2, 6, 9), price=12.95)
+parcel$price
+```
+
+Lists are *the* building block for heterogeneous structures — data frames are built on them.
+
+# Other Objects
+
+## Matrices
+
+A **matrix** extends a vector to two dimensions, holding two-dimensional data of one type. The clean constructor is `matrix`, here with named rows and columns:
+
+```{r,echo=TRUE}
+m <- matrix(data=1:12, nrow=4, ncol=3,
+            dimnames=list(c("r1", "r2", "r3", "r4"),
+                          c("c1", "c2", "c3")))
 m
-dim(m)
-t(m)            # transpose
-m %*% t(m)      # matrix product
 ```
 
-Row and column names make matrices self-documenting: `dimnames(m) <- list(c("r1","r2"), c("a","b","c"))`.
+- Other structures convert via `as.matrix`.
+- **Implementation note:** a matrix is stored as a *vector*, not as a vector of vectors — subscripts are an access convention, not the storage layout. And unlike most classes, matrices carry no explicit `class` attribute (attributes: later this chapter).
 
-## Factors
+## Arrays
 
-A **factor** stores categorical data: integer codes plus a `levels` attribute mapping codes to labels.
+An **array** extends a vector to *any* number of dimensions:
 
 ```{r,echo=TRUE}
-sizes <- factor(c("S", "L", "M", "L", "S"), levels = c("S", "M", "L"))
-sizes
-table(sizes)
-as.integer(sizes)     # the codes underneath
+a <- array(data=1:24, dim=c(3, 4, 2))
+a
 ```
 
-- `ordered = TRUE` creates ordinal factors (`S < M < L`), which comparison operators respect.
-- Factors are how regression functions know a column is categorical — they generate dummy variables automatically.
+Like matrices, arrays are stored as plain vectors underneath, and have no explicit class attribute.
+
+## Factors: Categorical Values
+
+Categorical data could live in a character vector — but repeating long strings is wasteful. A **factor** is an ordered collection of items whose possible values are called **levels**:
+
+```{r,echo=TRUE}
+eye.colors <- factor(c("brown", "blue", "blue", "green",
+                       "brown", "brown", "brown"))
+levels(eye.colors)
+eye.colors
+```
+
+Note the print format: no quotes, and the levels listed explicitly — visibly *not* a character vector.
+
+## Ordered Factors
+
+Sometimes level order matters. A survey asks for reactions to "melon is delicious with an omelet": Strongly Disagree ... Strongly Agree. Coding these 1–5 *implies* equal spacing and meaningful averages — is Disagree + Agree really = Neutral? An **ordered factor** captures the ranking without the arithmetic claims:
+
+```{r,echo=TRUE}
+survey.results <- factor(
+  c("Disagree", "Neutral", "Strongly Disagree",
+    "Neutral", "Agree", "Strongly Agree",
+    "Disagree", "Strongly Agree", "Neutral",
+    "Strongly Disagree", "Neutral", "Agree"),
+  levels=c("Strongly Disagree", "Disagree", "Neutral",
+           "Agree", "Strongly Agree"),
+  ordered=TRUE)
+survey.results
+```
+
+## Factors Under the Hood
+
+Internally a factor is an **integer vector** plus a `levels` attribute mapping integers to labels (integers are small and fixed-size — efficient). Strip the class and the implementation shows:
+
+```{r,echo=TRUE}
+eye.colors
+class(eye.colors)
+eye.colors.integer.vector <- unclass(eye.colors)
+eye.colors.integer.vector
+class(eye.colors.integer.vector)
+```
+
+Restore the class attribute, and it's a factor again:
+
+```{r,echo=TRUE}
+class(eye.colors.integer.vector) <- "factor"
+eye.colors.integer.vector
+```
 
 ## Data Frames
 
-The data frame — one row per observation, one column per variable — is technically a list of equal-length vectors with class `data.frame`:
+A **data frame** represents a table: scientific observations with several measurements each, or a database table of rows and typed columns. Each column ("variable") may have a different type, but all must have the same length:
 
-```{r,echo=TRUE}
-df <- data.frame(player = c("A", "B", "C"),
-                 yards  = c(43, 28, 51),
-                 good   = c(TRUE, FALSE, TRUE))
-str(df)
-df[df$good, "yards"]
+```{r,error=TRUE,echo=TRUE}
+data.frame(a=c(1, 2, 3, 4, 5), b=c(1, 2, 3, 4))
 ```
 
-`str()` is the single most useful inspection tool in R: structure, types, and a preview in one view.
+The book's example — where users search most for the word "bacon" (Google Insights, 2004–2009):
+
+```{r,echo=TRUE}
+top.bacon.searching.cities <- data.frame(
+  city = c("Seattle", "Washington", "Chicago", "New York", "Portland",
+           "St Louis", "Denver", "Boston", "Minneapolis", "Austin",
+           "Philadelphia", "San Francisco", "Atlanta", "Los Angeles",
+           "Richardson"),
+  rank = c(100, 96, 94, 93, 93, 92, 90, 90, 89, 87, 85, 84, 82, 80, 80)
+)
+head(top.bacon.searching.cities, 8)
+```
+
+## Data Frames Are Lists
+
+```{r,echo=TRUE}
+typeof(top.bacon.searching.cities)
+class(top.bacon.searching.cities)
+```
+
+A data frame is implemented as a **list with class `data.frame`** — so list methods work unchanged: `top.bacon.searching.cities$rank` extracts the rank column.
 
 ## Formulas
 
-A formula captures a model description *without evaluating it*:
+To express a relationship between variables — for a plot or a model — R provides the **formula** class:
 
 ```{r,echo=TRUE}
-f <- yards ~ player + good
-class(f)
+sample.formula <- as.formula(y ~ x1 + x2 + x3)
+class(sample.formula)
+typeof(sample.formula)
 ```
 
-Formula syntax: `+` adds terms, `-` removes them, `*` crosses (`a*b` = `a + b + a:b`), `:` is an interaction, `.` means "all other columns", and `I()` protects arithmetic (`I(x^2)`). Models, lattice plots, and aggregation functions all accept formulas.
+This reads "y is a function of x1, x2, and x3." Chapter 3's lattice example, `Amount ~ Year | Food`, reads "Amount as a function of Year, conditioned on Food."
+
+## Formula Vocabulary
+
+| Item | Meaning |
+|---|---|
+| variable names | the variables themselves |
+| `~` | separates response (left) from stimulus variables (right) |
+| `+` | a linear relationship between variables |
+| `0` | added to a formula: omit the intercept, e.g. `y~u+w+v+0` |
+| `|` | conditioning variables (lattice formulas, Chapter 14) |
+| `I()` | interpret the enclosed expression *arithmetically*: `a+b` means both variables; `I(a+b)` means their sum |
+| `*` | interactions: `y~(u+v)*w` ≡ `y~u+v+w+I(u*w)+I(v*w)` |
+| `^` | crossing to a degree: `y~(u+w)^2` ≡ `y~(u+w)*(u+w)` |
+| `f(x)` | a function of variables as a term, e.g. `y~log(u)+sin(v)+w` |
+
+Some functions add their own vocabulary (e.g., `s()` for smoothing splines in `gam`). Formulas return in Chapters 14 and 20.
 
 ## Time Series
 
-`ts` objects attach regular time metadata to a vector. The course convention loads the textbook's turkey-price series from GitHub:
+Many problems track a variable **over time**; class `ts` represents this, feeding regression functions (`ar`, `arima`) and specialized plot methods.
+
+```{r,eval=FALSE,echo=TRUE}
+ts(data = NA, start = 1, end = numeric(0), frequency = 1,
+   deltat = 1, ts.eps = getOption("ts.eps"), class = , names = )
+```
+
+| Argument | Description |
+|---|---|
+| `data` | the observations (vector or matrix) |
+| `start` / `end` | time of first/last observation: one number, or (unit, offset) |
+| `frequency` | observations per unit of time |
+| `deltat` | sampling fraction between observations (`frequency = 1/deltat`) |
+| `ts.eps` | comparison tolerance for frequencies |
+| `class` | `"ts"` for one series; `c("mts","ts")` for several |
+| `names` | names of each series in a multiseries object |
+
+Eight quarters starting Q2 2008 — the print method knows about quarters and months:
+
+```{r,echo=TRUE}
+ts(1:8, start=c(2008, 2), frequency=4)
+```
+
+## A Real Time Series: Turkey Prices
+
+The USDA tracks retail meat prices (supermarkets covering ~20% of the US market, averaged by month). The book packages monthly turkey prices as `turkey.price.ts`:
 
 ```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
+              temp, mode = "wb")
 load(temp)
-class(turkey.price.ts)
-start(turkey.price.ts); frequency(turkey.price.ts)
+turkey.price.ts
 ```
 
-```{r,echo=TRUE,out.width="60%"}
-plot(turkey.price.ts)
+Utility functions read off the structure:
+
+```{r,echo=TRUE}
+start(turkey.price.ts)
+end(turkey.price.ts)
+frequency(turkey.price.ts)
+deltat(turkey.price.ts)
 ```
+
+## Shingles
+
+A **shingle** generalizes a factor to a *continuous* variable: a numeric vector plus a set of intervals which — like roof shingles — may **overlap**. They let a continuous variable serve as a conditioning or grouping variable, and are used extensively in the `lattice` package (Chapter 14).
 
 ## Dates and Times
 
-```{r,echo=TRUE}
-d <- as.Date("2026-09-22")
-d + 7                          # date arithmetic in days
-weekdays(d)
-now <- Sys.time()
-class(now)                     # POSIXct: seconds since 1970
-format(now, "%Y-%m-%d %H:%M")
-```
+Three classes represent moments in time:
 
-- `Date` for daily data; `POSIXct` for timestamps.
-- `difftime` objects represent durations; `seq(d, by = "month", length.out = 3)` builds calendars.
+- **`Date`** — dates without times;
+- **`POSIXct`** — date-times as seconds since 1970-01-01 00:00;
+- **`POSIXlt`** — date-times as separate vectors: `sec` (0–61, allowing leap seconds!), `min`, `hour`, `mday`, `mon` (0–11), `year` (since 1900), `wday`, `yday`, `isdst`.
+
+Store dates as date objects, not strings or numbers — the classes support arithmetic, and many plot functions require them:
+
+```{r,echo=TRUE}
+date.I.started.writing <- as.Date("2/13/2009", "%m/%d/%Y")
+date.I.started.writing
+today <- Sys.Date()
+today - date.I.started.writing
+```
 
 ## Connections
 
-Connections abstract over data sources — files, URLs, compressed archives, pipes — so reading functions need not care where bytes come from:
+**Connections** move data between R and the outside world — like file pointers in C or filehandles in Perl. Targets include files, URLs, zip/gzip/bzip-compressed files, pipes, network sockets, FIFOs, even the system clipboard.
+
+The lifecycle: create → open → use → close. Loading a saved (gzip-compressed) data file explicitly:
 
 ```{r,eval=FALSE,echo=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda",
-              temp, mode = "wb")
-load(temp)           # our GitHub convention: download, then load
-
-gz <- gzfile("big.csv.gz")    # transparent decompression
-read.csv(gz)
+consumption.connection <- gzfile(description="consumption.RData", open="r")
+load(consumption.connection)
+close(consumption.connection)
 ```
 
-The course convention — `download.file()` to a temporary file, then `load()` — uses connections under the hood; `mode = "wb"` keeps the binary file intact on every platform.
+Usually you skip all this: `save`, `load`, `read.table` open connections **implicitly** when handed a filename or URL. Explicit connections earn their keep with nonstandard sources. See `?connection`.
 
-## Attributes
+# Attributes
 
-Attributes are the metadata that turn plain vectors into richer structures:
+## Properties Attached to Objects
+
+Objects carry named properties — **attributes** — explaining what the object represents and how to interpret it. Often, two similar objects differ *only* in their attributes. (Why attributes rather than lists or S4? History: attributes predate R's modern object systems.)
+
+| Attribute | Description |
+|---|---|
+| `class` | the class of the object |
+| `comment` | a comment, often a description |
+| `dim` | dimensions |
+| `dimnames` | names along each dimension |
+| `names` | names of elements (columns of a data frame, etc.) |
+| `row.names` | names of rows (related to `dimnames`) |
+| `tsp` | start time (time series) |
+| `levels` | levels of a factor |
+
+For attribute `a` of object `x`: query with `a(x)`, set with `a(x) <- value`. (Changes affect the current environment only.)
+
+## Inspecting Attributes
+
+All attributes at once via `attributes`; individually via accessor functions:
 
 ```{r,echo=TRUE}
-x <- 1:6
-attr(x, "dim") <- c(2, 3)     # now it's a matrix!
-x
-class(x)
-attributes(x)
+m <- matrix(data=1:12, nrow=4, ncol=3,
+            dimnames=list(c("r1", "r2", "r3", "r4"),
+                          c("c1", "c2", "c3")))
+attributes(m)
+dim(m)
+colnames(m)
+rownames(m)
 ```
 
-`names`, `dim`, `dimnames`, `levels`, and `class` are all just attributes — the entire object system of Chapter 10 rests on this one mechanism.
+## Attributes Define the Object
+
+Change the attributes, change the class — remove `dim` and a matrix collapses to a vector:
+
+```{r,echo=TRUE}
+dim(m) <- NULL
+m
+class(m)
+typeof(m)
+```
+
+## Same Data, Different Attributes
+
+An array and a vector with identical contents:
+
+```{r,error=TRUE,echo=TRUE}
+a <- array(1:12, dim=c(3, 4))
+b <- 1:12
+a[2, 2]
+b[2, 2]      # error: b has no dimensions
+```
+
+Are they "the same"? `==` compares cell-wise (and answers in the shape of `a`):
+
+```{r,echo=TRUE}
+a == b
+```
+
+## all.equal and identical
+
+`all.equal` compares data *and* attributes, explaining any differences; `identical` answers strictly yes or no:
+
+```{r,echo=TRUE}
+all.equal(a, b)
+identical(a, b)
+```
+
+Give `b` the missing attribute and the difference evaporates:
+
+```{r,echo=TRUE}
+dim(b) <- c(3, 4)
+b[2, 2]
+all.equal(a, b)
+identical(a, b)
+```
+
+## Class Is an Attribute
+
+For simple objects, class and type align; for compound objects they diverge. Query with `class` and `typeof` (for matrices/arrays the class is implicit):
+
+```{r,echo=TRUE}
+x <- c(1, 2, 3)
+typeof(x)
+class(x)
+```
+
+Because class is just an attribute, you can build a factor *by hand* from an integer vector:
+
+```{r,echo=TRUE}
+v <- as.integer(c(1, 1, 1, 2, 1, 2, 2, 3, 1))
+levels(v) <- c("what", "who", "why")
+class(v) <- "factor"
+v
+```
+
+(No guarantee the internal implementation of factors never changes — treat this trick as a demonstration, not a technique.)
+
+## Quoting and the Limits of Inspection
+
+To ask about a *symbol itself* rather than what it points to, quote it:
+
+```{r,echo=TRUE}
+class(quote(x))
+typeof(quote(x))
+```
+
+Some types resist inspection entirely: there is no way to isolate an `any`, `...`, `char`, or `promise` object — checking a promise's type would force its evaluation, converting it into an ordinary object.
 
 ## Copyright Notice
 

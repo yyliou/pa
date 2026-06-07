@@ -43,9 +43,9 @@ knitr::opts_chunk$set(fig.align = "center")
 
 # **How R Thinks**
 
-## The Big Picture
+## The Grammar Lesson
 
-Chapter 3 showed you R phrase by phrase; this chapter is the grammar lesson. Four ideas organize everything that follows in Part II:
+Learning a computer language is much like learning a spoken one (only simpler). A tourist can survive on memorized phrases; Chapter 3 gave you those phrases. But to *speak* fluently you need grammar — verb conjugation, sentence structure. This chapter is R's grammar lesson, built on four ideas:
 
 - programs are built from **expressions**;
 - expressions operate on **objects**;
@@ -56,129 +56,282 @@ Master these and the detailed syntax of Chapter 6 will feel inevitable rather th
 
 ## Expressions
 
-An R program is a sequence of expressions, each evaluated to produce a value:
+R code is a series of **expressions**: assignments, conditionals, arithmetic, and more — each evaluated to produce a value:
 
 ```{r,echo=TRUE}
-x <- 3 * 7          # an assignment expression
-if (x > 20) "big" else "small"   # even control flow returns a value
+x <- 1
+if (1 > 2) "yes" else "no"
+127 %% 10
 ```
 
-- Separate expressions with newlines or semicolons.
-- Group several expressions into one with braces `{ }`; the block's value is its last expression.
-- Because everything returns a value, expressions compose: you can nest an `if` inside a function call inside an assignment.
+Expressions are composed of objects and functions, and may be separated by newlines **or semicolons**:
+
+```{r,echo=TRUE}
+"this expression will be printed"; 7 + 13; exp(0+1i*pi)
+```
 
 ## Objects
 
-Every value an expression touches is an **object**: vectors, lists, functions, models, environments.
+All R code manipulates **objects** — "things" represented by the computer. Numeric vectors, character vectors, lists, and functions are all objects:
 
 ```{r,echo=TRUE}
-v <- c(8, 6, 7)
-class(v)
-attributes(matrix(1:6, 2, 3))
+c(1, 2, 3, 4, 5)                       # a numeric vector (five elements)
+"This is an object too"               # a character vector (one element)
+list(c(1,2,3,4,5), "This is an object too", "this whole thing is a list")
+function(x, y) { x + y }               # a function is an object as well
 ```
-
-Objects carry **attributes** — metadata such as dimensions, names, or class — that change how generic functions treat them. A matrix is literally a vector wearing a `dim` attribute.
 
 ## Symbols
 
-A variable name is itself an object: a **symbol** bound to a value within some environment.
+Formally, variable names in R are **symbols**. Assigning a value to a name binds the symbol to the object *in the current environment* — and, a touch tautologically, an environment is the set of symbols defined in a given context:
 
 ```{r,echo=TRUE}
-fortune <- "When in doubt, make a data frame."
-fortune
+x <- 1     # binds symbol "x" to object 1 in the current environment
 ```
 
-- Evaluating the symbol `fortune` looks up what it is bound to.
-- The binding lives in an **environment** (Chapter 8); the same name can be bound to different values in different environments.
-- This is why R can treat code as data: `quote(x + y)` returns the unevaluated expression, symbols and all.
+Chapter 8 treats symbols and environments in full; for now, just remember that a name and the thing it names are different objects.
+
+# Functions
+
+## All Work Is Done by Functions
+
+A **function** takes input objects (its **arguments**) and returns an output object. Every statement — setting variables, doing arithmetic, looping — can be written as a function call. The book's demonstration starts with a humble vector:
 
 ```{r,echo=TRUE}
-quote(x + y)
+animals <- c("cow", "chicken", "pig", "tuba")
+animals[4] <- "duck"     # the normal way to fix element 4
+animals
 ```
 
-## Functions
-
-A function is an object that accepts **arguments** and returns a **value**:
+That bracket assignment is *parsed into* a call to the function `[<-`. This is the equivalent expression:
 
 ```{r,echo=TRUE}
-f <- function(x, y) {
-  x + 2 * y
-}
-f(1, 10)
-f(y = 1, x = 10)        # arguments may be named
+animals <- c("cow", "chicken", "pig", "tuba")
+`[<-`(animals, 4, "duck")
 ```
 
-- Functions can be assigned to variables, stored in lists, passed to other functions, and returned as results — the trait that makes R a *functional* language.
-- Default values make arguments optional: `function(x, base = 10)`.
+(One subtle difference: written this way the result isn't auto-printed — but the effect is the same.)
+
+## Why Care That Everything Is a Function Call?
+
+In practice you would never write `` `[<-`(animals, 4, "duck") `` — bracket notation is far easier to read. But knowing the function is there means you can **inspect its code**, **read its help page**, or **write methods with the same name** for your own classes (Chapter 10). More pretty-vs-functional pairs:
+
+```{r,echo=TRUE}
+apples <- 3            # pretty assignment
+`<-`(oranges, 4)       # functional form of assignment
+apples + oranges       # pretty arithmetic
+`+`(apples, oranges)   # functional form
+if (apples > oranges) "apples are better" else "oranges are better"
+`if`(apples > oranges, "apples are better", "oranges are better")
+```
+
+```{r,echo=TRUE}
+x <- c("apple","orange","banana","pear")
+x[2]                   # pretty vector reference
+`[`(x, 2)              # functional form
+```
 
 ## Objects Are Copied in Assignment
 
-R behaves as though assignment and argument-passing **copy** objects, rather than sharing references:
+In assignment statements, most objects are **immutable**: R copies the object, not merely a reference to it. (Immutability is a virtue — it prevents whole categories of errors, e.g., in multithreaded programs.)
 
 ```{r,echo=TRUE}
-w <- c(1, 2, 3)
-double_it <- function(z) { z <- z * 2; z }
-double_it(w)
-w                       # untouched
+u <- list(1)
+v <- u
+u[[1]] <- "hat"
+u
+v          # v still holds the original
 ```
+
+This holds for vectors, lists, and most other primitive objects.
+
+## Copying Applies to Function Calls Too
+
+Arguments are copied as well. This function sets the `i`th element of `x` to 4 — and accomplishes nothing visible:
+
+```{r,echo=TRUE}
+f <- function(x, i) { x[i] = 4 }
+w <- c(10, 11, 12, 13)
+f(w, 1)
+w          # untouched: w was copied into x
+```
+
+Technically, the interpreter copies the object bound to `w` and binds the symbol `x` to the copy; the modification happens only inside the function's context. (Mutable objects and pass-by-reference become possible with environments — Chapter 8.)
 
 ::: {.callout-note}
-**Call by value.** A function cannot accidentally modify your data; it works on its own copy. (Internally R delays the physical copy until something is actually modified, so this is cheaper than it sounds.)
+**Semantics vs. performance.** R *behaves as if* every assignment copies, but often modifies objects **in place** — e.g., `v <- 1:100; v[50] <- 27` alters the vector without copying it. Identical meaning, much better speed. Details live in the *R Internals* guide.
 :::
 
-## Everything Is an Object
+## Everything in R Is an Object
 
-Beyond data, the language's own machinery is made of objects:
+Not just data: **functions, symbols, even expressions** are objects. A function name is really a symbol pointing at a function object (a relationship itself stored in an environment object). The same symbol can hold a number one moment and a function the next:
 
-```{r,echo=TRUE}
-class(mean)             # functions are objects
-class(quote(x + y))     # unevaluated code is an object
-formals(double_it)      # a function's argument list, as data
+```{r,error=TRUE,echo=TRUE}
+x <- 1
+x
+x(2)                     # x is not (yet) a function
+x <- function(i) i^2
+x
+x(2)
 ```
 
-A function name is just a symbol pointing at a function object — which is why you can do `apply(m, 1, mean)`: you are passing the function itself.
+You can even write R code that constructs new functions — in principle, a function that rewrites its own definition.
 
-## Special Values
+# Special Values
 
-A few special constants appear throughout real data work:
+## NA: Missing Values
 
-```{r,echo=TRUE}
-NA + 1                  # NA: missing value, infects calculations
-1 / 0                   # Inf
--1 / 0                  # -Inf
-0 / 0                   # NaN: not a number
-is.null(NULL)           # NULL: the empty object
-```
-
-- `NA` means "unknown"; most summary functions offer `na.rm=TRUE` to skip missing values.
-- `NULL` means "nothing at all" — assigning `x$col <- NULL` deletes a component.
-
-## Coercion
-
-When types do not match, R converts — **coerces** — values according to fixed rules, moving toward the more general type:
+`NA` ("not available") represents **missing values** — common in loaded text data, and substituted for database `NULL`s. Expanding a structure beyond its defined values fills the new cells with `NA`:
 
 ```{r,echo=TRUE}
-c(1, 2, TRUE)           # logical -> numeric
-c(1, 2, "three")        # numeric -> character
-as.numeric("3.14")      # explicit coercion
+v <- c(1, 2, 3)
+length(v) <- 4
+v
 ```
 
-- Implicit coercion follows the hierarchy logical → integer → numeric → character.
-- The `as.*` family (`as.numeric`, `as.character`, `as.factor`, ...) coerces on demand; `I()` (AsIs) suppresses unwanted conversion, e.g., when building data frames.
+## Inf, -Inf, and NaN
 
-## The R Interpreter
-
-R is an **interpreted** language: expressions are parsed and evaluated on the fly, with no separate compile step.
-
-- That is what makes the console possible — and what makes R slower than compiled languages for tight loops (Chapter 24 shows the cures, including the built-in byte-code compiler).
-- Parsing turns text into expression objects; evaluation walks those objects. You can do both yourself:
+Numbers too big to represent become **infinity**, signed accordingly — also the result of dividing by zero:
 
 ```{r,echo=TRUE}
-ex <- parse(text = "7 * 6")[[1]]
-eval(ex)
+2 ^ 1024
+- 2 ^ 1024
+1 / 0
 ```
 
-This "code is data" property powers R's formula notation, `quote()`, and much of its metaprogramming.
+Computations that make no sense yield **`NaN`** ("not a number"):
+
+```{r,echo=TRUE}
+Inf - Inf
+0 / 0
+```
+
+## NULL
+
+The symbol `NULL` always points to one special object: the **null object**.
+
+- Often used as a function argument meaning "no value supplied"; some functions also return it.
+- `NULL` is **not** the same as `NA`, `Inf`, `-Inf`, or `NaN` — it is not a value at all, but the absence of one.
+
+```{r,echo=TRUE}
+is.null(NULL)
+```
+
+# Coercion
+
+## Automatic Type Conversion
+
+Call a function with the "wrong" type and R tries to **coerce** the value so the call still works. Two mechanisms operate automatically:
+
+- **formal objects:** generic functions lacking an exact method look for a coercion method to a type that has one (creating such methods: Chapter 10);
+- **built-in types:** R converts from more specific to more general types on its own:
+
+```{r,echo=TRUE}
+x <- c(1, 2, 3, 4, 5)
+typeof(x); class(x)
+x[2] <- "hat"          # one character value forces the whole vector over
+x
+typeof(x); class(x)
+```
+
+## The Coercion Rules
+
+- Logical values become numbers: `TRUE` → 1, `FALSE` → 0.
+- Values convert to the **simplest type that can represent all the information**.
+- The ordering is roughly: logical < integer < numeric < complex < character < list.
+- `raw` objects are not converted to other types.
+- Object **attributes are dropped** during coercion.
+- To inhibit coercion when passing arguments, wrap the value in `I()` (the `AsIs` function) — see `?AsIs`.
+
+::: {.callout-note}
+**Why so permissive?** Strongly typed languages (Java) raise exceptions instead of converting. John Chambers, S's designer, recalled that early S "made as many cases work as possible," but the later, formal conclusion was that converting richer types to simpler ones *in all situations* breeds confusing, untrustworthy results. In daily practice — numeric vectors of one type — coercion rarely bites.
+:::
+
+# The R Interpreter
+
+## Parse, Substitute, Evaluate
+
+R is an **interpreted** language: the interpreter executes your expressions directly, with no compile step (unlike C, C++, Java; like LISP, Perl, JavaScript). For each expression, the interpreter:
+
+1. **parses** it, translating syntactic sugar into functional form;
+2. **substitutes** objects for symbols where appropriate;
+3. **evaluates** it, returning an object — recursively for complex expressions.
+
+Example: typing `x <- 1` becomes the call `` `<-`(x, 1) ``, which binds 1 to `x` in the current environment and returns 1.
+
+## Walking Through a Conditional
+
+With `x` bound to 1, consider:
+
+```{r,echo=TRUE}
+x <- 1
+if (x > 1) "orange" else "apple"
+```
+
+The interpreter parses the line as an if-then-else structure, evaluates the **condition** `(x > 1)` first — false — and therefore *never evaluates* `"orange"`; it evaluates the expression after `else` and returns `"apple"`. In special cases like this, **not all arguments are evaluated** — which is why `if` cannot be an ordinary function. And whatever an expression returns at the console gets handed to `print`.
+
+## .Internal and .Primitive
+
+Some functionality lives inside the R system itself:
+
+- Many functions call internal system code via **`.Internal`** — e.g., the graphics workhorse:
+
+```{r,echo=TRUE}
+plot.xy
+```
+
+- Where even `.Internal`'s calling overhead is too high, functions are implemented entirely internally via **`.Primitive`** — reserved for a few performance-critical basics:
+
+```{r,echo=TRUE}
+`<-`
+```
+
+# Seeing How R Works
+
+## quote: Parsing Without Evaluating
+
+Because R expressions are R objects, you can parse — or partially evaluate — expressions and inspect the result. The `quote()` function parses its argument but does *not* evaluate it, returning a **language object**:
+
+```{r,echo=TRUE}
+typeof(quote(if (x > 1) "orange" else "apple"))
+quote(if (x > 1) "orange" else "apple")   # the print method isn't very informative...
+```
+
+## The Parse Tree
+
+...but convert the language object **to a list** and the structure appears — this is the expression's parse tree:
+
+```{r,echo=TRUE}
+as(quote(if (x > 1) "orange" else "apple"), "list")
+```
+
+Apply `typeof` to every element to label the tree (here using `lapply` — and thanks to coercion, the `as` is optional):
+
+```{r,echo=TRUE}
+lapply(as(quote(if (x > 1) "orange" else "apple"), "list"), typeof)
+```
+
+Observations: the `else` keyword vanishes in parsing; the first element is a **symbol** referring to the `if` function — so even special syntax becomes *function name first, arguments after*, exactly like any call. For constants, the list has a single item: `as.list(quote(1))`.
+
+## Sugar Exposed, and deparse
+
+The bracket lookup `x[2]` and its functional twin parse to the *identical* tree:
+
+```{r,echo=TRUE}
+as.list(quote(x[2]))
+as.list(quote(`[`(x, 2)))
+```
+
+The translation is irreversible — both collapse to one tree — but `deparse` turns a parse tree back into properly formatted R code, choosing the pretty syntax:
+
+```{r,echo=TRUE}
+deparse(quote(x[2]))
+deparse(quote(`[`(x, 2)))
+```
+
+::: {.callout-tip}
+**Tools to carry through the book:** `quote`, `substitute`, `typeof`, `class`, and `methods` let you watch the interpreter parse and dispatch. When R surprises you, these are your microscope.
+:::
 
 ## Copyright Notice
 

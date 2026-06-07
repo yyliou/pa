@@ -38,182 +38,415 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 ```
 
 # **基礎繪圖**
 
-## 畫家模型
+## 三套繪圖系統，各佔一章
 
-基礎繪圖採「筆在紙上」的模型：高階函式畫出一張完整圖表，低階函式在其上疊加筆墨，畫上去就擦不掉——只能重畫 [@tukey1977exploratory; @cleveland1993visualizing]。
+R 繪圖的方式很多；本書聚焦三個最流行的套件：
 
-- **高階**：`plot()`、`hist()`、`barplot()`、`pie()`、`boxplot()`……
-- **低階**：`points()`、`lines()`、`text()`、`legend()`、`abline()`……
-- 輸出送往作用中的**繪圖裝置**（螢幕、PDF、PNG）。
+- **graphics**（本章）——經典系統：好客製、好修改、可在螢幕上互動；
+- **lattice**（第十四章）——專為*依條件變數拆分資料*而生；
+- **ggplot2**（第十五章）——另一套隱喻，讓複雜又漂亮的圖變得容易。
 
-本章範例資料，依課程慣例載入：
+本章路線：常見圖型巡禮 → 繪圖裝置 → 完整的客製化機制（`par`、低階函式）。
 
-```{r,echo=TRUE,cache=TRUE}
+# 散布圖
+
+## plot：泛型入口
+
+範例資料：2008 年癌症病例（美國癌症協會）與 2006 年各州毒物排放（EPA），打包成 `toxins.and.cancer`：
+
+```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda", temp, mode = "wb")
-load(temp)
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda", temp, mode = "wb")
-load(temp)
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
-load(temp)
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda",
+              temp, mode = "wb")
 load(temp)
 ```
 
-## 散佈圖
+`plot` 是泛型函式——向量、表格、時間序列都能畫。兩個向量時執行的是 `plot.default`。癌症死亡率 vs. 毒物排放率：
 
-環境毒物排放與癌症死亡率有關嗎？一個問題、一個 `plot()`：
-
-```{r,echo=TRUE,out.width="65%"}
-plot(toxins.and.cancer$total_toxic_chemicals / toxins.and.cancer$Surface_Area,
-     toxins.and.cancer$deaths_total / toxins.and.cancer$Population,
-     xlab = "Toxins released per sq mile",
-     ylab = "Deaths per capita")
-```
-
-`plot(x, y)` 是萬用入口；公式寫法 `plot(y ~ x, data = df)` 也可以。
-
-## 標示資料點
-
-用低階函式替有趣的觀測值加上標籤：
-
-```{r,echo=TRUE,out.width="62%"}
+```{r,echo=TRUE}
 attach(toxins.and.cancer)
-plot(air_on_site / Surface_Area, deaths_lung / Population,
-     xlab = "Air toxins", ylab = "Lung-cancer deaths per capita")
-text(air_on_site / Surface_Area, deaths_lung / Population,
-     labels = State_Abbrev, cex = 0.6, pos = 4)
-detach(toxins.and.cancer)
+plot(total_toxic_chemicals/Surface_Area, deaths_total/Population)
 ```
 
-互動模式下，`identify()` 與 `locator()` 讓你直接在繪圖視窗點選，找出資料點與座標。
-
-## 繪製時間序列
-
-`plot()` 認得 `ts` 物件，會沿著日曆畫出折線：
-
-```{r,echo=TRUE,out.width="65%"}
-plot(turkey.price.ts, ylab = "US cents per pound",
-     main = "Average turkey price by month")
-```
-
-節慶需求一眼可見——價格每年十一月都下探。
-
-## 長條圖
-
-```{r,echo=TRUE,out.width="65%"}
-doubles.by.team <- tapply(batting.2008$`2B`, batting.2008$teamID, sum)
-barplot(sort(doubles.by.team, decreasing = TRUE)[1:8],
-        las = 2, main = "Doubles by team, 2008 (top 8)")
-```
-
-- `horiz=TRUE` 翻成橫向；輸入矩陣可畫分組或堆疊長條（`beside=`）。
-- `las=2` 旋轉座標軸標籤——小小旗標，大大提升可讀性。
-
-## 圓餅圖與馬賽克圖
-
-```{r,echo=TRUE,out.width="55%"}
-pie(c(Good = 787, Missed = 163, Blocked = 24),
-    main = "Field goal outcomes, 2005")
-```
-
-- 知覺研究對圓餅圖很不留情：人類比較長度遠勝於比較角度。數值接近時請改用長條圖。
-- 兩個類別變數時，`mosaicplot(~ cut + color, data = ...)` 依交叉表比例鋪滿平面。
-
-## 三維資料
-
-曲面與網格有三位朋友：`image()`、`contour()`、`persp()`。優勝美地山谷的高程網格：
-
-```{r,echo=TRUE,out.width="60%"}
-image(yosemite, col = terrain.colors(64), asp = 1,
-      main = "Half Dome (elevation raster)")
-```
-
-```{r,echo=TRUE,out.width="55%"}
-persp(yosemite[seq(1, nrow(yosemite), 6), seq(1, ncol(yosemite), 6)],
-      expand = 0.2, theta = 225, phi = 20, shade = 0.6, border = NA)
-```
-
-## 繪製分布
-
-```{r,echo=TRUE,out.width="60%"}
-hist(batting.2008$AB[batting.2008$AB > 100], breaks = 30,
-     xlab = "Batting average", main = "Hitters with 100+ at-bats")
-```
-
-```{r,echo=TRUE,out.width="60%"}
-plot(density(batting.2008$AB[batting.2008$AB > 100]),
-     main = "Kernel density estimate")
-rug(batting.2008$AB[batting.2008$AB > 100])
-```
-
-`qqnorm()` 把樣本與常態分布對照——點落在直線上代表「常態尚屬合理」。
-
-## 盒鬚圖
-
-五數摘要的圖像化，一組一個盒子：
-
-```{r,echo=TRUE,out.width="68%"}
-boxplot(AB ~ teamID, data = batting.2008[batting.2008$AB > 100, ],
-        las = 2, cex.axis = 0.7, ylab = "Batting average")
-```
-
-鬚延伸到 1.5 × IQR；其外的點被標為離群值——Tukey 的配方，自 1977 年以來不曾改變。
-
-## 繪圖裝置
-
-圖表呈現在**裝置**上。螢幕是預設；檔案則是要開啟與關閉的裝置：
+## plot.default：引數
 
 ```{r,eval=FALSE,echo=TRUE}
-pdf("figure.pdf", width = 7, height = 5)    # 向量圖：任意縮放都銳利
-plot(turkey.price.ts)
-dev.off()                                    # 一定要關閉裝置
+plot(x, y = NULL, type = "p", xlim = NULL, ylim = NULL, log = "",
+     main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
+     ann = par("ann"), axes = TRUE, frame.plot = axes,
+     panel.first = NULL, panel.last = NULL, asp = NA, ...)
+```
 
-png("figure.png", width = 800, height = 600) # 點陣圖：適合網頁
+| 引數 | 說明 |
+|---|---|
+| `x`、`y` | 資料：兩個向量，或時間序列／公式／串列／兩欄矩陣（見 `?xy.coords`） |
+| `type` | `"p"` 點、`"l"` 線、`"o"` 點線重疊、`"b"` 點線相連、`"s"` 階梯、`"h"` 垂直線、`"n"` 不畫 |
+| `xlim`／`ylim` | 座標軸範圍 |
+| `log` | 對數軸：`""`、`"x"`、`"y"`、`"xy"` |
+| `main`／`sub`／`xlab`／`ylab` | 標題與軸標籤 |
+| `ann`／`axes`／`frame.plot` | 畫註記／座標軸／外框？ |
+| `panel.first`／`panel.last` | 畫點之前／之後評估的運算式 |
+| `asp` | 長寬比 y/x |
+| `...` | 圖形參數（見後） |
+
+## 互動式辨識與標籤
+
+*空氣*毒物與*肺癌*之間的相關更強：
+
+```{r,echo=TRUE}
+plot(air_on_site/Surface_Area, deaths_lung/Population,
+     xlab="Air Release Rate of Toxic Chemicals",
+     ylab="Lung Cancer Death Rate")
+text(air_on_site/Surface_Area, deaths_lung/Population,
+     labels=State_Abbrev, cex=0.5, adj=c(0,-1))
+```
+
+- 互動工具：`locator(1)` 印出你點擊位置的座標；`identify(x, y, labels)` 邊點邊標記。
+- 一次標出全部，用 `text`（這裡以 `cex` 縮小、`adj` 調位）。這個關係*確實*統計顯著（第十八章）——但僅憑這點談不上因果。
+
+## matplot、smoothScatter、pairs
+
+三個特殊場合的親戚：
+
+- **`matplot(x, y, type=, lty=, lwd=, pch=, col=, cex=, ..., add=)`** 把一個矩陣的各欄對另一個矩陣的各欄作圖；常見的 `par` 式引數在此接受*向量*，一個序列一個值。
+- **`smoothScatter`** 依點的*密度*塗色——點太多疊成一團時的解藥（見第十六章）。
+- **`pairs`** 替每對變數畫散布圖矩陣：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda",
+              temp, mode = "wb")
+load(temp)
+pairs(batting.2008[batting.2008$AB>100, c("H", "R", "SO", "BB", "HR")])
+```
+
+# 繪製時間序列
+
+## plot.ts 與 acf
+
+`plot` 有時間序列方法（`plot.type` 可選 `"multiple"`／`"single"`，另有 `panel`、`nc`、`yax.flip` 與邊界控制……）。第七章的火雞價格：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
+              temp, mode = "wb")
+load(temp)
 plot(turkey.price.ts)
+```
+
+季節性強烈：十一、十二月大特價（感恩節、聖誕節），春天小降價（大概是復活節）。
+
+## 相關圖（Correlogram）
+
+**自我相關函數**顯示各時間差下序列與自身過去的相關——`acf` 計算並預設畫圖：
+
+```{r,echo=TRUE}
+acf(turkey.price.ts)
+```
+
+12 個月週期正相關、6 個月週期負相關。（時間序列分析正篇：第二十三章。）
+
+# 長條圖
+
+## barplot 基礎
+
+2001–2006 年美國博士學位授予數（Statistical Abstract），直接輸入：
+
+```{r,echo=TRUE}
+doctorates <- data.frame(
+  year=c(2001, 2002, 2003, 2004, 2005, 2006),
+  engineering=c(5323, 5511, 5079, 5280, 5777, 6425),
+  science=c(20643, 20017, 19529, 20001, 20498, 21564),
+  education=c(6436, 6349, 6503, 6643, 6635, 6226),
+  health=c(1591, 1541, 1654, 1633, 1720, 1785),
+  humanities=c(5213, 5178, 5051, 5020, 5013, 4949),
+  other=c(2159, 2141, 2209, 2180, 2480, 2436))
+doctorates.m <- as.matrix(doctorates[2:7])   # barplot 要矩陣，
+rownames(doctorates.m) <- doctorates[, 1]    # 不收資料框
+barplot(doctorates.m[1, ])
+```
+
+預設行為：畫 y 軸、不畫 x 軸線、以欄名替長條命名。
+
+## 並排與堆疊
+
+並排的水平長條加圖例；然後是堆疊直條（先轉置使欄＝年份，加寬 `ylim` 容納圖例）：
+
+```{r,echo=TRUE}
+barplot(doctorates.m, beside=TRUE, horiz=TRUE, legend=TRUE, cex.names=.75)
+barplot(t(doctorates.m), legend=TRUE, ylim=c(0, 66000))
+```
+
+## barplot：引數
+
+重點引數（不只這些）：
+
+| 引數 | 說明 |
+|---|---|
+| `height` | 向量，或矩陣（`beside=FALSE` 堆疊、`TRUE` 並排） |
+| `width`／`space` | 條寬／間距（`beside=TRUE` 時可給 `c(組內, 組間)`） |
+| `names.arg`／`legend.text` | 條的標籤／圖例（邏輯值＝用列名） |
+| `beside`／`horiz` | 並排 vs. 堆疊／水平 vs. 垂直 |
+| `density`／`angle` | 每英寸陰影線數／陰影線斜率 |
+| `col`／`border` | 條色／邊框色 |
+| `main`、`sub`、`xlab`、`ylab`、`xlim`、`ylim`、`log`、`axes` | 慣常的註記 |
+| `xpd` | 允許條超出繪圖區？ |
+| `cex.axis`／`cex.names`／`axisnames`／`axis.lty` | 軸文字大小與樣式 |
+| `inside`／`offset`／`add`／`args.legend` | 分隔線、基線位移、疊圖、圖例選項 |
+
+# 圓餅圖
+
+## pie——慎用
+
+2006 年美國漁獲的去向（百萬磅）：
+
+```{r,echo=TRUE}
+domestic.catch.2006 <- c(7752, 1166, 463, 108)
+names(domestic.catch.2006) <- c("Fresh and frozen",
+  "Reduced to meal, oil, etc.", "Canned", "Cured")
+pie(domestic.catch.2006, init.angle=100, cex=.6)
+```
+
+引數：`x`（非負值）、`labels`、`edges`（圓的平滑度）、`radius`、`clockwise` 與 `init.angle`、`density`／`angle` 陰影、`col`（預設六種粉彩色）、`border`、`lty`、`main`。
+
+::: {.callout-warning}
+**說明檔自己都這麼說：**「圓餅圖是非常糟糕的資訊呈現方式。人眼擅長判斷線性長度、不擅長判斷相對面積。長條圖或點圖是呈現這類資料更好的選擇。」
+:::
+
+# 繪製類別資料
+
+## 條件密度：cdplot
+
+*類別*結果如何沿*數值*軸變化？`cdplot` 以核密度估計平滑（底層是 `density`；`bw`、`n`、`from`、`to` 會轉傳；`ylevels` 重排順序；支援公式＋`data`＋`subset`）。打擊慣用手 vs. 打擊率：
+
+```{r,echo=TRUE}
+batting.w.names.2008 <- transform(batting.2008,
+  AVG=H/AB, bats=as.factor(bats), throws=as.factor(throws))
+cdplot(bats~AVG, data=batting.w.names.2008,
+       subset=(batting.w.names.2008$AB>100))
+```
+
+左右開弓（`B`）的比例隨打擊率上升。
+
+## 馬賽克圖、脊柱圖、關聯圖
+
+兩個因子的列聯結構，三種畫法：
+
+```{r,echo=TRUE}
+mosaicplot(formula=bats~throws, data=batting.w.names.2008, color=TRUE)
+```
+
+- `mosaicplot` 的方塊面積與次數成比例；其餘引數：`sort`、`off`（間距）、`dir`（方向）、`shade`（延伸圖，依對數線性模型殘差上色）、`margin`、`type`（`"pearson"`／`"deviance"`／`"FT"` 殘差）。
+- `spineplot(bats~throws, data=...)`——近親。
+- `assocplot(table(bats, throws))`——以長條顯示各格*偏離獨立*的程度（Cohen–Friendly 關聯圖）。
+- 另見 `stars` 與 `fourfoldplot`。
+
+# 三維資料
+
+## 優勝美地高程資料
+
+所有 3D 函式都畫一個**矩陣**：列索引＝x、欄索引＝y、格值＝z。書中範例：USGS 的優勝美地谷高程，以 GridFloat 下載（562×253 的 4 位元組浮點流，用 `readBin(..., size=4, endian="little")` 讀入再設 `dim`）；打包為 `yosemite`：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda",
+              temp, mode = "wb")
+load(temp)
+dim(yosemite)
+```
+
+## persp：透視曲面
+
+重點引數：`x`／`y`（列／欄的座標）、`z`（矩陣）、`theta`／`phi`（視角方位角／餘緯度）、`r`／`d`（視點距離、透視強度）、`expand`（z 誇張倍率）、`col`／`border`、`ltheta`／`lphi`（光源）、`shade`、`box`／`axes`／`nticks`／`ticktype`。
+
+望向半圓頂——先左右翻轉欄（persp 的 y 由下往上畫），取方形的 253 欄子集（小心柵欄錯誤的 `+1`！），再旋轉、打光：
+
+```{r,echo=TRUE}
+halfdome <- yosemite[(nrow(yosemite) - ncol(yosemite) + 1):562,
+                     seq(from=253, to=1)]
+persp(halfdome, col=grey(.25), border=NA, expand=.15,
+      theta=225, phi=20, ltheta=45, lphi=20, shade=.75)
+```
+
+## image 與 heatmap
+
+`image` 把矩陣畫成上色的格網（引數：`zlim`、`col`——常用 `heat.colors`、`topo.colors`、`terrain.colors`、`breaks`、`oldstyle`、`add`）：
+
+```{r,echo=TRUE}
+image(yosemite, asp=253/562, ylim=c(1,0), col=sapply((0:32)/32, gray))
+```
+
+（微調：長寬比配合資料、y 軸反向、32 階灰。）生物學風味的親戚 **`heatmap`** 在邊緣加上可選的**樹狀圖（dendrogram）**——`Rowv`／`Colv`、`distfun`／`hclustfun`、`scale`、`margins`、`cexRow`／`cexCol` 等。
+
+## contour
+
+`contour` 以等值線連接相同的值——引數 `nlevels`／`levels`、`labels`／`labcex`／`drawlabels`／`method`（標籤位置：`"simple"`、`"edge"`、`"flattest"`）、`vfont`，加上慣常的 `col`／`lty`／`lwd`／`add`：
+
+```{r,echo=TRUE}
+contour(yosemite, asp=253/562, ylim=c(1, 0))
+```
+
+等值線常*疊加在* image 圖上（`add=TRUE`）。
+
+# 繪製分布
+
+## 直方圖
+
+2008 年每位打者的打席數（PA ＝ AB+BB+HBP+SF+SH）：
+
+```{r,echo=TRUE}
+batting.2008 <- transform(batting.2008, PA=AB+BB+HBP+SF+SH)
+hist(batting.2008$PA)
+```
+
+一大群打席不到 50 的球員——算比率統計時值得剔除。拉近並細分組距：
+
+```{r,echo=TRUE}
+hist(batting.2008[batting.2008$PA>25, "PA"], breaks=50, cex.main=.8)
+```
+
+## 密度圖與 rug
+
+許多統計學家偏好**密度圖**——更穩健、更好讀。用 `density` 計算、`plot` 繪製、`rug` 點綴（沿軸的帶狀小線段）：
+
+```{r,echo=TRUE}
+plot(density(batting.2008[batting.2008$PA>25, "PA"]))
+rug(batting.2008[batting.2008$PA>25, "PA"])
+```
+
+## 分位數—分位數圖
+
+**Q-Q 圖**把樣本分位數對理論分位數作圖——點落在 45° 對角線上代表分布吻合。`qqnorm` 對照常態；`qqplot` 對照任意兩個分布：
+
+```{r,echo=TRUE}
+qqnorm(batting.2008$AB)
+```
+
+打數顯然*不*常態——彎曲的形狀一眼就說明了。
+
+# 盒鬚圖
+
+## 構造與函式
+
+**盒鬚圖**壓縮一個分布：盒＝四分位距（25–75 百分位）、盒內線＝中位數、鬚＝*鄰接值*（≤ Q3 + 1.5·IQR 的最大觀測；≥ Q1 − 1.5·IQR 的最小觀測）、散點＝外圍值。
+
+`boxplot` 重點引數：公式 `y~grp` ＋ `data` ＋ `subset`（或直接給向量）；`range`（鬚的長度）、`width`／`varwidth`（∝ √n）、`notch`（±1.58·IQR/√n 的凹口）、`outline`、`names`、`plot`（FALSE 時回傳統計量）、`border`／`col`、`log`、`horizontal`、`add`、`at`、`pars`。
+
+## 各隊的上壘率
+
+美聯各隊的上壘率，只算常規球員：
+
+```{r,echo=TRUE}
+batting.2008 <- transform(batting.2008, OBP=(H+BB+HBP)/(AB+BB+HBP+SF))
+boxplot(OBP~teamID,
+        data=batting.2008[batting.2008$PA>100 & batting.2008$lgID=="AL",],
+        cex.axis=.7)
+```
+
+# 繪圖裝置
+
+## 螢幕與檔案
+
+圖形落在**裝置（device）**上。各平台預設：`windows`（Windows）、`X11`（Unix）、`quartz`（macOS）。檔案裝置：`bmp`、`jpeg`、`png`、`tiff`，加上 `postscript`、`pdf`、`pictex`（LaTeX）、`xfig`、`bitmap`。
+
+- 多數接受 `width`、`height`、`pointsize`；檔案裝置收 `file` 引數。（嚴格說 bmp/jpeg/png/tiff 叫 `filename`——但拜部分比對之賜，寫 `file` 處處通行。）
+- **用 `dev.off()` 關閉裝置**檔案才真正寫入。書中的圖正是這樣產生的：
+
+```{r,eval=FALSE,echo=TRUE}
+png("scatter.1.png", width=4.3, height=4.3, units="in", res=72)
+plot(total_toxic_chemicals/Surface_Area, deaths_total/Population)
 dev.off()
 ```
 
-忘記 `dev.off()` 會留下寫到一半的檔案——腳本中最常見的繪圖錯誤。
+# 客製化圖表
 
-## 自訂圖表
+## 四條路，與共同引數
 
-多數繪圖函式共享同一批引數；`par()` 設定整個工作階段的繪圖參數：
+客製化的途徑：(1) 繪圖函式的引數、(2) 工作階段參數（`par`）、(3) 修改既有圖表的函式、(4) 從零自寫函式。多數繪圖函式共享的引數：`add`、`axes`、`log`、`type`、`xlab`／`ylab`、`main`、`sub`。
 
-```{r,echo=TRUE,out.width="60%"}
-oldpar <- par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))   # 1x2 版面
-plot(cars, pch = 19, col = "steelblue", main = "pch & col")
-plot(cars, type = "l", lty = 2, lwd = 2, main = "lines")
-par(oldpar)
+**`par`** 查詢與設定作用中裝置的參數——設一次、影響之後每張圖：
+
+```{r,echo=TRUE}
+par("bg")
 ```
 
-- 單次呼叫：`pch`（符號）、`col`、`lty`/`lwd`（線型／線寬）、`cex`（大小）、`xlim`/`ylim`、`main`/`xlab`/`ylab`。
-- 全階段：`par(mfrow=)` 排版多圖、`par(mar=)` 調邊界。像上面那樣保存並還原 `par()`。
-
-## 註解函式
-
-一層一層把圖蓋起來：
-
-```{r,echo=TRUE,out.width="60%"}
-plot(cars, pch = 19)
-abline(lm(dist ~ speed, data = cars), col = "red", lwd = 2)
-text(8, 100, "fitted line", col = "red")
-legend("topleft", legend = c("data", "fit"),
-       pch = c(19, NA), lty = c(NA, 1), col = c("black", "red"))
-title(main = "Stopping distance vs. speed")
+```{r,eval=FALSE,echo=TRUE}
+par(bg="white")           # 設定
+par()                     # 列出全部
 ```
 
-`points()`、`lines()`、`segments()`、`arrows()`、`rect()` 與 `polygon()` 補齊這套加墨工具箱。
+所有參數皆可讀寫，唯讀的只有 `cin`、`cra`、`csi`、`cxy`、`din`。注意：有些函式的引數與參數同名但意義不同（如 `points` 的 `bg` ＝點的底色）。
+
+## 版面：邊界與多圖
+
+- **邊界：** `mai`（英寸）／`mar`（文字行數，預設 `c(5.1, 4.1, 4.1, 2.1)` 對應下左上右）／`mex`（行高倍率）；標題與標籤間距用 `mgp`；裝置尺寸看唯讀的 `din`；正方形繪圖區設 `pty="s"`。
+- **多圖：** `mfcol=c(3,2)`（先填欄）或 `mfrow`（先填列）切割裝置；`mfg` 跳到指定格。外邊界：`omi`／`oma`／`omd`。各圖幾何：`pin`、`plt`、`fig`。裁切：`xpd`。
+
+```{r,echo=TRUE,fig.height=5}
+par(mfcol=c(3, 2))
+pie(c(5, 4, 3)); plot(x=c(1,2,3,4,5), y=c(1.1,1.9,3,3.9,6))
+barplot(c(1,2,3,4,5)); barplot(c(1,2,3,4,5), horiz=TRUE)
+pie(c(5,4,3,2,1)); plot(c(1,2,3,4,5,6), c(4,3,6,2,1,1))
+par(mfcol=c(1, 1))
+```
+
+（更輕鬆的替代：`layout`、`split.screen`——或乾脆用 grid／lattice。）
+
+## 文字、線條、顏色、座標軸、點
+
+- **文字大小：** `ps`（點數）×`cex`（整體倍率）×`cex.axis`／`cex.lab`／`cex.main`／`cex.sub`。**字體：** `family`；樣式用 `font`（另有 `.axis`、`.lab`、`.main`、`.sub`）。對齊 `adj`、行距 `lheight`、旋轉 `crt`（單字元）／`srt`（整串）。
+- **線條：** 型式 `lty`（0 無、1 實線、2 虛線、3 點線、4 點虛、5 長虛、6 雙虛）、寬度 `lwd`、線端 `lend`、接點 `ljoin`／`lmitre`；外框樣式 `bty`（`"o"`、`"l"`、`"7"`、`"]"`、`"c"`、`"u"`、`"n"`）。
+- **顏色：** `bg`、`fg`、`col`（另有 `.axis`、`.lab`、`.main`、`.sub`）。可用名稱（`colors()`）、`"#RRGGBB"`、調色盤索引（`palette()`）；生成函式：`rgb`、`hsv`、`hcl`、`gray`、`rainbow`。
+- **座標軸：** `lab`（刻度數）、`las`（標籤方向）、`mgp`、刻度長 `tcl`／`tck`、刻度位置 `xaxp`／`yaxp`、區間算法 `xaxs`／`yaxs`（`"r"` 外擴 4%、`"i"` 內含）、`xaxt="n"`／`yaxt="n"` 隱藏；對數旗標 `xlog`／`ylog`。
+- **點：** 符號用 `pch`（19 實心圓、20 小圓點、21 填色圓、22 方、23 菱、24/25 三角；見 `?points`）；歷史上符號大小是 `mkh`。
+- 其他：`ann`（註記開關）、`ask`（換頁前詢問）、`new`（假裝新畫布以疊圖）、`usr`（使用者座標極值）、`smo`、`err`。
+
+# 基礎繪圖函式
+
+## 低階層
+
+高階函式是*由低階函式組裝的*——`plot` 呼叫 `title`、`plot.new`、`plot.window`、`points`、`lines`、`axis`、`box`；`pie` 呼叫 `polygon`、`lines`、`text`、`title`；`boxplot` 把活交給 `bxp`；依此類推。懂低階層，就能把客製化*穿過*高階函式傳下去，或從零組出圖表。
+
+- **`points(x, y, type="p", ...)`**——加點（好用的：`col`、`bg`、`pch`、`cex`、`lwd`）；矩陣版 `matpoints`。
+- **`lines(x, y, ...)`**——加折線（好用的：`lty`、`lwd`、`col`、`lend`、`ljoin`、`lmitre`）；矩陣版 `matlines`。
+- **`curve(expr, from, to, n=101, add=, ...)`**——畫 `x` 的運算式或函式名。
+
+## 直線、形狀、線段
+
+**`abline`** 橫貫繪圖區畫一條線——截距＋斜率（`a`、`b`）、水平（`h`）、垂直（`v`）、迴歸物件（`reg`）或 `coef`；對數軸上 `untf` 控制是否反變換：
+
+```{r,echo=TRUE}
+plot(x=c(0, 10), y=c(0, 10))
+abline(h=4); abline(v=3)
+abline(a=1, b=1); abline(coef=c(10, -1))
+polygon(x=c(2, 2, 4, 4), y=c(2, 4, 4, 2))
+segments(x0=6, y0=6, x1=8, y1=9)
+```
+
+向量引數一次畫多條（`abline(h=1:10, v=1:10)`）——但要畫格線，請改用 `grid(nx, ny, col, lty, lwd)`。形狀：`polygon(x, y, density, angle, border, col, lty)`；矩形用 `rect(xleft, ybottom, xright, ytop, ...)`；點對線段用 `segments(x0, y0, x1, y1, ...)`；箭頭用 `arrows`。
+
+## text、mtext、title、legend
+
+- **`text(x, y, labels, adj, pos, offset, vfont, cex, col, font)`**——在座標處放文字（`pos`：1 下、2 左、3 上、4 右）。
+- **`mtext(text, side=3, line=0, outer=, at=, ...)`**——在*邊界*放文字（side 1–4 ＝下／左／上／右）。
+- **`title(main, sub, xlab, ylab, line=, outer=)`**——事後補註記。
+- **`legend(x, y, legend, ...)`**——應有盡有：`fill`（色塊）、`col`／`lty`／`lwd`／`pch`（示例線與點）、`bty`／`bg`／`box.*`（圖例外框）、`pt.bg`／`pt.cex`／`pt.lwd`、`xjust`／`yjust`、`x.intersp`／`y.intersp`／`adj`／`text.width`／`text.col`、`merge`、`ncol`／`horiz`、`title`、`inset`、`xpd`。
+
+## axis、box、trans3d
+
+- **`axis(side, at, labels, tick, line, pos, outer, font, lty, lwd, lwd.ticks, col, col.ticks, hadj, padj)`**——想在哪畫軸、怎麼畫，悉聽尊便（side 1–4 同前）。
+- **`box(which="plot", lty="solid")`**——替 `"plot"`、`"figure"`、`"inner"` 或 `"outer"` 區域加框。
+- **`trans3d(x, y, z, pmat)`**——把 3D 點投影到 `persp` 圖上，使用 `persp` 回傳的透視矩陣。3D 曲面與 2D 註記之間的橋。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

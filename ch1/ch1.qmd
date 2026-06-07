@@ -61,17 +61,22 @@ Our textbook is *R in a Nutshell* (2nd ed.) [@adler2012r]. This first chapter ha
 :::
 
 - R is maintained by an international core team of developers and distributed through **CRAN** (the Comprehensive R Archive Network).
-- Because the source code is open, anyone can inspect how a method is implemented — and port R to new platforms.
+- Because the source code is open, anyone can inspect how a method is implemented — and anyone can port R to a new platform. That openness is precisely why binaries exist for every major desktop system.
 - Everything you need for this course costs exactly zero dollars.
 
 # R Versions
 
 ## The Release Cycle
 
-- The R Core Team publishes official releases on a regular schedule: a major `x.y.0` release each spring, followed by patch releases (`x.y.1`, `x.y.2`, ...) that fix bugs.
+- The R Core Team publishes official releases on a regular schedule: historically twice a year (spring and autumn in the book's era); today, one major `x.y.0` release each spring, followed by patch releases (`x.y.1`, `x.y.2`, ...) that fix bugs.
 - Version numbers follow the pattern **major.minor.patch**, e.g., `4.4.2`.
-- The language itself is very stable. Release-to-release changes are mostly bug fixes, performance work, and a handful of new functions, so code written for one recent version almost always runs unchanged on another.
-- The textbook was written against a much older release (2.15.1); essentially every example still behaves the same way today. Where modern R differs, the slides use the modern behavior.
+- A typical release brings bug fixes, performance improvements, and a few new functions. Genuine changes to the *language* are rare and usually touch only obscure corners (the book's example: the type of `NA` in partially initialized arrays changed back in R 2.5).
+
+## Version Stability: Why You Should Not Worry
+
+- The textbook's code was checked against R **2.15.1** (2012). Because the language is so stable, essentially every example still behaves the same way today; where modern R differs, these slides use the modern behavior.
+- The same logic applies to download links: filenames embed the version number (`R-4.4.2-win.exe`), so the exact name you see will always be newer than any screenshot or book. **Just take the latest one.**
+- Code you write against one recent version will almost always run unchanged on another. Results across nearby versions should be virtually identical.
 
 ## Which Version Should You Use?
 
@@ -86,59 +91,82 @@ R.version.string
 
 # Getting and Installing R Binaries
 
-## Where to Download
+## Binaries, and Where to Find Them
 
-R has been ported to every major desktop platform, and prebuilt installers ("binaries") are the easiest way to get it:
+A **binary** is a precompiled, ready-to-run build of R — the easiest installation route on every desktop platform. To get one:
 
-1. Visit the official site: <https://cran.r-project.org>.
-2. CRAN is replicated on **mirror sites** around the world. Any mirror works; a geographically close one is usually fastest. The default "0-Cloud" mirror automatically routes you to a good server.
-3. Pick the download link matching your operating system and run the installer.
+1. Visit the official site: <https://cran.r-project.org> and follow the *Download* link.
+2. The download link leads to a list of **mirror sites**, organized by country. CRAN is replicated worldwide; a geographically close mirror is usually also close on the network, hence fast. The modern "0-Cloud" mirror automatically routes you to a good server, so it is a safe default.
+3. Pick the installer matching your operating system and run it.
 
-::: {.callout-tip}
-**Filenames contain version numbers.** Links look like `R-4.4.2-win.exe` — the exact number will have moved on by the time you look. Always just take the newest one.
-:::
+A few platform-specific notes follow — Windows and macOS users normally download and run installers themselves, while Linux users are better served by a package manager.
 
 ## Windows
 
 - Click *Download R for Windows* → *base* → run the `.exe` installer.
-- The default settings are fine: R installs under `C:\Program Files\R\` and appears in the Start menu.
-- Both the installer and R itself are 64-bit on any modern machine; no choices need to be made.
-
-```{r,eval=FALSE,echo=TRUE}
-# After installing, launch "R x.y.z" from the Start menu,
-# or better: install RStudio (Chapter 2) and launch that instead.
-```
+- Installation works like any other Windows program: easy **if you have the right permissions**, awkward if you do not (common on corporate or lab machines).
+  - Simplest fix: install R as a standard user **into your own file space** (e.g., under your user directory).
+  - Alternatively, install — and later install packages — as an Administrator account.
+- The default location is under `%ProgramFiles%\R` (usually `C:\Program Files\R\`), with a Start-menu entry in the group *R*.
+- In the book's day, CRAN shipped only 32-bit Windows builds; today both the installer and R itself are 64-bit on any modern machine, so no choices need to be made.
 
 ## macOS
 
 - Click *Download R for macOS* and choose the build that matches your hardware:
   - **Apple Silicon** (M-series chips): the `arm64` package.
   - **Intel** Macs: the `x86_64` package.
-- The `.pkg` installer places an application called **R** in your Applications folder and a command-line `R` on your path.
-- If you mix the two builds up, R will refuse to start — when in doubt, check *About This Mac*.
+- The `.pkg` installer places an application called **R** in your Applications folder and a command-line `R` on your path: download, double-click, follow the prompts.
+- As with any application, you need adequate permissions on the machine — on your personal laptop that just means remembering your password; on a managed computer you may need the administrator's help.
+- Older hardware or operating systems? CRAN keeps **legacy builds** of earlier R versions that may suit older systems better. (The book's era offered separate universal binaries for OS X 10.4/10.5 — the same idea, two decades earlier.)
+- If you grab the wrong build for your chip, R will refuse to start — when in doubt, check *About This Mac*.
 
 ## Linux and Unix: Package Managers
 
-On Linux, the cleanest route is your distribution's package-management system, which also keeps R updated automatically:
+On Linux, the cleanest route is the distribution's **package-management system**: it fetches R, resolves every other piece of software R needs, and makes later upgrades a one-line affair. Before you start, make sure you know the root password or have `sudo` privileges; otherwise you will need the system administrator.
 
 ```{bash,eval=FALSE,echo=TRUE}
 # Debian / Ubuntu
 sudo apt-get update
 sudo apt-get install r-base r-base-dev
 
-# Fedora / Red Hat
+# Fedora / Red Hat (the book's era used: sudo yum install R.x86_64)
 sudo dnf install R
 ```
 
+- Updating later is equally simple: `sudo apt-get upgrade` or `sudo dnf update R` brings you to the newest packaged version.
 - CRAN maintains its own repositories with newer builds than most distributions ship; instructions for adding them are on the CRAN Linux pages.
 - `r-base-dev` (or the equivalent) is worth installing too — it provides the compilers needed to build contributed packages from source.
 
-## Linux and Unix: Installing from Files
+## Linux and Unix: Installing from Downloaded Files
 
-If no package manager is available, two alternatives remain:
+If you prefer (or a package manager is unavailable), you can download the files and install manually:
 
-- **Precompiled binaries** for several distributions can be downloaded from CRAN and installed manually (e.g., with `dpkg` or `rpm`).
-- **Building from source**: download the source tarball from CRAN and run the classic sequence:
+- CRAN provides **precompiled packages** for several distributions — Debian, Ubuntu, Fedora/Red Hat, SUSE — plus builds for Solaris.
+- On Red Hat–style systems the tool is RPM. The book's example: having downloaded `R-2.15.1.fc10.i386.rpm` into `~/Downloads`, install it with:
+
+```{bash,eval=FALSE,echo=TRUE}
+rpm -i ~/Downloads/R-2.15.1.fc10.i386.rpm
+# Debian-style equivalent:
+# sudo dpkg -i r-base-core_*.deb
+```
+
+- **Other Unix systems** often have their own channels — for instance, R is available through the FreeBSD Ports collection. Consult your system's documentation for installing third-party software.
+
+# Building R from Source
+
+## Should You Build Your Own R?
+
+It is standard practice to build R from source on Linux/Unix — but **not** on Windows or macOS, where it is tricky and yields little benefit for ordinary users:
+
+- it will not save **space** — the build pulls in large supporting tools (LaTeX among them);
+- it will not save **time** — unless you already have every tool and a glacial network connection;
+- the one real payoff is squeezing out extra **performance**, which in practice is rarely the bottleneck, even on large data sets.
+
+The fact that you *can* build R anywhere is, however, exactly how R reaches unusual platforms — a direct benefit of open source.
+
+## The Classic Build Sequence
+
+For the curious, building on a Unix-like system follows the time-honored ritual:
 
 ```{bash,eval=FALSE,echo=TRUE}
 tar -xzf R-4.4.2.tar.gz
@@ -148,7 +176,10 @@ make
 sudo make install
 ```
 
-This is rarely necessary on a desktop, but it is how R reaches unusual platforms — a direct benefit of R being open source.
+- `configure` inspects your system and prepares the build; `make` compiles; `make install` copies the result into place.
+- The textbook defers details to its later chapter on R internals; for the definitive treatment see the manual *R Installation and Administration* on CRAN.
+
+# Wrapping Up
 
 ## Checking Your Installation
 
@@ -160,6 +191,10 @@ sessionInfo()$R.version$version.string
 ```
 
 If you see sensible output, your installation works and you are ready for Chapter 2, where we tour the user interface.
+
+::: {.callout-tip}
+**Keep R current.** When a new version appears (CRAN announces them on the front page), upgrading follows exactly the same steps as installing — and on Linux, your package manager does it for you.
+:::
 
 ## Copyright Notice
 

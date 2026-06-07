@@ -93,4 +93,4 @@ All software is free and open-source: **R** at <https://cran.r-project.org>, **R
 
 9. Weeks 17–18: Flexible learning weeks; Part VI (Ch. 24–26) provided as self-study material.
 
-*Syllabus is subject to change. Any updates will be announced on the course website.*
+*Syllabus is subject to change. Any updates will be announced on the

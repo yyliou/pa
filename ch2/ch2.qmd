@@ -41,121 +41,245 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **Meeting R Face to Face**
+# **Meeting the Interface**
 
-## Many Faces of One System
+## Why You Are Here
 
-When people say they "use R," they may be interacting with it in quite different ways. This chapter tours the main options:
+You presumably have a problem you hope R will solve. Typical examples:
 
-- the **graphical user interface (GUI)** that ships with R on Windows and macOS;
-- the **R console**, the interactive prompt at the heart of every interface;
-- **batch mode**, for running scripts without any interaction;
-- **RStudio**, the integrated development environment (IDE) we will use in this course;
-- a few other front ends you may encounter in the wild.
+- checking the statistical significance of experimental results;
+- plotting data to understand it better;
+- analyzing genome data — or sales data, survey data, sensor data...
 
-Whichever wrapper you choose, the engine underneath — the interpreter — is identical.
+R is a *software environment* for statistical computing and graphics, made of many components: the language, its interpreter, a graphics system, and the desktop application that bundles them. This chapter tours the parts you physically interact with — the **graphical user interface (GUI)** on each platform, and then the most important part of all: the **R console**.
+
+If you have never used an interactive language before, this chapter teaches the survival skills; if you have, it will still tell you where everything lives.
 
 # The R Graphical User Interface
 
+## Launching R for the First Time
+
+- On **Windows** and **macOS**, opening the R application brings up a command window plus menu bars.
+- On most **Linux** systems, R simply starts on the command line — no window at all.
+- The look differs by platform, but the working parts are the same everywhere: a menu bar, possibly a toolbar with common functions, and — front and center — the R console.
+
 ## Windows
 
-- The Windows build of R installs a program called **RGui**. It opens a window containing a menu bar, a toolbar, and — most importantly — the R console.
-- The menus offer conveniences such as loading and saving workspaces, installing packages, and basic script editing.
-- The GUI is serviceable but minimal; almost everyone moves to RStudio quickly.
+- R installs under `%ProgramFiles%\R` (usually `C:\Program Files\R`) with a Start-menu entry in the group *R*.
+- Launching it opens the **R GUI window**, which contains a menu bar, a toolbar, and the R console.
+- The screenshots in the textbook date from Windows XP — kept in the second edition precisely because R itself had changed so little. The layout today remains essentially identical.
 
 ## macOS
 
-- The macOS installer provides **R.app**, a native application with a console window, a simple editor with syntax highlighting, and menus for package management and plotting devices.
-- Plots appear in a separate Quartz graphics window.
-- As on Windows, the bundled GUI covers the basics, and serious work tends to happen in an IDE.
+- The installer adds an application named **R** to the Applications folder; run it like any other Mac program.
+- You get the same trio: menu bar, toolbar with common functions, and an R console window.
+- macOS users have a second route: run R **from the terminal** without the GUI. Open Terminal (in *Applications → Utilities*) and type `R` at the prompt.
 
 ## Linux and Unix
 
-- On most Linux systems there is no bundled GUI at all: typing `R` in a terminal starts the console directly on the command line.
-- Plots open in an X11 window; everything else happens at the prompt.
-- This is a perfectly complete way to use R — the GUI elements are conveniences, not requirements.
+Start R from the command line by typing:
+
+```{bash,eval=FALSE,echo=TRUE}
+$ R
+```
+
+- Capital "R" — Linux filenames are case sensitive. (And the `$` is the Unix prompt; don't type it.)
+- Unlike Windows/macOS, this starts an interactive session *in the terminal itself*.
+- The book's era offered a windowed alternative, `R -g Tk &`, which launched R in its own Tk window (menu bar but no toolbar) running in the background. Modern Linux users wanting a windowed experience generally use RStudio instead.
+
+## How Little the Standard GUI Does
+
+::: {.callout-note}
+**A surprise for desktop users:** the standard R GUI implements only rudimentary menu functionality — reading help, managing graphics windows, editing some source and data files. There are no menus, buttons, or palettes for loading data, transforming it, plotting it, or building models. Commercial packages like SAS and SPSS ship far richer interfaces.
+:::
+
+All real work in plain R happens by *typing commands*. That is not a defect — it is a design choice with real benefits, as we will see. But it explains why several projects built friendlier front ends...
+
+## Additional R GUIs
+
+Several projects layer an easier interface on top of R:
+
+- **Rcmdr** (R Commander): an R package providing an alternative GUI — buttons for loading data, menu items for many common functions. Install it like any package.
+- **RKWard**: a polished front end with palettes, menu-driven analysis, data-editing tools, and an IDE for R code; historically strongest on Linux.
+- **RStudio**: the open-source IDE that became the de facto standard — more shortly.
+- The book also mentions Revolution Computing's *R Productivity Environment*, a commercial Windows IDE of that era (script editor, object browser, visual debugger).
+
+These slides don't cover the front ends in detail — but everything in this course works in all of them, because they all sit on the same R functions underneath.
 
 # The R Console
 
-## The Interactive Prompt
+## The Most Important Tool
 
-The console is where R actually happens. You type an expression after the `>` prompt; R evaluates it and prints the result:
+The **console** is where you type commands and watch R respond.
 
-```{r,echo=TRUE}
-17 %% 5
-"hello, world"
+- What you type are **expressions**; the part of R called the **interpreter** reads each expression and answers with a result or an error message.
+- If you have used a command line (`cmd.exe`, a Unix shell) or an interactive interpreter such as LISP, this will feel familiar. (R and LISP are genuine relatives: both can compute on the language itself, both use similar internal structures for data, and both love parentheses.)
+
+::: {.callout-tip}
+**Why command lines win for data analysis.** After finishing a problem you want a record of *every* step — how the data was loaded, whether a random sample was taken and how, which variables were created, which model parameters were used. A typed transcript gives you exactly that, and lets you re-create the analysis later.
+:::
+
+## The Startup Message
+
+Launching R prints a banner like this (modern version shown):
+
+```
+R version 4.4.2 (2024-10-31) -- "Pile of Leaves"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
 ```
 
-- If a line is syntactically incomplete, the prompt changes to `+` and R waits for the rest.
-- Results that are not assigned to a variable are simply printed and discarded.
+It tells you: the version you are running, license information, quick reminders for getting help — and then hands you a **command prompt**.
 
-::: {.callout-note}
-**The read–eval–print loop (REPL).** The console endlessly repeats three steps: *read* what you typed, *evaluate* it, and *print* the value. Interactive languages like R make exploration cheap — you can poke at your data one line at a time.
-:::
+## The Prompt and Your First Expression
+
+When R is waiting for input, it shows a greater-than sign at the start of an empty line: the **prompt** `>`. Type `17 + 3` and press Enter:
+
+```{r,echo=TRUE}
+17 + 3
+```
+
+Reading the exchange:
+
+- you entered `17 + 3` at the prompt;
+- R answered `[1] 20` (the meaning of `[1]` is explained in Chapter 3).
+
+In the textbook's convention, **boldface** marks what the user typed; everything else is R's output. Your own terminal won't bold your input — but it may color it.
+
+## Continuation: the `+` Prompt
+
+When an expression doesn't fit on one line, R notices it is incomplete and switches the prompt to a plus sign (`+`), inviting you to finish:
+
+```{r,echo=TRUE}
+1 * 2 * 3 * 4 * 5 *
+  6 * 7 * 8 * 9 * 10
+```
+
+- In the console the second line appears after a `+` prompt — easy to confuse with addition in long sums or inequalities, so watch for it.
+- To help you tell prompt, input, and output apart, most platforms color them differently:
+
+| Platform | Command prompt | User input | R output |
+|---|---|---|---|
+| macOS | Purple | Blue | Black |
+| Windows | Red | Red | Blue |
+| Linux | Black | Black | Black |
 
 ## Command-Line Editing
 
-The console includes line-editing conveniences that save enormous amounts of typing:
+R saves you typing with line-editing tools:
 
-- **Up/Down arrows** scroll through your command history; recall a previous command, edit it, and resubmit.
-- **Tab completion** finishes function and variable names — type `summ` then *Tab*.
-- `history()` displays recent commands.
-- On all platforms, *Ctrl+C* (or *Esc*) interrupts a running computation and returns you to the prompt.
-
-## Batch Mode
-
-For repetitive jobs — nightly reports, simulations, grading scripts — you do not want an interactive session at all. R can execute a script from the operating-system shell:
-
-```{bash,eval=FALSE,echo=TRUE}
-# classic interface
-R CMD BATCH myscript.R output.txt
-
-# modern, more flexible interface
-Rscript myscript.R arg1 arg2
-```
-
-- `Rscript` prints to standard output and accepts command-line arguments, making it the natural choice for automation and pipelines.
-- Everything you can do interactively can be done in a script.
-
-## R Inside Other Applications
-
-- R can be embedded in **Microsoft Excel** through third-party add-ins, letting spreadsheet users call R functions on worksheet ranges.
-- Database systems, web servers, and other languages (Python, Java) all have bridges to R.
-- The common pattern: another program prepares the data, R does the statistics, and results flow back.
-
-# RStudio
-
-## The IDE We Will Use
-
-**RStudio Desktop** is a free, open-source IDE that has become the de facto standard front end for R. One window organizes four panes:
-
-- **Source editor** — scripts and documents, with completion and highlighting;
-- **Console** — the same R prompt as always;
-- **Environment / History** — the objects in your workspace;
-- **Files / Plots / Packages / Help** — everything else.
+- **Up/down arrows** scroll through previous commands — the single most useful trick. Repeat a command with a small change (different parameter, fixed parenthesis) without retyping it.
+- `history()` lists previously typed commands.
+- The **Tab** key auto-completes function names and filenames, showing a list of possible completions.
+- Under the hood, Linux and macOS use the GNU `readline` library, which supports a large set of editing commands; Windows supports a smaller set.
 
 ```{r,eval=FALSE,echo=TRUE}
-# RStudio is an interface to R, not a replacement for it:
-# install R first (Chapter 1), then RStudio from
-# https://posit.co/download/rstudio-desktop
+history()    # show recent commands
 ```
 
-## Why an IDE Matters
+# Batch Mode
 
-- One-keystroke execution of the current line or selection (*Ctrl/Cmd+Enter*) keeps you in flow between editor and console.
-- Integrated help, plots, and package management remove constant window-switching.
-- Projects keep each analysis in its own folder with its own workspace — a habit that will keep your coursework organized.
-- RStudio also builds the course's document formats (R Markdown, Quarto) with a single click.
+## Beyond the Interactive Session
 
-## Other Ways to Run R
+Interactive mode suits ad hoc analysis, but suppose you must repeat the same pipeline — load experiment data, transform it, emit three PDF plots, quit — many times. **Batch mode** runs a whole file of commands in sequence and saves the results.
 
-You may also meet:
+From the *system* command line (not the R console):
 
-- **ESS (Emacs Speaks Statistics)** — R inside the Emacs editor; beloved by long-time users.
-- **Jupyter notebooks** — R kernels run inside the notebook interface popular in data science.
-- **Visual Studio Code** — extensions provide R editing and an integrated terminal.
+```{bash,eval=FALSE,echo=TRUE}
+$ R CMD BATCH generate_graphs.R
+```
 
-All of them drive the same interpreter; choose whatever keeps you productive. In this course, demonstrations use RStudio.
+- R executes everything in `generate_graphs.R` and writes the output to `generate_graphs.Rout`.
+- You can name the output file yourself — for instance, stamping it with today's date:
+
+```{bash,eval=FALSE,echo=TRUE}
+$ R CMD BATCH generate_graphs.R generate_graphs_`date "+%y%m%d"`.log
+```
+
+- Generating graphics in batch mode? Remember to specify the output device and filenames. For all command-line options: `R --help`.
+
+## Rscript and Executable Scripts
+
+`R CMD BATCH` has one notable limitation: the script cannot read the system's standard input. The second batch command, **Rscript**, lifts that restriction:
+
+```{bash,eval=FALSE,echo=TRUE}
+$ Rscript generate_graphs.R
+```
+
+You can even make R scripts directly executable (Linux/macOS). Create `hello_world.R`:
+
+```{bash,eval=FALSE,echo=TRUE}
+#! /usr/bin/env Rscript
+print("Hello world!")
+```
+
+then mark it executable and run it like any program:
+
+```{bash,eval=FALSE,echo=TRUE}
+$ chmod +x hello_world.R
+$ ./hello_world.R
+[1] "Hello world!"
+```
+
+Finally, batch execution is available *from inside R* too: the `source()` function runs the commands in a file within your current session — see `?source`.
+
+# Other Ways to Run R
+
+## R Inside Microsoft Excel
+
+For heavy Excel users on Windows, the **RExcel** software (from the rcom project) let you run R directly inside Excel. The book's installation sequence:
+
+```{r,eval=FALSE,echo=TRUE}
+install.packages("RExcelInstaller", "rcom", "rsproxy")
+library(rcom)
+comRegisterRegistry()       # configure the RCOM server
+library(RExcelInstaller)
+installstatconnDCOM()       # install RDCOM
+installRExcel()             # launch the RExcel installer
+```
+
+The workflow: enter values in a column → *Put R Var → Array* names them as an R object (say `v`) → select a blank cell → *Get R Value → Array* and enter an expression such as `(v - mean(v)) / sd(v)` → the rescaled values land back in Excel. You can also call R from Excel formulas and macros, and plot R graphics inside Excel.
+
+::: {.callout-warning}
+**Dated technology.** RExcel was Windows-only and is no longer actively maintained. The modern route runs the other way: read and write Excel files *from R* with packages like `readxl` and `openxlsx` (Chapter 11).
+:::
+
+## RStudio
+
+**RStudio** is a free, open-source integrated development environment (IDE) for R — and today the most popular way to run it.
+
+- Unlike the standard GUI, RStudio tiles the screen into panes and tabs: console, source editor, environment/history, and files/plots/help.
+- It can also be installed **on a Linux server**, letting you use R from a web browser.
+- Download: <https://posit.co> (the company formerly named RStudio is now Posit).
+
+We will use RStudio throughout this course: it wraps everything from this chapter — console, history, tab completion, script execution — in one coherent window.
+
+## R as a Server, on the Web, in Emacs
+
+Open-source projects connect R to other applications:
+
+- **As a server — Rserve.** Other programs (e.g., Java) send computations to a running R instance over the network. One beefy Rserve machine, with plenty of CPU and memory, can serve calculations users couldn't run on their own desktops.
+- **As a web application — rApache.** Embeds R analyses in a web server, e.g., to publish sophisticated reports rendered with R graphics. (The modern descendant of this idea is **Shiny**.)
+- **Inside Emacs — ESS** (*Emacs Speaks Statistics*). An add-on that runs R within the Emacs editor, beloved by long-time statisticians.
+
+Whatever the wrapper, it is the same interpreter underneath — which is why one reference book covers them all.
+
+## Looking Ahead
+
+- You now know where to type (the console), how to read the prompt (`>` vs. `+`), and how to save keystrokes (history, Tab).
+- Chapter 3 puts the console to work: a hands-on tutorial of expressions, vectors, functions, data structures, models, and charts.
+
+::: {.callout-tip}
+**Try it now.** Open R (or RStudio), type a few arithmetic expressions, press the up arrow, edit, re-run. Five minutes of play makes the next chapter twice as easy.
+:::
 
 ## Copyright Notice
 

@@ -41,196 +41,614 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **資料科學的那 80%**
+# **八成時間花在哪裡**
 
-## 為什麼整備很重要
+## 資料分析的不光彩祕密
 
-真實資料總是凌亂的：分散在多張表、型別錯誤、重複、滿是缺漏。在任何模型或圖表之前，你都得先合併、轉換、清理、取子集、彙總與重塑。本章就是那個工具箱。貫穿本章的例子是舊金山房屋成交資料：
+書的作者原是生化系學生，受不了沒完沒了的實驗室準備工作而投奔計算機科學——結果踏進資料探勘這行，發現**專案約 80% 的力氣花在尋找、清理與整備資料**，真正的分析不到 5%（剩下的時間在寫報告）。
 
-```{r,echo=TRUE,cache=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda", temp, mode = "wb")
-load(temp)
-dim(sanfrancisco.home.sales)
-names(sanfrancisco.home.sales)[1:10]
-```
+「資料是電腦產的，所以很完美，對吧？」實際上，資料幾乎從不以適合分析的形式儲存，連格式正確的資料也藏著驚喜。本章是工具箱：合併、轉換、分箱、取子集、摘要、重塑、清理、排序。
 
 # 合併資料集
 
-## 表格拼接
+## paste：黏接文字
+
+`paste` 逐元素串接字元向量（其他型別先轉型）：
 
 ```{r,echo=TRUE}
-a <- data.frame(id = 1:3, x = c(10, 20, 30))
-b <- data.frame(id = 4:5, x = c(40, 50))
-rbind(a, b)                  # 疊加列（欄位需相同）
-cbind(a, flag = c(TRUE, FALSE, TRUE))   # 增加欄（長度需相同）
+x <- c("a", "b", "c", "d", "e")
+y <- c("A", "B", "C", "D", "E")
+paste(x, y)
+paste(x, y, sep="-")
+paste(x, y, sep="-", collapse="#")   # collapse：壓成「一個」值
 ```
 
-`rbind()` 依名稱對齊欄位；面對許多檔案時，`do.call(rbind, list_of_frames)` 能一次疊完整個串列。
+## cbind：橫向加欄
 
-## 依共同欄位合併
-
-`merge()` 是 R 的關聯式 join：
+`cbind` 水平合併物件。從第十一章的 NFL 薪資表出發：
 
 ```{r,echo=TRUE}
-sales <- data.frame(id = c(1, 2, 3, 4), price = c(300, 150, 220, 410))
-zips  <- data.frame(id = c(1, 2, 3, 5), zip = c("94114", "94110", "94117", "94109"))
-merge(sales, zips)                       # 以共同欄位做 inner join
-merge(sales, zips, all.x = TRUE)         # left join：保留所有 sales
+top.5.salaries <- data.frame(
+  name.last = c("Manning", "Brady", "Pepper", "Palmer", "Manning"),
+  name.first = c("Peyton", "Tom", "Julius", "Carson", "Eli"),
+  team = c("Colts", "Patriots", "Panthers", "Bengals", "Giants"),
+  position = c("QB", "QB", "DE", "QB", "QB"),
+  salary = c(18700000, 14626720, 14137500, 13980000, 12916666))
+more.cols <- data.frame(year = rep(2008, 5), rank = 1:5)
+cbind(top.5.salaries, more.cols)
 ```
 
-- `by=`、`by.x=`、`by.y=` 控制鍵欄位；`all=TRUE` 是 full outer join。
-- 合併後務必檢查列數——鍵意外重複會讓列數倍增。
+## rbind：縱向加列
+
+`rbind` 垂直合併——接上第六到第八名的薪資：
+
+```{r,echo=TRUE}
+next.three <- data.frame(
+  name.last = c("Favre", "Bailey", "Harrison"),
+  name.first = c("Brett", "Champ", "Marvin"),
+  team = c("Packers", "Broncos", "Colts"),
+  position = c("QB", "CB", "WR"),
+  salary = c(12800000, 12690050, 12000000))
+rbind(top.5.salaries, next.three)
+```
+
+## 延伸範例：抓股價並黏起來
+
+書中把道瓊 30 檔成分股的報價合成一個資料框。`get.quotes` 用 `paste` 組出 Yahoo! Finance 的 CSV 網址（格式是作者試誤摸出來的）、用 `read.csv` 抓檔、再 `cbind` 上股票代碼欄：
+
+```{r,eval=FALSE,echo=TRUE}
+get.quotes <- function(ticker, from=(Sys.Date()-365), to=(Sys.Date()),
+                       interval="d") {
+  base <- "http://ichart.finance.yahoo.com/table.csv?"
+  symbol <- paste("s=", ticker, sep="")
+  from.month <- paste("&a=",                      # 月份從 00 編到 11！
+    formatC(as.integer(format(from,"%m"))-1, width=2, flag="0"), sep="")
+  from.day  <- paste("&b=", format(from,"%d"), sep="")
+  from.year <- paste("&c=", format(from,"%Y"), sep="")
+  to.month  <- paste("&d=",
+    formatC(as.integer(format(to,"%m"))-1, width=2, flag="0"), sep="")
+  to.day    <- paste("&e=", format(to,"%d"), sep="")
+  to.year   <- paste("&f=", format(to,"%Y"), sep="")
+  inter     <- paste("&g=", interval, sep="")
+  url <- paste(base, symbol, from.month, from.day, from.year,
+               to.month, to.day, to.year, inter, "&ignore=.csv", sep="")
+  tmp <- read.csv(url)
+  cbind(symbol=ticker, tmp)
+}
+```
+
+## ……再把各檔股票綁在一起
+
+`get.multiple.quotes` 走訪代碼清單，一路 `rbind`：
+
+```{r,eval=FALSE,echo=TRUE}
+get.multiple.quotes <- function(tkrs, from=(Sys.Date()-365),
+                                to=(Sys.Date()), interval="d") {
+  tmp <- NULL
+  for (tkr in tkrs) {
+    if (is.null(tmp)) tmp <- get.quotes(tkr, from, to, interval)
+    else tmp <- rbind(tmp, get.quotes(tkr, from, to, interval))
+  }
+  tmp
+}
+dow.tickers <- c("MMM","AA","AXP","T","BAC","BA","CAT","CVX","CSCO",
+  "KO","DD","XOM","GE","HPQ","HD","INTC","IBM","JNJ","JPM","KFT",
+  "MCD","MRK","MSFT","PFE","PG","TRV","UTX","VZ","WMT","DIS")
+dow30 <- get.multiple.quotes(dow.tickers)
+```
+
+::: {.callout-warning}
+**Yahoo! 已關閉這個 API**——網址不再有效（今日請用 `quantmod`）。但*模式*——用 `paste` 組網址、用 `rbind` 累積——仍是日常功夫。為了讓本章後續範例能跑，下一張投影片徒手重建書中的五檔小樣本。
+:::
+
+## 重建 my.quotes
+
+書中的五檔股票、三個月樣本，直接輸入：
+
+```{r,echo=TRUE}
+my.quotes <- data.frame(
+  symbol = rep(c("GE","GOOG","AAPL","AXP","GS"), each=3),
+  Date = rep(as.Date(c("2009-03-02","2009-02-02","2009-01-02")), 5),
+  Open  = c(8.29,12.03,16.51, 333.33,334.29,308.60, 88.12,89.10,85.88,
+            11.68,16.35,18.57, 87.86,78.78,84.02),
+  High  = c(11.35,12.90,17.24, 359.16,381.00,352.33, 109.98,103.00,97.17,
+            15.24,18.27,21.38, 115.65,98.66,92.20),
+  Low   = c(5.87,8.40,11.87, 289.45,329.55,282.75, 82.33,86.51,78.20,
+            9.71,11.44,14.72, 72.78,78.57,59.13),
+  Close = c(10.11,8.51,12.13, 348.06,337.99,338.53, 105.12,89.31,90.13,
+            13.63,12.06,16.73, 106.02,91.08,80.73),
+  Volume = c(277426300,194928800,117846700, 5346800,6158100,5727600,
+             25963400,27394900,33487900, 31136400,24297100,19110000,
+             30196400,28301500,22764300),
+  Adj.Close = c(10.11,8.51,11.78, 348.06,337.99,338.53, 105.12,89.31,90.13,
+                13.45,11.90,16.51, 106.02,91.08,80.29))
+head(my.quotes, 6)
+```
+
+## merge：以共同欄位連結
+
+棒球員年齡在 `Master` 表、打擊數據在 `Batting` 表，兩邊都有 `playerID`。想看「附姓名與年齡的打擊數據」，就**merge**：
+
+```{r,eval=FALSE,echo=TRUE}
+batting <- dbGetQuery(con, "SELECT * FROM Batting")
+master  <- dbGetQuery(con, "SELECT * FROM Master")
+intersect(names(batting), names(master))
+## [1] "playerID"
+batting.w.names <- merge(batting, master)   # 以 playerID 連結
+```
+
+預設情況下 `merge` 以**所有同名欄位**為鍵——這裡只有一個，所以什麼都不必多寫。
+
+## merge：引數與 JOIN 語意
+
+```{r,eval=FALSE,echo=TRUE}
+merge(x, y, by =, by.x =, by.y =, all =, all.x =, all.y =,
+      sort =, suffixes =, incomparables =, ...)
+```
+
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `x`、`y` | 兩個資料框 | |
+| `by`／`by.x`、`by.y` | 鍵欄位（共同／各邊指定） | 同名欄位 |
+| `all` | 兩邊未配對的列也保留（OUTER JOIN） | `FALSE` |
+| `all.x`／`all.y` | 保留 x／y 未配對的列（LEFT／RIGHT OUTER） | `all` |
+| `sort` | 結果依鍵排序？ | `TRUE` |
+| `suffixes` | 非鍵同名欄位的改名後綴 | `c(".x",".y")` |
+| `incomparables` | 永不配對的值 | `NULL` |
+
+用 SQL 的話說：預設是 NATURAL JOIN；指定鍵就是 INNER JOIN；`all=TRUE` 是 FULL OUTER JOIN——完全沒有同名欄位時，回傳完整的**笛卡兒積**。
 
 # 轉換
 
-## 建立與修改欄位
+## 重新指派變數
+
+用指派運算子就地修正變數。匯入的日期常以文字到貨——轉成真正的 `Date` 物件；衍生欄位也用同一套記法加入：
 
 ```{r,echo=TRUE}
-sales$price.per.k <- sales$price / 1000
-sales <- transform(sales, log.price = log(price))
-sales
+my.quotes$Date <- as.Date(my.quotes$Date)   # 此處本來就是 Date；書中的
+class(my.quotes$Date)                        # dow30 需要 factor -> Date
+my.quotes$mid <- (my.quotes$High + my.quotes$Low) / 2
+names(my.quotes)
 ```
 
-`transform()` 在資料框內部求值運算式，省去一再重複的 `sales$` 前綴。
+## transform 函式
 
-## apply 家族處理資料
+`transform(data, ...)` 把一組運算式套用在資料框*內部*——不必寫 `data$` 前綴——回傳修改後的資料框：
 
 ```{r,echo=TRUE}
-nums <- data.frame(a = 1:4, b = c(2, 4, 6, 8))
-sapply(nums, mean)             # 每欄一個摘要
-mapply(function(x, y) x * y, nums$a, nums$b)
+my.quotes.transformed <- transform(my.quotes, Date = as.Date(Date),
+                                   mid = (High + Low) / 2)
+names(my.quotes.transformed)
 ```
 
-- `lapply()` 回傳串列；`sapply()` 在可行時簡化成向量。
-- 矩陣的逐列運算用 `apply(m, 1, f)`。
+## apply：沿陣列維度套用函式
 
-## 資料分組（binning）
-
-`cut()` 把連續值變成類別：
+`apply(X, MARGIN, FUN, ...)` 沿指定維度套用 `FUN`（額外引數轉傳給 `FUN`）。用 `max` 示範，結果一眼看得出來源：
 
 ```{r,echo=TRUE}
-price <- sanfrancisco.home.sales$price
-bins <- cut(price, breaks = c(0, 5e5, 1e6, 2e6, Inf),
-            labels = c("<500K", "500K-1M", "1M-2M", ">2M"))
-table(bins)
+x <- 1:20
+dim(x) <- c(5, 4)
+x
+apply(X=x, MARGIN=1, FUN=max)   # 逐列
+apply(X=x, MARGIN=2, FUN=max)   # 逐欄
 ```
 
-lattice 的 `shingle()` 製作*互相重疊*的分組；`tabulate()` 與 `table()` 負責計數。
+## 三維的 apply
 
-# 清理資料
-
-## 找出並移除重複
+`MARGIN` 可指定多個維度。換用 `paste`，*親眼看*哪些元素被分到一組：
 
 ```{r,echo=TRUE}
-v <- c("a", "b", "a", "c", "b")
-duplicated(v)
-unique(v)
+x <- 1:27
+dim(x) <- c(3, 3, 3)
+apply(X=x, MARGIN=1, FUN=paste, collapse=",")
+apply(X=x, MARGIN=3, FUN=paste, collapse=",")
+apply(X=x, MARGIN=c(1,2), FUN=paste, collapse=",")
 ```
 
-對資料框而言，`duplicated(df)` 標記重複的*列*——每次合併或從可能重複餵資料的系統匯入後都該跑一次。
+最後一個呼叫的意思：對每組 (i, j)，計算 `x[i, j, 1], x[i, j, 2], x[i, j, 3]` 的 `FUN`。
 
-## 排序
+## lapply 與 sapply：串列、向量、資料框
+
+`lapply(X, FUN, ...)` 對每個元素套用 `FUN`、回傳**串列**——資料框就是欄位的串列：
 
 ```{r,echo=TRUE}
-sort(c(3, 1, 2))
-o <- order(sales$price, decreasing = TRUE)   # 排序索引
-sales[o, ]
+x <- as.list(1:5)
+lapply(x, function(x) 2^x)[1:2]
+d <- data.frame(x=1:5, y=6:10)
+lapply(d, FUN=max)
 ```
 
-::: {.callout-tip}
-**向量用 `sort()`，資料框用 `order()`。** `order()` 回傳排序所需的排列，因此能重排整列——還能用額外鍵打破平手：`order(zip, -price)`。
-:::
-
-## 缺失值
+想要向量或矩陣？`sapply` 能簡化就簡化：
 
 ```{r,echo=TRUE}
-x <- c(2, NA, 5, 9)
-is.na(x)
-mean(x); mean(x, na.rm = TRUE)
-complete.cases(data.frame(a = c(1, NA), b = c(2, 3)))
+sapply(d, FUN=function(x) 2^x)
 ```
 
-- `na.omit(df)` 丟掉不完整的列；記得記錄你丟了幾筆。
-- 要刻意決定：刪除、補值，或為缺漏建模——唯一錯誤的選擇是默不作聲。
+## mapply：多變量版本
 
-# 子集與抽樣
-
-## 取子集
+`mapply(FUN, ..., MoreArgs=, SIMPLIFY=, USE.NAMES=)` 把 `FUN` 套用在各向量的第一個元素、再第二個、依此類推：
 
 ```{r,echo=TRUE}
-expensive <- subset(sales, price > 200, select = c(id, price))
-expensive
-# 中括號等價寫法：
-sales[sales$price > 200, c("id", "price")]
+mapply(paste, c(1,2,3,4,5), c("a","b","c","d","e"),
+       c("A","B","C","D","E"), MoreArgs=list(sep="-"))
 ```
 
-`subset()` 讀起來順；中括號利於程式化。兩者都要會。
+引數：`...` 放向量；`MoreArgs`——給 `FUN` 的固定額外引數串列；`SIMPLIFY`——簡化結果（預設 `TRUE`）；`USE.NAMES`——用第一個向量替結果命名。
+
+## plyr 套件
+
+被 apply 動物園搞糊塗了——名字亂、引數亂、回傳亂？**plyr** 套件提供 12 個命名有邏輯的函式：輸入型別（陣列 `a`／資料框 `d`／串列 `l`）×輸出型別（`a`／`d`／`l`／`_` 丟棄）：
+
+| 輸入 ↓ 輸出 → | 陣列 | 資料框 | 串列 | 丟棄 |
+|---|---|---|---|---|
+| 陣列 | `aaply` | `adply` | `alply` | `a_ply` |
+| 資料框 | `daply` | `ddply` | `dlply` | `d_ply` |
+| 串列 | `laply` | `ldply` | `llply` | `l_ply` |
+
+共同引數：`.data`、`.fun`、`.progress`（進度條）、`.parallel`（透過 foreach）、`...` 轉傳 `.fun`；陣列另有 `.margins`；資料框另有 `.variables`（分組依據）與 `.drop`。
+
+```{r,echo=TRUE,message=FALSE}
+library(plyr)
+llply(.data=d, .fun=function(x) 2^x)$x   # ＝ lapply
+aaply(.data=d, .margins=2, .fun=max)     # 附標籤的結果
+```
+
+（plyr 沒有 `tapply` 的對應。現代備註：plyr 的想法後來長成 `dplyr` 與 `purrr`。）
+
+# 資料分箱
+
+## Shingle 與 equal.count
+
+分箱依某變數的值把觀測分組——例如把逐日資料按月摘要。**Shingle**（第七章）表示可重疊的區間，lattice 用它對數值變數做條件分組：
+
+```{r,eval=FALSE,echo=TRUE}
+shingle(x, intervals=sort(unique(x)))   # intervals：向量或兩欄矩陣
+equal.count(x, ...)                     # 各箱觀測數相等
+```
+
+## cut：連續變離散
+
+`cut` 把數值向量切成**因子**，每個水準對應一段區間（另有 Date 版本）：
+
+```{r,eval=FALSE,echo=TRUE}
+cut(x, breaks, labels = NULL, include.lowest = FALSE, right = TRUE,
+    dig.lab = 3, ordered_result = FALSE, ...)
+```
+
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `breaks` | 箱數（一個整數）或切點（向量） | |
+| `labels` | 水準標籤 | `NULL` |
+| `include.lowest` | 邊界值算進端點箱？ | `FALSE` |
+| `right` | 區間右閉左開？ | `TRUE` |
+| `dig.lab` | 自動標籤的位數 | 3 |
+| `ordered_result` | 回傳有序因子？ | `FALSE` |
+
+## cut 實戰：打擊率
+
+統計各打擊率區間的球員數——書中的 `batting.2008` 資料集，按課程慣例抓取：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda",
+              temp, mode = "wb")
+load(temp)
+batting.2008.AB <- transform(batting.2008, AVG = H/AB)
+batting.2008.over100AB <- subset(batting.2008.AB, subset=(AB > 100))
+battingavg.2008.bins <- cut(batting.2008.over100AB$AVG, breaks=10)
+table(battingavg.2008.bins)
+```
+
+## make.groups：合併並標注來源
+
+`make.groups`（lattice）把多個相似物件疊成一個資料框，逐列標注出處：
+
+```{r,echo=TRUE}
+library(lattice)
+hat.sizes <- seq(from=6.25, to=7.75, by=.25)
+pants.sizes <- c(30, 31, 32, 33, 34, 36, 38, 40)
+shoe.sizes <- seq(from=7, to=12)
+head(make.groups(hat.sizes, pants.sizes, shoe.sizes), 9)
+```
+
+# 子集
+
+## 中括號記法
+
+資料太多——有不相干的列，或乾脆超出記憶體？切吧。邏輯運算式當列索引、名稱向量挑欄位：
+
+```{r,echo=TRUE}
+batting.2008.short <- batting.2008[batting.2008$yearID==2008,
+                       c("nameFirst", "nameLast", "AB", "H", "BB")]
+head(batting.2008.short, 4)
+```
+
+## subset 函式
+
+`subset(x, subset, select, drop=FALSE)` 做不了中括號做不到的事——但更好讀，因為欄名在裡面可以*裸寫*：
+
+```{r,echo=TRUE}
+batting.2008.short <- subset(batting.2008, yearID==2008,
+                             c("nameFirst", "nameLast", "AB", "H", "BB"))
+head(batting.2008.short, 4)
+```
+
+引數：`subset`——選列的邏輯運算式；`select`——選欄的運算式；`drop`——轉傳給 `[`。
 
 ## 隨機抽樣
 
-```{r,echo=TRUE}
-set.seed(42)                       # 可重現性！
-sample(1:10, 4)                    # 不放回抽樣
-idx <- sample(nrow(sanfrancisco.home.sales), 5)
-sanfrancisco.home.sales[idx, c("city", "price")]
-```
-
-抽樣是訓練／測試切分（第二十一、二十二章）的基礎——而 `set.seed()` 讓結果可以重現給閱卷者看。
-
-# 彙總資料
-
-## tapply 與 aggregate
-
-分組摘要一行搞定：
-
-```{r,echo=TRUE,cache=TRUE}
-tapply(sanfrancisco.home.sales$price,
-       sanfrancisco.home.sales$bedrooms, median, na.rm = TRUE)[1:6]
-
-aggregate(price ~ bedrooms, data = sanfrancisco.home.sales,
-          FUN = median)[1:6, ]
-```
-
-- `tapply(values, groups, f)` 回傳陣列；`aggregate(formula, data, f)` 回傳整齊的資料框。
-- `by()` 是對整個資料框區塊的 `tapply`。
-
-## rowsum 與計數
+`sample(x, size, replace=FALSE, prob=NULL)` 抽取*向量元素*的隨機樣本。反直覺的是：用在資料框上抽的是**欄位**（資料框是欄位的串列！）——所以改抽*列號*：
 
 ```{r,echo=TRUE}
-rowsum(sales$price, group = c("g1", "g1", "g2", "g2"))
-table(sanfrancisco.home.sales$bedrooms)[1:8]
+batting.2008[sample(1:nrow(batting.2008), 5), 9:14]
 ```
 
-給 `table()` 兩個引數就是交叉表——通往第十八章列聯表檢定的大門。
+更複雜的隨機子集也是同一招——隨機抽三支球隊的全部數據：
+
+```{r,echo=TRUE}
+batting.2008$teamID <- as.factor(batting.2008$teamID)
+batting.2008.3teams <- batting.2008[is.element(batting.2008$teamID,
+                         sample(levels(batting.2008$teamID), 3)), ]
+summary(batting.2008.3teams$teamID)[1:10]
+```
+
+分層、群集、最大熵等進階抽樣方法，見 `sampling` 套件。
+
+# 摘要函式
+
+## tapply
+
+`tapply(X, INDEX, FUN=, ..., simplify=)` 在因子串列 `INDEX` 定義的分組內摘要向量 `X`。各隊全壘打總數：
+
+```{r,echo=TRUE}
+tapply(X=batting.2008$HR, INDEX=list(batting.2008$teamID), FUN=sum)
+```
+
+引數：`X`——對象；`INDEX`——因子串列，各與 `X` 等長；`FUN`；`...` 轉傳 `FUN`；`simplify`——`FUN` 回傳純量時給陣列（預設），否則串列。
+
+## tapply：更豐富的摘要、更多維度
+
+`FUN` 可以回傳多個值——各聯盟打擊率的 `fivenum`（最小值、下樞紐、中位數、上樞紐、最大值）：
+
+```{r,echo=TRUE}
+tapply(X=(batting.2008$H/batting.2008$AB),
+       INDEX=list(batting.2008$lgID), FUN=fivenum)
+```
+
+`INDEX` 也能放多個因子——聯盟×打擊慣用手的平均全壘打：
+
+```{r,echo=TRUE}
+tapply(X=(batting.2008$HR),
+       INDEX=list(batting.2008$lgID, batting.2008$bats), FUN=mean)
+```
+
+## by：資料框版的 tapply
+
+`by` 是 `tapply` 的資料框手足（`INDICES` 取代 `INDEX`）——逐組計算整欄平均：
+
+```{r,echo=TRUE}
+by(batting.2008[, c("H", "2B", "3B", "HR")],
+   INDICES=list(batting.2008$lgID, batting.2008$bats), FUN=colMeans)
+```
+
+## aggregate
+
+`aggregate(x, by, FUN, ...)` 一次摘要多個欄位（時間序列版改收 `nfrequency`、`ndeltat`、`ts.eps`）。各隊合計：
+
+```{r,echo=TRUE}
+aggregate(x=batting.2008[, c("AB", "H", "BB", "2B", "3B", "HR")],
+          by=list(batting.2008$teamID), FUN=sum)[1:8, ]
+```
+
+引數：`x`；`by`——與 `x` 等長的分組元素串列；`FUN`——純量摘要函式（時間序列預設 `sum`）；`...` 轉傳 `FUN`。
+
+## rowsum
+
+只想按組求和？`rowsum(x, group, reorder=TRUE)` 是直達車：
+
+```{r,echo=TRUE}
+rowsum(batting.2008[, c("AB", "H", "BB", "2B", "3B", "HR")],
+       group=batting.2008$teamID)[1:8, ]
+```
+
+## 計數：tabulate 與 table
+
+`tabulate` 統計各整數值出現的次數（不附標籤——自己加）：
+
+```{r,echo=TRUE}
+HR.cnts <- tabulate(batting.2008$HR)
+names(HR.cnts) <- 0:(length(HR.cnts) - 1)
+HR.cnts[1:12]
+```
+
+**類別**值用 `table`，回傳計數的 table 物件（SAS 使用者：相當於 `PROC FREQ`）：
+
+```{r,echo=TRUE}
+table(batting.2008$bats)
+```
+
+`table` 的引數：`...`——因子（或可轉型者）；`exclude`——剔除的水準；`useNA`——`"no"`／`"ifany"`／`"always"`；`dnn`——維度名稱；`deparse.level`——自動命名方式。
+
+## 多維表與 xtabs
+
+因子越多、維度越多——打擊手×投球手（再加 `lgID` 就是第三維）：
+
+```{r,echo=TRUE}
+table(batting.2008[, c("bats", "throws")])
+```
+
+`xtabs` 用**公式**建同樣的列聯表——常常省下不少打字：
+
+```{r,echo=TRUE}
+xtabs(~bats+lgID, batting.2008)
+```
+
+數值變數也能入列：先 `cut`、再 `table`——正是前面打擊率分箱的做法。
 
 # 重塑資料
 
-## 寬與長
+## 窄與寬，以及 t
 
-同一份資料可以排成**寬格式**（一個測量一欄）或**長格式**（一筆測量一列）。建模與 `ggplot2` 通常偏好長格式。
-
-```{r,echo=TRUE}
-wide <- data.frame(id = 1:2, q1 = c(90, 70), q2 = c(85, 95))
-long <- reshape(wide, direction = "long",
-                varying = c("q1", "q2"), v.names = "score",
-                timevar = "quiz", times = c("q1", "q2"))
-long
-```
-
-## stack 與現代工具
+資料倉儲常一列存一個*事實*（「窄」格式）；分析可能需要一個概念一欄（「寬」格式）——反之亦然。最簡單的重塑工具是轉置 `t`（向量被當成單欄矩陣，轉出單列矩陣）：
 
 ```{r,echo=TRUE}
-stack(wide, select = c(q1, q2))
+m <- matrix(1:10, nrow=5)
+t(m)
+t(1:10)
 ```
 
-- Base R：簡單情況用 `stack()`/`unstack()`，一般情況用 `reshape()`。
-- 現代實務上，`tidyr` 套件（`pivot_longer()`、`pivot_wider()`）以更易讀的方式表達同樣的操作；進入 tidyverse 世界時就會遇到它。
+## stack 與 unstack
+
+以窄版報價表（代碼、日期、收盤）操作：
+
+```{r,echo=TRUE}
+my.quotes.narrow <- my.quotes[, c("symbol", "Date", "Close")]
+unstacked <- unstack(my.quotes.narrow, form=Close~symbol)
+unstacked
+stack(unstacked)[1:6, ]
+```
+
+`form` 公式裡，右側是攤開依據的變數、左側是值。順序保留；Date 欄**消失**——`unstack` 適合「只有兩個變數重要」的資料。
+
+## reshape：長變寬
+
+`reshape` 是強大（卻出名地一體兩面）的工具。列＝日期、欄＝股票：
+
+```{r,echo=TRUE}
+my.quotes.wide <- reshape(my.quotes.narrow, idvar="Date",
+                          timevar="symbol", direction="wide")
+my.quotes.wide
+```
+
+參數會跟著結果存進屬性（`attributes(my.quotes.wide)$reshapeWide` 記著 `idvar`、`timevar`、`varying`……）——所以**不帶引數**呼叫 `reshape(my.quotes.wide)` 就能逆轉操作。
+
+## reshape：各種變化
+
+角色互換——列＝股票、欄＝日期；或一次攜帶**多個**值欄位：
+
+```{r,echo=TRUE}
+reshape(my.quotes.narrow, idvar="symbol", timevar="Date",
+        direction="wide")
+my.quotes.oc <- my.quotes[, c("symbol", "Date", "Close", "Open")]
+reshape(my.quotes.oc, timevar="Date", idvar="symbol",
+        direction="wide")[, 1:5]
+```
+
+## reshape：引數
+
+一個函式、兩種身分——`direction="wide"` 需要 `idvar` ＋ `timevar`；`direction="long"` 需要 `varying`：
+
+| 引數 | 說明 |
+|---|---|
+| `data` | 要重塑的資料框 |
+| `varying` | 寬格式中將攤成長格式各列的變數 |
+| `v.names` | 長格式中將變成寬格式欄位的變數 |
+| `timevar`／`idvar` | 長格式中識別觀測／群體的變數（預設 `"time"`／`"id"`） |
+| `ids`／`times` | 新 id／time 變數的值 |
+| `drop` | 排除的變數 |
+| `direction` | `"wide"` 或 `"long"` |
+| `new.row.names` | 以 id×time 產生列名？ |
+| `sep`／`split` | 寬欄名如何編碼「變數×時間」（sep 預設 `"."`） |
+
+## reshape 套件：melt 與 cast
+
+Hadley Wickham 的 **reshape** 套件（不是那個函式！）用一個直覺模型取代上述一切：先把表格**melt（熔化）**成交易式紀錄，再把紀錄**cast（澆鑄）**成任何形狀：
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE}
+library(reshape)
+my.molten.quotes <- melt(my.quotes[, 1:8])
+head(my.molten.quotes)
+```
+
+## cast：一鍋熔湯、三種形狀
+
+```{r,echo=TRUE}
+cast(data=my.molten.quotes, variable~Date, subset=(symbol=='GE'))
+cast(data=my.molten.quotes, symbol~Date, subset=(variable=='Adj.Close'))
+```
+
+公式裡放 `|` 會回傳表格的**串列**——`cast(my.molten.quotes, Date~variable|symbol)` 給每檔股票一張報價表。
+
+## melt 與 cast：引數
+
+`melt.data.frame(data, id.vars, measure.vars, variable_name, na.rm, ...)`——`id.vars` 識別觀測、`measure.vars` 是測量值（未指定時：因子／字元欄當 id、其餘當測量）；`variable_name` 預設 `"variable"`。另有陣列與串列方法（`melt.array` 收 `varnames`；`melt.list` 遞迴熔化）。
+
+`cast(data, formula, fun.aggregate=NULL, ..., margins, subset, fill, add.missing, value)`：
+
+- `formula`——`x_1 + x_2 ~ y_1 ~ ... | list_var`，`...` 表示「其餘所有變數」、`.` 表示「沒有變數」（預設 `...~variable`）；
+- `fun.aggregate`——一格多值時的聚合方式；`margins`——計算邊際；`subset`——篩選熔化資料；`fill`／`add.missing`——處理缺席組合；`value`——值欄位名稱。
+
+（現代備註：reshape 衍生出 `reshape2`，如今由 `tidyr` 的 `pivot_longer`／`pivot_wider` 接班——melt/cast 的思想一脈相承。）
+
+# 資料清理
+
+## 清理的意義
+
+::: {.callout-note}
+**驚喜是常態。** 作者的信用資料戰爭故事：有效的 FICO 信用分數介於 340–840，但資料裡滿是 997／998／999——那是「資料不足」之類的特殊代碼，不是超神信用。醫院紀錄：同名病人被誤併成一筆；同一病人看兩位醫生變成兩筆。清理**不是改變資料的意義**——而是辨識收集、處理、儲存過程造成的問題，修掉它們、別讓它們汙染分析。
+:::
+
+## 找出並移除重複
+
+假設 GE 不小心在代碼清單出現兩次。`duplicated` 標記重複了前面列的列；拿它來過濾，或讓 `unique` 一步到位：
+
+```{r,echo=TRUE}
+my.quotes.2 <- rbind(my.quotes, my.quotes[my.quotes$symbol == "GE", ])
+duplicated(my.quotes.2)
+my.quotes.unique <- my.quotes.2[!duplicated(my.quotes.2), ]
+my.quotes.unique <- unique(my.quotes.2)        # 結果相同
+nrow(my.quotes.unique)
+```
+
+# 排序
+
+## sort
+
+```{r,echo=TRUE}
+w <- c(5, 4, 7, 2, 7, 1)
+sort(w)
+sort(w, decreasing=TRUE)
+length(w) <- 7                      # 製造一個 NA
+sort(w)                             # na.last=NA：NA 被丟掉
+sort(w, na.last=TRUE)
+sort(w, na.last=FALSE)
+```
+
+## order：排序資料框
+
+`sort` 排向量；資料框要靠**列索引的排列**，由 `order(..., na.last=, decreasing=)` 產生——它依序按各引數向量排序、以下一個向量打破平手：
+
+```{r,echo=TRUE}
+v <- c(11, 12, 13, 15, 14)
+order(v)
+v[order(v)]
+u <- c("pig", "cow", "duck", "horse", "rat")
+w <- data.frame(v, u)
+w[order(w$v), ]
+```
+
+## 按一欄或多欄排序
+
+報價表按收盤價排；再按代碼排、收盤價打破平手：
+
+```{r,echo=TRUE}
+my.quotes[order(my.quotes$Close), ][1:5, 1:6]
+my.quotes[order(my.quotes$symbol, my.quotes$Close), ][1:6, 1:6]
+```
+
+## 按全部欄位排序：do.call
+
+整個資料框排序藏著陷阱：`order(my.quotes)` 把資料框當*一條長向量*。`order` 想要的是一串向量——用 `do.call` 把資料框的欄位攤成引數送進去：
+
+```{r,echo=TRUE}
+do.call(order, my.quotes)
+my.quotes[do.call(order, my.quotes), ][1:6, 1:6]
+```
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

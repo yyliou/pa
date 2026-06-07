@@ -214,73 +214,64 @@ Yu-You Liou (NTU)
   <p class="date">2026-06-07</p>
 </section>
 <section>
-<section id="meeting-r-face-to-face" class="title-slide slide level1 center">
-<h1><strong>Meeting R Face to Face</strong></h1>
+<section id="meeting-the-interface" class="title-slide slide level1 center">
+<h1><strong>Meeting the Interface</strong></h1>
 
 </section>
-<section id="many-faces-of-one-system" class="slide level2">
-<h2>Many Faces of One System</h2>
-<p>When people say they “use R,” they may be interacting with it in quite different ways. This chapter tours the main options:</p>
+<section id="why-you-are-here" class="slide level2">
+<h2>Why You Are Here</h2>
+<p>You presumably have a problem you hope R will solve. Typical examples:</p>
 <ul>
-<li>the <strong>graphical user interface (GUI)</strong> that ships with R on Windows and macOS;</li>
-<li>the <strong>R console</strong>, the interactive prompt at the heart of every interface;</li>
-<li><strong>batch mode</strong>, for running scripts without any interaction;</li>
-<li><strong>RStudio</strong>, the integrated development environment (IDE) we will use in this course;</li>
-<li>a few other front ends you may encounter in the wild.</li>
+<li>checking the statistical significance of experimental results;</li>
+<li>plotting data to understand it better;</li>
+<li>analyzing genome data — or sales data, survey data, sensor data…</li>
 </ul>
-<p>Whichever wrapper you choose, the engine underneath — the interpreter — is identical.</p>
+<p>R is a <em>software environment</em> for statistical computing and graphics, made of many components: the language, its interpreter, a graphics system, and the desktop application that bundles them. This chapter tours the parts you physically interact with — the <strong>graphical user interface (GUI)</strong> on each platform, and then the most important part of all: the <strong>R console</strong>.</p>
+<p>If you have never used an interactive language before, this chapter teaches the survival skills; if you have, it will still tell you where everything lives.</p>
 </section></section>
 <section>
 <section id="the-r-graphical-user-interface" class="title-slide slide level1 center">
 <h1>The R Graphical User Interface</h1>
 
 </section>
+<section id="launching-r-for-the-first-time" class="slide level2">
+<h2>Launching R for the First Time</h2>
+<ul>
+<li>On <strong>Windows</strong> and <strong>macOS</strong>, opening the R application brings up a command window plus menu bars.</li>
+<li>On most <strong>Linux</strong> systems, R simply starts on the command line — no window at all.</li>
+<li>The look differs by platform, but the working parts are the same everywhere: a menu bar, possibly a toolbar with common functions, and — front and center — the R console.</li>
+</ul>
+</section>
 <section id="windows" class="slide level2">
 <h2>Windows</h2>
 <ul>
-<li>The Windows build of R installs a program called <strong>RGui</strong>. It opens a window containing a menu bar, a toolbar, and — most importantly — the R console.</li>
-<li>The menus offer conveniences such as loading and saving workspaces, installing packages, and basic script editing.</li>
-<li>The GUI is serviceable but minimal; almost everyone moves to RStudio quickly.</li>
+<li>R installs under <code>%ProgramFiles%\R</code> (usually <code>C:\Program Files\R</code>) with a Start-menu entry in the group <em>R</em>.</li>
+<li>Launching it opens the <strong>R GUI window</strong>, which contains a menu bar, a toolbar, and the R console.</li>
+<li>The screenshots in the textbook date from Windows XP — kept in the second edition precisely because R itself had changed so little. The layout today remains essentially identical.</li>
 </ul>
 </section>
 <section id="macos" class="slide level2">
 <h2>macOS</h2>
 <ul>
-<li>The macOS installer provides <strong>R.app</strong>, a native application with a console window, a simple editor with syntax highlighting, and menus for package management and plotting devices.</li>
-<li>Plots appear in a separate Quartz graphics window.</li>
-<li>As on Windows, the bundled GUI covers the basics, and serious work tends to happen in an IDE.</li>
+<li>The installer adds an application named <strong>R</strong> to the Applications folder; run it like any other Mac program.</li>
+<li>You get the same trio: menu bar, toolbar with common functions, and an R console window.</li>
+<li>macOS users have a second route: run R <strong>from the terminal</strong> without the GUI. Open Terminal (in <em>Applications → Utilities</em>) and type <code>R</code> at the prompt.</li>
 </ul>
 </section>
 <section id="linux-and-unix" class="slide level2">
 <h2>Linux and Unix</h2>
-<ul>
-<li>On most Linux systems there is no bundled GUI at all: typing <code>R</code> in a terminal starts the console directly on the command line.</li>
-<li>Plots open in an X11 window; everything else happens at the prompt.</li>
-<li>This is a perfectly complete way to use R — the GUI elements are conveniences, not requirements.</li>
-</ul>
-</section></section>
-<section>
-<section id="the-r-console" class="title-slide slide level1 center">
-<h1>The R Console</h1>
-
-</section>
-<section id="the-interactive-prompt" class="slide level2">
-<h2>The Interactive Prompt</h2>
-<p>The console is where R actually happens. You type an expression after the <code>&gt;</code> prompt; R evaluates it and prints the result:</p>
+<p>Start R from the command line by typing:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="dv">17</span> <span class="sc">%%</span> <span class="dv">5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="st">"hello, world"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] "hello, world"</code></pre>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href=""></a><span class="ex">$</span> R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <ul>
-<li>If a line is syntactically incomplete, the prompt changes to <code>+</code> and R waits for the rest.</li>
-<li>Results that are not assigned to a variable are simply printed and discarded.</li>
+<li>Capital “R” — Linux filenames are case sensitive. (And the <code>$</code> is the Unix prompt; don’t type it.)</li>
+<li>Unlike Windows/macOS, this starts an interactive session <em>in the terminal itself</em>.</li>
+<li>The book’s era offered a windowed alternative, <code>R -g Tk &amp;</code>, which launched R in its own Tk window (menu bar but no toolbar) running in the background. Modern Linux users wanting a windowed experience generally use RStudio instead.</li>
 </ul>
+</section>
+<section id="how-little-the-standard-gui-does" class="slide level2">
+<h2>How Little the Standard GUI Does</h2>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
 <div class="callout-title">
@@ -290,82 +281,251 @@ Yu-You Liou (NTU)
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>The read–eval–print loop (REPL).</strong> The console endlessly repeats three steps: <em>read</em> what you typed, <em>evaluate</em> it, and <em>print</em> the value. Interactive languages like R make exploration cheap — you can poke at your data one line at a time.</p>
+<p><strong>A surprise for desktop users:</strong> the standard R GUI implements only rudimentary menu functionality — reading help, managing graphics windows, editing some source and data files. There are no menus, buttons, or palettes for loading data, transforming it, plotting it, or building models. Commercial packages like SAS and SPSS ship far richer interfaces.</p>
 </div>
 </div>
 </div>
+<p>All real work in plain R happens by <em>typing commands</em>. That is not a defect — it is a design choice with real benefits, as we will see. But it explains why several projects built friendlier front ends…</p>
+</section>
+<section id="additional-r-guis" class="slide level2">
+<h2>Additional R GUIs</h2>
+<p>Several projects layer an easier interface on top of R:</p>
+<ul>
+<li><strong>Rcmdr</strong> (R Commander): an R package providing an alternative GUI — buttons for loading data, menu items for many common functions. Install it like any package.</li>
+<li><strong>RKWard</strong>: a polished front end with palettes, menu-driven analysis, data-editing tools, and an IDE for R code; historically strongest on Linux.</li>
+<li><strong>RStudio</strong>: the open-source IDE that became the de facto standard — more shortly.</li>
+<li>The book also mentions Revolution Computing’s <em>R Productivity Environment</em>, a commercial Windows IDE of that era (script editor, object browser, visual debugger).</li>
+</ul>
+<p>These slides don’t cover the front ends in detail — but everything in this course works in all of them, because they all sit on the same R functions underneath.</p>
+</section></section>
+<section>
+<section id="the-r-console" class="title-slide slide level1 center">
+<h1>The R Console</h1>
+
+</section>
+<section id="the-most-important-tool" class="slide level2">
+<h2>The Most Important Tool</h2>
+<p>The <strong>console</strong> is where you type commands and watch R respond.</p>
+<ul>
+<li>What you type are <strong>expressions</strong>; the part of R called the <strong>interpreter</strong> reads each expression and answers with a result or an error message.</li>
+<li>If you have used a command line (<code>cmd.exe</code>, a Unix shell) or an interactive interpreter such as LISP, this will feel familiar. (R and LISP are genuine relatives: both can compute on the language itself, both use similar internal structures for data, and both love parentheses.)</li>
+</ul>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Why command lines win for data analysis.</strong> After finishing a problem you want a record of <em>every</em> step — how the data was loaded, whether a random sample was taken and how, which variables were created, which model parameters were used. A typed transcript gives you exactly that, and lets you re-create the analysis later.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-startup-message" class="slide level2">
+<h2>The Startup Message</h2>
+<p>Launching R prints a banner like this (modern version shown):</p>
+<pre><code>R version 4.4.2 (2024-10-31) -- "Pile of Leaves"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.</code></pre>
+<p>It tells you: the version you are running, license information, quick reminders for getting help — and then hands you a <strong>command prompt</strong>.</p>
+</section>
+<section id="the-prompt-and-your-first-expression" class="slide level2">
+<h2>The Prompt and Your First Expression</h2>
+<p>When R is waiting for input, it shows a greater-than sign at the start of an empty line: the <strong>prompt</strong> <code>&gt;</code>. Type <code>17 + 3</code> and press Enter:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="dv">17</span> <span class="sc">+</span> <span class="dv">3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 20</code></pre>
+</div>
+</div>
+<p>Reading the exchange:</p>
+<ul>
+<li>you entered <code>17 + 3</code> at the prompt;</li>
+<li>R answered <code>[1] 20</code> (the meaning of <code>[1]</code> is explained in Chapter 3).</li>
+</ul>
+<p>In the textbook’s convention, <strong>boldface</strong> marks what the user typed; everything else is R’s output. Your own terminal won’t bold your input — but it may color it.</p>
+</section>
+<section id="continuation-the-prompt" class="slide level2">
+<h2>Continuation: the <code>+</code> Prompt</h2>
+<p>When an expression doesn’t fit on one line, R notices it is incomplete and switches the prompt to a plus sign (<code>+</code>), inviting you to finish:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="dv">1</span> <span class="sc">*</span> <span class="dv">2</span> <span class="sc">*</span> <span class="dv">3</span> <span class="sc">*</span> <span class="dv">4</span> <span class="sc">*</span> <span class="dv">5</span> <span class="sc">*</span></span>
+<span id="cb5-2"><a href=""></a>  <span class="dv">6</span> <span class="sc">*</span> <span class="dv">7</span> <span class="sc">*</span> <span class="dv">8</span> <span class="sc">*</span> <span class="dv">9</span> <span class="sc">*</span> <span class="dv">10</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3628800</code></pre>
+</div>
+</div>
+<ul>
+<li>In the console the second line appears after a <code>+</code> prompt — easy to confuse with addition in long sums or inequalities, so watch for it.</li>
+<li>To help you tell prompt, input, and output apart, most platforms color them differently:</li>
+</ul>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Platform</th>
+<th>Command prompt</th>
+<th>User input</th>
+<th>R output</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>macOS</td>
+<td>Purple</td>
+<td>Blue</td>
+<td>Black</td>
+</tr>
+<tr class="even">
+<td>Windows</td>
+<td>Red</td>
+<td>Red</td>
+<td>Blue</td>
+</tr>
+<tr class="odd">
+<td>Linux</td>
+<td>Black</td>
+<td>Black</td>
+<td>Black</td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="command-line-editing" class="slide level2">
 <h2>Command-Line Editing</h2>
-<p>The console includes line-editing conveniences that save enormous amounts of typing:</p>
+<p>R saves you typing with line-editing tools:</p>
 <ul>
-<li><strong>Up/Down arrows</strong> scroll through your command history; recall a previous command, edit it, and resubmit.</li>
-<li><strong>Tab completion</strong> finishes function and variable names — type <code>summ</code> then <em>Tab</em>.</li>
-<li><code>history()</code> displays recent commands.</li>
-<li>On all platforms, <em>Ctrl+C</em> (or <em>Esc</em>) interrupts a running computation and returns you to the prompt.</li>
+<li><strong>Up/down arrows</strong> scroll through previous commands — the single most useful trick. Repeat a command with a small change (different parameter, fixed parenthesis) without retyping it.</li>
+<li><code>history()</code> lists previously typed commands.</li>
+<li>The <strong>Tab</strong> key auto-completes function names and filenames, showing a list of possible completions.</li>
+<li>Under the hood, Linux and macOS use the GNU <code>readline</code> library, which supports a large set of editing commands; Windows supports a smaller set.</li>
 </ul>
-</section>
-<section id="batch-mode" class="slide level2">
-<h2>Batch Mode</h2>
-<p>For repetitive jobs — nightly reports, simulations, grading scripts — you do not want an interactive session at all. R can execute a script from the operating-system shell:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href=""></a><span class="co"># classic interface</span></span>
-<span id="cb5-2"><a href=""></a><span class="ex">R</span> CMD BATCH myscript.R output.txt</span>
-<span id="cb5-3"><a href=""></a></span>
-<span id="cb5-4"><a href=""></a><span class="co"># modern, more flexible interface</span></span>
-<span id="cb5-5"><a href=""></a><span class="ex">Rscript</span> myscript.R arg1 arg2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href=""></a><span class="fu">history</span>()    <span class="co"># show recent commands</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<ul>
-<li><code>Rscript</code> prints to standard output and accepts command-line arguments, making it the natural choice for automation and pipelines.</li>
-<li>Everything you can do interactively can be done in a script.</li>
-</ul>
-</section>
-<section id="r-inside-other-applications" class="slide level2">
-<h2>R Inside Other Applications</h2>
-<ul>
-<li>R can be embedded in <strong>Microsoft Excel</strong> through third-party add-ins, letting spreadsheet users call R functions on worksheet ranges.</li>
-<li>Database systems, web servers, and other languages (Python, Java) all have bridges to R.</li>
-<li>The common pattern: another program prepares the data, R does the statistics, and results flow back.</li>
-</ul>
 </section></section>
 <section>
-<section id="rstudio" class="title-slide slide level1 center">
-<h1>RStudio</h1>
+<section id="batch-mode" class="title-slide slide level1 center">
+<h1>Batch Mode</h1>
 
 </section>
-<section id="the-ide-we-will-use" class="slide level2">
-<h2>The IDE We Will Use</h2>
-<p><strong>RStudio Desktop</strong> is a free, open-source IDE that has become the de facto standard front end for R. One window organizes four panes:</p>
+<section id="beyond-the-interactive-session" class="slide level2">
+<h2>Beyond the Interactive Session</h2>
+<p>Interactive mode suits ad hoc analysis, but suppose you must repeat the same pipeline — load experiment data, transform it, emit three PDF plots, quit — many times. <strong>Batch mode</strong> runs a whole file of commands in sequence and saves the results.</p>
+<p>From the <em>system</em> command line (not the R console):</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href=""></a><span class="ex">$</span> R CMD BATCH generate_graphs.R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 <ul>
-<li><strong>Source editor</strong> — scripts and documents, with completion and highlighting;</li>
-<li><strong>Console</strong> — the same R prompt as always;</li>
-<li><strong>Environment / History</strong> — the objects in your workspace;</li>
-<li><strong>Files / Plots / Packages / Help</strong> — everything else.</li>
+<li>R executes everything in <code>generate_graphs.R</code> and writes the output to <code>generate_graphs.Rout</code>.</li>
+<li>You can name the output file yourself — for instance, stamping it with today’s date:</li>
 </ul>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="co"># RStudio is an interface to R, not a replacement for it:</span></span>
-<span id="cb6-2"><a href=""></a><span class="co"># install R first (Chapter 1), then RStudio from</span></span>
-<span id="cb6-3"><a href=""></a><span class="co"># https://posit.co/download/rstudio-desktop</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href=""></a><span class="ex">$</span> R CMD BATCH generate_graphs.R generate_graphs_<span class="kw">`</span><span class="fu">date</span> <span class="st">"+%y%m%d"</span><span class="kw">`</span>.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li>Generating graphics in batch mode? Remember to specify the output device and filenames. For all command-line options: <code>R --help</code>.</li>
+</ul>
+</section>
+<section id="rscript-and-executable-scripts" class="slide level2">
+<h2>Rscript and Executable Scripts</h2>
+<p><code>R CMD BATCH</code> has one notable limitation: the script cannot read the system’s standard input. The second batch command, <strong>Rscript</strong>, lifts that restriction:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href=""></a><span class="ex">$</span> Rscript generate_graphs.R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>You can even make R scripts directly executable (Linux/macOS). Create <code>hello_world.R</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href=""></a><span class="co">#! /usr/bin/env Rscript</span></span>
+<span id="cb11-2"><a href=""></a><span class="ex">print</span><span class="er">(</span><span class="st">"Hello world!"</span><span class="kw">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>then mark it executable and run it like any program:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href=""></a><span class="ex">$</span> chmod +x hello_world.R</span>
+<span id="cb12-2"><a href=""></a><span class="ex">$</span> ./hello_world.R</span>
+<span id="cb12-3"><a href=""></a><span class="ex">[1]</span> <span class="st">"Hello world!"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Finally, batch execution is available <em>from inside R</em> too: the <code>source()</code> function runs the commands in a file within your current session — see <code>?source</code>.</p>
+</section></section>
+<section>
+<section id="other-ways-to-run-r" class="title-slide slide level1 center">
+<h1>Other Ways to Run R</h1>
+
+</section>
+<section id="r-inside-microsoft-excel" class="slide level2">
+<h2>R Inside Microsoft Excel</h2>
+<p>For heavy Excel users on Windows, the <strong>RExcel</strong> software (from the rcom project) let you run R directly inside Excel. The book’s installation sequence:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"RExcelInstaller"</span>, <span class="st">"rcom"</span>, <span class="st">"rsproxy"</span>)</span>
+<span id="cb13-2"><a href=""></a><span class="fu">library</span>(rcom)</span>
+<span id="cb13-3"><a href=""></a><span class="fu">comRegisterRegistry</span>()       <span class="co"># configure the RCOM server</span></span>
+<span id="cb13-4"><a href=""></a><span class="fu">library</span>(RExcelInstaller)</span>
+<span id="cb13-5"><a href=""></a><span class="fu">installstatconnDCOM</span>()       <span class="co"># install RDCOM</span></span>
+<span id="cb13-6"><a href=""></a><span class="fu">installRExcel</span>()             <span class="co"># launch the RExcel installer</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The workflow: enter values in a column → <em>Put R Var → Array</em> names them as an R object (say <code>v</code>) → select a blank cell → <em>Get R Value → Array</em> and enter an expression such as <code>(v - mean(v)) / sd(v)</code> → the rescaled values land back in Excel. You can also call R from Excel formulas and macros, and plot R graphics inside Excel.</p>
+<div class="callout callout-warning callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Warning</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Dated technology.</strong> RExcel was Windows-only and is no longer actively maintained. The modern route runs the other way: read and write Excel files <em>from R</em> with packages like <code>readxl</code> and <code>openxlsx</code> (Chapter 11).</p>
+</div>
+</div>
 </div>
 </section>
-<section id="why-an-ide-matters" class="slide level2">
-<h2>Why an IDE Matters</h2>
+<section id="rstudio" class="slide level2">
+<h2>RStudio</h2>
+<p><strong>RStudio</strong> is a free, open-source integrated development environment (IDE) for R — and today the most popular way to run it.</p>
 <ul>
-<li>One-keystroke execution of the current line or selection (<em>Ctrl/Cmd+Enter</em>) keeps you in flow between editor and console.</li>
-<li>Integrated help, plots, and package management remove constant window-switching.</li>
-<li>Projects keep each analysis in its own folder with its own workspace — a habit that will keep your coursework organized.</li>
-<li>RStudio also builds the course’s document formats (R Markdown, Quarto) with a single click.</li>
+<li>Unlike the standard GUI, RStudio tiles the screen into panes and tabs: console, source editor, environment/history, and files/plots/help.</li>
+<li>It can also be installed <strong>on a Linux server</strong>, letting you use R from a web browser.</li>
+<li>Download: <a href="https://posit.co" class="uri">https://posit.co</a> (the company formerly named RStudio is now Posit).</li>
 </ul>
+<p>We will use RStudio throughout this course: it wraps everything from this chapter — console, history, tab completion, script execution — in one coherent window.</p>
 </section>
-<section id="other-ways-to-run-r" class="slide level2">
-<h2>Other Ways to Run R</h2>
-<p>You may also meet:</p>
+<section id="r-as-a-server-on-the-web-in-emacs" class="slide level2">
+<h2>R as a Server, on the Web, in Emacs</h2>
+<p>Open-source projects connect R to other applications:</p>
 <ul>
-<li><strong>ESS (Emacs Speaks Statistics)</strong> — R inside the Emacs editor; beloved by long-time users.</li>
-<li><strong>Jupyter notebooks</strong> — R kernels run inside the notebook interface popular in data science.</li>
-<li><strong>Visual Studio Code</strong> — extensions provide R editing and an integrated terminal.</li>
+<li><strong>As a server — Rserve.</strong> Other programs (e.g., Java) send computations to a running R instance over the network. One beefy Rserve machine, with plenty of CPU and memory, can serve calculations users couldn’t run on their own desktops.</li>
+<li><strong>As a web application — rApache.</strong> Embeds R analyses in a web server, e.g., to publish sophisticated reports rendered with R graphics. (The modern descendant of this idea is <strong>Shiny</strong>.)</li>
+<li><strong>Inside Emacs — ESS</strong> (<em>Emacs Speaks Statistics</em>). An add-on that runs R within the Emacs editor, beloved by long-time statisticians.</li>
 </ul>
-<p>All of them drive the same interpreter; choose whatever keeps you productive. In this course, demonstrations use RStudio.</p>
+<p>Whatever the wrapper, it is the same interpreter underneath — which is why one reference book covers them all.</p>
+</section>
+<section id="looking-ahead" class="slide level2">
+<h2>Looking Ahead</h2>
+<ul>
+<li>You now know where to type (the console), how to read the prompt (<code>&gt;</code> vs.&nbsp;<code>+</code>), and how to save keystrokes (history, Tab).</li>
+<li>Chapter 3 puts the console to work: a hands-on tutorial of expressions, vectors, functions, data structures, models, and charts.</li>
+</ul>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>Try it now.</strong> Open R (or RStudio), type a few arithmetic expressions, press the up arrow, edit, re-run. Five minutes of play makes the next chapter twice as easy.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

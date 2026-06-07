@@ -38,141 +38,377 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 library(lattice)
 ```
 
-# **Trellis Plots in R**
+# **Trellis Graphics**
 
-## History and Idea
+## History and Strengths
 
-The `lattice` package [@sarkar2008lattice] implements **trellis graphics**, Cleveland's framework for visualizing *conditioned* data [@cleveland1993visualizing]: the same panel repeated for every subset of the data, arranged in a grid for instant comparison.
+In the early 1990s, Richard Becker and William Cleveland at Bell Labs built **Trellis graphics**, grounded in Cleveland's research on how people actually perceive information. The **lattice** package is R's implementation (some function names still say "trellis").
 
-- Formula interface: `y ~ x | condition` reads "y against x, one panel per level of condition."
-- Lattice functions **return objects**; the plot appears when the object is printed — remember this inside scripts and functions.
+Lattice's real strength: **splitting a chart into panels** (a grid) or **groups** (colors/symbols) using conditioning or grouping variables — plus clean, readable output by default. Familiar charts (scatter, bar, histogram) and new friends (dot plots, strip plots, Q-Q plots) all included.
 
-```{r,echo=TRUE,cache=TRUE}
+## How Lattice Works
+
+The vocabulary: rectangular drawing areas are **panels**; the data sent to a panel is a **packet**; **panel functions** actually draw packets. The lifecycle:
+
+1. you call a high-level lattice function;
+2. it assembles and *returns* a lattice object (class `"trellis"` — hence `print.trellis`, `plot.trellis`);
+3. printing the object (automatic at the console) is what draws it;
+4. `plot.trellis` lays out the panel matrix, assigns packets, and calls the **panel function** for each.
+
+::: {.callout-warning}
+**Inside functions and scripts, lattice plots nothing unless you `print` the object** — the classic lattice gotcha (first met in Chapter 3).
+:::
+
+## A Simple Example: Formula, Conditioning, Groups
+
+Lattice arguments are consistent: a **formula** first (positional — its name has changed before!), then `data`. The same toy data three ways:
+
+```{r,echo=TRUE}
+d <- data.frame(x=c(0:9), y=c(1:10), z=c(rep(c("a", "b"), times=5)))
+xyplot(y~x, data=d)
+xyplot(y~x|z, data=d)            # conditioning: panels split by z
+xyplot(y~x, groups=z, data=d)    # grouping: colors/symbols by z
+```
+
+`y~x|z` reads "y against x, conditioned on z."
+
+## Graphics-to-Lattice Dictionary
+
+| graphics function | lattice function | Chart |
+|---|---|---|
+| `barplot` | `barchart` | bar/column charts |
+| `dotchart` | `dotplot` | Cleveland dot plots |
+| `hist` | `histogram` | histograms |
+| `density`+`plot` | `densityplot` | kernel density plots |
+| `stripchart` | `stripplot` | strip charts |
+| `qqnorm` (stats) | `qqmath` | theoretical Q-Q plots |
+| `plot` | `xyplot` | scatter plots |
+| `qqplot` (stats) | `qq` | two-sample Q-Q plots |
+| `pairs` | `splom` | scatter plot matrices |
+| `image` | `levelplot` | image plots |
+| `contour` | `contourplot` | contour plots |
+| `persp` | `cloud`, `wireframe` | 3-D perspective |
+
+Most functions accept a formula + data frame; many also take arrays, matrices, tables, or vectors directly (e.g., `barchart` happily eats a `table`).
+
+## Custom Panel Functions
+
+To superimpose extra elements, replace the **panel function** — typically a wrapper that adds something, then delegates:
+
+```{r,echo=TRUE}
+xyplot(y~x|z, data=d,
+  panel=function(...){
+    panel.abline(a=1, b=1)
+    panel.xyplot(...)
+  })
+```
+
+# Univariate Trellis Plots
+
+## The Births Data
+
+Running example: every US birth of 2006 (CDC natality file — 3.1 GB raw; the book preprocessed it with a Perl `unpack` script, recoded factors in R, and sampled 10% into `births2006.smpl`). Variables include `DOB_MM`/`DOB_WK` (month/weekday of birth), `MAGER` (mother's age), `WTGAIN`, `SEX`, `APGAR5`, `DMEDUC`, `UPREVIS`, `ESTGEST`, `DMETH_REC` (delivery method), `DPLURAL` (single/twin/...), `DBWT` (birth weight, grams):
+
+```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda",
+              temp, mode = "wb")
 load(temp)
 dim(births2006.smpl)
 ```
 
-## A Simple Example
+## barchart
 
-US births in 2006 (a 10% sample): how does birth weight relate to delivery method?
+Births by day of week (1 = Sunday):
 
-```{r,echo=TRUE,out.width="70%"}
-histogram(~ DBWT | DMETH_REC, data = births2006.smpl,
-          xlab = "Birth weight (g)")
+```{r,echo=TRUE}
+births.dow <- table(births2006.smpl$DOB_WK)
+barchart(births.dow)
 ```
 
-One formula produced three aligned panels — conditioning without loops.
+Far more babies arrive on weekdays — surprising! Is it the *delivery method*? Tabulate by weekday × method (dropping unknowns):
 
-## Using Lattice Functions
+```{r,echo=TRUE}
+births2006.dm <- transform(
+  births2006.smpl[births2006.smpl$DMETH_REC != "Unknown",],
+  DMETH_REC=as.factor(as.character(DMETH_REC)))
+dob.dm.tbl <- table(WK=births2006.dm$DOB_WK, MM=births2006.dm$DMETH_REC)
+barchart(dob.dm.tbl)            # default: stacked groups, no key
+```
 
-All high-level lattice functions share the same anatomy:
+## Iterating to the Right Display
+
+Unstack and add a key; still hard to compare — so drop the color groups and switch to columns in **two panels**:
+
+```{r,echo=TRUE}
+barchart(dob.dm.tbl, stack=FALSE, auto.key=TRUE)
+barchart(dob.dm.tbl, horizontal=FALSE, groups=FALSE)
+```
+
+Now it's plain: vaginal births dip ~25–30% on weekends, **C-sections drop 50–60%**. Lattice's quick iteration — stack/unstack, group/panel, flip — is exactly how you zero in on the story.
+
+## dotplot
+
+Cleveland **dot plots** show one point per category — calmer than bars for bigger tables. Is the weekday pattern seasonal? Count by week × month × method and plot:
+
+```{r,echo=TRUE}
+dob.dm.tbl.alt <- table(WEEK=births2006.dm$DOB_WK,
+                        MONTH=births2006.dm$DOB_MM,
+                        METHOD=births2006.dm$DMETH_REC)
+dotplot(dob.dm.tbl.alt, stack=FALSE, auto.key=TRUE, groups=TRUE)
+```
+
+Slight seasonal wiggles; the weekly pattern persists year-round.
+
+## dotplot: the Tire Failure Data
+
+NHTSA's 2003 "Stepped-Up Speed to Failure" tests (post-Firestone recall, run in hot Phoenix): tires run at increasing speeds until failure. Six tire types (B–L, various sizes/brands). Variables: `Time_To_Failure`, `Speed_At_Failure_km_h` (a stepped value — treat as a factor!), `Tire_Type`:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda",
+              temp, mode = "wb")
+load(temp)
+dotplot(as.factor(Speed_At_Failure_km_h)~Time_To_Failure|Tire_Type,
+        data=tires.sus)
+```
+
+All type D tires died fast at 180 km/h; some type H tires endured. (Revisited in Chapter 18.)
+
+## histogram
+
+Birth weight by plurality — note alphabetical panel order (hence the numbered level names) and the space-filling square panels:
+
+```{r,echo=TRUE}
+histogram(~DBWT|DPLURAL, data=births2006.smpl)
+```
+
+Stack the panels with `layout` for comparability:
+
+```{r,echo=TRUE,fig.height=5}
+histogram(~DBWT|DPLURAL, data=births2006.smpl, layout=c(1, 5))
+```
+
+Roughly normal within groups; mean weight falls as plurality rises. (Other arguments: `type` = `"percent"`/`"count"`/`"density"`, `nint`/`breaks`/`endpoints`/`equal.widths` for binning.)
+
+## densityplot
+
+One smooth line instead of bins — and stackable. With 427k observations we suppress the per-point strip (`plot.points=FALSE`):
+
+```{r,echo=TRUE,fig.height=5}
+densityplot(~DBWT|DPLURAL, data=births2006.smpl,
+            layout=c(1,5), plot.points=FALSE)
+```
+
+Density plots *superimpose* gracefully — turn the conditioning variable into a grouping one:
+
+```{r,echo=TRUE}
+densityplot(~DBWT, groups=DPLURAL, data=births2006.smpl,
+            plot.points=FALSE, auto.key=TRUE)
+```
+
+## stripplot
+
+**Strip plots** are one-dimensional scatter plots — many values per category (vs. dot plots' one), ideal for *small* data. Weights of quadruplets-and-up (44 observations), jittered:
+
+```{r,echo=TRUE}
+stripplot(~DBWT, data=births2006.smpl,
+          subset=(DPLURAL=="5 Quintuplet or higher" |
+                  DPLURAL=="4 Quadruplet"),
+          jitter.data=TRUE)
+```
+
+## qqmath
+
+`qqmath` compares sample quantiles to a theoretical distribution (default: normal via `qnorm`; also `f.value`, `distribution`, `qtype`). Sanity check with actual normals, then the births:
+
+```{r,echo=TRUE}
+qqmath(rnorm(100000))
+qqmath(~DBWT|DPLURAL,
+       data=births2006.smpl[sample(1:nrow(births2006.smpl), 50000), ],
+       pch=19, cex=0.25,
+       subset=(DPLURAL != "5 Quintuplet or higher"))
+```
+
+Birth weights: not quite normal.
+
+## The San Francisco Home Sales Data
+
+Second running example: 3,281 San Francisco home sales, 2008-02-13 to 2009-07-14, compiled by the author from newspaper listings, geocoded, and joined to Zillow neighborhood shapefiles (with `sp`/`maptools` and `point.in.polygon`). Variables: `street`, `city`, `zip`, `saledate`, `price`, `bedrooms`, `squarefeet`, `lotsize`, `yearbuilt`, `condolike`, `latitude`/`longitude`, `neighborhood`. Real data — imperfect, partially missing:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda",
+              temp, mode = "wb")
+load(temp)
+```
+
+## qqmath on Prices: Finding the Log-Normal
+
+Prices range $100,000–$9,500,000 — intuitively not normal:
+
+```{r,echo=TRUE}
+qqmath(~price, data=sanfrancisco.home.sales)
+qqmath(~log(price), data=sanfrancisco.home.sales)
+```
+
+The log transform straightens the line nicely. Now split by bedrooms — groups, smooth lines instead of points (`type="smooth"`, an argument that flows to the panel function), explicit subset to keep the key clean:
+
+```{r,echo=TRUE}
+qqmath(~log(price), groups=bedrooms,
+       data=subset(sanfrancisco.home.sales,
+                   !is.na(bedrooms) & bedrooms > 0 & bedrooms < 7),
+       auto.key=TRUE, drop.unused.levels=TRUE, type="smooth")
+```
+
+Separated lines, higher for more bedrooms — the same trick works for square-footage sextiles (`Hmisc::cut2(squarefeet, g=6)` as `groups`) and neighborhoods.
+
+# Bivariate Trellis Plots
+
+## xyplot
+
+Price vs. size — first naively, then trimmed (price < $4M, < 6,000 sq ft) and conditioned by zip code with custom strips:
+
+```{r,echo=TRUE}
+xyplot(price~squarefeet, data=sanfrancisco.home.sales)
+trellis.par.set(fontsize=list(text=7))
+xyplot(price~squarefeet|zip, data=sanfrancisco.home.sales,
+       subset=(zip!=94100 & zip!=94104 & zip!=94108 &
+               zip!=94111 & zip!=94133 & zip!=94158 &
+               price < 4000000 &
+               ifelse(is.na(squarefeet), FALSE, squarefeet < 6000)),
+       strip=strip.custom(strip.levels=TRUE))
+trellis.par.set(fontsize=list(text=12))
+```
+
+The linear relationship sharpens within each zip — neighborhood conditioning (`price~squarefeet|neighborhood`, with `pch=19, cex=.2`) tells the same story with better labels.
+
+## bwplot: Box Plots by Month
+
+Distribution of prices over time — round dates to months with `cut`. The raw attempt drowns in outliers; log-transform and rotate the labels:
+
+```{r,echo=TRUE}
+bwplot(log(price)~cut(saledate, "month"),
+       data=sanfrancisco.home.sales,
+       scales=list(x=list(rot=90)))
+```
+
+Medians wandered; the interquartile range moved less; the high end visibly thinned — yet the basic shape stayed stable month to month. (Volume note: the data starts mid-February and ends mid-July — don't over-read those months.)
+
+## splom and qq
+
+- **`splom(x, data, ...)`** — scatter plot matrices (lattice's `pairs`); panels drawn by `panel.splom`, the matrix orchestrated by `superpanel=panel.pairs`, axis detail via `pscales`, names via `varnames`.
+- **`qq(x, data, ...)`** — *two-sample* quantile-quantile plots, comparing two observed distributions (formula syntax `factor ~ value`).
+
+# Trivariate Plots
+
+## levelplot
+
+Flat grids colored by a third value (drawn by `panel.levelplot`; key arguments `at`, `cuts=15`, `region`, `colorkey`, `col.regions`, `contour`). Coordinates are too precise to plot raw — bin first with `cut` + `table`:
+
+```{r,echo=TRUE}
+attach(sanfrancisco.home.sales)
+levelplot(table(cut(longitude, breaks=40), cut(latitude, breaks=40)),
+          scales=list(y=list(cex=.5), x=list(rot=90, cex=.5)))
+```
+
+Mean *price* by area? Swap `table` for `tapply`:
+
+```{r,echo=TRUE}
+levelplot(tapply(price,
+                 INDEX=list(cut(longitude, breaks=40),
+                            cut(latitude, breaks=40)),
+                 FUN=mean),
+          scales=list(draw=FALSE))
+```
+
+## levelplot with Conditioning; contourplot
+
+A third factor makes panels — sales location by (capped) bedroom count:
+
+```{r,echo=TRUE}
+bedrooms.capped <- ifelse(bedrooms < 5, bedrooms, 5)
+levelplot(table(cut(longitude, breaks=25),
+                cut(latitude, breaks=25),
+                bedrooms.capped),
+          scales=list(draw=FALSE))
+detach(sanfrancisco.home.sales)
+```
+
+**`contourplot`** is the topographic-map sibling (`cuts=7`, `labels`, `contour=TRUE`, `region=FALSE`).
+
+## cloud and wireframe
+
+- **`cloud`** — 3-D point clouds (projections of 3-D points onto 2-D); arguments include `aspect=c(1,1)`, `panel.aspect`, drawing handled by `panel.cloud` → `panel.3dscatter`.
+- **`wireframe`** — 3-D surfaces, lattice's `persp` (`panel.3dwire` underneath).
+- Other lattice plots worth knowing: **`rfs`** (residual and fit spread plots for a model, optionally with `distribution=qnorm`) and **`parallel`** (parallel-coordinate plots).
+
+# Customizing Lattice Graphics
+
+## Common Arguments to Lattice Functions
+
+Shared by the high-level functions:
+
+| Argument | Description |
+|---|---|
+| `x` (formula), `data` | what to plot, where the variables live |
+| `allow.multiple`, `outer` | handling of `y1+y2~x` formulas: superpose or separate panels |
+| `groups` / `subset` / `subscripts` | grouping variable; row filter; expose indices to panels |
+| `panel` | the panel function — *the* customization hook |
+| `aspect` | panel aspect ratio (`"fill"`, `"xy"` banking to 45°, numeric) |
+| `auto.key` | quick legend (logical or list) |
+| `prepanel` | function determining per-panel space/limits |
+| `strip` | strip-drawing function (e.g., `strip.custom`); `strip.left` for left strips |
+| `xlab`, `ylab`, `main`, `sub`, `xlim`, `ylim` | annotation and limits |
+| `scales` | axis control (next slide) |
+| `layout`, `between`, `skip` | panel arrangement, spacing |
+| `drop.unused.levels`, `default.scales`, `lattice.options` | the long tail (passed via `trellis.skeleton`) |
+
+## Controlling Axes: scales
+
+`scales` is a list (optionally with `x` and `y` sublists):
+
+- `relation` — `"same"` (shared limits), `"free"` (per-panel), `"sliced"` (equal-length slices);
+- `draw`, `alternating`, `tick.number`, `at`, `labels`, `cex`, `rot`, `font`, `col`, `log`, `abbreviate`...
+
+Seen in action earlier: `scales=list(x=list(rot=90))` for rotated month labels, `scales=list(draw=FALSE)` to silence map axes.
+
+## Parameters: trellis.par.get / set
+
+Lattice ignores `par`; its own settings live in a deep parameter list:
+
+```{r,echo=TRUE}
+trellis.par.get("axis.text")
+```
 
 ```{r,eval=FALSE,echo=TRUE}
-xyplot(y ~ x | g,            # formula with optional conditioning
-       data = df,            # where the variables live
-       groups = h,           # overlay groups within panels
-       layout = c(3, 1),     # panel arrangement
-       main = "...", xlab = "...", ylab = "...")
+trellis.par.set(list(axis.text = list(cex = 0.5)))
+show.settings()                    # visual overview of current settings
+names(trellis.par.get())           # 30+ groups, ~380 parameters
 ```
 
-- `groups=` distinguishes subsets *inside* a panel (with `auto.key=TRUE` for a legend); `|` separates subsets *across* panels.
-- The returned `"trellis"` object can be stored, updated with `update()`, and printed later.
+Groups include `superpose.symbol`/`superpose.line` (groups), `plot.polygon` (bars/histograms), `box.rectangle`/`box.umbrella` (bwplot), `plot.line`/`plot.symbol` (xyplot et al.), `reference.line`, `regions`+`shade.colors` (levelplot/wireframe), `strip.background`/`strip.shingle`, `fontsize`, `par.main.text` and friends.
 
-## Univariate Plots: Histograms and Densities
+## plot.trellis, strip.default, simpleKey
 
-```{r,echo=TRUE,out.width="68%"}
-densityplot(~ DBWT | DPLURAL, data = births2006.smpl,
-            plot.points = FALSE, layout = c(1, 5),
-            xlab = "Birth weight (g)")
-```
+- **`plot.trellis`** — arguments controlling drawing: `position`/`split`/`more` (plot several trellis objects on one page), `panel.height`/`panel.width`, `packet.panel` (which packet lands in which panel; default `packet.panel.default`), `panel.error`.
+- **`strip.default(which.given, which.panel, var.name, factor.levels, shingle.intervals, strip.names, strip.levels, style, bg, fg, par.strip.text)`** — how strips display conditioning levels; customize via `strip.custom`.
+- **`simpleKey(text, points=TRUE, rectangles=FALSE, lines=FALSE, col, cex, ...)`** — builds the legend that `auto.key` requests.
 
-Stacking the panels vertically (one per plurality: singles, twins, triplets...) aligns the x-axes — multiples are born lighter, and the whole story is one column tall.
+## Low-Level and Panel Functions
 
-## Univariate Plots: Strips and Quantiles
+Grid-based primitives mirror base graphics: `llines`/`panel.lines`, `lpoints`/`panel.points`, `ltext`/`panel.text`, `lsegments`/`panel.segments`, `lpolygon`/`panel.polygon`, `larrows`/`panel.arrows`, `lrect`/`panel.rect`, plus `panel.axis` and `panel.superpose`.
 
-- `stripplot()` — one point per observation, ideal for small groups;
-- `qqmath()` — quantiles of a sample against a theoretical distribution;
-- `bwplot()` — box-and-whisker, the lattice cousin of `boxplot()`:
+Ready-made panel helpers to compose into custom panels:
 
-```{r,echo=TRUE,out.width="68%"}
-bwplot(DBWT ~ factor(APGAR5), data = births2006.smpl,
-       xlab = "5-minute Apgar score", ylab = "Birth weight (g)")
-```
-
-Weight and Apgar score rise together — visible across twenty boxes at once.
-
-## Bivariate Plots
-
-`xyplot()` is the conditioned scatter plot. Average birth weight by day of week, split by delivery method:
-
-```{r,echo=TRUE,out.width="70%"}
-wt <- aggregate(DBWT ~ DOB_WK + DMETH_REC, data = births2006.smpl, mean)
-xyplot(DBWT ~ DOB_WK | DMETH_REC, data = wt, type = "h",
-       layout = c(3, 1), xlab = "Day of week", ylab = "Mean weight (g)")
-```
-
-Other bivariate friends: `barchart()`, `dotplot()` (Cleveland's dot plot — often the best replacement for both pies and bars).
-
-## Trivariate Plots
-
-For three numeric dimensions:
-
-```{r,echo=TRUE,out.width="62%"}
-x <- seq(-2, 2, length.out = 40)
-grid <- expand.grid(x = x, y = x)
-grid$z <- with(grid, exp(-(x^2 + y^2)))
-levelplot(z ~ x * y, data = grid)
-```
-
-- `levelplot()` — colored tiles; `contourplot()` — labeled contour lines;
-- `cloud()` — 3-D point clouds; `wireframe()` — 3-D surfaces.
-
-## Custom Panel Functions
-
-A panel function decides what gets drawn inside each rectangle. Wrap the default and add to it:
-
-```{r,echo=TRUE,out.width="65%"}
-xyplot(DBWT ~ WTGAIN | SEX,
-       data = births2006.smpl[sample(nrow(births2006.smpl), 2000), ],
-       alpha = 0.2,
-       panel = function(x, y, ...) {
-         panel.xyplot(x, y, ...)
-         panel.lmline(x, y, col = "red", lwd = 2)
-       },
-       xlab = "Maternal weight gain (lb)", ylab = "Birth weight (g)")
-```
-
-`panel.lmline`, `panel.loess`, `panel.abline`, and `panel.grid` are ready-made building blocks.
-
-## Customizing Lattice
-
-- `trellis.par.get()` / `trellis.par.set()` adjust the theme (colors, fonts, symbols) globally.
-- `show.settings()` displays the current theme at a glance.
-- Per-plot: `par.settings=` injects theme tweaks into a single call;
-- `update(plot_object, ...)` modifies an existing trellis object — handy for polishing a stored plot without recomputing.
-
-```{r,eval=FALSE,echo=TRUE}
-my.theme <- trellis.par.get()
-my.theme$plot.symbol$pch <- 19
-trellis.par.set(my.theme)
-```
-
-## Lattice vs. Base Graphics
-
-| | Base | Lattice |
-|:---|:---|:---|
-| Conditioning | manual loops + `par(mfrow)` | `| g` in the formula |
-| Return value | none (ink on paper) | trellis object |
-| Legends | manual `legend()` | `auto.key = TRUE` |
-| Consistency across panels | your job | automatic |
-
-Lattice shines exactly when the question is "does this pattern hold *within every subgroup*?" — Chapter 15 shows `ggplot2`, a third system built on a full grammar.
+- `panel.abline`, `panel.curve`, `panel.rug`, `panel.grid`, `panel.fill`;
+- `panel.mathdensity` (overlay a theoretical density), `panel.average`;
+- `panel.loess` (smoother), `panel.lmline` (regression line);
+- and each high-level function's `panel.*` (e.g., `panel.xyplot`, `panel.barchart`, `panel.histogram`) for delegation — the pattern from our first custom panel.
 
 ## Copyright Notice
 

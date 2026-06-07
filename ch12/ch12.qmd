@@ -41,191 +41,609 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **The 80% of Data Science**
+# **Where 80% of the Time Goes**
 
-## Why Preparation Matters
+## The Dirty Secret of Data Analysis
 
-Real data arrives messy: scattered across tables, wrongly typed, duplicated, and full of holes. Before any model or chart, you will combine, transform, clean, subset, summarize, and reshape. This chapter is the toolbox. Our running example is the San Francisco home-sales data:
+The book's author started as a biochemist, fled to computer science to escape endless lab preparation — and landed in data mining, where **~80% of project effort goes to finding, cleaning, and preparing data**, under 5% to actual analysis (the rest to writing it up).
 
-```{r,echo=TRUE,cache=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda", temp, mode = "wb")
-load(temp)
-dim(sanfrancisco.home.sales)
-names(sanfrancisco.home.sales)[1:10]
-```
+"It came from computers, so it's perfect, right?" In practice data is almost never stored in the right form, and even well-formed data hides surprises. This chapter is the toolbox: combining, transforming, binning, subsetting, summarizing, reshaping, cleaning, and sorting.
 
 # Combining Data Sets
 
-## Pasting Tables Together
+## paste: Concatenating Text
+
+`paste` concatenates character vectors element-wise (coercing other types first):
 
 ```{r,echo=TRUE}
-a <- data.frame(id = 1:3, x = c(10, 20, 30))
-b <- data.frame(id = 4:5, x = c(40, 50))
-rbind(a, b)                  # stack rows (same columns required)
-cbind(a, flag = c(TRUE, FALSE, TRUE))   # add columns (same length)
+x <- c("a", "b", "c", "d", "e")
+y <- c("A", "B", "C", "D", "E")
+paste(x, y)
+paste(x, y, sep="-")
+paste(x, y, sep="-", collapse="#")   # collapse: squash into ONE value
 ```
 
-`rbind()` matches columns by name; for many files, `do.call(rbind, list_of_frames)` stacks a whole list at once.
+## cbind: Adding Columns
 
-## Merging by Common Fields
-
-`merge()` is R's relational join:
+`cbind` combines objects horizontally. Starting from the NFL salary table of Chapter 11:
 
 ```{r,echo=TRUE}
-sales <- data.frame(id = c(1, 2, 3, 4), price = c(300, 150, 220, 410))
-zips  <- data.frame(id = c(1, 2, 3, 5), zip = c("94114", "94110", "94117", "94109"))
-merge(sales, zips)                       # inner join on shared column
-merge(sales, zips, all.x = TRUE)         # left join: keep all sales
+top.5.salaries <- data.frame(
+  name.last = c("Manning", "Brady", "Pepper", "Palmer", "Manning"),
+  name.first = c("Peyton", "Tom", "Julius", "Carson", "Eli"),
+  team = c("Colts", "Patriots", "Panthers", "Bengals", "Giants"),
+  position = c("QB", "QB", "DE", "QB", "QB"),
+  salary = c(18700000, 14626720, 14137500, 13980000, 12916666))
+more.cols <- data.frame(year = rep(2008, 5), rank = 1:5)
+cbind(top.5.salaries, more.cols)
 ```
 
-- `by=`, `by.x=`, `by.y=` control the key columns; `all=TRUE` gives a full outer join.
-- Always check row counts after a merge — unexpected duplication of keys multiplies rows.
+## rbind: Adding Rows
+
+`rbind` combines vertically — here appending salaries six through eight:
+
+```{r,echo=TRUE}
+next.three <- data.frame(
+  name.last = c("Favre", "Bailey", "Harrison"),
+  name.first = c("Brett", "Champ", "Marvin"),
+  team = c("Packers", "Broncos", "Colts"),
+  position = c("QB", "CB", "WR"),
+  salary = c(12800000, 12690050, 12000000))
+rbind(top.5.salaries, next.three)
+```
+
+## Extended Example: Fetch and Bind Stock Quotes
+
+The book builds one data frame of quotes for all 30 Dow stocks. `get.quotes` assembles a Yahoo! Finance CSV URL with `paste` (format discovered by trial and error), fetches it with `read.csv`, and `cbind`s on a ticker column:
+
+```{r,eval=FALSE,echo=TRUE}
+get.quotes <- function(ticker, from=(Sys.Date()-365), to=(Sys.Date()),
+                       interval="d") {
+  base <- "http://ichart.finance.yahoo.com/table.csv?"
+  symbol <- paste("s=", ticker, sep="")
+  from.month <- paste("&a=",                      # months number 00-11!
+    formatC(as.integer(format(from,"%m"))-1, width=2, flag="0"), sep="")
+  from.day  <- paste("&b=", format(from,"%d"), sep="")
+  from.year <- paste("&c=", format(from,"%Y"), sep="")
+  to.month  <- paste("&d=",
+    formatC(as.integer(format(to,"%m"))-1, width=2, flag="0"), sep="")
+  to.day    <- paste("&e=", format(to,"%d"), sep="")
+  to.year   <- paste("&f=", format(to,"%Y"), sep="")
+  inter     <- paste("&g=", interval, sep="")
+  url <- paste(base, symbol, from.month, from.day, from.year,
+               to.month, to.day, to.year, inter, "&ignore=.csv", sep="")
+  tmp <- read.csv(url)
+  cbind(symbol=ticker, tmp)
+}
+```
+
+## ...and Bind the Tickers Together
+
+`get.multiple.quotes` loops over tickers, `rbind`ing as it goes:
+
+```{r,eval=FALSE,echo=TRUE}
+get.multiple.quotes <- function(tkrs, from=(Sys.Date()-365),
+                                to=(Sys.Date()), interval="d") {
+  tmp <- NULL
+  for (tkr in tkrs) {
+    if (is.null(tmp)) tmp <- get.quotes(tkr, from, to, interval)
+    else tmp <- rbind(tmp, get.quotes(tkr, from, to, interval))
+  }
+  tmp
+}
+dow.tickers <- c("MMM","AA","AXP","T","BAC","BA","CAT","CVX","CSCO",
+  "KO","DD","XOM","GE","HPQ","HD","INTC","IBM","JNJ","JPM","KFT",
+  "MCD","MRK","MSFT","PFE","PG","TRV","UTX","VZ","WMT","DIS")
+dow30 <- get.multiple.quotes(dow.tickers)
+```
+
+::: {.callout-warning}
+**Yahoo! retired this API** — the URL no longer works (use `quantmod` today). The *pattern* — build URLs with `paste`, accumulate with `rbind` — remains everyday practice. To keep the chapter's later examples runnable, we reconstruct the book's small five-stock extract by hand on the next slide.
+:::
+
+## Reconstructing my.quotes
+
+The book's five-stock, three-month sample, entered directly:
+
+```{r,echo=TRUE}
+my.quotes <- data.frame(
+  symbol = rep(c("GE","GOOG","AAPL","AXP","GS"), each=3),
+  Date = rep(as.Date(c("2009-03-02","2009-02-02","2009-01-02")), 5),
+  Open  = c(8.29,12.03,16.51, 333.33,334.29,308.60, 88.12,89.10,85.88,
+            11.68,16.35,18.57, 87.86,78.78,84.02),
+  High  = c(11.35,12.90,17.24, 359.16,381.00,352.33, 109.98,103.00,97.17,
+            15.24,18.27,21.38, 115.65,98.66,92.20),
+  Low   = c(5.87,8.40,11.87, 289.45,329.55,282.75, 82.33,86.51,78.20,
+            9.71,11.44,14.72, 72.78,78.57,59.13),
+  Close = c(10.11,8.51,12.13, 348.06,337.99,338.53, 105.12,89.31,90.13,
+            13.63,12.06,16.73, 106.02,91.08,80.73),
+  Volume = c(277426300,194928800,117846700, 5346800,6158100,5727600,
+             25963400,27394900,33487900, 31136400,24297100,19110000,
+             30196400,28301500,22764300),
+  Adj.Close = c(10.11,8.51,11.78, 348.06,337.99,338.53, 105.12,89.31,90.13,
+                13.45,11.90,16.51, 106.02,91.08,80.29))
+head(my.quotes, 6)
+```
+
+## merge: Joining on Common Fields
+
+Baseball player ages live in `Master`; batting statistics in `Batting`; both carry `playerID`. To show batting *with names and ages*, **merge**:
+
+```{r,eval=FALSE,echo=TRUE}
+batting <- dbGetQuery(con, "SELECT * FROM Batting")
+master  <- dbGetQuery(con, "SELECT * FROM Master")
+intersect(names(batting), names(master))
+## [1] "playerID"
+batting.w.names <- merge(batting, master)   # joins on playerID
+```
+
+By default `merge` keys on **all common column names** — here just one, so no extra arguments needed.
+
+## merge: Arguments and Join Semantics
+
+```{r,eval=FALSE,echo=TRUE}
+merge(x, y, by =, by.x =, by.y =, all =, all.x =, all.y =,
+      sort =, suffixes =, incomparables =, ...)
+```
+
+| Argument | Description | Default |
+|---|---|---|
+| `x`, `y` | the two data frames | |
+| `by` / `by.x`, `by.y` | key columns (shared / per side) | common names |
+| `all` | keep unmatched rows from both sides (OUTER JOIN) | `FALSE` |
+| `all.x` / `all.y` | keep unmatched rows from x / y (LEFT / RIGHT OUTER) | `all` |
+| `sort` | sort result by the `by` columns? | `TRUE` |
+| `suffixes` | renaming for same-named non-key columns | `c(".x",".y")` |
+| `incomparables` | values that never match | `NULL` |
+
+In SQL terms: the default is a NATURAL JOIN; chosen keys give an INNER JOIN; `all=TRUE` a FULL OUTER JOIN — and no matching names at all yields the full **Cartesian product**.
 
 # Transformations
 
-## Creating and Changing Columns
+## Reassigning Variables
+
+Fix variables in place with the assignment operator. Imported dates often arrive as text — convert them to real `Date` objects; derived columns join by the same notation:
 
 ```{r,echo=TRUE}
-sales$price.per.k <- sales$price / 1000
-sales <- transform(sales, log.price = log(price))
-sales
+my.quotes$Date <- as.Date(my.quotes$Date)   # idempotent here; the book's
+class(my.quotes$Date)                        # dow30 needed factor -> Date
+my.quotes$mid <- (my.quotes$High + my.quotes$Low) / 2
+names(my.quotes)
 ```
 
-`transform()` evaluates expressions inside the data frame, sparing the repeated `sales$` prefix.
+## The transform Function
 
-## The Apply Family on Data
+`transform(data, ...)` applies a set of expressions *inside* the data frame — no `data$` prefixes — and returns the modified frame:
 
 ```{r,echo=TRUE}
-nums <- data.frame(a = 1:4, b = c(2, 4, 6, 8))
-sapply(nums, mean)             # one summary per column
-mapply(function(x, y) x * y, nums$a, nums$b)
+my.quotes.transformed <- transform(my.quotes, Date = as.Date(Date),
+                                   mid = (High + Low) / 2)
+names(my.quotes.transformed)
 ```
 
-- `lapply()` returns lists; `sapply()` simplifies to vectors when possible.
-- For row-wise work on matrices use `apply(m, 1, f)`.
+## apply: Functions over Array Margins
 
-## Binning Data
-
-Continuous values become categories with `cut()`:
+`apply(X, MARGIN, FUN, ...)` applies `FUN` along chosen dimensions (extra arguments pass through to `FUN`). With `max`, the workings are visible at a glance:
 
 ```{r,echo=TRUE}
-price <- sanfrancisco.home.sales$price
-bins <- cut(price, breaks = c(0, 5e5, 1e6, 2e6, Inf),
-            labels = c("<500K", "500K-1M", "1M-2M", ">2M"))
-table(bins)
+x <- 1:20
+dim(x) <- c(5, 4)
+x
+apply(X=x, MARGIN=1, FUN=max)   # per row
+apply(X=x, MARGIN=2, FUN=max)   # per column
 ```
 
-`shingle()` (lattice) makes *overlapping* bins; `tabulate()` and `table()` count occurrences.
+## apply in Three Dimensions
 
-# Cleaning Data
-
-## Finding and Removing Duplicates
+`MARGIN` can name several dimensions. Switching to `paste` to *see* which elements group together:
 
 ```{r,echo=TRUE}
-v <- c("a", "b", "a", "c", "b")
-duplicated(v)
-unique(v)
+x <- 1:27
+dim(x) <- c(3, 3, 3)
+apply(X=x, MARGIN=1, FUN=paste, collapse=",")
+apply(X=x, MARGIN=3, FUN=paste, collapse=",")
+apply(X=x, MARGIN=c(1,2), FUN=paste, collapse=",")
 ```
 
-For data frames, `duplicated(df)` flags repeated *rows* — run it after every merge or import from a system that might double-feed records.
+The last call computes, for each (i, j), `FUN` of `x[i, j, 1], x[i, j, 2], x[i, j, 3]`.
 
-## Sorting
+## lapply and sapply: Lists, Vectors, Data Frames
+
+`lapply(X, FUN, ...)` applies `FUN` to each element, returning a **list** — and a data frame counts as a list of columns:
 
 ```{r,echo=TRUE}
-sort(c(3, 1, 2))
-o <- order(sales$price, decreasing = TRUE)   # ordering indices
-sales[o, ]
+x <- as.list(1:5)
+lapply(x, function(x) 2^x)[1:2]
+d <- data.frame(x=1:5, y=6:10)
+lapply(d, FUN=max)
 ```
 
-::: {.callout-tip}
-**`sort()` for vectors, `order()` for data frames.** `order()` returns the permutation that sorts, so it can rearrange whole rows — and break ties with extra keys: `order(zip, -price)`.
-:::
-
-## Missing Values
+Prefer a vector or matrix? `sapply` simplifies when it can:
 
 ```{r,echo=TRUE}
-x <- c(2, NA, 5, 9)
-is.na(x)
-mean(x); mean(x, na.rm = TRUE)
-complete.cases(data.frame(a = c(1, NA), b = c(2, 3)))
+sapply(d, FUN=function(x) 2^x)
 ```
 
-- `na.omit(df)` drops incomplete rows; document how many you dropped.
-- Decide deliberately: drop, impute, or model missingness — silence is the only wrong choice.
+## mapply: the Multivariate Version
 
-# Subsets and Sampling
-
-## Taking Subsets
+`mapply(FUN, ..., MoreArgs=, SIMPLIFY=, USE.NAMES=)` applies `FUN` to the first elements of all vectors, then the second, and so on:
 
 ```{r,echo=TRUE}
-expensive <- subset(sales, price > 200, select = c(id, price))
-expensive
-# the bracket equivalent:
-sales[sales$price > 200, c("id", "price")]
+mapply(paste, c(1,2,3,4,5), c("a","b","c","d","e"),
+       c("A","B","C","D","E"), MoreArgs=list(sep="-"))
 ```
 
-`subset()` reads nicely; brackets are programmable. Know both.
+Arguments: the vectors in `...`; `MoreArgs` — a list of fixed extra arguments for `FUN`; `SIMPLIFY` — simplify the result (default `TRUE`); `USE.NAMES` — name results from the first vector.
+
+## The plyr Library
+
+Confused by the apply zoo — inconsistent names, arguments, returns? The **plyr** package offers 12 logically named functions: input type (array `a` / data frame `d` / list `l`) × output type (`a`/`d`/`l`/`_` to discard):
+
+| Input ↓ Output → | array | data frame | list | discard |
+|---|---|---|---|---|
+| array | `aaply` | `adply` | `alply` | `a_ply` |
+| data frame | `daply` | `ddply` | `dlply` | `d_ply` |
+| list | `laply` | `ldply` | `llply` | `l_ply` |
+
+Shared arguments: `.data`, `.fun`, `.progress` (progress bar), `.parallel` (via foreach), `...` to `.fun`; arrays add `.margins`; data frames add `.variables` (split-by) and `.drop`.
+
+```{r,echo=TRUE,message=FALSE}
+library(plyr)
+llply(.data=d, .fun=function(x) 2^x)$x   # = lapply
+aaply(.data=d, .margins=2, .fun=max)     # labeled results
+```
+
+(No plyr equivalent of `tapply` exists. Modern note: plyr's ideas grew into `dplyr` and `purrr`.)
+
+# Binning Data
+
+## Shingles and equal.count
+
+Binning groups observations by a variable's value — e.g., daily data summarized monthly. **Shingles** (Chapter 7) represent possibly overlapping intervals, used in lattice for conditioning on numeric variables:
+
+```{r,eval=FALSE,echo=TRUE}
+shingle(x, intervals=sort(unique(x)))   # intervals: vector or 2-col matrix
+equal.count(x, ...)                     # bins with equal observation counts
+```
+
+## cut: Continuous to Discrete
+
+`cut` splits a numeric vector into a **factor**, one level per interval (a Date version exists too):
+
+```{r,eval=FALSE,echo=TRUE}
+cut(x, breaks, labels = NULL, include.lowest = FALSE, right = TRUE,
+    dig.lab = 3, ordered_result = FALSE, ...)
+```
+
+| Argument | Description | Default |
+|---|---|---|
+| `breaks` | bin count (one integer) or break points (vector) | |
+| `labels` | level labels | `NULL` |
+| `include.lowest` | does the boundary value join the end bin? | `FALSE` |
+| `right` | intervals closed on the right? | `TRUE` |
+| `dig.lab` | digits in auto-generated labels | 3 |
+| `ordered_result` | return an ordered factor? | `FALSE` |
+
+## cut in Action: Batting Averages
+
+Count players by batting-average range — the book's `batting.2008` data set, fetched per course convention:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda",
+              temp, mode = "wb")
+load(temp)
+batting.2008.AB <- transform(batting.2008, AVG = H/AB)
+batting.2008.over100AB <- subset(batting.2008.AB, subset=(AB > 100))
+battingavg.2008.bins <- cut(batting.2008.over100AB$AVG, breaks=10)
+table(battingavg.2008.bins)
+```
+
+## make.groups: Combine with a Source Label
+
+`make.groups` (lattice) stacks similar objects into one data frame, labeling each row's origin:
+
+```{r,echo=TRUE}
+library(lattice)
+hat.sizes <- seq(from=6.25, to=7.75, by=.25)
+pants.sizes <- c(30, 31, 32, 33, 34, 36, 38, 40)
+shoe.sizes <- seq(from=7, to=12)
+head(make.groups(hat.sizes, pants.sizes, shoe.sizes), 9)
+```
+
+# Subsets
+
+## Bracket Notation
+
+Too much data — irrelevant rows, or simply more than memory holds? Slice it. A logical expression indexes the rows; a name vector picks columns:
+
+```{r,echo=TRUE}
+batting.2008.short <- batting.2008[batting.2008$yearID==2008,
+                       c("nameFirst", "nameLast", "AB", "H", "BB")]
+head(batting.2008.short, 4)
+```
+
+## The subset Function
+
+`subset(x, subset, select, drop=FALSE)` does nothing brackets can't — but reads better, since column names work *bare* inside it:
+
+```{r,echo=TRUE}
+batting.2008.short <- subset(batting.2008, yearID==2008,
+                             c("nameFirst", "nameLast", "AB", "H", "BB"))
+head(batting.2008.short, 4)
+```
+
+Arguments: `subset` — logical expression for rows; `select` — expression for columns; `drop` — passed to `[`.
 
 ## Random Sampling
 
-```{r,echo=TRUE}
-set.seed(42)                       # reproducibility!
-sample(1:10, 4)                    # without replacement
-idx <- sample(nrow(sanfrancisco.home.sales), 5)
-sanfrancisco.home.sales[idx, c("city", "price")]
-```
-
-Sampling underlies train/test splits (Chapters 21–22) — and `set.seed()` makes results repeatable for graders.
-
-# Summarizing Data
-
-## tapply and aggregate
-
-Group-wise summaries are one call away:
-
-```{r,echo=TRUE,cache=TRUE}
-tapply(sanfrancisco.home.sales$price,
-       sanfrancisco.home.sales$bedrooms, median, na.rm = TRUE)[1:6]
-
-aggregate(price ~ bedrooms, data = sanfrancisco.home.sales,
-          FUN = median)[1:6, ]
-```
-
-- `tapply(values, groups, f)` returns an array; `aggregate(formula, data, f)` returns a tidy data frame.
-- `by()` is `tapply` for whole data-frame chunks.
-
-## rowsum and Counting
+`sample(x, size, replace=FALSE, prob=NULL)` draws a random sample of a *vector's elements*. Nonintuitively, on a data frame it samples **columns** (a data frame is a list of columns!) — so sample *row numbers* instead:
 
 ```{r,echo=TRUE}
-rowsum(sales$price, group = c("g1", "g1", "g2", "g2"))
-table(sanfrancisco.home.sales$bedrooms)[1:8]
+batting.2008[sample(1:nrow(batting.2008), 5), 9:14]
 ```
 
-`table()` with two arguments cross-tabulates — the gateway to Chapter 18's contingency tests.
+Cleverer subsets follow the same trick — all statistics for three randomly chosen teams:
+
+```{r,echo=TRUE}
+batting.2008$teamID <- as.factor(batting.2008$teamID)
+batting.2008.3teams <- batting.2008[is.element(batting.2008$teamID,
+                         sample(levels(batting.2008$teamID), 3)), ]
+summary(batting.2008.3teams$teamID)[1:10]
+```
+
+For stratified, cluster, or maximum-entropy sampling, see the `sampling` package.
+
+# Summarizing Functions
+
+## tapply
+
+`tapply(X, INDEX, FUN=, ..., simplify=)` summarizes vector `X` within groups defined by the factor list `INDEX`. Home runs by team:
+
+```{r,echo=TRUE}
+tapply(X=batting.2008$HR, INDEX=list(batting.2008$teamID), FUN=sum)
+```
+
+Arguments: `X` — the object; `INDEX` — list of factors, each as long as `X`; `FUN`; `...` to `FUN`; `simplify` — array if `FUN` is scalar (default), list otherwise.
+
+## tapply: Richer Summaries, More Dimensions
+
+`FUN` may return several values — `fivenum` (min, lower hinge, median, upper hinge, max) of batting average by league:
+
+```{r,echo=TRUE}
+tapply(X=(batting.2008$H/batting.2008$AB),
+       INDEX=list(batting.2008$lgID), FUN=fivenum)
+```
+
+And `INDEX` may hold several factors — mean home runs by league × batting hand:
+
+```{r,echo=TRUE}
+tapply(X=(batting.2008$HR),
+       INDEX=list(batting.2008$lgID, batting.2008$bats), FUN=mean)
+```
+
+## by: tapply for Data Frames
+
+`by` is `tapply`'s data-frame sibling (`INDICES` replaces `INDEX`) — whole-column means per group:
+
+```{r,echo=TRUE}
+by(batting.2008[, c("H", "2B", "3B", "HR")],
+   INDICES=list(batting.2008$lgID, batting.2008$bats), FUN=colMeans)
+```
+
+## aggregate
+
+`aggregate(x, by, FUN, ...)` summarizes several columns at once (a time-series variant takes `nfrequency`, `ndeltat`, `ts.eps` instead). Team totals:
+
+```{r,echo=TRUE}
+aggregate(x=batting.2008[, c("AB", "H", "BB", "2B", "3B", "HR")],
+          by=list(batting.2008$teamID), FUN=sum)[1:8, ]
+```
+
+Arguments: `x`; `by` — list of grouping elements as long as `x`; `FUN` — scalar summary (time-series default: `sum`); `...` to `FUN`.
+
+## rowsum
+
+Just sums by group? `rowsum(x, group, reorder=TRUE)` is the direct route:
+
+```{r,echo=TRUE}
+rowsum(batting.2008[, c("AB", "H", "BB", "2B", "3B", "HR")],
+       group=batting.2008$teamID)[1:8, ]
+```
+
+## Counting: tabulate and table
+
+`tabulate` counts elements at each integer value (labels not included — add them):
+
+```{r,echo=TRUE}
+HR.cnts <- tabulate(batting.2008$HR)
+names(HR.cnts) <- 0:(length(HR.cnts) - 1)
+HR.cnts[1:12]
+```
+
+For **categorical** values, `table` returns a table object of counts (SAS users: this is `PROC FREQ`):
+
+```{r,echo=TRUE}
+table(batting.2008$bats)
+```
+
+Arguments of `table`: `...` — factors (or coercibles); `exclude` — levels to drop; `useNA` — `"no"`/`"ifany"`/`"always"`; `dnn` — dimension names; `deparse.level` — how to auto-name dimensions.
+
+## Multidimensional Tables and xtabs
+
+More factors, more dimensions — batting hand × throwing hand (add `lgID` for a third):
+
+```{r,echo=TRUE}
+table(batting.2008[, c("bats", "throws")])
+```
+
+`xtabs` builds the same contingency tables from a **formula** — often less typing:
+
+```{r,echo=TRUE}
+xtabs(~bats+lgID, batting.2008)
+```
+
+And numeric variables join the party via `cut` first, `table` second — exactly the batting-average binning shown earlier.
 
 # Reshaping Data
 
-## Wide and Long
+## Narrow vs. Wide, and t
 
-The same data can be laid out **wide** (one column per measurement) or **long** (one row per measurement). Modeling and `ggplot2` usually want long.
-
-```{r,echo=TRUE}
-wide <- data.frame(id = 1:2, q1 = c(90, 70), q2 = c(85, 95))
-long <- reshape(wide, direction = "long",
-                varying = c("q1", "q2"), v.names = "score",
-                timevar = "quiz", times = c("q1", "q2"))
-long
-```
-
-## Stack and Modern Tools
+Data warehouses often store one *fact* per row ("narrow"); analysis may need one column per concept ("wide") — or vice versa. The simplest reshaper is `t`, transpose (a vector becomes a one-row matrix):
 
 ```{r,echo=TRUE}
-stack(wide, select = c(q1, q2))
+m <- matrix(1:10, nrow=5)
+t(m)
+t(1:10)
 ```
 
-- Base R: `stack()`/`unstack()` for the simple cases, `reshape()` for the general one.
-- In modern practice the `tidyr` package (`pivot_longer()`, `pivot_wider()`) expresses the same operations more readably; you will meet it whenever you work in the tidyverse.
+## stack and unstack
+
+Working on the narrow quote table (symbol, date, close):
+
+```{r,echo=TRUE}
+my.quotes.narrow <- my.quotes[, c("symbol", "Date", "Close")]
+unstacked <- unstack(my.quotes.narrow, form=Close~symbol)
+unstacked
+stack(unstacked)[1:6, ]
+```
+
+In the `form` formula, the right side names the unstacking variable, the left the values. Order survives; the Date column does **not** — `unstack` suits data where only two variables matter.
+
+## reshape: Long to Wide
+
+`reshape` is the powerful (and notoriously two-faced) tool. Rows = dates, columns = stocks:
+
+```{r,echo=TRUE}
+my.quotes.wide <- reshape(my.quotes.narrow, idvar="Date",
+                          timevar="symbol", direction="wide")
+my.quotes.wide
+```
+
+Its parameters ride along as attributes (`attributes(my.quotes.wide)$reshapeWide` stores `idvar`, `timevar`, `varying`...) — which is why `reshape(my.quotes.wide)` with **no arguments** reverses the operation.
+
+## reshape: Variations
+
+Swap the roles — rows = stocks, columns = dates; or carry **several** value columns at once:
+
+```{r,echo=TRUE}
+reshape(my.quotes.narrow, idvar="symbol", timevar="Date",
+        direction="wide")
+my.quotes.oc <- my.quotes[, c("symbol", "Date", "Close", "Open")]
+reshape(my.quotes.oc, timevar="Date", idvar="symbol",
+        direction="wide")[, 1:5]
+```
+
+## reshape: Arguments
+
+Two functions in one — `direction="wide"` requires `idvar` + `timevar`; `direction="long"` requires `varying`:
+
+| Argument | Description |
+|---|---|
+| `data` | data frame to reshape |
+| `varying` | wide-format variables that become unique rows in long format |
+| `v.names` | long-format variables that become columns in wide format |
+| `timevar` / `idvar` | long-format variables identifying observation / group (defaults `"time"` / `"id"`) |
+| `ids` / `times` | values for new id / time variables |
+| `drop` | variables to exclude |
+| `direction` | `"wide"` or `"long"` |
+| `new.row.names` | build row names from id × time? |
+| `sep` / `split` | how wide names encode variable × time (default sep `"."`) |
+
+## The reshape Package: Melt and Cast
+
+Hadley Wickham's **reshape** package (not the function!) replaces all that with one intuitive model: **melt** a table into transaction-like records, then **cast** the records into any shape:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE}
+library(reshape)
+my.molten.quotes <- melt(my.quotes[, 1:8])
+head(my.molten.quotes)
+```
+
+## cast: Three Shapes from One Molten Frame
+
+```{r,echo=TRUE}
+cast(data=my.molten.quotes, variable~Date, subset=(symbol=='GE'))
+cast(data=my.molten.quotes, symbol~Date, subset=(variable=='Adj.Close'))
+```
+
+A `|` in the formula returns a **list** of tables — `cast(my.molten.quotes, Date~variable|symbol)` yields one quote table per stock.
+
+## melt and cast: Arguments
+
+`melt.data.frame(data, id.vars, measure.vars, variable_name, na.rm, ...)` — `id.vars` identify observations, `measure.vars` are the measurements (unspecified: factors/characters are ids, the rest measures); `variable_name` defaults to `"variable"`. Array and list methods exist too (`melt.array` takes `varnames`; `melt.list` melts recursively).
+
+`cast(data, formula, fun.aggregate=NULL, ..., margins, subset, fill, add.missing, value)`:
+
+- `formula` — `x_1 + x_2 ~ y_1 ~ ... | list_var`, with `...` = "all other variables" and `.` = "none" (default `...~variable`);
+- `fun.aggregate` — how to combine multiple values per cell; `margins` — compute margins; `subset` — filter the molten data; `fill` / `add.missing` — handle absent combinations; `value` — name of the value column.
+
+(Modern note: reshape begat `reshape2`, now succeeded by `tidyr`'s `pivot_longer`/`pivot_wider` — same melt/cast ideas.)
+
+# Data Cleaning
+
+## What Cleaning Means
+
+::: {.callout-note}
+**Surprises are the rule.** The author's credit-data war story: valid FICO scores span 340–840, yet the data brimmed with 997/998/999 — special codes like "insufficient data," not stellar credit. Hospital records: two patients sharing a name get fused into one record; one patient seeing two doctors becomes two records. Cleaning **does not change data's meaning** — it removes artifacts of collection, processing, and storage so they can't contaminate the analysis.
+:::
+
+## Finding and Removing Duplicates
+
+Suppose GE sneaked into the ticker list twice. `duplicated` flags rows that repeat earlier rows; filter with it, or let `unique` do both steps:
+
+```{r,echo=TRUE}
+my.quotes.2 <- rbind(my.quotes, my.quotes[my.quotes$symbol == "GE", ])
+duplicated(my.quotes.2)
+my.quotes.unique <- my.quotes.2[!duplicated(my.quotes.2), ]
+my.quotes.unique <- unique(my.quotes.2)        # same result
+nrow(my.quotes.unique)
+```
+
+# Sorting
+
+## sort
+
+```{r,echo=TRUE}
+w <- c(5, 4, 7, 2, 7, 1)
+sort(w)
+sort(w, decreasing=TRUE)
+length(w) <- 7                      # introduce an NA
+sort(w)                             # na.last=NA: NAs dropped
+sort(w, na.last=TRUE)
+sort(w, na.last=FALSE)
+```
+
+## order: Sorting Data Frames
+
+`sort` sorts a vector; data frames need a **permutation of row indices**, supplied by `order(..., na.last=, decreasing=)` — it sorts by each argument vector, breaking ties with the next:
+
+```{r,echo=TRUE}
+v <- c(11, 12, 13, 15, 14)
+order(v)
+v[order(v)]
+u <- c("pig", "cow", "duck", "horse", "rat")
+w <- data.frame(v, u)
+w[order(w$v), ]
+```
+
+## Sorting by One or More Columns
+
+The quotes by closing price; then by symbol, ties broken by price:
+
+```{r,echo=TRUE}
+my.quotes[order(my.quotes$Close), ][1:5, 1:6]
+my.quotes[order(my.quotes$symbol, my.quotes$Close), ][1:6, 1:6]
+```
+
+## Sorting by All Columns: do.call
+
+Whole-frame sorting holds a trap: `order(my.quotes)` treats the data frame as *one long vector*. `order` wants a list of vectors — deliver the data frame's columns as arguments via `do.call`:
+
+```{r,echo=TRUE}
+do.call(order, my.quotes)
+my.quotes[do.call(order, my.quotes), ][1:6, 1:6]
+```
 
 ## Copyright Notice
 

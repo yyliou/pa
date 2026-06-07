@@ -41,122 +41,325 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **擴充 R 的能力**
+# **套件系統**
 
 ## 什麼是套件？
 
-**套件**（package）把相關的函式、說明文件與資料集打包成一個可安裝的單位——相當於 Perl 的 module、C 的 library 或 Java 的類別庫。
+**套件（package）**是一組打包在一起、彼此相關的函式、說明檔與資料檔——R 分享功能的基本單位。
 
-- 有些套件隨 R 一起出貨（`stats`、`graphics`、`utils` 等）。
-- 公開軟體庫中還有數以萬計的套件，涵蓋金融、基因體學到最新的機器學習方法。
-- 你也可以自己打造套件。
+- 其他語言的粗略對應：Perl 的 module、C/C++ 的 library、Java 的 class。（C 程式設計師注意：在 R 裡，「library」指的是*套件存放的地方*，不是套件本身。）
+- 套件內容通常主題一致：`stats` 套件收錄統計分析函式。
+- 生態系大得驚人：繪圖套件、統計檢定、最新的機器學習——還有各行業的專用工具：微陣列資料分析、信用風險建模、社會科學……
+- 有些套件隨 R 附贈；數以千計的套件放在公開儲存庫；你也能自己做。本章三者都談。
 
-::: {.callout-note}
-**兩個分開的步驟。** 套件必須先*安裝*到磁碟上的本地函式庫（一次性），再於每個要使用它的工作階段中*載入*。把兩者分開能節省記憶體、維持說明系統的速度，並避免套件之間的名稱衝突。
-:::
+## 函式庫，以及套件為何要載入
 
-## 函式庫
+使用任何套件之前有兩個步驟：
 
-**函式庫**（library）是磁碟上存放已安裝套件的目錄。
+1. 先**安裝**到本機的**函式庫（library）**（預設一個系統層級函式庫，可自行增加）；
+2. 再**載入**到目前的工作階段。
 
-- R 一定有一個系統層級的函式庫；其上可再疊加個人函式庫（沒有管理員權限時特別有用）。
-- `.libPaths()` 顯示 R 目前搜尋的函式庫。
+為什麼堅持手動載入、不乾脆全部載入？
 
-```{r,echo=TRUE}
-.libPaths()
-```
+- **說明系統的速度：** 每多載入一個套件，說明搜尋就更慢（書的作者寫書時載了數十個套件，親身領教）。
+- **名稱衝突：** 兩個套件可能定義同名物件——你以為呼叫的是這個 `fit`，實際跑的是那個，產生詭異難解的結果。只載入需要的套件，把風險降到最低。
 
-注意用語：你是把*套件*安裝進*函式庫*——儘管載入函式偏偏叫 `library()`。
+# 列出套件
 
-## 列出套件
+## 哪些已載入、哪些可用
 
-```{r,echo=TRUE,eval=FALSE}
-library()                    # 安裝了哪些？
-installed.packages()[1:5, c("Package", "Version")]
-```
+三個快速檢查指令：
 
 ```{r,echo=TRUE}
-# 目前載入了哪些？
-(.packages())
+getOption("defaultPackages")   # 啟動時載入的（不含永遠載入的 base）
+(.packages())                  # 目前已載入的（注意外層括號）
 ```
-
-- `installed.packages()` 回傳一個矩陣，一列一個已安裝套件——名稱、版本、相依性、授權。
-- 新開的工作階段會自動載入一小組基礎套件。
-
-## 載入套件
-
-用 `library()` 載入已安裝的套件（或用 `require()`，套件不存在時回傳 `FALSE` 而非報錯）：
-
-```{r,echo=TRUE}
-library(lattice)         # lattice 的函式現在可見了
-"package:lattice" %in% search()
-```
-
-- 載入會把套件掛上**搜尋路徑**（search path），即 R 解析名稱時查找的位置清單（第八章）。
-- `detach("package:lattice")` 可將其移除。
-- 各平台指令相同；GUI 只是提供同一個呼叫的選單捷徑。
-
-## CRAN
-
-**Comprehensive R Archive Network** 是核心的公開軟體庫：
-
-- 超過兩萬個貢獻套件，各自附有文件與平台對應的編譯版。
-- 每個套件頁面列出相依性、手冊與長篇導覽（vignettes）。
-- **Task Views**（<https://cran.r-project.org/web/views/>）按領域整理套件——計量經濟、機器學習、時間序列、繪圖——是探索生態系的最佳入口。
-
-你還會遇到其他軟體庫：**Bioconductor**（基因體學；第二十五章）與 **GitHub**（開發版）。
-
-## 安裝套件
-
-一個函式就能完成下載與相依性解析：
 
 ```{r,eval=FALSE,echo=TRUE}
-install.packages("ggplot2")                     # 單一套件
-install.packages(c("dplyr", "lattice"))         # 一次多個
-update.packages()                               # 全部更新
+(.packages(all.available=TRUE))  # 函式庫中安裝的全部套件
+library()                        # 同樣的資訊，以視窗顯示
 ```
 
-- 在 RStudio：*Tools → Install Packages...* 不過是同一個呼叫包上對話框。
-- 每台機器安裝一次；每個工作階段 `library()` 一次。
-- 要從非 CRAN 軟體庫安裝可加 `repos=` 參數；GitHub 開發版則用 `remotes` 套件的 `install_github()`。
+- 預設清單裡看不到 `base`，因為它實作語言的核心功能，*永遠*處於載入狀態。
 
-## 套件資料與課程慣例
+## 內附套件（一）：基礎建設
 
-許多套件附帶範例資料集，以 `data()` 載入：
+R 出廠就附帶一批精選套件。第一類實作語言與環境本身：
+
+| 套件 | 預設載入 | 用途 |
+|---|---|---|
+| `base` | ✓ | 語言核心：算術、輸入輸出、程式設計支援 |
+| `utils` | ✓ | 工具集：套件管理、檔案讀寫、編輯 |
+| `methods` | ✓ | 正式（S4）類別與方法 |
+| `stats` | ✓ | 統計檢定、機率分布、建模工具 |
+| `graphics` | ✓ | 基礎繪圖函式 |
+| `grDevices` | ✓ | 基礎與 grid 繪圖的裝置支援 |
+| `datasets` | ✓ | 著名的範例資料集 |
+| `grid` |  | 建構精緻圖形的底層引擎 |
+| `compiler` |  | R 的位元組碼編譯器 |
+| `parallel` |  | 平行運算與平行亂數生成 |
+| `tools` |  | 套件開發工具 |
+| `tcltk` |  | Tcl/Tk 介面，跨平台 UI 工具 |
+| `codetools` |  | 程式碼分析工具 |
+
+## 內附套件（二）：統計與建模
+
+第二類提供廣泛使用的統計方法——很多分析根本不必再裝別的：
+
+| 套件 | 用途 |
+|---|---|
+| `MASS` | Venables 與 Ripley 著《Modern Applied Statistics with S》的函式與資料——統計工具寶庫 |
+| `cluster` | 集群分析演算法 |
+| `class` | 分類：最近鄰、自組織映射、學習向量量化 |
+| `nnet` | 前饋神經網路、多項對數線性模型 |
+| `rpart` | 遞迴分割與迴歸樹 |
+| `survival` | 存活分析 |
+| `nlme` | 線性與非線性混合效果模型 |
+| `mgcv` | 廣義可加（混合）模型 |
+| `splines` | 迴歸樣條 |
+| `boot` | 拔靴法重抽樣 |
+| `KernSmooth` | 核平滑 |
+| `spatial` | 克利金法、點型態分析 |
+| `foreign` | 讀取 Stata、SAS、SPSS 檔案 |
+| `lattice` | Trellis 圖形——比預設更漂亮 |
+| `stats4` | 以 S4 類別／方法呈現的統計函式 |
+
+# 載入套件
+
+## `library()` 指令
+
+呼叫未載入套件的函式，R 會拒絕：
+
+```{r,error=TRUE,echo=TRUE}
+fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+```
+
+先載入套件，一切順利：
 
 ```{r,echo=TRUE}
-data(cars)        # 來自 datasets 套件
-head(cars, 3)
+library(rpart)
 ```
 
-教科書的配套套件（`nutshell`、`nutshell.bbdb`、`nutshell.audioscrobbler`）已自 CRAN 下架，因此本課程改從 CRAN 的 GitHub 鏡像直接串流資料集：
+- 還有個近親指令 `require()`，引數略有不同（套件缺少時回傳 `FALSE` 而非報錯）——詳見說明檔。
+- GUI 也提供選單式載入——但**腳本裡務必照樣寫上 `library()`**，否則換台機器執行就會失敗。
 
-```{r,echo=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/doctorates.rda", temp, mode = "wb")
-load(temp)
-doctorates[, 1:6]
+## 各平台的 GUI 載入方式
+
+- **Windows／Linux GUI：** 在 *Packages* 選單選 *Load package*，視窗會列出可載入的套件。
+- **macOS：** 更講究——在 *Packages & Data* 選單選 *Package Manager*。套件管理員顯示哪些已載入、點一下即可載入，還能瀏覽各套件的說明檔。
+- RStudio 使用者：*Packages* 窗格用勾選框做同一件事——而且會把 `library()` 指令寫到主控台，方便你複製進腳本。
+
+# 探索套件儲存庫
+
+## CRAN、Bioconductor、R-Forge
+
+線上有數以千計的套件；兩大來源：
+
+- **CRAN**（Comprehensive R Archive Network）——由 R 基金會主持，全球鏡像（挑近的鏡像站：你快、伺服器也輕鬆）。書中統計 2009 年 2 月有 1,698 個套件；如今已超過兩萬。懂 Perl 的話：CRAN 就是 R 的 CPAN。
+- **Bioconductor**——分析基因體資料的開源專案，工具以 R 打造、以 R 套件形式從自家管道發布（多數*不在* CRAN 上）。
+- **R-Forge**——進行中專案的協作開發站；可能挖到寶，但請細讀免責聲明——許多專案尚未完工。
+
+R 能從任意儲存庫安裝，但實務上幾乎所有專案都發布在 CRAN（甚至有書用 CRAN 散布範例程式與資料）。現代的例外：放在 **GitHub** 上的開發版——稍後介紹。
+
+## 在網路上找套件
+
+R 自己的 GUI 擅長安裝、不擅長*搜尋*。開瀏覽器吧：
+
+| 儲存庫 | 網址 |
+|---|---|
+| CRAN | <https://cran.r-project.org/web/packages/>（權威清單；請改用本地鏡像） |
+| Bioconductor | <https://www.bioconductor.org/packages/release/BiocViews.html> |
+| R-Forge | <https://r-forge.r-project.org/> |
+
+搜尋引擎也行：書中的訣竅是搜 **「R package」＋應用名稱**。書中實例：搜 *"R package multivariate additive regression splines"* 找到含 `mars` 函式的 `mda` 套件——雖然作者後來發現 `earth` 套件做這個演算法更好。（今天還有 <https://r-universe.dev> 與 CRAN Task Views，找套件容易多了。）
+
+# 安裝套件
+
+## Windows 與 Linux GUI
+
+透過 Windows GUI 安裝：
+
+1. *（可選）* 預設從「CRAN」與「CRAN (extra)」類別抓取；想加別的，在 *Packages* 選單選 *Select repositories*（可複選）。
+2. 在 *Packages* 選單選 *Install package(s)*。
+3. 本次工作階段第一次安裝？R 會請你挑**鏡像站**——選地理位置近的。
+4. 點選想裝的套件、按 OK；R 下載並安裝。
+
+權限問題與第一章如出一轍：管理員帳號暢行無阻；一般帳號可能得把 R 裝在自己的目錄，或以管理員身分執行 R 才能加裝套件。
+
+## macOS GUI
+
+macOS 的安裝介面資訊較多，但也較令人困惑：
+
+1. 在 *Packages & Data* 選單選 *Package Installer*。
+2. *（可選）* 視窗左上角的選單選擇套件類別——初始為「CRAN (binaries)」。
+3. 按 **Get List** 顯示可安裝的套件。
+4. 搜尋框可過濾清單——但要*先*按過 Get List 才有結果。
+5. 勾選想裝的套件，按 **Install Selected**。
+
+書中兩個提醒：R 預設**安裝到系統層級**供所有使用者共用（權限不足就改選其他位置）；而且這個介面**不會**自動安裝相依套件——載入時缺少相依套件會報錯。
+
+## 從 R 主控台安裝
+
+主控台路線到處通用——也是該寫進腳本的那一種。書中範例：一次安裝 `tree` 與 `maptree`：
+
+```{r,eval=FALSE,echo=TRUE}
+install.packages(c("tree", "maptree"))
 ```
 
-## 自製套件
+R 會逐一回報下載進度，並把套件裝進預設函式庫（位置存於 `.Library`）。想移除，要同時指名套件*與*安裝時的函式庫：
 
-當你累積了一批常用函式，打包成套件是自然的歸宿：
+```{r,eval=FALSE,echo=TRUE}
+remove.packages(c("tree", "maptree"), .Library)
+```
 
-- 套件就是一個目錄：`DESCRIPTION` 檔（中繼資料）、`R/` 資料夾（程式碼）、`man/`（說明頁），可選的 `data/`。
-- `package.skeleton()` 能從工作空間的物件產生骨架；現代流程多用 `devtools` 與 `roxygen2`。
-- `R CMD build` 產生可散布的壓縮檔；`R CMD check` 執行完整的品質檢查。
+::: {.callout-note}
+現代的 `install.packages()` 會**自動解析並安裝相依套件**——這是書出版之後悄悄變好的地方之一。
+:::
+
+## 套件管理詞彙表
+
+主控台指令全家福：
+
+| 指令 | 說明 |
+|---|---|
+| `installed.packages` | 已安裝套件的資訊矩陣 |
+| `available.packages` | 儲存庫中所有可安裝的套件 |
+| `old.packages` | 已安裝且有新版可用的套件 |
+| `new.packages` | 儲存庫有、本機尚未安裝的套件 |
+| `download.packages` | 把套件下載到本機目錄 |
+| `install.packages` | 從儲存庫安裝套件 |
+| `remove.packages` | 移除已安裝的套件 |
+| `update.packages` | 把已安裝套件更新到最新版 |
+| `setRepositories` | 設定套件儲存庫清單 |
+
+學期開始時跑一次 `update.packages()`，工具箱常保最新。
+
+## 從系統命令列安裝
+
+自己下載了套件檔？不必開 R shell，用 `R CMD INSTALL` 直接裝。書中以 `aplpack`（"Another PLotting PACKage"）為例：
 
 ```{bash,eval=FALSE,echo=TRUE}
-R CMD build mypackage/
-R CMD check mypackage_1.0.0.tar.gz
+$ R CMD INSTALL aplpack_1.1.1.tgz
 ```
 
-就算永遠不上架 CRAN，打包也是與隊友——或未來的自己——分享程式碼最乾淨的方式。
+成功會回報：
+
+```
+* Installing to library '/Library/Frameworks/R.framework/Resources/library'
+* Installing *binary* package 'aplpack' ...
+* DONE (aplpack)
+```
+
+## 從其他儲存庫安裝：devtools
+
+不是所有東西都在 CRAN。**devtools** 套件能從 git 儲存庫與其他網址安裝——書中的例子是 Hadley Wickham 放在 GitHub 上的 ggplot2 開發版：
+
+```{r,eval=FALSE,echo=TRUE}
+# 第一次需要：
+install.packages("devtools")
+
+library(devtools)
+install_github("tidyverse/ggplot2")   # 現代寫法：owner/repo
+```
+
+（書中寫的是 `install_github("ggplot2")`；這個函式現在要求 `owner/repo` 格式。更輕量的 `remotes` 套件如今提供同樣的 `install_github()`。）
+
+# 自製套件
+
+## 為什麼自己做套件？
+
+想**和別人分享程式或資料**，或單純想把自己的工作打包成可重用、有文件的形式，做套件就對了。書的作者身體力行：書中資料集就包成 `nutshell` 套件，正是用以下方法做的。
+
+簡易路線有三站：建立目錄骨架、編輯詮釋資料、建置與檢查。
+
+## 建立套件目錄：`package.skeleton`
+
+`package.skeleton` 鋪好必要的目錄結構，還能把一批 R 物件複製進去：
+
+```{r,eval=FALSE,echo=TRUE}
+package.skeleton(name = "anRpackage", list, environment = .GlobalEnv,
+                 path = ".", force = FALSE, namespace = FALSE,
+                 code_files = character())
+```
+
+| 引數 | 說明 | 預設值 |
+|---|---|---|
+| `name` | 新套件的名稱 | `"anRpackage"`（書中吐槽：可能是全 R 最沒用的預設值） |
+| `list` | 要納入的 R 物件名稱 | |
+| `environment` | 評估 `list` 的環境 | `.GlobalEnv` |
+| `path` | 檔案系統路徑 | `"."` |
+| `force` | 目錄已存在時是否覆寫 | `FALSE` |
+| `namespace` | 是否加入命名空間 | `FALSE` |
+| `code_files` | 含 R 程式碼的檔案路徑 | `character()` |
+
+## 骨架裡有什麼
+
+書中作者自己的呼叫：
+
+```{r,eval=FALSE,echo=TRUE}
+package.skeleton(name = "nutshell", path = "~/Documents/book/current/")
+```
+
+R 回報建立了目錄、DESCRIPTION 檔、Read-and-delete-me、儲存的函式與資料、說明檔。關鍵目錄：
+
+- **`man/`**——說明檔；
+- **`R/`**——R 原始碼；
+- **`data/`**——資料檔，三種格式皆可：R 資料檔（`save()` 的輸出，副檔名 `.rda`／`.Rdata`）、逗號分隔的 `.csv`、或含 R 程式碼的 `.R` 檔；
+- **`DESCRIPTION`**——套件的詮釋資料，位於根目錄。
+
+## DESCRIPTION 檔
+
+自動產生的範本——每一行都等你改：
+
+```
+Package: nutshell
+Type: Package
+Title: What the package does (short line)
+Version: 1.0
+Date: 2012-03-13
+Author: Who wrote it
+Maintainer: Whom to complain to <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+License: What license is it under?
+```
+
+實用的可選欄位：
+
+- **`LazyLoad`**——設為 `yes`（預設）時，資料物件以輕量的 *promise* 形式載入而非佔用記憶體；照常取用，（幾乎）不佔空間。
+- **`LazyData`**——同樣的機制，專門針對資料檔。
+- **`Depends`**——對 R 或其他套件的需求，例如 `Depends: R(>= 2.8), nnet`。
+
+## 替套件寫文件
+
+R 用 `prompt` 家族自動產生說明檔樣板：
+
+- `prompt`——一般物件的文件；
+- `promptData`——資料檔的文件；
+- `promptMethods`——泛型函式各方法的文件；
+- `promptClass`——類別的文件。
+
+每個都會在 `man/` 寫出待補完的 `.Rd` 骨架，細節見各自的說明頁。（現代開發者多半改用 `roxygen2` 套件，從程式碼內的註解直接生成 `.Rd`。）
+
+## 建置與檢查
+
+材料備齊後，在系統命令列（不是 R shell）收尾。先驗證套件符合規範、能正確建置：
+
+```{bash,eval=FALSE,echo=TRUE}
+$ R CMD check nutshell
+```
+
+再建置：
+
+```{bash,eval=FALSE,echo=TRUE}
+$ R CMD build nutshell
+```
+
+兩者都接受 `--help` 查選項。認真寫套件的權威參考是 CRAN 手冊《Writing R Extensions》：<https://cran.r-project.org/doc/manuals/R-exts.pdf>。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

@@ -41,148 +41,465 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **Data In, Data Out**
+# **Getting Data In and Out**
 
-## Entering Data Within R
+## The Plan
 
-For small data sets, the constructors from Part II are all you need:
+Analysis needs data. This chapter covers the whole pipeline:
+
+- **entering** data inside R (commands, the data editor);
+- **saving and loading** R objects;
+- **importing** external files — delimited text, fixed-width text, other packages' formats;
+- **exporting** data to text files;
+- **databases** — RODBC and DBI.
+
+# Entering Data Within R
+
+## Entering Data Using R Commands
+
+For a handful of observations, the console suffices: build vectors with `c`, then assemble them with `data.frame`. The book's example — 2008's five highest NFL salaries:
 
 ```{r,echo=TRUE}
-salary <- c(18700000, 14626720, 14137500)
-position <- c("QB", "QB", "DE")
-top.contracts <- data.frame(position, salary)
-top.contracts
+salary <- c(18700000, 14626720, 14137500, 13980000, 12916666)
+position <- c("QB", "QB", "DE", "QB", "QB")
+team <- c("Colts", "Patriots", "Panthers", "Bengals", "Giants")
+name.last <- c("Manning", "Brady", "Pepper", "Palmer", "Manning")
+name.first <- c("Peyton", "Tom", "Julius", "Carson", "Eli")
+top.5.salaries <- data.frame(name.last, name.first, team, position, salary)
+top.5.salaries
 ```
 
-- `rbind()` appends rows; `cbind()` appends columns.
-- `scan()` reads values typed interactively — handy for quick experiments.
+## The Data Editor: edit and fix
 
-## The Edit GUI
-
-R ships a minimal spreadsheet-style editor:
+Statement-by-statement entry gets awkward beyond a few rows. R's **data editor** edits tabular objects in a GUI:
 
 ```{r,eval=FALSE,echo=TRUE}
-top.contracts <- edit(top.contracts)  # edit returns the NEW object
-fix(top.contracts)                    # fix saves the result back itself
+top.5.salaries <- edit(top.5.salaries)   # must assign, or edits are lost!
+fix(top.5.salaries)                      # edit + assign back, in one step
+```
+
+- `edit` opens the editor and *returns* the edited object — forget the assignment and your work vanishes. `fix` calls `edit` and reassigns for you.
+- Designed for data frames and matrices; on vectors, functions, or lists it falls back to a text editor.
+- Platform flavors: **Windows** — click cells to edit, click a column name to rename or retype it, type into empty cells to grow the table (also reachable via *Edit → Data Editor*). **macOS** — toolbar buttons add/delete rows and columns; column types and names are *not* editable. **Linux (X11)** — like Windows, plus Copy/Paste/Quit buttons.
+
+## Editor vs. Spreadsheet
+
+::: {.callout-warning}
+**Fine for inspection, wrong for serious entry.** The book's three reasons: the R data editor has **no Undo/Redo**; it has **no Save button** (you must close, save, reopen — awkward and error-prone); and spreadsheets or desktop databases offer **data-entry forms**, far friendlier for complicated records. Enter big data elsewhere, then import it.
+:::
+
+# Saving and Loading R Objects
+
+## save and load
+
+The simplest persistence: `save` writes objects to a file, `load` brings them back —
+
+```{r,echo=TRUE}
+target <- file.path(tempdir(), "top.5.salaries.RData")
+save(top.5.salaries, file = target)
+rm(top.5.salaries)
+load(target)
+top.5.salaries[1, ]
+```
+
+- File paths always use **forward slashes** — even on Windows (`"C:/Documents and Settings/..."`).
+- The `file` argument **must be named** (the book's author forgets nine times out of ten).
+- Saved files are **cross-platform**: written on macOS, they load on Windows and Linux.
+- Save several objects by listing them; save *everything* with `save.image()` — exactly what "Save workspace?" does when you quit R.
+
+## save: the Full Signature
+
+```{r,eval=FALSE,echo=TRUE}
+save(..., list =, file =, ascii =, version =, envir =,
+     compress =, eval.promises =, precheck = )
+```
+
+| Argument | Description | Default |
+|---|---|---|
+| `...` / `list` | objects to save, as symbols / as a character vector | |
+| `file` | filename or connection | |
+| `ascii` | human-readable text instead of binary? | `FALSE` |
+| `version` | file-format version (2 from R 1.4.0 on) | 2 |
+| `envir` | where to find the objects | calling environment |
+| `compress` | gzip the output? | `TRUE` for binary |
+| `eval.promises` | force promises before saving? | `TRUE` |
+| `precheck` | verify objects exist before writing? | `TRUE` |
+
+Sensible defaults all around: compressed binary, no accidental overwrites of your objects.
+
+# Importing Data from External Files
+
+## Anatomy of a Text Data File
+
+Most data text files share a shape: one line per **observation**, each line holding that observation's **variables** — separated by a **delimiter** character, or distinguished by fixed positions on the line. A delimited example, `top.5.salaries.csv`:
+
+```
+name.last,name.first,team,position,salary
+"Manning","Peyton","Colts","QB",18700000
+"Brady","Tom","Patriots","QB",14626720
+...
+```
+
+Reading it off: the first row holds **column names**; text fields wear **quotes**; **commas** separate fields.
+
+## read.table
+
+The workhorse importer returns a data frame — one row per observation, one column per variable. For the file above: header present, comma delimiter, double-quote quoting:
+
+```{r,include=FALSE}
+csvfile <- file.path(tempdir(), "top.5.salaries.csv")
+writeLines(c('name.last,name.first,team,position,salary',
+ '"Manning","Peyton","Colts","QB",18700000',
+ '"Brady","Tom","Patriots","QB",14626720',
+ '"Pepper","Julius","Panthers","DE",14137500',
+ '"Palmer","Carson","Bengals","QB",13980000',
+ '"Manning","Eli","Giants","QB",12916666'), csvfile)
+```
+
+```{r,echo=TRUE,eval=FALSE}
+top.5.salaries <- read.table("top.5.salaries.csv",
+                             header=TRUE, sep=",", quote="\"")
+```
+
+```{r,include=FALSE}
+top.5.salaries <- read.table(csvfile, header=TRUE, sep=",", quote="\"")
+```
+
+```{r,echo=TRUE}
+top.5.salaries
+```
+
+## read.table Arguments (1)
+
+| Argument | Description | Default |
+|---|---|---|
+| `file` | filename, connection, or **URL** (the one required argument) | |
+| `header` | first row holds variable names? | `FALSE` |
+| `sep` | field separator (`""` = any whitespace) | `""` |
+| `quote` | quote characters for text | `"` and `'` |
+| `dec` | decimal-point character | `.` |
+| `row.names` / `col.names` | names for rows / columns | |
+| `as.is` | per-column: suppress factor conversion | `!stringsAsFactors` |
+| `na.strings` | values to read as `NA` | `"NA"` |
+| `colClasses` | class to assign each column | `NA` |
+| `nrows` | number of rows to read | `-1` |
+
+## read.table Arguments (2)
+
+| Argument | Description | Default |
+|---|---|---|
+| `skip` | rows to skip before reading | 0 |
+| `check.names` | verify column names are valid symbols? | `TRUE` |
+| `fill` | pad short rows with blanks? | `!blank.lines.skip` |
+| `strip.white` | trim spaces around character fields? | `FALSE` |
+| `blank.lines.skip` | ignore blank lines? | `TRUE` |
+| `comment.char` | comment-line marker | `"#"` |
+| `allowEscapes` | interpret `\n` etc.? | `FALSE` |
+| `flush` | skip rest of line once fields are read? | `FALSE` |
+| `stringsAsFactors` | convert text to factors? | `FALSE` since R 4.0 |
+| `encoding` | input file encoding | `"unknown"` |
+
+The two you nearly always need: **`sep`** and **`header`**.
+
+## The Convenience Family
+
+Wrappers preset the usual choices:
+
+| Function | header | sep | dec |
+|---|---|---|---|
+| `read.table` | `FALSE` | whitespace | `.` |
+| `read.csv` | `TRUE` | `,` | `.` |
+| `read.csv2` | `TRUE` | `;` | `,` |
+| `read.delim` | `TRUE` | tab | `.` |
+| `read.delim2` | `TRUE` | tab | `,` |
+
+In practice `read.csv` and `read.delim` cover most files unmodified (the `2` variants serve European comma-decimal conventions).
+
+## Reading from a URL
+
+`file` accepts a URL, so web data loads directly. The book pulled ten years of monthly S&P 500 quotes straight from Yahoo! Finance:
+
+```{r,eval=FALSE,echo=TRUE}
+sp500 <- read.csv(paste("http://ichart.finance.yahoo.com/table.csv?",
+  "s=%5EGSPC&a=03&b=1&c=1999&d=03&e=1&f=2009&g=m&ignore=.csv", sep=""))
+sp500[1:5, ]
+##         Date   Open   High    Low  Close      Volume Adj.Close
+## 1 2009-04-01 793.59 813.62 783.32 811.08 12068280000    811.08
+## 2 2009-03-02 729.57 832.98 666.79 797.87  7633306300    797.87
+## ...
 ```
 
 ::: {.callout-warning}
-**`edit()` does not modify in place.** Forgetting to assign its result is a classic data-loss moment; `fix()` exists precisely to avoid that.
+**Dead API.** Yahoo! retired this service years ago — the URL no longer responds. The *technique* (any URL in place of a filename) remains fully valid; for financial data today use the `quantmod` or `tidyquant` packages.
 :::
 
-- The editor's look differs by platform (Windows grid, macOS sheet, X11 window), but the function is identical.
-- For real data entry, a spreadsheet program is more comfortable — the editor is best for quick inspection and one-cell fixes.
+## Practical Importing Tips
 
-## Saving Objects
+- **Test with a sample first.** A 15-minute load that fails on a wrong separator hurts; add `nrows=20` while experimenting.
+- **From Excel:** export CSV or tab-delimited TXT, preferring Unix line endings (`\n`) over MS-DOS (`\n\r`). CSVs open conveniently in Excel — but commas inside text demand quoting and escaped quotation marks; tabs occur less often in text, so TXT files cause fewer surprises.
+- **From databases:** querying with a GUI tool and exporting beats fragile command-line scripts; the book names Toad for Data Analysts, MySQL Query Browser, and Oracle SQL Developer (today: DBeaver, and each vendor's current tool).
 
-`save()` writes any set of R objects to a portable binary file; `load()` restores them, names and all:
+## Fixed-Width Files: read.fwf
 
-```{r,echo=TRUE}
-tmp <- tempfile(fileext = ".RData")
-save(top.contracts, file = tmp)       # `file =` must be NAMED
-rm(top.contracts)
-load(tmp)
-top.contracts[1, ]
-```
-
-- Files are cross-platform; compression is on by default.
-- `save.image()` snapshots the whole workspace (what "Save workspace?" does on exit).
-- `saveRDS()`/`readRDS()` save a *single* object without its name — often cleaner for programmatic use.
-
-## Loading from the Web: the Course Convention
-
-`download.file()` fetches any file from a URL to disk (`mode = "wb"` for binary files); `load()` then restores it. This is exactly how all course data sets are loaded:
-
-```{r,echo=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/top.bacon.searching.cities.rda", temp, mode = "wb")
-load(temp)
-top.bacon.searching.cities
-```
-
-The textbook's `library(nutshell); data(...)` is always replaced by this three-line pattern.
-
-## Importing Text Files
-
-The `read.table()` family parses delimited text into data frames:
+When position, not a delimiter, defines the variables:
 
 ```{r,eval=FALSE,echo=TRUE}
-df  <- read.table("file.txt", header = TRUE, sep = "\t")
-csv <- read.csv("file.csv")             # comma-separated
-eu  <- read.csv2("file.csv")            # ; separator, , decimal
-fwf <- read.fwf("file.dat", widths = c(8, 4, 4))
+read.fwf(file, widths, header = , sep = , skip = ,
+         row.names, col.names, n = , buffersize = , ...)
 ```
 
-Key arguments worth memorizing: `header`, `sep`, `na.strings`, `stringsAsFactors`, `skip`, `colClasses` (huge speed win on big files).
+| Argument | Description | Default |
+|---|---|---|
+| `file` | filename or connection (required) | |
+| `widths` | integer vector of field widths — or a *list* of vectors when one record spans several lines (required) | |
+| `header` | first line holds names (delimited by `sep`)? | `FALSE` |
+| `sep` | delimiter of the header names | tab |
+| `skip` / `n` | lines to skip / records to read | 0 / `-1` |
+| `row.names` / `col.names` | row / column names | |
+| `buffersize` | lines read per batch (a performance knob) | 2000 |
 
-```{r,echo=TRUE}
-# readLines shows raw lines — always look at a file before parsing it
-readLines(textConnection("a,b\n1,2\n3,4"))
-```
+`read.fwf` also accepts `read.table` arguments such as `as.is`, `na.strings`, `colClasses`, `strip.white`.
 
-## Other Software and Spreadsheets
+## Big Fixed-Width Files: Preprocess First
 
-- The `foreign` package reads legacy statistics formats: SAS (`read.xport`), SPSS (`read.spss`), Stata (`read.dta`), and more.
-- Excel files: the `readxl` package (`read_excel("book.xlsx")`) needs no Excel installation; `openxlsx` also writes.
-- The quick-and-dirty route still works: export a sheet to CSV, then `read.csv()`.
+::: {.callout-note}
+**The CDC mortality file, a cautionary tale.** The US CDC publishes every death as fixed-width records — 1.1 GB for 2006. In theory one giant `read.fwf` call (the book lists all 43 widths and names) loads a subset; in practice it crawls: R parses text slowly, and single-character category codes balloon from 1 byte to 4-byte integers in memory. The book's remedy: preprocess with a scripting language — its Perl script `unpack`s each line and emits a slim CSV, then `read.csv` finishes the job. (The author drafts the width/name lists in Excel and generates the code with formulas.) The modern remedy: `readr::read_fwf` or `data.table::fread`, dramatically faster.
+:::
+
+## Line-by-Line: readLines
+
+When observations span multiple lines or the format defies `read.table`, drop a level. `readLines` returns one character value per line — and can read interactive input too:
 
 ```{r,eval=FALSE,echo=TRUE}
-library(readxl)
-roster <- read_excel("stu/roster.xlsx", sheet = 1)
+readLines(con = stdin(), n = -1L, ok = TRUE, warn = TRUE,
+          encoding = "unknown")
 ```
 
-## Exporting Data
+| Argument | Description | Default |
+|---|---|---|
+| `con` | file, URL, or connection | `stdin()` |
+| `n` | lines to read (negative = all) | `-1L` |
+| `ok` | tolerate fewer than `n` lines? | `TRUE` |
+| `warn` | warn on missing final EOL? | `TRUE` |
+| `encoding` | input encoding | `"unknown"` |
 
-Every importer has a mirror image:
+## Structured Low-Level Reading: scan
+
+`scan` reads into a *specified structure* via `what` — a single type, or a list of types yielding a list of columns:
 
 ```{r,eval=FALSE,echo=TRUE}
-write.csv(top.contracts, "contracts.csv", row.names = FALSE)
-write.table(top.contracts, "contracts.txt", sep = "\t")
-saveRDS(top.contracts, "contracts.rds")
+scan(file = "", what = double(0), nmax = -1, n = -1, sep = "",
+     quote = , dec = ".", skip = 0, nlines = 0, na.strings = "NA",
+     flush = FALSE, fill = FALSE, strip.white = FALSE, quiet = FALSE,
+     blank.lines.skip = TRUE, multi.line = TRUE, comment.char = "",
+     allowEscapes = FALSE, encoding = "unknown")
 ```
 
-- `row.names = FALSE` avoids the mysterious extra first column that surprises spreadsheet users.
-- For data interchange with other languages, CSV remains the lingua franca; for R-to-R, use `.rds`.
+Highlights: `what` — target type(s) (`logical`, `integer`, `numeric`, `complex`, `character`, `raw`, or a list); `nmax`/`n` — values or records to read; `multi.line` — let records span lines when `what` is a list; `flush` — discard the rest of each line after the last requested field (enables trailing comments); `quiet` — suppress the "Read n items" message. The rest mirror `read.table`.
 
-## Importing from Databases
+## Files from Other Software
 
-Three strategies, in increasing order of integration:
+The `foreign` package (and friends) reads other systems' native files directly:
 
-1. **Export then import**: dump a query result to CSV from the database tool, then `read.csv()` it. Crude but dependable.
-2. **RODBC**: connect through ODBC drivers — works with virtually any database that has a driver.
-3. **DBI**: R's native database interface, with backend packages per engine (`RSQLite`, `RPostgres`, `RMariaDB`, ...).
+| Format | Reading | Writing |
+|---|---|---|
+| ARFF (Weka) | `read.arff` | `write.arff` |
+| DBF | `read.dbf` | `write.dbf` |
+| Stata | `read.dta` | `write.dta` |
+| Epi Info | `read.epiinfo` | |
+| Minitab | `read.mtp` | |
+| Octave | `read.octave` | |
+| S3 binary / `data.dump` | `read.S` | |
+| SPSS | `read.spss` | |
+| SAS permanent dataset | `read.ssd` | |
+| Systat | `read.systat` | |
+| SAS XPORT | `read.xport` | |
 
-## RODBC in Brief
+(Modern alternative: the `haven` package for SPSS/Stata/SAS, `readxl` for Excel.)
+
+# Exporting Data
+
+## write.table and Friends
+
+Exporting reverses the trip — `write.table`, with `write.csv`/`write.csv2` preset for spreadsheet-friendly CSVs:
+
+```{r,eval=FALSE,echo=TRUE}
+write.table(x, file = "", append = FALSE, quote = TRUE, sep = " ",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"))
+write.csv(top.5.salaries, file = "salaries.csv", row.names = FALSE)
+```
+
+| Argument | Description | Default |
+|---|---|---|
+| `x` / `file` | object to export / filename or connection | |
+| `append` | append rather than overwrite? | `FALSE` |
+| `quote` | quote character columns (or a numeric column selection)? | `TRUE` |
+| `sep` / `eol` | field separator / line ending | `" "` / `"\n"` |
+| `na` / `dec` | text for `NA` / decimal character | `"NA"` / `"."` |
+| `row.names` / `col.names` | include them (or supply alternatives)? | `TRUE` |
+| `qmethod` | escape embedded quotes with `\` or by doubling | `"escape"` |
+
+# Importing Data from Databases
+
+## Strategy: Export Then Import — or Connect
+
+Large organizations keep data in relational databases. Two routes into R:
+
+- **Export to text, then import.** For very large extracts (1 GB+), the book finds text files load *faster* than database connections — the best approach for one-time pulls.
+- **Connect directly.** Better when R produces recurring reports or repeats an analysis: no manual export step each time.
+
+Two connection frameworks exist:
+
+- **RODBC** — fetches data over ODBC, the cross-program standard interface;
+- **DBI** — a common database abstraction using native or JDBC drivers, one add-on package per database.
+
+Choosing: ODBC drivers are easy to find on Windows/Linux (historically harder on macOS; JDBC exists everywhere); native drivers can be faster and expose product features; not every package runs on every platform; and DBI is built on S4, encouraging better code.
+
+## The Running Example: SQLite
+
+**SQLite** stores a whole database in one file via a C library — nothing to install or configure, ideal for practice. The book ships the *Baseball Databank* database as `bb.db` inside the `nutshell` package, addressed as:
+
+```{r,eval=FALSE,echo=TRUE}
+system.file("extdata", "bb.db", package = "nutshell")
+```
+
+::: {.callout-note}
+**Course note.** Since `nutshell` left CRAN, grab the same file once from the GitHub mirror and reuse it locally:
+
+```{r,eval=FALSE,echo=TRUE}
+download.file(paste0("https://raw.githubusercontent.com/cran/nutshell/",
+                     "master/inst/extdata/bb.db"), "bb.db", mode = "wb")
+```
+
+The database chunks below are shown unevaluated — run them after installing the relevant packages and, for ODBC, configuring a driver.
+:::
+
+## RODBC Setup
+
+Three one-time steps:
+
+1. **Install the package:** `install.packages("RODBC")`; verify with `library(RODBC)`.
+2. **Install an ODBC driver** for your database, if not already present. Vendors and third parties (MySQL, Oracle, PostgreSQL, Microsoft, Data Direct, Easysoft, Actual Technologies, OpenLink, Christian Werner's SQLite ODBC...) publish drivers for the major platforms.
+3. **Configure a DSN** (database source name). The book walks through SQLite ODBC on macOS (build with `configure; make; sudo make install`, then register the driver and a DSN named `bbdb` in ODBC Administrator, with keyword `Database` = path to `bb.db`) and on Windows (run the installer, then add a User/System DSN in the ODBC Data Source Administrator, browsing to the file).
+
+Test the result:
+
+```{r,eval=FALSE,echo=TRUE}
+bbdb <- odbcConnect("bbdb")
+odbcGetInfo(bbdb)    # DBMS name/version, driver, paths...
+```
+
+## RODBC: Opening a Channel and Looking Around
+
+`odbcConnect(dsn, uid="", pwd="", ...)` returns an `RODBC` object — a **channel**. Exploration tools:
 
 ```{r,eval=FALSE,echo=TRUE}
 library(RODBC)
-ch <- odbcConnect("dsn_name", uid = "user", pwd = "pass")
-df <- sqlQuery(ch, "SELECT player, yards FROM kicks WHERE good = 1")
-sqlTables(ch)              # list tables
-close(ch)
+bbdb <- odbcConnect("bbdb")
+sqlTables(bbdb)               # data frame of readable tables: Allstar,
+                              #   Batting, Master, Teams, Salaries, ...
+sqlColumns(bbdb, "Allstar")   # column names, types, sizes, nullability
+# sqlPrimaryKeys(bbdb, ...)   # primary keys of a table
 ```
 
-- `sqlFetch(ch, "tbl")` grabs a whole table; `sqlSave()` writes a data frame back.
-- ODBC setup happens *outside* R (driver + data source name), which is most of the work in practice.
+## RODBC: Fetching Data
 
-## DBI in Brief
+`sqlFetch(channel, sqtable, ..., colnames=, rownames=)` pulls a whole table into a data frame; afterward it's ordinary R:
 
-```{r,echo=TRUE,message=FALSE}
-library(DBI)
-con <- dbConnect(RSQLite::SQLite(), ":memory:")   # a throwaway database
-dbWriteTable(con, "contracts", top.contracts)
-dbGetQuery(con, "SELECT position, MAX(salary) AS top FROM contracts GROUP BY position")
+```{r,eval=FALSE,echo=TRUE}
+teams <- sqlFetch(bbdb, "Teams")
+dim(teams)
+## [1] 2595   48
+subset(teams, subset=(teams$yearID==2008 & teams$lgID=="AL"),
+       select=c("teamID", "W", "L"))
+```
+
+Arbitrary SQL — SELECT, but equally INSERT/UPDATE/DELETE and CREATE/DROP/ALTER — goes through `sqlQuery`:
+
+```{r,eval=FALSE,echo=TRUE}
+sqlQuery(bbdb,
+  "SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'")
+```
+
+(Writing back: `sqlSave` saves a data frame as a table, `sqlUpdate` updates one.)
+
+## RODBC: Piecewise Results and Cleanup
+
+For huge results, fetch in pieces: call `sqlQuery`/`sqlFetch` with `max=n`, then `sqlGetResults` (or `sqlFetchMore`) for the rest. Key arguments of `sqlQuery`/`sqlGetResults`: `errors` (stop or return −1 on error, default `TRUE`); `max` (0 = no maximum); `rows_at_time` (driver fetch batch — try 1024 with modern drivers); `as.is`, `stringsAsFactors` (factor conversion); `buffsize`, `believeNRows` (performance); `nullstring`, `na.strings`, `dec` (value mapping).
+
+- Lower-level cousins exist — `odbcQuery`, `odbcTables`, `odbcColumns`, `odbcPrimaryKeys` return C-style integer status codes, `odbcFetchResults` returns lists, `odbcGetErrMsg` retrieves errors — more control, less convenience.
+- Done? `odbcClose(bbdb)` — or `odbcCloseAll()` — frees resources on both ends.
+
+## DBI: Drivers and Connections
+
+**DBI** is a framework: one core package plus a driver package per database — `RMySQL`, `RSQLite`, `ROracle`, `RPostgreSQL`, `RJDBC` (anything with JDBC). All S4-based. With SQLite:
+
+```{r,eval=FALSE,echo=TRUE}
+install.packages("RSQLite")
+library(RSQLite)          # loads DBI too
+drv <- dbDriver("SQLite")
+con <- dbConnect(drv, dbname = "bb.db")
+```
+
+You may skip the explicit driver (`dbConnect("SQLite", ...)`), but keeping it lets you query open connections and later free its resources. Connection arguments (`dbname`, usernames...) vary by database — read that driver's help.
+
+## DBI: Inspecting the Connection
+
+```{r,eval=FALSE,echo=TRUE}
+class(con)                 # "SQLiteConnection" — meaningful S4 classes
+dbListConnections(drv)     # connections belonging to a driver
+dbGetInfo(con)             # host, user, dbname, server version...
+dbListTables(con)          # "Allstar" "Batting" ... "Teams" ...
+dbListFields(con, "Allstar")
+## [1] "playerID" "yearID"   "lgID"
+```
+
+## DBI: Queries
+
+`dbGetQuery(con, sql)` runs a statement and returns the data frame:
+
+```{r,eval=FALSE,echo=TRUE}
+wlrecords.2008 <- dbGetQuery(con,
+  "SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'")
+batting.2008 <- dbGetQuery(con,
+  paste("SELECT m.nameLast, m.nameFirst, m.weight, m.height, ",
+        "m.bats, m.throws, m.debut, m.birthYear, b.* ",
+        "from Master m inner join Batting b ",
+        "on m.playerID=b.playerID where b.yearID=2008"))
+dim(batting.2008)
+## [1] 1384   31
+```
+
+This joined data set returns throughout the book (and ships in `nutshell` as `batting.2008`).
+
+## DBI: Send/Fetch, Errors, Whole Tables
+
+Submitting and fetching separately gives finer control:
+
+```{r,eval=FALSE,echo=TRUE}
+res <- dbSendQuery(con,
+  "SELECT teamID, W, L FROM Teams where yearID=2008 and lgID='AL'")
+wlrecords.2008 <- fetch(res)       # n = max rows; omit or -1 for all
+dbClearResult(res)                 # discard pending results
+dbGetException(con)                # last error number + message
+batters <- dbReadTable(con, "Batting")   # a whole table
+# dbWriteTable / dbExistsTable / dbRemoveTable: write, test, delete
+```
+
+Cleanup mirrors the setup:
+
+```{r,eval=FALSE,echo=TRUE}
 dbDisconnect(con)
+dbUnloadDriver(drv)
 ```
 
-- One generic API — `dbConnect`, `dbGetQuery`, `dbWriteTable`, `dbDisconnect` — over interchangeable backends.
-- Prepared statements and incremental fetching (`dbSendQuery` + `dbFetch`) handle result sets too large for memory.
+## TSDBI and Hadoop
 
-## Bigger Pipelines
+Two pointers to close the chapter:
 
-- **TSDBI** offers a database interface specialized for time series.
-- Data living in **Hadoop**/distributed storage is the subject of Chapter 26 — the usual pattern is to reduce it first, then pull the summary into R.
-- Rule of thumb: push heavy filtering and joins into the database (`WHERE`, `GROUP BY`), and bring into R only what analysis actually needs.
+- **TSDBI** — a database interface *specifically for time series*, with per-database packages: `TSMySQL`, `TSSQLite`, `TSFame`, `TSPostgreSQL`, and `TSODBC` for anything with an ODBC driver.
+- **Hadoop** — the book's era's big-data platform; its Chapter 26 covers R packages for HDFS and HBase. (Today's landscape favors Spark via `sparklyr`, or cloud warehouses spoken to through DBI.)
 
 ## Copyright Notice
 

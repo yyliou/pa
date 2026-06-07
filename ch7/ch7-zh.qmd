@@ -41,171 +41,467 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **物件型錄**
+# **基本構件**
 
-## 原始物件型別
+## 型別與類別
 
-每個 R 物件都有底層的**型別**，可用 `typeof()` 查看。整個型錄可分成幾個自然的家族：
+R 的所有物件都建立在一組內建物件之上：
 
-- **基本向量**：`logical`、`integer`、`double`、`complex`、`character`、`raw`；
-- **複合物件**：`list` 以及一切以串列為基礎的結構；
-- **語言物件**：`symbol`、`call`、`expression`；
-- **函式**：`closure`（R 層級）、`builtin` 與 `special`（以 C 實作）；
-- **特殊物件**：`NULL`、環境，以及少數內部型別。
+- 物件的**型別（type）**定義它如何被*儲存*；
+- 物件的**類別（class）**定義它*包含*什麼資訊、可以怎麼*使用*。
+
+本章談內建物件本身——物件導向機制（類別定義、繼承、方法）留到第十章。注意：「物件導向程式設計」的意思可不只是「用物件寫程式」！
+
+## 基本型別地圖
+
+內建物件型別可分成幾大類：
+
+- **基本向量**——單一型別的集合：整數、雙精度、複數、字元、邏輯、原始位元組。
+- **複合物件**——具名物件的容器：串列、pairlist、S4 物件、環境。
+- **特殊物件**——`any`、`NULL`、`...`：各在特定脈絡中有重要意義，但你永遠不會親手建立它們。
+- **R 語言物件**——代表 R 程式碼本身的物件，可求值得到其他物件。
+- **函式**——主力工人：收引數、回傳輸出，有時造成副作用（繪圖、存檔、網路傳輸）。
+- **內部／位元組碼**——R 正式定義、但一般使用者程式碼碰不到的型別。
+
+## 基本型別（一）：基本向量
+
+| 型別 | 說明 | 範例 |
+|---|---|---|
+| `integer` | 整數；序列自然產生 | `5:5`、`integer(5)` |
+| `double` | 浮點數（現代平台 8 位元組）；數值的預設表示 | `1`、`-1`、`2^50` |
+| `complex` | 複數；實部、虛部都要寫，實部為 0 也不例外 | `2+3i`、`exp(0+1i*pi)` |
+| `character` | 文字字串（其他語言的「string」） | `"Hello world."` |
+| `logical` | 布林值 | `TRUE`、`FALSE` |
+| `raw` | 原始位元組；用於編碼 R 之外的物件 | `raw(8)`、`charToRaw("Hello")` |
+
+## 基本型別（二）：複合物件
+
+| 型別 | 說明 | 範例 |
+|---|---|---|
+| `list` | 可異質、可命名的集合；資料框就建立在串列上 | `list(1, 2, "hat")` |
+| `pairlist` | 名稱–值對的結構，主要供內部使用；使用者程式中已不建議（普通串列同樣有效率且更靈活） | `.Options` |
+| `S4` | 支援現代物件導向（繼承、方法）的物件（第十章） | — |
+| `environment` | 某脈絡下可用符號的集合：符號–值對加上指向外層環境的指標 | `.GlobalEnv`、`new.env()` |
+
+## 基本型別（三）：特殊與語言物件
+
+| 型別 | 說明 | 範例 |
+|---|---|---|
+| `any` | 「任何型別皆可」——防止轉型；用於 S4 槽位與泛型簽名 | `representation(data="ANY")` |
+| `NULL` | 「沒有物件」；不能有屬性 | `NULL` |
+| `...` | 可變長度引數列，特別是轉傳給其他函式的引數 | — |
+| `symbol` | 指向其他物件的語言物件 | `as.name("x")`、`quote(x)` |
+| `promise` | 建立時不求值、*第一次使用*才求值；套件的延遲載入靠它 | `delayedAssign("v", c(x,y,z))` |
+| `language` | 代表 R 程式碼本身的物件 | `quote(function(x) {x+1})` |
+| `expression` | 未求值的運算式；以 `expression()` 建立、`eval()` 執行 | `expression(1 + 2)` |
+
+## 基本型別（四）：函式與內部型別
+
+| 型別 | 說明 | 範例 |
+|---|---|---|
+| `closure` | 以 R 寫成的函式：使用者自訂、base R 大多數、套件大多數 | `function(x) {x+1}`、`print` |
+| `special` | 引數*不一定求值*的內部函式 | `if`、`[` |
+| `builtin` | 會求值引數的內部函式 | `+`、`^` |
+| `bytecode` | `compiler` 套件編譯出的 R 函式 | `cmpfun(function(x) {x^2})` |
+| `char` | 純量「字串」；字元向量由它組成（使用者碰不到也不需要） | — |
+| `externalptr` | 外部指標，用於 C 程式碼 | — |
+| `weakref` | 弱參照（僅內部使用） | — |
+
+# 向量
+
+## 建構向量：c 與轉型
+
+六種基本向量天天出現。最簡單的建構子是 `c`——**合併**引數，並把它們全部轉成同一型別：
 
 ```{r,echo=TRUE}
-typeof(1.5); typeof(1L); typeof("a"); typeof(list()); typeof(mean)
-```
-
-## 向量
-
-向量是 R 的原子：有順序、同型別的集合。`c()` 會遞迴攤平它的引數：
-
-```{r,echo=TRUE}
-v <- c(1, 2, c(3, 4, c(5)))
+v <- c(.295, .300, .250, .287, .215)
 v
-length(v)
+v <- c(.295, .300, .250, .287, "zilch")   # 混進一個字元值……
+v                                          # ……全體變字元
 ```
 
-名稱可以跟著元素走：
+## 遞迴合併
+
+`c` 加上 `recursive=TRUE` 能從巢狀結構拼出向量——但小心：不加的話，串列引數會讓你拿回一個串列：
 
 ```{r,echo=TRUE}
-prices <- c(apple = 30, banana = 12, cherry = 95)
-prices["banana"]
+v <- c(.295, .300, .250, .287, list(.102, .200, .303), recursive=TRUE)
+v
+typeof(v)
+v <- c(.295, .300, .250, .287, list(1, 2, 3))
+typeof(v)
+class(v)
 ```
 
-## 串列
+## 序列與 length 屬性
 
-串列是異質容器，是 R 中一切複雜結構的骨幹：
+另外兩個向量建構工具——`:` 運算子和更靈活的 `seq`：
 
 ```{r,echo=TRUE}
-rec <- list(name = "Kim", scores = c(88, 92), pass = TRUE)
-rec$scores
-rec[["name"]]
-rec[1]          # 單層中括號回傳（子）串列
+1:10
+seq(from=5, to=25, by=5)
 ```
 
-::: {.callout-note}
-**`[ ]` 與 `[[ ]]` 的差別。** 單層中括號是*切片*，回傳串列；雙層中括號是*取出*單一元件，回傳元件本身。混淆兩者是最常見的串列錯誤。
-:::
-
-## 矩陣與陣列
-
-矩陣是帶著長度為 2 的 `dim` 屬性的向量；陣列推廣到任意維度：
+向量長度可以*直接*操弄——縮短就截斷，加長就補 `NA`：
 
 ```{r,echo=TRUE}
-m <- matrix(1:6, nrow = 2)
+w <- 1:10
+length(w) <- 5
+w
+length(w) <- 10
+w
+```
+
+# 串列
+
+## 有序、可命名、可異質
+
+串列是物件的有序集合，可依位置索引——回想 `[` 與 `[[` 的差別：
+
+```{r,echo=TRUE}
+l <- list(1, 2, 3, 4, 5)
+l[1]      # 子串列
+l[[1]]    # 元素本身
+```
+
+具名元素能自然地描述真實事物。一個實體包裹——寄往紐約、2×6×9 英寸、郵資 12.95 美元——三種型別裝進一個物件：
+
+```{r,echo=TRUE}
+parcel <- list(destination="New York", dimensions=c(2, 6, 9), price=12.95)
+parcel$price
+```
+
+串列是異質結構*的*基本構件——資料框就蓋在它上面。
+
+# 其他物件
+
+## 矩陣
+
+**矩陣**是向量往二維的延伸，存放單一型別的二維資料。乾淨的建構方式是 `matrix`，這裡順便命名列與行：
+
+```{r,echo=TRUE}
+m <- matrix(data=1:12, nrow=4, ncol=3,
+            dimnames=list(c("r1", "r2", "r3", "r4"),
+                          c("c1", "c2", "c3")))
 m
-dim(m)
-t(m)            # 轉置
-m %*% t(m)      # 矩陣乘法
 ```
 
-列名與欄名讓矩陣能自我說明：`dimnames(m) <- list(c("r1","r2"), c("a","b","c"))`。
+- 其他結構可用 `as.matrix` 轉換。
+- **實作備註：** 矩陣存成*一條向量*，不是「向量的向量」——下標只是存取慣例，不反映儲存方式。而且矩陣（不像多數類別）沒有明確的 `class` 屬性（屬性：本章稍後）。
 
-## 因子
+## 陣列
 
-**因子**（factor）儲存類別資料：內部是整數代碼，加上把代碼對應到標籤的 `levels` 屬性。
+**陣列**把向量延伸到*任意*維數：
 
 ```{r,echo=TRUE}
-sizes <- factor(c("S", "L", "M", "L", "S"), levels = c("S", "M", "L"))
-sizes
-table(sizes)
-as.integer(sizes)     # 底層的代碼
+a <- array(data=1:24, dim=c(3, 4, 2))
+a
 ```
 
-- `ordered = TRUE` 建立有序因子（`S < M < L`），比較運算子會尊重順序。
-- 因子是迴歸函式辨識「這欄是類別變數」的依據——虛擬變數會自動產生。
+跟矩陣一樣，陣列底層存的是普通向量，也沒有明確的 class 屬性。
+
+## 因子：類別值
+
+類別資料當然可以放進字元向量——但重複存放長字串很浪費。**因子（factor）**是一個項目的有序集合，可取的值稱為**水準（levels）**：
+
+```{r,echo=TRUE}
+eye.colors <- factor(c("brown", "blue", "blue", "green",
+                       "brown", "brown", "brown"))
+levels(eye.colors)
+eye.colors
+```
+
+注意列印格式：沒有引號、明確列出水準——一眼就看出*不是*字元向量。
+
+## 有序因子
+
+有時水準的順序有意義。問卷請受訪者對「哈密瓜配蛋捲很好吃」表態：非常不同意……非常同意。若編碼成 1–5，等於*暗示*間距相等、平均數有意義——「不同意」加「同意」真的平均成「中立」嗎？**有序因子**保住排序、不背負算術的包袱：
+
+```{r,echo=TRUE}
+survey.results <- factor(
+  c("Disagree", "Neutral", "Strongly Disagree",
+    "Neutral", "Agree", "Strongly Agree",
+    "Disagree", "Strongly Agree", "Neutral",
+    "Strongly Disagree", "Neutral", "Agree"),
+  levels=c("Strongly Disagree", "Disagree", "Neutral",
+           "Agree", "Strongly Agree"),
+  ordered=TRUE)
+survey.results
+```
+
+## 因子的內部構造
+
+因子內部是**整數向量**加一個把整數對應到標籤的 `levels` 屬性（整數小而定長——省空間）。剝掉 class，實作就現形：
+
+```{r,echo=TRUE}
+eye.colors
+class(eye.colors)
+eye.colors.integer.vector <- unclass(eye.colors)
+eye.colors.integer.vector
+class(eye.colors.integer.vector)
+```
+
+把 class 屬性裝回去，它又是因子了：
+
+```{r,echo=TRUE}
+class(eye.colors.integer.vector) <- "factor"
+eye.colors.integer.vector
+```
 
 ## 資料框
 
-資料框——一列一筆觀測、一欄一個變數——技術上是一個等長向量的串列，類別為 `data.frame`：
+**資料框**代表一張表：科學實驗的多項測量觀測，或資料庫裡多列多欄的表格。每欄（「變數」）型別可以不同，但長度必須一致：
 
-```{r,echo=TRUE}
-df <- data.frame(player = c("A", "B", "C"),
-                 yards  = c(43, 28, 51),
-                 good   = c(TRUE, FALSE, TRUE))
-str(df)
-df[df$good, "yards"]
+```{r,error=TRUE,echo=TRUE}
+data.frame(a=c(1, 2, 3, 4, 5), b=c(1, 2, 3, 4))
 ```
 
-`str()` 是 R 裡最有用的檢視工具：結構、型別、預覽一次看完。
+書中範例——哪些城市的使用者最常搜尋「bacon」（Google Insights，2004–2009）：
+
+```{r,echo=TRUE}
+top.bacon.searching.cities <- data.frame(
+  city = c("Seattle", "Washington", "Chicago", "New York", "Portland",
+           "St Louis", "Denver", "Boston", "Minneapolis", "Austin",
+           "Philadelphia", "San Francisco", "Atlanta", "Los Angeles",
+           "Richardson"),
+  rank = c(100, 96, 94, 93, 93, 92, 90, 90, 89, 87, 85, 84, 82, 80, 80)
+)
+head(top.bacon.searching.cities, 8)
+```
+
+## 資料框就是串列
+
+```{r,echo=TRUE}
+typeof(top.bacon.searching.cities)
+class(top.bacon.searching.cities)
+```
+
+資料框的實作是**class 為 `data.frame` 的串列**——串列的方法原封不動可用：`top.bacon.searching.cities$rank` 就取出 rank 欄。
 
 ## 公式
 
-公式*不經求值*地保存一段模型描述：
+要表達變數間的關係——畫圖或建模都用得上——R 提供 **formula** 類別：
 
 ```{r,echo=TRUE}
-f <- yards ~ player + good
-class(f)
+sample.formula <- as.formula(y ~ x1 + x2 + x3)
+class(sample.formula)
+typeof(sample.formula)
 ```
 
-公式語法：`+` 加入項、`-` 移除項、`*` 交叉（`a*b` = `a + b + a:b`）、`:` 是交互作用、`.` 代表「其餘所有欄位」、`I()` 保護算術（`I(x^2)`）。模型、lattice 圖與彙總函式都接受公式。
+讀作「y 是 x1、x2、x3 的函數」。第三章 lattice 的例子 `Amount ~ Year | Food` 讀作「Amount 是 Year 的函數，依 Food 分組」。
+
+## 公式詞彙表
+
+| 項目 | 意義 |
+|---|---|
+| 變數名 | 變數本身 |
+| `~` | 分隔反應變數（左）與解釋變數（右） |
+| `+` | 變數間的線性關係 |
+| `0` | 加進公式表示不含截距項，如 `y~u+w+v+0` |
+| `|` | 條件（分組）變數（lattice 公式，第十四章） |
+| `I()` | 括號內按*算術*意義解讀：`a+b` 是兩個變數；`I(a+b)` 是兩者之和 |
+| `*` | 交互作用：`y~(u+v)*w` ≡ `y~u+v+w+I(u*w)+I(v*w)` |
+| `^` | 交叉到指定次數：`y~(u+w)^2` ≡ `y~(u+w)*(u+w)` |
+| `f(x)` | 變數的函數作為一項，如 `y~log(u)+sin(v)+w` |
+
+有些函式還有自己的詞彙（如 `gam` 公式裡的平滑樣條 `s()`）。公式在第十四、二十章再登場。
 
 ## 時間序列
 
-`ts` 物件替向量加上規律的時間中繼資料。依課程慣例，從 GitHub 載入課本的火雞價格序列：
+許多問題關注變數**隨時間**的變化；`ts` 類別就是為此而生，供迴歸函式（`ar`、`arima`）與專屬繪圖方法使用。
+
+```{r,eval=FALSE,echo=TRUE}
+ts(data = NA, start = 1, end = numeric(0), frequency = 1,
+   deltat = 1, ts.eps = getOption("ts.eps"), class = , names = )
+```
+
+| 引數 | 說明 |
+|---|---|
+| `data` | 觀測值（向量或矩陣） |
+| `start`／`end` | 首／末筆觀測的時間：一個數，或（時間單位，位移） |
+| `frequency` | 每單位時間的觀測數 |
+| `deltat` | 觀測間隔佔抽樣週期的比例（`frequency = 1/deltat`） |
+| `ts.eps` | 頻率比較的容差 |
+| `class` | 單一序列為 `"ts"`；多序列為 `c("mts","ts")` |
+| `names` | 多序列物件中各序列的名稱 |
+
+從 2008 年第二季起的八個季度——print 方法認得季與月：
+
+```{r,echo=TRUE}
+ts(1:8, start=c(2008, 2), frequency=4)
+```
+
+## 真實的時間序列：火雞價格
+
+美國農業部追蹤肉品零售價（涵蓋約 20% 市場的超市，按月與地區平均）。書中把火雞月價格包成 `turkey.price.ts`：
 
 ```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
+              temp, mode = "wb")
 load(temp)
-class(turkey.price.ts)
-start(turkey.price.ts); frequency(turkey.price.ts)
+turkey.price.ts
 ```
 
-```{r,echo=TRUE,out.width="60%"}
-plot(turkey.price.ts)
+工具函式直接讀出結構：
+
+```{r,echo=TRUE}
+start(turkey.price.ts)
+end(turkey.price.ts)
+frequency(turkey.price.ts)
+deltat(turkey.price.ts)
 ```
+
+## Shingle
+
+**Shingle** 是因子向*連續*變數的推廣：一個數值向量加一組區間，而且區間允許**重疊**（像屋頂的瓦片相互交疊，故得名）。它讓連續變數能輕鬆充當條件或分組變數，在 `lattice` 套件中大量使用（第十四章）。
 
 ## 日期與時間
 
+三個類別表示時間點：
+
+- **`Date`**——只有日期、沒有時間；
+- **`POSIXct`**——以 1970-01-01 00:00 起算的秒數儲存日期時間；
+- **`POSIXlt`**——把日期時間拆成多個向量：`sec`（0–61，能表示閏秒！）、`min`、`hour`、`mday`、`mon`（0–11）、`year`（1900 起算）、`wday`、`yday`、`isdst`。
+
+請把日期存成日期物件，別存字串或數字——這些類別支援加減運算，許多繪圖函式也要求日期物件：
+
 ```{r,echo=TRUE}
-d <- as.Date("2026-09-22")
-d + 7                          # 日期運算以天為單位
-weekdays(d)
-now <- Sys.time()
-class(now)                     # POSIXct：自 1970 起的秒數
-format(now, "%Y-%m-%d %H:%M")
+date.I.started.writing <- as.Date("2/13/2009", "%m/%d/%Y")
+date.I.started.writing
+today <- Sys.Date()
+today - date.I.started.writing
 ```
 
-- 日資料用 `Date`；時間戳用 `POSIXct`。
-- `difftime` 物件表示時間長度；`seq(d, by = "month", length.out = 3)` 能產生日曆序列。
+## 連線（Connections）
 
-## 連線
+**連線**負責在 R 與外界之間搬資料——類似 C 的 file pointer、Perl 的 filehandle。對象包括：檔案、URL、zip/gzip/bzip 壓縮檔、管線、網路 socket、FIFO，甚至系統剪貼簿。
 
-連線（connection）把資料來源抽象化——檔案、URL、壓縮檔、管線——讓讀取函式不必在意位元組從哪裡來：
+生命週期：建立 → 開啟 → 使用 → 關閉。明確地載入一個（gzip 壓縮的）資料檔：
 
 ```{r,eval=FALSE,echo=TRUE}
-temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda",
-              temp, mode = "wb")
-load(temp)           # 我們的 GitHub 慣例：先下載、再載入
-
-gz <- gzfile("big.csv.gz")    # 透明解壓縮
-read.csv(gz)
+consumption.connection <- gzfile(description="consumption.RData", open="r")
+load(consumption.connection)
+close(consumption.connection)
 ```
 
-課程慣例——先 `download.file()` 到暫存檔、再 `load()`——底層用的正是連線；`mode = "wb"` 確保二進位檔在各平台都完好無損。
+平常你可以全部省略：`save`、`load`、`read.table` 拿到檔名或 URL 時會**隱含**開啟連線。連線的價值在非標準來源上才顯現。見 `?connection`。
 
-## 屬性
+# 屬性
 
-屬性是讓普通向量升級成豐富結構的中繼資料：
+## 掛在物件上的性質
+
+物件可帶具名性質——**屬性（attributes）**——說明物件代表什麼、R 該如何解讀。很多時候，兩個相似物件的差異*只在*屬性。（為什麼用屬性而非串列或 S4？歷史因素：屬性比 R 的現代物件系統更早出現。）
+
+| 屬性 | 說明 |
+|---|---|
+| `class` | 物件的類別 |
+| `comment` | 註解，通常描述物件意義 |
+| `dim` | 維度 |
+| `dimnames` | 各維度上的名稱 |
+| `names` | 元素名稱（資料框的欄名等） |
+| `row.names` | 列名（與 `dimnames` 相關） |
+| `tsp` | 起始時間（時間序列用） |
+| `levels` | 因子的水準 |
+
+物件 `x` 的屬性 `a`：用 `a(x)` 查詢、`a(x) <- value` 設定。（修改只影響目前環境。）
+
+## 檢視屬性
+
+`attributes` 一次看全部；各別屬性有對應的存取函式：
 
 ```{r,echo=TRUE}
-x <- 1:6
-attr(x, "dim") <- c(2, 3)     # 它變成矩陣了！
-x
-class(x)
-attributes(x)
+m <- matrix(data=1:12, nrow=4, ncol=3,
+            dimnames=list(c("r1", "r2", "r3", "r4"),
+                          c("c1", "c2", "c3")))
+attributes(m)
+dim(m)
+colnames(m)
+rownames(m)
 ```
 
-`names`、`dim`、`dimnames`、`levels`、`class` 全都只是屬性——第十章的整套物件系統，就建立在這一個機制之上。
+## 屬性定義了物件
+
+改變屬性，就改變類別——拿掉 `dim`，矩陣塌縮成向量：
+
+```{r,echo=TRUE}
+dim(m) <- NULL
+m
+class(m)
+typeof(m)
+```
+
+## 資料相同、屬性不同
+
+內容一模一樣的陣列與向量：
+
+```{r,error=TRUE,echo=TRUE}
+a <- array(1:12, dim=c(3, 4))
+b <- 1:12
+a[2, 2]
+b[2, 2]      # 錯誤：b 沒有維度
+```
+
+它們「一樣」嗎？`==` 逐格比較（並以 `a` 的形狀回答）：
+
+```{r,echo=TRUE}
+a == b
+```
+
+## all.equal 與 identical
+
+`all.equal` 同時比資料*與*屬性，並解釋差異何在；`identical` 只回答嚴格的是或否：
+
+```{r,echo=TRUE}
+all.equal(a, b)
+identical(a, b)
+```
+
+把缺的屬性補給 `b`，差異就煙消雲散：
+
+```{r,echo=TRUE}
+dim(b) <- c(3, 4)
+b[2, 2]
+all.equal(a, b)
+identical(a, b)
+```
+
+## class 也是屬性
+
+簡單物件的 class 與 type 大致對齊；複合物件則會分歧。用 `class` 與 `typeof` 查詢（矩陣／陣列的 class 是隱含的）：
+
+```{r,echo=TRUE}
+x <- c(1, 2, 3)
+typeof(x)
+class(x)
+```
+
+正因 class 只是屬性，你可以*徒手*把整數向量組裝成因子：
+
+```{r,echo=TRUE}
+v <- as.integer(c(1, 1, 1, 2, 1, 2, 2, 3, 1))
+levels(v) <- c("what", "who", "why")
+class(v) <- "factor"
+v
+```
+
+（沒人保證因子的內部實作永不改變——把這招當示範看，別當技術用。）
+
+## quote 與檢視的極限
+
+想問*符號本身*（而非它指向的東西）的型別，先 quote 起來：
+
+```{r,echo=TRUE}
+class(quote(x))
+typeof(quote(x))
+```
+
+有些型別完全無法檢視：`any`、`...`、`char`、`promise` 物件在 R 中無法被單獨抓出來——檢查 promise 的型別就得先求值，它也就變成普通物件了。
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

@@ -223,11 +223,11 @@
 <p>R <span class="citation" data-cites="rcore2024">(R Core Team 2024)</span> 是一套自由、開源的統計運算與繪圖環境，源自貝爾實驗室開發的 S 語言 <span class="citation" data-cites="becker1988new">(Becker et al. 1988)</span>。在本課程中，「R」這個名字其實同時指涉好幾件事：</p>
 <ul>
 <li>一種以資料為核心設計的<strong>程式語言</strong>；</li>
-<li>執行這種語言的<strong>直譯器</strong>（interpreter）；</li>
-<li>一套產生統計圖形的<strong>繪圖系統</strong>；</li>
-<li>一個把直譯器、標準套件與使用者介面包裝在一起的桌面<strong>應用程式</strong>（Windows、macOS、Linux 皆有）。</li>
+<li>執行該語言程式的<strong>直譯器</strong>（interpreter）；</li>
+<li>用來繪製統計圖形的<strong>繪圖系統</strong>；</li>
+<li>一個把直譯器、標準套件與使用者介面打包在一起的 Windows、macOS 或 Linux <strong>桌面應用程式</strong>。</li>
 </ul>
-<p>本課程的教科書為 <em>R in a Nutshell</em>（第二版）<span class="citation" data-cites="adler2012r">(Adler 2012)</span>。本章的目標非常實際：在你的電腦上裝好一份可以運作的 R。</p>
+<p>本課程教科書為 <em>R in a Nutshell</em>（第二版）<span class="citation" data-cites="adler2012r">(Adler 2012)</span>。第一章的目標非常實際：讓你的電腦裝好一份能用的 R。</p>
 </section>
 <section id="為什麼選-r" class="slide level2">
 <h2>為什麼選 R？</h2>
@@ -240,14 +240,14 @@
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p><strong>R 在實務資料工作中勝出的三個理由：</strong> 完全免費、跨所有主流平台，且擁有涵蓋幾乎所有統計方法的龐大套件生態系。</p>
+<p><strong>R 在應用資料工作中獨佔鰲頭的三個理由。</strong> 它完全免授權費、可在所有主流平台上執行，而且擁有龐大的外掛套件生態系，幾乎涵蓋所有發表過的統計方法。</p>
 </div>
 </div>
 </div>
 <ul>
-<li>R 由跨國的核心開發團隊維護，透過 <strong>CRAN</strong>（Comprehensive R Archive Network）發佈。</li>
-<li>由於原始碼公開，任何人都能檢視方法的實作細節，也能把 R 移植到新的平台上。</li>
-<li>本課程所需的一切軟體，花費都是零元。</li>
+<li>R 由跨國的核心開發團隊維護，透過 <strong>CRAN</strong>（Comprehensive R Archive Network，R 綜合典藏網）發布。</li>
+<li>由於原始碼公開，任何人都能檢視方法的實作細節——也能把 R 移植到新平台。這份開放性正是各大系統都有現成安裝檔的原因。</li>
+<li>修這門課所需的一切軟體，花費恰好是零元。</li>
 </ul>
 </section></section>
 <section>
@@ -255,19 +255,26 @@
 <h1>R 的版本</h1>
 
 </section>
-<section id="發行週期" class="slide level2">
-<h2>發行週期</h2>
+<section id="發布週期" class="slide level2">
+<h2>發布週期</h2>
 <ul>
-<li>R 核心團隊依固定節奏發佈版本：每年春季推出一個主要版本 <code>x.y.0</code>，之後陸續釋出修正錯誤的小版本（<code>x.y.1</code>、<code>x.y.2</code>……）。</li>
-<li>版本號採 <strong>major.minor.patch</strong> 格式，例如 <code>4.4.2</code>。</li>
-<li>R 語言本身非常穩定，版本間的差異多半是錯誤修正、效能改善與少數新函式，所以為某個版本寫的程式碼，幾乎都能在其他版本原封不動地執行。</li>
-<li>教科書是以相當舊的版本（2.15.1）撰寫的；書中的範例至今幾乎全數照常運作。少數現代 R 行為不同之處，講義一律以現代行為為準。</li>
+<li>R 核心團隊按固定節奏發布正式版：教科書年代是一年兩次（春、秋）；現在則是每年春季推出一個 <code>x.y.0</code> 主要版本，之後以修補版（<code>x.y.1</code>、<code>x.y.2</code>……）修正錯誤。</li>
+<li>版本編號遵循 <strong>major.minor.patch</strong> 格式，例如 <code>4.4.2</code>。</li>
+<li>典型的新版本內容是錯誤修正、效能改善與少量新函式。真正動到<em>語言本身</em>的變更非常罕見，而且通常只涉及冷僻角落（書中舉的例子：R 2.5 改變了未完整初始化陣列中 <code>NA</code> 的型別）。</li>
+</ul>
+</section>
+<section id="版本穩定性為什麼不必擔心" class="slide level2">
+<h2>版本穩定性：為什麼不必擔心</h2>
+<ul>
+<li>教科書的程式碼是以 R <strong>2.15.1</strong>（2012 年）檢驗的。因為語言極其穩定，書中幾乎每個範例至今行為不變；凡是現代 R 有差異之處，本講義一律採用現代行為。</li>
+<li>下載連結同理：檔名內嵌版本號（如 <code>R-4.4.2-win.exe</code>），你實際看到的名稱永遠比任何截圖或書本更新。<strong>直接抓最新版即可。</strong></li>
+<li>針對某個近期版本寫的程式碼，幾乎都能原封不動地在另一版本執行，相鄰版本的結果應該完全一致。</li>
 </ul>
 </section>
 <section id="該用哪個版本" class="slide level2">
 <h2>該用哪個版本？</h2>
 <ul>
-<li>本課程的答案：<strong>CRAN 上最新的正式版</strong>。</li>
+<li>本課程：用 CRAN 上<strong>最新的正式版</strong>。</li>
 <li>隨時可以查看自己執行的版本：</li>
 </ul>
 <div class="cell" data-layout-align="center">
@@ -277,83 +284,102 @@
 </div>
 </div>
 <ul>
-<li>你的修正版號與同學不同沒有關係——本課程的所有操作結果都會一致。</li>
+<li>修補版號跟同學不同沒關係——本課程做的所有事情，結果都會一模一樣。</li>
 </ul>
 </section></section>
 <section>
-<section id="取得並安裝-r" class="title-slide slide level1 center">
-<h1>取得並安裝 R</h1>
+<section id="取得並安裝-r-執行檔" class="title-slide slide level1 center">
+<h1>取得並安裝 R 執行檔</h1>
 
 </section>
-<section id="去哪裡下載" class="slide level2">
-<h2>去哪裡下載</h2>
-<p>R 已被移植到所有主流桌面平台，預先編譯好的安裝檔（binaries）是最省事的途徑：</p>
+<section id="什麼是-binary去哪裡找" class="slide level2">
+<h2>什麼是 binary？去哪裡找？</h2>
+<p><strong>Binary（執行檔）</strong>指預先編譯好、下載即可執行的 R——這是各桌面平台最簡單的安裝途徑：</p>
 <ol type="1">
-<li>前往官方網站：<a href="https://cran.r-project.org" class="uri">https://cran.r-project.org</a>。</li>
-<li>CRAN 在世界各地設有<strong>鏡像站</strong>（mirror）。任何鏡像站都可以用，地理位置近的通常較快；預設的「0-Cloud」鏡像會自動把你導向合適的伺服器。</li>
-<li>點選符合你作業系統的下載連結並執行安裝程式。</li>
+<li>造訪官方網站 <a href="https://cran.r-project.org" class="uri">https://cran.r-project.org</a>，點選 <em>Download</em> 連結。</li>
+<li>下載連結會帶你到依國家排列的<strong>鏡像站（mirror）</strong>清單。CRAN 在全球設有副本；地理上近的鏡像站通常網路距離也近、速度快。現代的「0-Cloud」鏡像會自動把你導向合適的伺服器，是安全的預設選擇。</li>
+<li>挑選符合你作業系統的安裝檔並執行。</li>
 </ol>
-<div class="callout callout-tip callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Tip</strong></p>
-</div>
-<div class="callout-content">
-<p><strong>檔名內含版本號。</strong> 連結看起來像 <code>R-4.4.2-win.exe</code>——等你下載時數字一定又往前跑了。永遠直接拿最新的那個即可。</p>
-</div>
-</div>
-</div>
+<p>以下是各平台的注意事項——Windows 與 macOS 使用者通常自行下載安裝檔執行；Linux 使用者則建議交給套件管理系統。</p>
 </section>
 <section id="windows" class="slide level2">
 <h2>Windows</h2>
 <ul>
-<li>點 <em>Download R for Windows</em> → <em>base</em> → 執行 <code>.exe</code> 安裝程式。</li>
-<li>預設設定即可：R 會安裝在 <code>C:\Program Files\R\</code>，並出現在開始選單中。</li>
-<li>現代機器上安裝程式與 R 都是 64 位元，不需要做任何選擇。</li>
+<li>點 <em>Download R for Windows</em> → <em>base</em> → 執行 <code>.exe</code> 安裝檔。</li>
+<li>安裝過程跟其他 Windows 軟體一樣：<strong>有足夠權限就很簡單</strong>，沒有就麻煩（公司或機房電腦常見）。
+<ul>
+<li>最簡單的解法：以一般使用者身分，把 R 裝進<strong>自己的檔案空間</strong>（例如使用者目錄下）。</li>
+<li>或者改用系統管理員帳號安裝——之後安裝套件也得用同一帳號。</li>
+</ul></li>
+<li>預設安裝位置在 <code>%ProgramFiles%\R</code>（通常是 <code>C:\Program Files\R\</code>），並在開始功能表建立 <em>R</em> 群組。</li>
+<li>教科書年代 CRAN 只提供 32 位元 Windows 版；現在的安裝檔與 R 本身在現代機器上都是 64 位元，不必做任何選擇。</li>
 </ul>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="co"># 安裝完成後，從開始選單啟動「R x.y.z」，</span></span>
-<span id="cb3-2"><a href=""></a><span class="co"># 或者更好：安裝 RStudio（第二章）改用它來操作。</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
 </section>
 <section id="macos" class="slide level2">
 <h2>macOS</h2>
 <ul>
-<li>點 <em>Download R for macOS</em>，選擇符合你硬體的版本：
+<li>點 <em>Download R for macOS</em>，選擇符合硬體的版本：
 <ul>
 <li><strong>Apple Silicon</strong>（M 系列晶片）：<code>arm64</code> 安裝包。</li>
 <li><strong>Intel</strong> Mac：<code>x86_64</code> 安裝包。</li>
 </ul></li>
-<li><code>.pkg</code> 安裝程式會在「應用程式」資料夾放入名為 <strong>R</strong> 的應用程式，並在路徑中加入命令列的 <code>R</code>。</li>
-<li>如果裝錯架構，R 會無法啟動——不確定時請查看「關於這台 Mac」。</li>
+<li><code>.pkg</code> 安裝檔會把名為 <strong>R</strong> 的應用程式放進「應用程式」資料夾，並在命令列路徑加入 <code>R</code> 指令：下載、雙擊、照指示進行即可。</li>
+<li>跟所有應用程式一樣需要足夠的權限——個人筆電只要記得自己的密碼；受管理的電腦可能得請管理者協助。</li>
+<li>較舊的硬體或系統？CRAN 保留早期 R 版本的<strong>舊版安裝檔</strong>，可能更適合老系統。（書中年代為 OS X 10.4／10.5 提供不同的 universal binary——同樣的概念，早了二十年。）</li>
+<li>若抓錯晶片版本，R 會拒絕啟動——不確定時查一下「關於這台 Mac」。</li>
 </ul>
 </section>
 <section id="linux-與-unix套件管理系統" class="slide level2">
 <h2>Linux 與 Unix：套件管理系統</h2>
-<p>在 Linux 上，最乾淨的途徑是發行版的套件管理系統，它還會自動幫你更新 R：</p>
+<p>在 Linux 上最乾淨的途徑是發行版的<strong>套件管理系統</strong>：它會抓取 R、自動解決 R 需要的其他軟體，日後升級也只要一行指令。開始前請確認你知道 root 密碼或擁有 <code>sudo</code> 權限；否則需要系統管理員幫忙。</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href=""></a><span class="co"># Debian / Ubuntu</span></span>
-<span id="cb4-2"><a href=""></a><span class="fu">sudo</span> apt-get update</span>
-<span id="cb4-3"><a href=""></a><span class="fu">sudo</span> apt-get install r-base r-base-dev</span>
-<span id="cb4-4"><a href=""></a></span>
-<span id="cb4-5"><a href=""></a><span class="co"># Fedora / Red Hat</span></span>
-<span id="cb4-6"><a href=""></a><span class="fu">sudo</span> dnf install R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href=""></a><span class="co"># Debian / Ubuntu</span></span>
+<span id="cb3-2"><a href=""></a><span class="fu">sudo</span> apt-get update</span>
+<span id="cb3-3"><a href=""></a><span class="fu">sudo</span> apt-get install r-base r-base-dev</span>
+<span id="cb3-4"><a href=""></a></span>
+<span id="cb3-5"><a href=""></a><span class="co"># Fedora / Red Hat（書中年代的指令是 sudo yum install R.x86_64）</span></span>
+<span id="cb3-6"><a href=""></a><span class="fu">sudo</span> dnf install R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <ul>
-<li>CRAN 自行維護的軟體庫通常比發行版內建的更新；加入方式見 CRAN 的 Linux 說明頁。</li>
-<li>建議同時安裝 <code>r-base-dev</code>（或對應套件）——它提供從原始碼編譯外掛套件所需的編譯器。</li>
+<li>日後更新同樣簡單：<code>sudo apt-get upgrade</code> 或 <code>sudo dnf update R</code> 就能升到最新打包版本。</li>
+<li>CRAN 自己也維護儲存庫，版本比多數發行版內建的更新；加入方式見 CRAN 的 Linux 說明頁。</li>
+<li>順手裝 <code>r-base-dev</code>（或對應套件）很值得——它提供從原始碼編譯外掛套件所需的編譯器。</li>
 </ul>
 </section>
-<section id="linux-與-unix手動安裝" class="slide level2">
-<h2>Linux 與 Unix：手動安裝</h2>
-<p>若沒有套件管理系統可用，還有兩條路：</p>
+<section id="linux-與-unix手動下載安裝" class="slide level2">
+<h2>Linux 與 Unix：手動下載安裝</h2>
+<p>如果你偏好手動（或沒有套件管理系統可用），也可以自行下載檔案安裝：</p>
 <ul>
-<li>從 CRAN 下載特定發行版的<strong>預編譯安裝檔</strong>，再以 <code>dpkg</code> 或 <code>rpm</code> 等工具手動安裝。</li>
-<li><strong>從原始碼編譯</strong>：自 CRAN 下載原始碼壓縮檔，執行經典的編譯流程：</li>
+<li>CRAN 為多個發行版提供<strong>預編譯套件</strong>——Debian、Ubuntu、Fedora/Red Hat、SUSE——還有 Solaris 版本。</li>
+<li>Red Hat 系的工具是 RPM。書中範例：把 <code>R-2.15.1.fc10.i386.rpm</code> 下載到 <code>~/Downloads</code> 後，這樣安裝：</li>
 </ul>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href=""></a><span class="ex">rpm</span> <span class="at">-i</span> ~/Downloads/R-2.15.1.fc10.i386.rpm</span>
+<span id="cb4-2"><a href=""></a><span class="co"># Debian 系的對應指令：</span></span>
+<span id="cb4-3"><a href=""></a><span class="co"># sudo dpkg -i r-base-core_*.deb</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ul>
+<li><strong>其他 Unix 系統</strong>常有自己的管道——例如 FreeBSD 可透過 Ports 系統取得 R。安裝第三方軟體的方法請查閱系統文件。</li>
+</ul>
+</section></section>
+<section>
+<section id="從原始碼編譯-r" class="title-slide slide level1 center">
+<h1>從原始碼編譯 R</h1>
+
+</section>
+<section id="你該自己編譯-r-嗎" class="slide level2">
+<h2>你該自己編譯 R 嗎？</h2>
+<p>在 Linux／Unix 上從原始碼編譯是標準做法——但在 Windows 或 macOS 上<strong>不是</strong>：過程棘手，對一般使用者好處有限：</p>
+<ul>
+<li>不會省<strong>空間</strong>——編譯得先下載一堆輔助工具（包括 LaTeX）；</li>
+<li>不會省<strong>時間</strong>——除非工具一應俱全而你的網路又奇慢無比；</li>
+<li>唯一實質的好處是榨出額外<strong>效能</strong>，但實務上 R 的效能即使在很大的資料集上也很少成為瓶頸。</li>
+</ul>
+<p>不過，「到處都<em>能</em>編譯」正是 R 得以登上各種冷門平台的原因——開放原始碼的直接好處。</p>
+</section>
+<section id="經典編譯流程" class="slide level2">
+<h2>經典編譯流程</h2>
+<p>給好奇的同學：在類 Unix 系統上編譯，遵循行之有年的儀式：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href=""></a><span class="fu">tar</span> <span class="at">-xzf</span> R-4.4.2.tar.gz</span>
 <span id="cb5-2"><a href=""></a><span class="bu">cd</span> R-4.4.2</span>
@@ -361,10 +387,18 @@
 <span id="cb5-4"><a href=""></a><span class="fu">make</span></span>
 <span id="cb5-5"><a href=""></a><span class="fu">sudo</span> make install</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>桌面環境幾乎用不到這招，但 R 之所以能登上各種冷門平台，靠的正是開放原始碼帶來的這種彈性。</p>
+<ul>
+<li><code>configure</code> 檢查系統並準備編譯設定；<code>make</code> 進行編譯；<code>make install</code> 把成品安裝到位。</li>
+<li>教科書把細節留到後面講 R 內部運作的章節；最權威的說明請見 CRAN 上的手冊 <em>R Installation and Administration</em>。</li>
+</ul>
+</section></section>
+<section>
+<section id="收尾" class="title-slide slide level1 center">
+<h1>收尾</h1>
+
 </section>
-<section id="檢查安裝結果" class="slide level2">
-<h2>檢查安裝結果</h2>
+<section id="檢查安裝是否成功" class="slide level2">
+<h2>檢查安裝是否成功</h2>
 <p>啟動 R，確認主控台有回應：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="dv">1</span> <span class="sc">+</span> <span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -376,14 +410,27 @@
 <pre><code>[1] "R version 4.6.0 (2026-04-24)"</code></pre>
 </div>
 </div>
-<p>若輸出正常，表示安裝成功，可以進入第二章——認識 R 的使用者介面。</p>
+<p>看到合理的輸出，就表示安裝成功，可以進入第二章認識使用者介面了。</p>
+<div class="callout callout-tip callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Tip</strong></p>
+</div>
+<div class="callout-content">
+<p><strong>讓 R 保持最新。</strong> 新版本發布時（CRAN 首頁會公告），升級步驟與安裝完全相同——在 Linux 上，套件管理系統還會自動幫你完成。</p>
+</div>
+</div>
+</div>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>
 <ul>
-<li><p><strong>版權聲明。</strong> 本教材改編自 Joseph Adler 所著 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版，O’Reilly Media）。所有權利均由原作者與出版者保留。</p></li>
-<li><p><strong>僅供非商業用途。</strong> 本教材嚴格限定用於教育目的，不得用於商業獲利。</p></li>
-<li><p><strong>適當標註出處。</strong> 任何對本教材的重製、散布或使用，都必須適當標註原始出處。</p></li>
+<li><p><strong>版權。</strong> 本講義改編自 Joseph Adler 著、O’Reilly Media 出版之 <em>R in a Nutshell: A Desktop Quick Reference</em>（第二版）。原著作者與出版社保留一切權利。</p></li>
+<li><p><strong>僅限非商業用途。</strong> 本教材僅供教學使用，不得用於商業營利。</p></li>
+<li><p><strong>標示出處。</strong> 任何重製、散布或使用本教材，皆須妥善標註原始出處。</p></li>
 </ul>
 
 </section></section>

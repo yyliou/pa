@@ -43,123 +43,293 @@ knitr::opts_chunk$set(fig.align = "center")
 
 # **Where Names Live**
 
-## Symbols and Bindings
+## Environments, Finally Defined
 
-Defining a variable really means **binding a symbol to a value inside an environment**:
+We have danced around environments since Chapter 3; time to define them. An **environment** is an R object containing:
 
-```{r,echo=TRUE}
-x <- 1            # bind symbol `x` to 1 in the current environment
-y <- quote(x + 1) # an unevaluated expression mentioning `x`
-eval(y)           # evaluate it: `x` is looked up NOW
-x <- 100
-eval(y)           # same expression, new answer
-```
+- the set of **symbols** available in a given context,
+- the **objects** associated with those symbols (together: the **frame**), and
+- a pointer to a **parent environment**.
 
-An expression is data until evaluated; the value of its symbols is decided at evaluation time, in some environment.
+Every evaluation context has an environment. To resolve a symbol, R searches the current environment first, then **recursively searches parent environments** until it finds a match.
 
-## Delayed Evaluation and Promises
+# Symbols
 
-Evaluation can be postponed deliberately:
+## Resolution Happens at Construction Time
+
+Defining a variable assigns a symbol to a value *in an environment*. When an object is built from symbols, R resolves them **at construction time**:
 
 ```{r,echo=TRUE}
-delayedAssign("lazy", {message("computing now!"); 42})
-# nothing printed yet ...
-lazy             # first touch forces the promise
+x <- 1; y <- 2; z <- 3
+v <- c(x, y, z)
+v
+x <- 10      # v was already built; changing x changes nothing
+v
 ```
 
-::: {.callout-note}
-**Promises.** A promise packages an expression plus the environment to evaluate it in, and computes its value only when first needed. R passes *all* function arguments as promises — that is "lazy evaluation," and it is why an unused argument can contain an error without crashing the call.
-:::
+## Delaying Evaluation: quote and eval
 
-## What Is an Environment?
-
-An **environment** is a set of symbol-to-value bindings plus a pointer to a **parent environment**. Lookup walks the chain: current environment first, then parent, then grandparent, until `emptyenv()`.
+You can postpone symbol resolution by quoting the expression and evaluating it later — each `eval` resolves symbols *as of now*:
 
 ```{r,echo=TRUE}
-e <- new.env()
-assign("z", 99, envir = e)
-get("z", envir = e)
-exists("z", envir = e)
-ls(envir = e)
+x <- 1; y <- 2; z <- 3
+v <- quote(c(x, y, z))
+eval(v)
+x <- 5
+eval(v)
 ```
 
-Other tools: `rm(..., envir=)` removes bindings; `environmentName()` labels well-known environments.
+## Promises: delayedAssign
+
+A **promise** delays evaluation until the variable is *first used*:
+
+```{r,echo=TRUE}
+x <- 1; y <- 2; z <- 3
+delayedAssign("v", c(x, y, z))
+x <- 5
+v          # evaluated now — with the current x
+```
+
+Packages use promises to expose objects without loading them into memory. Two caveats: you cannot test whether an object *is* a promise, nor recover the environment where one was created.
+
+# Working with Environments
+
+## The Environment Toolbox
+
+Environments are objects (internally, hash tables of symbol mappings — an efficiency trick exploited in Chapter 24). The vocabulary:
+
+| Function | Description |
+|---|---|
+| `assign` / `get` / `exists` | bind, fetch, or test a name in an environment |
+| `objects` | all names defined in an environment |
+| `remove` (`rm`) | drop objects from an environment |
+| `search` | names of attached packages — the chain of parent environments |
+| `searchpaths` | paths of attached packages |
+| `attach` / `detach` | add/remove a list, data frame, or data file to/from the search path |
+| `emptyenv` | the empty environment — every chain ends here |
+| `parent.env` | the parent of an environment |
+| `baseenv` | the environment of the base package |
+| `globalenv` / `.GlobalEnv` | the user's workspace |
+| `environment` | a function's environment (no argument: the current one) |
+| `new.env` | a fresh environment object |
+
+## objects and rm
+
+The two everyday calls — what's here, and clean it up:
+
+```{r,echo=TRUE}
+rm(list = ls())      # start with a clean slate
+x <- 1; y <- 2; z <- 3
+objects()
+rm(x)
+objects()
+```
 
 ## The Global Environment
 
-Each session starts in the **global environment** — your workspace:
+Each session gets a fresh environment for your objects: the **global environment**. Surprisingly, it is not the root of the tree — it is the *last* environment in the search path's chain. Walking the parents from `.GlobalEnv`:
 
 ```{r,echo=TRUE}
-environment()             # where am I?
-ls()[1:5]                 # what have I defined?
-```
-
-The chain above the global environment consists of the attached packages — exactly the **search path**:
-
-```{r,echo=TRUE}
-search()
-```
-
-This is why loading a package makes its functions visible: it inserts an environment into the lookup chain.
-
-## Environments and Functions
-
-Calling a function creates a *fresh* environment for its local variables, whose parent is the environment where the function was **defined** (not where it was called):
-
-```{r,echo=TRUE}
-make_counter <- function() {
-  count <- 0
-  function() {
-    count <<- count + 1   # write to the enclosing environment
-    count
-  }
+e <- .GlobalEnv
+while (environmentName(e) != environmentName(emptyenv())) {
+  print(environmentName(parent.env(e))); e <- parent.env(e)
 }
-tick <- make_counter()
-tick(); tick(); tick()
 ```
 
-The inner function *remembers* `count` between calls — a **closure**. This lexical scoping rule is the heart of R's function semantics.
+Attached packages line up as parents, ending at `base` and finally the **empty environment** — the one environment with no parent, to which all chains lead.
 
-## Global vs. Lexical Assignment
+# Environments and Functions
+
+## A Function Call Creates an Environment
+
+Calling a function creates a new environment; the arguments are bound to symbols there. (In language lingo: R is **lexically scoped**.)
 
 ```{r,echo=TRUE}
-v <- "global"
-f <- function() { v <- "local"; v }
-g <- function() { v <<- "overwritten"; v }
-f(); v          # local assignment leaves global alone
-g(); v          # <<- climbed up and replaced it
+env.demo <- function(a, b, c, d) { print(objects()) }
+env.demo(1, "truck", c(1,2,3,4,5), pi)
 ```
+
+Only the arguments appear — everything else lives in parent environments. And note carefully: a function's parent environment is **where it was created**, not where it is called. For functions you define at the console the two coincide; for functions from packages they differ.
+
+## The Call Stack
+
+R also maintains a **stack** of calling environments (a stack: add and remove only at the top — push and pop, like cafeteria trays). Each call pushes an environment; each return pops one.
+
+| Function | Description |
+|---|---|
+| `sys.call` | the current function call, as a language object |
+| `sys.frame` | the calling environment |
+| `sys.nframe` | number of the current frame (0 at the console) |
+| `sys.function` | the function being evaluated |
+| `sys.parent` | number of the parent frame |
+| `sys.calls` / `sys.frames` / `sys.parents` | calls, environments, parents for the whole stack |
+| `sys.on.exit` | the `on.exit` expression of the current frame |
+| `sys.status` | `sys.calls` + `sys.parents` + `sys.frames` in one list |
+| `parent.frame` | `sys.frame(sys.parent(n))` — the parent frame |
+
+Why care? A package function sometimes needs a symbol's meaning **in the calling context**. Modeling functions do exactly this: a formula contains symbol names but no data, and when you omit the `data` argument, the function hunts for the variables in the calling environment.
+
+## Evaluating in Another Environment: eval
+
+`eval` evaluates an expression in an arbitrary environment:
+
+```{r,eval=FALSE,echo=TRUE}
+eval(expr, envir = parent.frame(),
+     enclos = if (is.list(envir) || is.pairlist(envir))
+                parent.frame() else baseenv())
+```
+
+The book's example: a timing wrapper that records the start time, evaluates its argument **in the caller's frame**, and prints the elapsed time:
+
+```{r,echo=TRUE}
+timethis <- function(...) {
+  start.time <- Sys.time()
+  eval(..., sys.frame(sys.parent(sys.parent())))
+  end.time <- Sys.time()
+  print(end.time - start.time)
+}
+```
+
+## The Timing Demo
+
+Time an inefficient function that grows a vector element by element (console transcript):
+
+```{r,eval=FALSE,echo=TRUE}
+create.vector.of.ones <- function(n) {
+  return.vector <- NA
+  for (i in 1:n) {
+    return.vector[i] <- 1
+  }
+  return.vector
+}
+timethis(returned.vector <- create.vector.of.ones(10000))
+## Time difference of 1.485959 secs
+length(returned.vector)
+## [1] 10000
+```
+
+The timing is nice; the *point* is the last line — the assignment happened **in the calling environment**, so `returned.vector` exists there afterward. (Aside: pre-allocating with `length(return.vector) <- n` before the loop cuts the time from ~1.5 s to ~0.04 s — a preview of Chapter 24.)
+
+## Shorthands: evalq, eval.parent, local
+
+Three convenient wrappers around `eval`:
+
+- `evalq(expr, ...)` ≡ `eval(quote(expr), ...)` — quote for me;
+- `eval.parent(expr, n)` ≡ `eval(expr, parent.frame(n))` — evaluate in the caller;
+- `local(expr)` ≡ `eval(quote(expr), envir=new.env())` — evaluate in a fresh environment.
+
+`eval.parent` shortens the timing function nicely:
+
+```{r,echo=TRUE}
+timethis.b <- function(...) {
+  start.time <- Sys.time()
+  eval.parent(...)
+  end.time <- Sys.time()
+  print(end.time - start.time)
+}
+```
+
+## Data as Environment: with and within
+
+Treating a data frame or list as an environment lets you use its element names like symbols:
+
+```{r,error=TRUE,echo=TRUE}
+example.list <- list(a=1, b=2, c=3)
+a + b + c                          # not in the workspace...
+with(example.list, a + b + c)      # ...but with() finds them
+within(example.list, d <- a + b + c)
+```
+
+`with(data, expr)` evaluates and returns the **result**; `within(data, expr)` modifies and returns the **data**.
+
+## attach and detach
+
+`attach` adds the objects of a "database" — a list, data frame, or saved data file — to the search path; `detach` removes them:
+
+```{r,eval=FALSE,echo=TRUE}
+attach(what, pos = 2, name = deparse(substitute(what)),
+       warn.conflicts = TRUE)
+detach(name, pos = 2, unload = FALSE)
+```
+
+`pos` is the search-path position, `name` labels the attached database (used again by `detach`), `warn.conflicts` warns about masked names, and `unload` controls namespace unloading.
 
 ::: {.callout-warning}
-**Use `<<-` sparingly.** Functions that silently modify state outside themselves are hard to test and debug. Closures (previous slide) are the disciplined use case.
+**Use attach sparingly.** With several data frames sharing column names, it becomes genuinely hard to tell which object a name refers to. Prefer `transform` to change columns and `with` to evaluate expressions against a data frame.
 :::
 
-## Working with the Call Stack
+# Exceptions
 
-The environment where a function was *called* is reachable too — essential for functions that interpret expressions in their caller's context:
+## Errors and Warnings
 
-```{r,echo=TRUE}
-whodunit <- function() sys.function(-1)   # who called me?
-show_caller_x <- function() {
-  eval(quote(x), envir = parent.frame())
+Invalid expressions produce **errors**; questionable ones produce **warnings**:
+
+```{r,error=TRUE,echo=TRUE}
+12 / "hat"
+if (c(TRUE, FALSE)) TRUE else FALSE
+```
+
+(The second was merely a warning in the book's era; modern R promotes it to an error.) Why discuss exceptions in the environments chapter? Because when an exception occurs, the interpreter may abandon the current function and **signal the exception in the calling environment** — exception handling and environments are intertwined.
+
+## Signaling: stop, warning, message
+
+Three levels of telling the user something, from fatal to informative:
+
+```{r,error=TRUE,echo=TRUE}
+doWork <- function(filename) {
+  if (file.exists(filename)) read.delim(filename)
+  else stop("Could not open the file: ", filename)
 }
-x <- "caller's x"
-show_caller_x()
+doWork("file that doesn't exist")
 ```
 
-- `sys.call()` — the current call; `match.call()` — with argument names filled in.
-- `parent.frame()` — the calling environment. Functions like `lm()` use exactly this trick to evaluate formulas against your data.
+```{r,warning=TRUE,echo=TRUE}
+doNoWork <- function(filename) {
+  if (file.exists(filename)) "la la la"
+  else warning("File does not exist: ", filename)
+}
+doNoWork("another file that doesn't exist")
+```
 
-## Environments in Packages
+```{r,message=TRUE,echo=TRUE}
+doNothing <- function(x) {
+  message("This function does nothing.")
+}
+doNothing("another input value")
+```
 
-- Each loaded package contributes an environment to the search path; lookup explains shadowing — a name in your workspace hides one in a package.
-- Disambiguate explicitly with the `::` operator:
+In your own programs: `stop` on errors that invalidate the work; `warning` for problems the caller should know about; `message` for chatter.
+
+## Catching: try
+
+Suppose `foo` calls `bar`, `bar` sometimes fails (can't open a file, say), and `foo` wants to *survive* and try something else. The simple tool is `try`, which hides most of the machinery:
 
 ```{r,echo=TRUE}
-stats::sd(c(1, 2, 3, 4))
+res <- try({x <- 1}, silent=TRUE)
+res
+res <- try({open("file that doesn't exist")}, silent=TRUE)
+res
+class(res)
 ```
 
-- Packages use **namespaces** so their internal helpers stay invisible, and *promises* (via lazy data loading) so big data sets cost nothing until touched.
+`try(expr, silent)` evaluates `expr`; on failure it returns an object of class `"try-error"` (and prints the message unless `silent=TRUE`).
+
+## Catching: tryCatch
+
+The capable tool is `tryCatch`, taking an expression, a set of **handlers**, and a final expression:
+
+```{r,eval=FALSE,echo=TRUE}
+tryCatch(expression, handler1, handler2, ..., finally=finalexpr)
+```
+
+Evaluation order: R evaluates `expression`; if a **condition** (error or warning) arises, R picks the handler whose argument matches the condition's class; afterward `finally` is evaluated — with the handlers no longer active. A taste:
+
+```{r,echo=TRUE}
+tryCatch({
+  log(-1)
+}, warning = function(w) "caught a warning",
+   finally = message("done either way"))
+```
 
 ## Copyright Notice
 

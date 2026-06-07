@@ -41,144 +41,409 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **有教養的物件**
+# **兩套物件系統**
 
-## 兩套系統，一個概念
+## 支援 OOP 的函數式語言
 
-R 本質上是函數式語言，但內建了物件導向機制——而且有兩套：
+R 骨子裡是**函數式**語言——寫函數式程式完全是好做法。但 R 也支援**物件導向程式設計（OOP）**：Java、C#、Ruby、C++ 的主流範式。許多 R 套件以 R 物件打造，包括核心的 `stats`、`lattice` 與 `ggplot2`。OOP 在表示複雜事物（統計模型、圖表）時特別好用。
 
-- **S3**：非正式、輕量、無所不在。類別只是一個 `class` 屬性；分派靠命名慣例。
-- **S4**：正式類別，具備宣告的槽位（slots）、有效性檢查與註冊式方法 [@chambers2008software]。
+R 有兩套機制並存，皆承自 S：
+
+- **S3**（約 1990）：用 class 屬性實現單引數方法。經典建模軟體用 S3，所以它無所不在。
+- **S4**：正式的類別與方法——多重分派、抽象型別、精緻的繼承。許多較新套件採用，Bioconductor 用得尤其多。
+
+書中建議：*新的*抽象用 **S4** 打造；**S3** 也得學，因為你必須閱讀並擴充大量使用它的既有程式碼。
+
+## 以時間序列認識關鍵概念
+
+時間序列——等距時間間隔的測量值，有起點、終點、頻率——讓每個 OOP 概念都變具體：
+
+- **類別（class）**是正式定義；每個實際的時間序列是一個**實例（instance）**；操作該類別的函式是**方法（method）**；
+- 把儲存細節（資料框？向量？文字？）藏在方法之後，叫**封裝（encapsulation）**；
+- 體重紀錄類別*重用*時間序列的機制、只增添不同之處，這展示了**繼承（inheritance）**——時間序列是**父類別**、體重紀錄是**子類別**；
+- 同一個名字（`period`）對不同類別各自做對的事，叫**多型（polymorphism）**；
+- 由多個成分類別組成新類別叫**組合（composition）**——繼承一個以上的類別叫**多重繼承**，R 是允許的。
+
+（沒錯，R 早有時間序列類別——`stats` 裡的 S3 類別 `ts`。這是故意的：我們先用 S4 重蓋一遍，再解剖 S3 原版。）
+
+# S4 實作範例
+
+## setClass：定義 TimeSeries
+
+槽位（slot）是物件存放資訊的地方。我們用三個槽位表示時間序列——資料、起始時間、結束時間（單位、頻率、週期都能推導）：
+
+```{r,echo=TRUE}
+setClass("TimeSeries",
+  representation(
+    data="numeric",
+    start="POSIXct",
+    end="POSIXct"
+  )
+)
+```
+
+`representation` 說明每個槽位所裝物件的類別。
+
+## new：建立實例
+
+`new` 是通用建構子：第一個引數是類別名，其餘填入槽位。S4 預設的列印方法逐一顯示槽位：
+
+```{r,echo=TRUE}
+my.TimeSeries <- new("TimeSeries",
+  data=c(1, 2, 3, 4, 5, 6),
+  start=as.POSIXct("07/01/2009 0:00:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("07/01/2009 0:05:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"))
+my.TimeSeries
+```
+
+## setValidity：拒絕壞物件
+
+不是所有槽位值都合理：`end` 不能早於 `start`，兩者長度都得是 1。用 `setValidity` 註冊驗證函式、用 `validObject` 檢查：
+
+```{r,echo=TRUE}
+setValidity("TimeSeries",
+  function(object) {
+    object@start <= object@end &&
+    length(object@start) == 1 &&
+    length(object@end) == 1
+  }
+)
+validObject(my.TimeSeries)
+```
+
+（也可以在 `setClass` 時就指定驗證函式——見其完整定義。）
+
+## 驗證的實際效果
+
+從此 `new` 會檢查每個候選物件、拒絕不合格者：
+
+```{r,error=TRUE,echo=TRUE}
+good.TimeSeries <- new("TimeSeries",
+  data=c(7, 8, 9, 10, 11, 12),
+  start=as.POSIXct("07/01/2009 0:06:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("07/01/2009 0:11:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"))
+bad.TimeSeries <- new("TimeSeries",
+  data=c(7, 8, 9, 10, 11, 12),
+  start=as.POSIXct("07/01/2009 0:06:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("07/01/1999 0:11:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"))   # 還沒開始就結束了！
+```
+
+## 第一個方法：period
+
+從槽位計算週期的普通函式：
+
+```{r,echo=TRUE}
+period.TimeSeries <- function(object) {
+  if (length(object@data) > 1) {
+    (object@end - object@start) / (length(object@data) - 1)
+  } else {
+    Inf
+  }
+}
+```
+
+`@` 運算子直探槽位——那是實作者的視角。使用者該得到更友善的動詞；泛型函式登場。
+
+## setGeneric：series
+
+想從*任何*合適的物件抽出資料序列——多型——先定義函式、再升格為**泛型**；舊的函式主體成為預設方法：
+
+```{r,echo=TRUE}
+series <- function(object) { object@data }
+setGeneric("series")
+series(my.TimeSeries)
+showMethods("series")
+```
+
+（OOP 術語稱此為函式的*多載（overloading）*。）
+
+## setMethod：替 TimeSeries 註冊 period
+
+建立泛型 `period`，再把 `period.TimeSeries` 註冊為 `TimeSeries` 簽名的方法：
+
+```{r,echo=TRUE}
+period <- function(object) { object@period }
+setGeneric("period")
+setMethod(period, signature=c("TimeSeries"), definition=period.TimeSeries)
+period(my.TimeSeries)
+```
+
+呼叫泛型，R 依類別分派到正確的定義。
+
+## 為既有泛型寫方法——連運算子也行
+
+你可以替既存的泛型（如 `summary`）掛上方法——甚至**運算子**：
+
+```{r,echo=TRUE}
+setMethod("summary", signature="TimeSeries",
+  definition=function(object, ...) {
+    print(paste(object@start, " to ", object@end, sep="", collapse=""))
+    print(paste(object@data, sep="", collapse=","))
+  }
+)
+summary(my.TimeSeries)
+setMethod("[", signature=c("TimeSeries"),
+  definition=function(x, i, j, ..., drop) { x@data[i] }
+)
+my.TimeSeries[3]
+```
 
 ::: {.callout-note}
-**核心概念。** **類別**（class）描述一種物件；物件是其類別的**實例**（instance）。**泛型函式**（如 `print`、`summary`）透過**分派**（dispatch）到類別專屬的**方法**（method）決定行為。**繼承**（inheritance）讓一個類別擴充另一個。
+這招只對*部分*內建函式有效——`print` 就不能這樣重定義。可重定義的泛型清單見 `?S4groupGeneric`；原因在後面的 S3 一節說明。
 :::
 
-S3 撐起了 base R 的大半江山；S4 撐起 Bioconductor 與講究嚴謹的程式。我們先看 S4，再看 S3。
+## 繼承：WeightHistory
 
-## 貫穿全章的例子
-
-假設要追蹤多位使用者的體重變化。自然的設計是：
-
-- 一個 `TimeSeries` 類別，存放數值與起迄時間戳；
-- 一個 `WeightHistory` 類別，**擴充** `TimeSeries` 並加上人名；
-- 各類別實作泛型操作——`period()`、`series()`。
-
-這個例子會把本章所有 S4 功能演練一遍。
-
-## 定義 S4 類別
-
-`setClass()` 宣告類別名稱與**槽位**（具型別的欄位）：
-
-```{r,echo=TRUE}
-library(methods)
-setClass("TimeSeries",
-  representation(data = "numeric", start = "POSIXct", end = "POSIXct"))
-
-my.ts <- new("TimeSeries",
-  data  = c(1, 2, 1, 4, 5),
-  start = as.POSIXct("2026-09-22 09:00:00"),
-  end   = as.POSIXct("2026-09-22 09:04:00"))
-my.ts@data            # 槽位以 @ 存取
-```
-
-`new()` 建構實例；列印 S4 物件會列出槽位。
-
-## 有效性檢查
-
-有效性函式能在建構當下擋掉不合法的物件：
-
-```{r,echo=TRUE,error=TRUE}
-setValidity("TimeSeries", function(object) {
-  if (object@start <= object@end) TRUE
-  else "start must precede end"
-})
-new("TimeSeries", data = 1:3 + 0,
-    start = as.POSIXct("2026-01-02"), end = as.POSIXct("2026-01-01"))
-```
-
-這是 S4 相對 S3 最實際的優勢：系統替你強制執行不變條件。
-
-## 泛型函式與方法（S4）
-
-`setGeneric()` 宣告泛型；`setMethod()` 替某個類別註冊實作：
-
-```{r,echo=TRUE}
-setGeneric("period", function(object) standardGeneric("period"))
-setMethod("period", "TimeSeries", function(object) {
-  (object@end - object@start) / (length(object@data) - 1)
-})
-period(my.ts)
-```
-
-你也可以為*既有的*泛型新增方法——例如替 `TimeSeries` 寫一個 `summary` 方法——R 會自動分派。
-
-## 繼承（S4）
-
-`contains=` 讓一個類別擴充另一個；子類別繼承槽位、有效性與方法：
+體重紀錄＝時間序列＋姓名與身高。`contains` 宣告父類別；新類別只加自己的額外槽位：
 
 ```{r,echo=TRUE}
 setClass("WeightHistory",
-  contains = "TimeSeries",
-  representation(name = "character"))
-
-kim <- new("WeightHistory",
-  data  = c(63, 62.5, 62),
-  start = as.POSIXct("2026-01-01"), end = as.POSIXct("2026-03-01"),
-  name  = "Kim")
-period(kim)        # 繼承來的方法直接可用
-kim@name
+  representation(height = "numeric", name = "character"),
+  contains = "TimeSeries")
+john.doe <- new("WeightHistory",
+  data=c(170, 169, 171, 168, 170, 169),
+  start=as.POSIXct("02/14/2009 0:00:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("03/28/2009 0:00:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"),
+  height=72, name="John Doe")
 ```
 
-類別可以繼承多個父類別；方法分派會挑選最特定的匹配。
+R 會自動驗證內嵌的 TimeSeries（你可以自己試試塞個壞的）。
 
-## S3：靠慣例的類別
+## 多重繼承：Person ＋ TimeSeries
 
-在 S3 中，「類別」不過是一個屬性，「方法」不過是叫做 `generic.class` 的函式：
+更乾淨的組合：先定義 `Person` 類別，再**同時**繼承兩者：
 
 ```{r,echo=TRUE}
-cat_record <- list(name = "Mochi", weight = 4.2)
-class(cat_record) <- "cat"
+setClass("Person",
+  representation(height = "numeric", name = "character"))
+setClass("AltWeightHistory",
+  contains = c("TimeSeries", "Person"))
+```
 
-print.cat <- function(x, ...) {
-  cat("Cat:", x$name, "—", x$weight, "kg\n")
+行為一模一樣、設計略勝一籌——而且 `AltWeightHistory` 同時繼承兩個父類別的方法。
+
+## 虛擬類別：setClassUnion
+
+加一個 `Cat` 類別——貓也有名字。想寫一個同時涵蓋人*與*貓的 `is.fluffy` 方法，就用 `setClassUnion` 在兩者之上建立**虛擬類別**：
+
+```{r,echo=TRUE}
+setClass("Cat",
+  representation(breed = "character", name = "character"))
+setClassUnion("NamedThing", c("Person", "Cat"))
+```
+
+方法可以鎖定 `NamedThing`；但不能從它建立物件（表示法有歧義）。若在子類別（如 `Person`）另外定義 `is.fluffy`，會覆寫父類別的版本。附帶好處——類別成員資格可以檢驗：
+
+```{r,echo=TRUE}
+jane.doe <- new("AltWeightHistory",
+  data=c(130, 129, 131, 128, 130, 129),
+  start=as.POSIXct("02/14/2009 0:00:00", tz="GMT",
+                   format="%m/%d/%Y %H:%M:%S"),
+  end=as.POSIXct("03/28/2009 0:00:00", tz="GMT",
+                 format="%m/%d/%Y %H:%M:%S"),
+  height=67, name="Jane Doe")
+is(jane.doe, "NamedThing")
+is(john.doe, "TimeSeries")
+```
+
+# 深入 S4
+
+## setClass 完整簽名
+
+```{r,eval=FALSE,echo=TRUE}
+setClass(Class, representation, prototype, contains=character(),
+         validity, access, where, version, sealed, package,
+         S3methods = FALSE)
+```
+
+| 引數 | 說明 |
+|---|---|
+| `Class` | 新類別的名稱（唯一必填） |
+| `representation` | 槽位及其類別的具名串列（`"ANY"` 表示什麼都能放） |
+| `prototype` | 槽位預設值的物件 |
+| `contains` | 此類別擴充的父類別名稱 |
+| `validity` | 驗證函式（預設不檢查；可用 `setValidity` 補設） |
+| `where` | 存放定義的環境（預設：呼叫 `setClass` 之處） |
+| `sealed` | 是否禁止再以同名 `setClass` 重定義 |
+| `package` | 類別所屬套件名 |
+| `S3methods` | 是否允許為此類別寫 S3 方法（預設 `FALSE`） |
+| `access`、`version` | 不使用；S-PLUS 相容性保留 |
+
+`methods` 套件的 `representation()` 與 `prototype()` 輔助函式，在「擴充基本型別」「多個父類別」「兩者混合」時特別好用。
+
+## 槽位規則、.Data 與其他
+
+- **禁用的槽位名**——保留給屬性：`class`、`comment`、`dim`、`dimnames`、`names`、`row.names`、`tsp`。（物件可以同時擁有槽位*與*屬性。）
+- 擴充**基本型別**（本章稍後的表）會得到一個存放基本部分的 `.Data` 槽位——針對內建型別寫的程式碼照常運作，作用在 `.Data` 上。
+- `setIs(class1, class2, ...)` 明確宣告繼承關係——`contains` 之外的另一條路。
+- 建立物件時，R 會執行類別的 **`initialize`** 方法（若有定義）——通常用來計算衍生槽位。
+- `setClassUnion(name, members, where)` 建立前面看過的虛擬父類別。
+
+## 建立物件與槽位存取
+
+- `new(c, ...)`——**建構子**：具名引數填槽位；之後執行 `initialize` 方法（若有）。
+- 讀槽位：`object@slotname`，或等價的 `slot(object, "slotname")`。
+- 寫槽位用普通指派，預設會驗證：
+
+```{r,eval=FALSE,echo=TRUE}
+birthdate@month <- "June"
+slot(birthdate, "month") <- "June"
+slot(birthdate, "month", check=FALSE) <- "June"   # 跳過驗證：通常不智
+```
+
+## 物件操作與轉型
+
+物件檢視詞彙：
+
+- `is(o, c)`——物件 `o` 屬於類別 `c` 嗎？`extends(c1, c2)`——類別 `c1` 擴充 `c2` 嗎？
+- `slotNames(o)`／`slotNames(c)`——物件／類別的槽位名；`getSlots(c)`——各槽位的*類別*（有點反直覺）。
+
+轉換：`as(o, c)` 把物件 `o` 轉成類別 `c`。自己的類別要用 **`setAs`** 註冊轉型方法：
+
+| 引數 | 說明 |
+|---|---|
+| `from`、`to` | 輸入與輸出的類別名 |
+| `def` | 執行轉換的函式 |
+| `replace` | 替換形式用的函式（`as` 被指派時） |
+| `where` | 存放定義的環境 |
+
+## setGeneric 與 setMethod 完整簽名
+
+`setGeneric(name, def=, group=list(), valueClass=character(), where=, package=, signature=, useAsDefault=, ...)`——重點引數：
+
+- `name`／`def`——名稱與（可選的）定義函式；`group`——群組泛型（見 `?S4groupGeneric`）；
+- `valueClass`——回傳值必須隸屬的類別；`signature`——形式引數名與類別（`"ANY"` 表示不限）；
+- `useAsDefault`——指定哪個函式當預設方法。
+
+`setMethod(f, signature=character(), definition, where=, valueClass=NULL, sealed=FALSE)`：
+
+- `f`——泛型（或其名稱）；`signature`——要比對的引數類別；`definition`——被呼叫的函式；`sealed`——禁止重定義。
+
+## 管理泛型與方法
+
+`methods` 套件的記帳函式：
+
+| 函式 | 說明 |
+|---|---|
+| `isGeneric`／`isGroup` | 是否存在此名稱的泛型／群組泛型 |
+| `removeGeneric`／`removeMethods` | 移除泛型連同方法／只移除方法 |
+| `getMethod`、`selectMethod` | 取得某函式＋簽名的方法 |
+| `existsMethod`、`hasMethod` | 該方法存在嗎？ |
+| `findMethod` | 哪些套件含有此方法？ |
+| `showMethods` | 顯示 S4 泛型的所有方法 |
+| `dumpMethod`／`dumpMethods` | 傾印一個／全部方法為程式碼 |
+| `findFunction` | 函式定義在搜尋路徑的哪裡 |
+
+更多協助：`library(help="methods")`。
+
+## 基本類別
+
+內建型別的類別——一切類別都建立在這些之上，而且你可以為它們寫方法：
+
+| 分類 | 物件型別 | 類別 |
+|---|---|---|
+| 向量 | `integer`／`double`／`complex`／`character`／`logical`／`raw` | `integer`／`numeric`／`complex`／`character`／`logical`／`raw` |
+| 複合 | `list`／`pairlist`／`environment` | `list`／`pairlist`／`environment` |
+| 特殊 | `NULL` | `NULL` |
+| 語言 | `symbol`／`language`／`expression` | `name`／`call`／`expression` |
+| 函式 | `closure`／`special`／`builtin` | `function` |
+| 其他 | `externalptr` | `externalptr` |
+
+六個向量類別都擴充虛擬類別 `vector`。
+
+# 老派 OOP：S3
+
+## S3 類別不過是屬性
+
+S3 物件＝基本物件＋額外屬性，其中一個叫 `class`。沒有正式定義；屬性（包括 class）可以徒手改。（S3 很像 JavaScript 這類原型語言。）解剖內建的 `ts` 類別：
+
+```{r,echo=TRUE}
+my.ts <- ts(data=c(1, 2, 3, 4, 5), start=c(2009, 2), frequency=12)
+my.ts
+attributes(my.ts)
+typeof(my.ts)
+unclass(my.ts)
+```
+
+`ts` 就是一條 double 向量，外加 `class` 與 `tsp` 兩個屬性。S4 的工具在這裡不適用：
+
+```{r,error=TRUE,echo=TRUE}
+my.ts@tsp
+```
+
+S3 的繼承是非正式的——class 屬性若有多個元素，第一個是物件的類別、其餘是「繼承」的類別，使繼承成了*物件*的性質、而非類別的。封裝不受語言強制；參數化多型也付之闕如。不過簡單多型行得通——靠 S3 泛型。
+
+## S3 方法：命名慣例＋ UseMethod
+
+S3 泛型靠**命名慣例**分派，不靠註冊：
+
+1. 取個泛型名，例如 `gname`；
+2. 定義 `gname`，主體為 `UseMethod("gname")`；
+3. 對每個目標類別，定義 `gname.classname`，第一個引數是該類別的物件。
+
+來看真品：
+
+```{r,echo=TRUE}
+plot
+```
+
+`UseMethod` 沿著物件的 class 向量找 `plot.class`；全部落空就找 `plot.default`。（`NextMethod` 可在方法內呼叫，交棒給下一個可用的方法。）
+
+## 替我們的 S4 類別加 S3 方法
+
+替 `TimeSeries` 加 plot 方法，*只需把函式取對名字*：
+
+```{r,echo=TRUE}
+plot.TimeSeries <- function(x, ...) {
+  plot(x@data, ...)
 }
-print(cat_record)        # print() 分派到 print.cat
+plot(my.TimeSeries)
 ```
 
-沒有宣告、沒有驗證——從頭到尾都是慣例。函式內呼叫 `UseMethod()` 就讓它成為泛型。
+`plot(my.TimeSeries)` 默默變成 `plot.TimeSeries(my.TimeSeries)`。
 
-## S3 分派的運作方式
+## S4 裡用 S3：setOldClass
 
-```{r,echo=TRUE}
-describe <- function(x) UseMethod("describe")
-describe.default <- function(x) "some object"
-describe.numeric <- function(x) paste("numbers, mean =", mean(x))
-describe(letters)
-describe(c(1, 2, 3))
+S4 槽位不能直接放 S3 類別——得先用 `setOldClass(Classes, prototype, where, test=FALSE, S4Class)` 包裝：
+
+- `Classes`——舊式類別的名稱；
+- `prototype`——S4 類別的預設物件；
+- `test`——可能多重繼承時設 `TRUE`；
+- `S4Class`——作為基礎的 S4 類別定義。
+
+## 找出被藏起來的 S3 方法
+
+套件作者可能**隱藏**個別方法，逼你使用泛型——用隱蔽實現封裝：
+
+```{r,error=TRUE,echo=TRUE}
+library(lattice)
+methods(histogram)
+histogram.factor()
 ```
 
-- `class()` 向量由左至右搜尋是否存在對應的 `generic.class` 函式；`.default` 是後備。
-- `methods("describe")` 列出現有方法；`inherits(x, "cat")` 檢查類別歸屬。
+無論如何想讀隱藏的程式碼：
 
-## S3 與 S4 的比較
+```{r,eval=FALSE,echo=TRUE}
+getS3method(f="histogram", class="formula")
+getAnywhere(histogram.formula)
+```
 
-| 面向 | S3 | S4 |
-|:---|:---|:---|
-| 類別定義 | `class(x) <- "name"` | `setClass()` 加上具型別槽位 |
-| 欄位存取 | `x$field` | `x@slot` |
-| 方法 | 名為 `generic.class` 的函式 | `setMethod()` |
-| 驗證 | 無 | `setValidity()` |
-| 成本 | 極低 | 較繁瑣 |
-
-- 日常工作與快速多型用 **S3**；`lm`、`data.frame` 與多數 CRAN 套件都是它。
-- 當正確性比簡潔更重要——大型系統、複雜階層、Bioconductor——用 **S4**。
-- 還有更新的系統（R5 參照類別、R6、S7），全都建立在同一套屬性機制上。
+::: {.callout-tip}
+**現代註腳。** 今日的生態系又添了幾套系統——可變參照物件的 `R6`，以及計畫統一 S3/S4 的接班人 `S7`。你剛學的概念（類別、方法、分派、繼承）全部直接通用。
+:::
 
 ## 版權聲明
 
-- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+- **版權。** 本講義改編自 Joseph Adler 著、O'Reilly Media 出版之 *R in a Nutshell: A Desktop Quick Reference*（第二版）。原著作者與出版社保留一切權利。
 
-- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+- **僅限非商業用途。** 本教材僅供教學使用，不得用於商業營利。
 
-- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
+- **標示出處。** 任何重製、散布或使用本教材，皆須妥善標註原始出處。

@@ -38,131 +38,247 @@ include-after-body:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
+knitr::opts_chunk$set(fig.align = "center", fig.height = 4, message = FALSE, warning = FALSE)
 library(ggplot2)
 ```
 
-# **A Grammar of Graphics**
+# **The Grammar of Graphics**
 
-## The Third System
+## A Short Introduction
 
-`ggplot2` [@wickham2016ggplot2] implements Wilkinson's **grammar of graphics** [@wilkinson2011grammar]: instead of choosing from a menu of chart types, you *compose* a chart from independent parts —
+Hadley Wickham's **ggplot2** became one of R's most popular packages — not just for pretty output, but because it speaks a *language* for describing plots: the **grammar of graphics**. You describe **what** you want to show, not **how** to draw it. The toy data (lattice's, with renamed variables):
 
-- **data** and **aesthetic mappings** (which variable drives position, color, size, shape);
-- **geoms** (points, lines, bars — the visible marks);
-- **stats** (transformations like binning or smoothing);
-- **scales**, **coordinates**, **facets**, and **themes**.
+```{r,echo=TRUE}
+d <- data.frame(a=c(0:9), b=c(1:10), c=c(rep(c("Odd", "Even"), times=5)))
+qplot(x=a, y=b, data=d)
+```
 
-This is the system our companion textbook (and the `da` course) is devoted to; here we meet its essentials.
+We specified an x, a y, and a data set — never the words "scatter plot." (`qplot` = quick plot; deprecated in recent ggplot2 but still working — the full `ggplot()` style follows shortly.)
 
-```{r,echo=TRUE,cache=TRUE}
+## Plot Objects
+
+Like lattice, ggplot2 functions **return an object**; printing draws it. Inside functions and scripts: `print` it yourself.
+
+```{r,echo=TRUE}
+first.ggplot2.example <- qplot(x=a, y=b, data=d)
+summary(first.ggplot2.example)
+```
+
+The summary lays the plot's anatomy bare: the data, the **mapping** (x = a, y = b), the faceting, and the layer (`geom_point` + `stat_identity` + identity position).
+
+## Facets and Colors
+
+Panels (lattice's conditioning) are **facets**, specified by formula; group-by-color is just another mapping:
+
+```{r,echo=TRUE}
+qplot(x=a, y=b, data=d, facets=~c)     # panels left-right
+qplot(x=a, y=b, data=d, facets=c~.)    # panels top-bottom — easy to flip!
+qplot(x=a, y=b, data=d, color=c)       # color instead of panels
+```
+
+(Hadley's preferred spelling of the first: `qplot(x=a, y=b, data=d) + facet_wrap(~c)`.)
+
+## One Variable: Histogram and Density
+
+With only `x` supplied, `qplot` defaults to a histogram; ask for another **geom** by name:
+
+```{r,echo=TRUE}
+set.seed(123456789)
+e <- data.frame(f=rnorm(1000))
+qplot(x=f, data=e)
+qplot(x=f, data=e, geom="density")
+```
+
+## The Grammar's Components
+
+Drawing a chart means doing many things at once; the grammar names each one, and ggplot2's functions mirror the names:
+
+- **Data** — what is visualized;
+- **Mappings** — variables → chart components;
+- **Geometric objects (geom)** — points, bars, lines... (`geom_point`, `geom_bar`, ...);
+- **Aesthetic properties (aes)** — how it looks: sizes, labels, ticks;
+- **Scales** — how variables map to aesthetics;
+- **Coordinates** — Cartesian (`coord_cartesian`), polar (`coord_polar`), map projections (`coord_map`);
+- **Statistical transformations (stat)** — summaries: `stat_bin` for histograms, `stat_boxplot`...;
+- **Facets** — partitioning into subplots;
+- **Positional adjustments** — fine placement (stack, dodge, jitter...).
+
+`summary` of any plot object reports every component — your map when tuning a chart.
+
+# A More Complex Example: Medicare Data
+
+## The Data
+
+Real, complicated data: US **Medicare** cost and outcome measures, packaged three ways — `outcome.of.care.measures.national` (national mortality/readmission rates for heart attack, heart failure, pneumonia), `medicare.payments` (average payment per hospital × 70 conditions; 140,722 records), `medicare.payments.by.state`:
+
+```{r,echo=TRUE}
 temp <- tempfile(fileext = ".rda")
-download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda", temp, mode = "wb")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/outcome.of.care.measures.national.rda",
+              temp, mode = "wb")
 load(temp)
-hitters <- subset(batting.2008, AB > 100)
+outcome.of.care.measures.national
 ```
 
-## Anatomy of a ggplot Call
+## Bar Charts: Facets...
 
-```{r,echo=TRUE,out.width="62%"}
-ggplot(hitters, aes(x = AB, y = H)) +
-  geom_point(alpha = 0.4)
+One categorical x, so a univariate plot with bar heights from `weight=Rate`; facet by Measure, fill by Measure:
+
+```{r,echo=TRUE}
+qplot(x=Condition, data=outcome.of.care.measures.national,
+      geom="bar", weight=Rate, facets=Measure~., fill=Measure)
 ```
 
-- `ggplot(data, aes(...))` establishes the data and mappings;
-- `+ geom_*()` adds a layer that draws them;
-- further `+` terms refine scales, labels, facets, and themes.
+## ...or Dodging
 
-## Aesthetic Mappings
+Drop the facets, set `position="dodge"` to place bars side by side:
 
-Map a third variable to color and the legend writes itself:
-
-```{r,echo=TRUE,out.width="62%"}
-ggplot(hitters, aes(x = AB, y = H, color = HR)) +
-  geom_point() +
-  labs(x = "At-bats", y = "Hits", color = "Home runs")
+```{r,echo=TRUE}
+qplot(x=Condition, data=outcome.of.care.measures.national,
+      geom="bar", weight=Rate, fill=Measure, position="dodge")
 ```
 
-::: {.callout-note}
-**Mapping vs. setting.** `aes(color = HR)` *maps* data to color (legend, scale); `geom_point(color = "red")` *sets* a constant. Mixing these up is the classic ggplot beginner error.
+Both work — *differently*: faceting invites comparing conditions within each measure; dodging invites comparing measures within each condition. The display is an argument.
+
+## Payments vs. Volume
+
+Question: do hospitals treating more cases charge Medicare more or less? Restrict to the three heart-failure diagnosis groups and plot payment vs. case count, colored by diagnosis:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/medicare.payments.rda",
+              temp, mode = "wb")
+load(temp)
+heart.failure <- c("Heart failure and shock w/o CC/MCC",
+                   "Heart failure and shock w MCC",
+                   "Heart failure and shock w CC")
+payment.plot <- qplot(x=Number.Of.Cases, y=Medicare.Average.Payment,
+  data=subset(medicare.payments, Diagnosis.Related.Group %in% heart.failure),
+  color=Diagnosis.Related.Group)
+payment.plot
+```
+
+Unreadable — everything clumps left. (Small counts are censored by HIPAA.)
+
+## Fixing the Plot by Adding Layers
+
+Recipe: log x-scale, semi-opaque points (`alpha=I(1/10)`), a smoothing line, trimmed y. The elegant route **adds components with `+`**:
+
+```{r,echo=TRUE}
+payment.plot.alpha <- qplot(x=Number.Of.Cases, y=Medicare.Average.Payment,
+  data=subset(medicare.payments, Diagnosis.Related.Group %in% heart.failure),
+  color=Diagnosis.Related.Group, alpha=I(1/10), ylim=c(0, 20000))
+payment.plot.scaled <- payment.plot.alpha + scale_x_log10() + geom_smooth()
+payment.plot.scaled
+```
+
+`summary` of this object now shows **two** geom/stat/position triples — one per layer — with the alpha aesthetic threaded through.
+
+## Reordering Factors for Dot Plots
+
+Costs rise with volume — geography, perhaps? State-level data, with `State` levels **reordered by payment** (sorting the *levels*, not the rows) before a dot plot:
+
+```{r,echo=TRUE,fig.height=5}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/medicare.payments.by.state.rda",
+              temp, mode = "wb")
+load(temp)
+medicare.payments.by.state.hf <- subset(medicare.payments.by.state,
+  Diagnosis.Related.Group %in% heart.failure)
+medicare.payments.by.state.hf$State <- with(medicare.payments.by.state.hf,
+  reorder(State, Medicare.Average.Payment.Maximum, mean))
+qplot(x=Medicare.Average.Payment.Maximum, y=State,
+      data=medicare.payments.by.state.hf,
+      color=Diagnosis.Related.Group)
+```
+
+Top of the list: Northern Mariana Islands, Alaska, Virgin Islands — remote and expensive — then NY, MD, CA: high cost of living *and* big hospitals. Cheapest: Puerto Rico, American Samoa. Cost and volume are both correlated **with geography**.
+
+## A Choropleth Map
+
+Are adjacent states similar? Merge payments with state polygons (`maps` package) and fill by payment — `geom="polygon"` plus a repositioned legend:
+
+```{r,echo=TRUE}
+library(maps)
+states <- map_data("state")
+state.name.map <- data.frame(abb=state.abb, region=tolower(state.name),
+                             stringsAsFactors=FALSE)
+states <- merge(states, state.name.map, by="region")
+toplot <- merge(states, medicare.payments.by.state,
+                by.x="abb", by.y="State")
+toplot <- toplot[order(toplot$order), ]
+qplot(long, lat,
+      data=subset(toplot,
+        Diagnosis.Related.Group=="Heart failure and shock w/o CC/MCC"),
+      group=group, fill=Medicare.Average.Payment.Maximum,
+      geom="polygon") +
+  theme(legend.position="bottom", legend.direction="vertical")
+```
+
+(The book wrote `opts(...)` — long since replaced by `theme()`.)
+
+# Quick Plot and the Full Grammar
+
+## qplot: Arguments
+
+```{r,eval=FALSE,echo=TRUE}
+qplot(x, y, ..., data, facets, margins, geom, stat,
+      position, xlim, ylim, log, main, xlab, ylab, asp)
+```
+
+| Argument | Description | Default |
+|---|---|---|
+| `x`, `y`, `data` | values and (optional) data frame | |
+| `facets` | facet formula: one-sided → `facet_wrap`, two-sided → `facet_grid` | `NULL` |
+| `geom` | geoms as character vector | `"auto"`: point (x,y) / histogram (x) |
+| `stat` / `position` | statistics / position adjustments | `list(NULL)` |
+| `xlim`, `ylim`, `log` | limits; `log` = `""`/`"x"`/`"y"`/`"xy"` | |
+| `main`, `xlab`, `ylab`, `asp` | titles, labels, aspect | deparsed expressions |
+| `...` | other aesthetics passed to layers | |
+
+## ggplot + Layers: the Verbose, Flexible Way
+
+Beyond `qplot`: create the object with `ggplot(data, mapping=aes(...))`, then **add layers and options with `+`**:
+
+```{r,echo=TRUE}
+plt <- ggplot(data=d, mapping=aes(x=a, y=b)) + geom_point()
+summary(plt)
+```
+
+- `aes(x, y, ...)` declares the mappings (relatives: `aes_string`, `aes_auto` in the book's era).
+- A bare `ggplot(...)` object has no layers — printing it errors ("No layers in plot").
+- The generic `layer(...)` adds a layer by geom short-name (`layer("point")`); in practice the `geom_*` convenience functions do this.
+
+## The geom Vocabulary
+
+| | | |
+|---|---|---|
+| `geom_abline` line by slope+intercept | `geom_errorbar(h)` error bars | `geom_polygon` polygons |
+| `geom_area` area plot | `geom_freqpoly` frequency polygon | `geom_quantile` quantile-regression lines |
+| `geom_bar` bars | `geom_hex` hexagonal binning | `geom_rect` rectangles |
+| `geom_bin2d` 2-D bin heatmap | `geom_histogram` histogram | `geom_ribbon` ribbons (à la Minard) |
+| `geom_blank` nothing | `geom_hline` / `geom_vline` h/v lines | `geom_rug` rug |
+| `geom_boxplot` box plots | `geom_jitter` jittered points | `geom_segment` segments |
+| `geom_contour` contours | `geom_line` / `geom_path` lines/paths | `geom_smooth` smoothed mean |
+| `geom_crossbar` boxless boxes | `geom_linerange` vertical intervals | `geom_step` steps |
+| `geom_density(2d)` densities | `geom_point` / `geom_pointrange` | `geom_text` text |
+| | | `geom_tile` tiles |
+
+## stats, scales, coords, facets, positions
+
+- **stat_**: `bin`, `bin2d`, `binhex`, `boxplot`, `contour`, `density`, `density2d`, `function`, `identity`, `qq`, `quantile`, `smooth`, `spoke`, `sum`, `summary`, `unique`, plus line helpers `abline`/`hline`/`vline` (modern ggplot2 folds these into geoms).
+- **scale_**: `alpha`, `brewer` (ColorBrewer), `continuous`, `date`/`datetime`, `discrete`, `gradient`/`gradient2`/`gradientn`, `grey`, `hue`, `identity`, `linetype`, `manual`, `shape`, `size` (today spelled e.g. `scale_color_brewer`, `scale_x_continuous`).
+- **coord_**: `cartesian`, `equal`, `flip`, `map`, `polar`, `trans`.
+- **facet_**: `facet_grid` (grid layout) and `facet_wrap` (wrapped 1-D list).
+- **position_**: `dodge`, `fill`, `identity`, `jitter`, `stack`.
+
+## Learning More
+
+- Hadley Wickham's book *ggplot2: Elegant Graphics for Data Analysis* — the definitive treatment.
+- The official documentation site (now <https://ggplot2.tidyverse.org>) and the *R Graphics Cookbook*.
+
+::: {.callout-tip}
+**Course note on API drift.** Since the book: `opts()` → `theme()`; `qplot` is soft-deprecated in favor of `ggplot() + geom_*()`; scales are written `scale_<aesthetic>_<type>`. The grammar itself — data, mapping, geom, stat, scale, coord, facet, position — is unchanged, which is exactly the point of having a grammar.
 :::
-
-## Histograms and Densities
-
-Each geom implies a default stat — `geom_histogram()` bins for you:
-
-```{r,echo=TRUE,out.width="62%",message=FALSE}
-ggplot(hitters, aes(x = H / AB)) +
-  geom_histogram(bins = 30)
-```
-
-```{r,echo=TRUE,out.width="62%"}
-ggplot(hitters, aes(x = H / AB)) +
-  geom_density(fill = "steelblue", alpha = 0.3)
-```
-
-## Smoothing Layers
-
-Layers stack — raw data underneath, a model on top:
-
-```{r,echo=TRUE,out.width="65%",message=FALSE}
-ggplot(hitters, aes(x = AB, y = H)) +
-  geom_point(alpha = 0.3) +
-  geom_smooth(method = "lm")
-```
-
-`geom_smooth()` defaults to loess with a confidence ribbon; `method = "lm"` fits a straight line.
-
-## Bars and Boxes
-
-```{r,echo=TRUE,out.width="65%"}
-team.hr <- aggregate(HR ~ teamID, data = batting.2008, sum)
-top8 <- head(team.hr[order(-team.hr$HR), ], 8)
-ggplot(top8, aes(x = reorder(teamID, -HR), y = HR)) +
-  geom_col() +
-  labs(x = NULL, y = "Team home runs (top 8)")
-```
-
-`geom_boxplot()`, `geom_violin()`, and `geom_jitter()` cover the distribution-by-group cases of Chapter 13 in grammar form.
-
-## Faceting
-
-The lattice trick, grammar style:
-
-```{r,echo=TRUE,out.width="70%",message=FALSE}
-ggplot(hitters, aes(x = AB, y = H)) +
-  geom_point(alpha = 0.3) +
-  facet_wrap(~ bats) +
-  labs(title = "Hits vs. at-bats by batting side")
-```
-
-`facet_wrap(~ g)` wraps panels into a grid; `facet_grid(rows ~ cols)` crosses two factors.
-
-## Scales and Themes
-
-Every mapping has a scale you may replace; themes control the non-data ink:
-
-```{r,echo=TRUE,out.width="65%"}
-ggplot(hitters, aes(x = AB, y = H, color = HR)) +
-  geom_point() +
-  scale_color_gradient(low = "grey80", high = "red") +
-  scale_x_log10() +
-  theme_minimal(base_size = 13) +
-  labs(title = "Hits vs. at-bats", subtitle = "color = home runs")
-```
-
-`theme_bw()`, `theme_classic()`, and the `theme()` function (for surgical adjustments) round out the toolkit; `ggsave("fig.pdf")` writes the last plot to disk.
-
-## Three Systems Side by Side
-
-| | Base | Lattice | ggplot2 |
-|:---|:---|:---|:---|
-| Model | ink on paper | conditioned panels | grammar of layers |
-| Composition | sequential calls | one formula | `+` pipeline |
-| Legends | manual | mostly automatic | automatic |
-| Extensibility | low-level | panel functions | new geoms/stats |
-
-All three live happily in one analysis. For this course: base for quick looks, lattice for conditioning, `ggplot2` for publication figures — and the dedicated Data Analysis course for everything deeper.
 
 ## Copyright Notice
 

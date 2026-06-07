@@ -41,138 +41,253 @@ include-after-body:
 knitr::opts_chunk$set(fig.align = "center")
 ```
 
-# **Building Your Own Tools**
+# **The Workhorses**
 
 ## The Function Keyword
 
-The `function` keyword creates a function object; assigning it to a name is optional:
+Functions evaluate input arguments and return an output value. The definition syntax is
 
-```{r,echo=TRUE}
-square <- function(x) x ^ 2
-square(12)
+```{r,eval=FALSE,echo=TRUE}
+function(arguments) body
 ```
 
-A multi-expression body needs braces; the function's value is the last expression evaluated:
+where *arguments* is a set of symbol names (optionally with default values) available inside the body, and *body* is an R expression. Braces are customary but optional for a single expression — these two are equivalent:
 
 ```{r,echo=TRUE}
-zscore <- function(v) {
-  m <- mean(v)
-  s <- sd(v)
-  (v - m) / s
+f <- function(x, y) x + y
+f <- function(x, y) { x + y }
+```
+
+# Arguments
+
+## Defaults Make Arguments Optional
+
+Give an argument a default value and callers may omit it; omit a *required* argument and the error arrives only when the function tries to **use** it:
+
+```{r,error=TRUE,echo=TRUE}
+f <- function(x, y) { x + y }
+f(1, 2)
+g <- function(x, y = 10) { x + y }
+g(1)
+g(1, 2)     # overriding the default
+f(1)        # missing y: error when `+` needs it
+```
+
+::: {.callout-note}
+A function that simply never touches an uninitialized argument runs fine. You can even detect missing arguments yourself — e.g., inspecting `as.list(match.call())` for a `NULL` entry — but in practice, **put defaults in the signature**: it keeps functions clear and readable.
+:::
+
+## Variable-Length Argument Lists: ...
+
+The ellipsis `...` means "all the other arguments." Two main uses. First, **passing extras through** to another function — here everything after `x` flows into `summary`:
+
+```{r,echo=TRUE}
+v <- c(sqrt(1:100))
+f <- function(x, ...) { print(x); summary(...) }
+f("Here is the summary for v.", v, digits = 2)
+```
+
+(Recall from Chapter 7 that `...` is a special object type, manipulable *only* inside a function body.)
+
+## Reading the Arguments in ...
+
+Second, you can **consume** the variable arguments yourself, by converting `...` to a list. A function that sums all its arguments:
+
+```{r,echo=TRUE}
+addemup <- function(x, ...) {
+  args <- list(...)
+  for (a in args) x <- x + a
+  x
 }
-round(zscore(c(2, 4, 6, 8)), 2)
+addemup(1, 1)
+addemup(1, 2, 3, 4, 5)
 ```
 
-## Arguments and Defaults
-
-```{r,echo=TRUE}
-trim_mean <- function(v, trim = 0.1, digits = 2) {
-  round(mean(v, trim = trim), digits)
-}
-trim_mean(c(1, 2, 3, 100))            # defaults used
-trim_mean(c(1, 2, 3, 100), trim = 0.25)
-```
-
-- Arguments match first by exact name, then by partial name, then by position.
-- An argument with no default and no supplied value triggers an error **only if the body actually uses it** — lazy evaluation again.
-- Defaults may reference other arguments: `function(x, n = length(x))`.
-
-## The ... Argument
-
-The ellipsis `...` absorbs any extra arguments and can forward them onward:
-
-```{r,echo=TRUE}
-loud_plot_summary <- function(v, ...) {
-  cat("n =", length(v), "\n")
-  summary(v, ...)
-}
-loud_plot_summary(c(1, 5, 9, NA), na.rm = TRUE)
-```
-
-This is how wrapper functions pass options through to `plot()`, `mean()`, and friends without naming every possibility.
+Individual items are also reachable directly as `..1`, `..2`, ... up to `..9`. And named arguments remain valid symbols inside the body (scoping: Chapter 8).
 
 ## Return Values
 
-```{r,echo=TRUE}
-sign_word <- function(x) {
-  if (x > 0) return("positive")     # explicit, early return
-  if (x < 0) return("negative")
-  "zero"                            # implicit: last value
-}
-sign_word(-3); sign_word(0)
-```
-
-- `return()` exits immediately — useful for guard clauses.
-- Otherwise the last evaluated expression is the value; idiomatic R leans on this.
-- `invisible(x)` returns a value without printing it at the console — what `assign()` and plotting functions do.
-
-## Functions as Arguments
-
-Higher-order functions take functions as inputs. The `sapply`/`lapply` family applies a function over a vector or list:
+An explicit `return` works as in other languages — but R simply returns the **last evaluated expression**, so `return` is commonly omitted:
 
 ```{r,echo=TRUE}
-sapply(1:5, sqrt)
-lapply(list(a = 1:3, b = 4:6), mean)
+f <- function(x) { return(x^2 + 3) }
+f(3)
+f <- function(x) { x^2 + 3 }
+f(3)
 ```
 
-`apply()` works over matrix margins (1 = rows, 2 = columns):
+Use the explicit form when it makes the code cleaner — e.g., early exits.
+
+# Functions as Arguments
+
+## Higher-Order Functions: sapply
+
+Many R functions accept *other functions* as arguments (modeling functions, for instance, take a function describing how to treat missing values). The classic example is `sapply`, which applies a function to every element of a vector:
 
 ```{r,echo=TRUE}
-m <- matrix(1:6, nrow = 2)
-apply(m, 1, sum)     # row sums
-apply(m, 2, max)     # column maxima
+a <- 1:7
+sapply(a, sqrt)
 ```
 
-`mapply()` zips several vectors through one function in parallel.
+A toy example — `sqrt(1:7)` does the same — but many useful functions don't accept multi-element vectors, and `sapply` extends them gracefully. (The whole family of summarizing relatives: Chapter 12.)
 
 ## Anonymous Functions
 
-When a helper is needed exactly once, skip the name:
+Functions are objects, so they don't need names. A function passed without ever being named is **anonymous**. A minimal demonstration — a function that applies its argument to the number 3:
 
 ```{r,echo=TRUE}
-sapply(1:5, function(i) i * (i + 1) / 2)
-
-# applied directly at the point of definition
-(function(x) x ^ x)(3)
+apply.to.three <- function(f) { f(3) }
+apply.to.three(function(x) { x * 7 })
 ```
 
-Since R 4.1 there is a compact backslash shorthand:
+How the interpreter reads it: `f` is bound to the anonymous `function(x) {x * 7}`; evaluating `f(3)` binds `x` to 3; the body returns `3 * 7 = 21`.
+
+## Anonymous Functions with sapply
+
+The everyday use: passing one-off functions to apply-style functions:
 
 ```{r,echo=TRUE}
-sapply(1:5, \(i) i ^ 2)
+a <- c(1, 2, 3, 4, 5)
+sapply(a, function(x) { x + 1 })
 ```
 
-Anonymous functions keep one-off logic exactly where it is used.
-
-## Properties of Functions
-
-A function object dissects into three parts:
+This family is a real **alternative to control structures**. Squaring each element with a loop versus an apply:
 
 ```{r,echo=TRUE}
-args(trim_mean)        # human-readable signature
-formals(trim_mean)     # arguments + defaults, as a list
-body(zscore)           # the code
-environment(zscore)    # where it was defined
+v <- 1:20
+w <- NULL
+for (i in 1:length(v)) { w[i] <- v[i]^2 }
+w
+w <- sapply(v, function(i) { i^2 })
+w
 ```
 
-You can even *modify* these pieces programmatically — `body(f) <- ...` — which is occasionally useful and always impressive at parties.
+The second version states its intent — apply this function to each element — and is faster, too (Chapter 24).
 
-## Argument Verification
+## Applying Anonymous Functions Directly
 
-Robust functions check their inputs early and fail informatively:
+You can define an anonymous function and call it on the spot — but the function object **must be wrapped in parentheses**:
 
-```{r,echo=TRUE,error=TRUE}
-safe_log <- function(x) {
-  stopifnot(is.numeric(x), all(x > 0))
-  log(x)
+```{r,echo=TRUE}
+(function(x) { x + 1 })(1)
+```
+
+Why? Function calls `f(arguments)` bind very tightly. Without the parentheses, `function(x) {x+1}(1)` quietly defines a function whose *body* is `{x+1}(1)` — no error appears, because the body isn't evaluated yet. Valid R, almost certainly not what you meant.
+
+# Properties of Functions
+
+## args and formals
+
+To see what arguments a function accepts, `args` returns a function object with a `NULL` body:
+
+```{r,echo=TRUE}
+args(sin)
+args(args)
+args(lm)
+```
+
+To *manipulate* the argument list from code, use `formals`, which returns a **pairlist** — one pair per argument, value `NULL` where no default exists. (`formals` works only on closures, not built-ins.)
+
+```{r,echo=TRUE}
+f <- function(x, y=1, z=2) { x + y + z }
+f.formals <- formals(f)
+f.formals
+f.formals$y
+```
+
+## Changing Arguments: formals<- and alist
+
+`formals` also works on the **left-hand side** of an assignment — change a default in place:
+
+```{r,echo=TRUE}
+f.formals$y <- 3
+formals(f) <- f.formals
+args(f)
+```
+
+The convenience function `alist` builds an argument list using definition syntax (note: an argument with no default still needs its equals sign):
+
+```{r,echo=TRUE}
+formals(f) <- alist(x=, y=100, z=200)
+f
+```
+
+## body
+
+The body, too, is readable and writable — its type is `expression`, so assign expressions:
+
+```{r,echo=TRUE}
+body(f)
+body(f) <- expression({x * y * z})
+f
+```
+
+Functions are data, all the way down: arguments and body alike can be inspected and rewritten by ordinary R code.
+
+# Argument Order and Named Arguments
+
+## Three Ways to Supply Arguments
+
+Inside a function, arguments are accessed by the names from the definition:
+
+```{r,echo=TRUE}
+addTheLog <- function(first, second) { first + log(second) }
+```
+
+Callers may specify arguments three ways, matched in priority order:
+
+```{r,echo=TRUE}
+addTheLog(second=exp(4), first=1)   # 1. exact names (matched first)
+addTheLog(s=exp(4), f=1)            # 2. partially matching names
+addTheLog(1, exp(4))                # 3. positional order
+```
+
+One restriction: with generic functions you cannot name the argument carrying the dispatching object — other arguments can still be named.
+
+## Prefer Exact Names; Partial Matching Bites
+
+Exact names cost keystrokes but buy readability and remove ambiguity. Partial matching is **deprecated** for good reason:
+
+```{r,error=TRUE,echo=TRUE}
+f <- function(arg1=10, arg2=20) {
+  print(paste("arg1:", arg1))
+  print(paste("arg2:", arg2))
 }
-safe_log(c(1, 10))
-safe_log(-5)
+f(arg=1)            # ambiguous: error
+f(arg=1, arg2=2)    # now "arg" can only mean arg1...
+f(arg=1, arg1=2)    # ...or suddenly it means arg2!
 ```
 
-- `stop("message")` raises an error; `warning()` raises a warning but continues.
-- `missing(arg)` tests whether the caller supplied an argument.
-- `match.arg()` validates an argument against a fixed set of choices.
+The same prefix lands on different arguments depending on what else is supplied — a recipe for silent bugs.
+
+# Side Effects
+
+## Beyond the Return Value
+
+Every function returns a value; some *also* change variables in other environments, draw graphics, read or write files, or talk to the network. These extra actions are **side effects**.
+
+The key side-effecting operator is `<<-`. The statement `var <<- value` searches the current environment for `var`, then the parent, recursively upward; if the global environment is reached without a match, the assignment happens **there**:
+
+```{r,error=TRUE,echo=TRUE}
+rm(list = ls())
+doesnt.assign.x <- function(i) { x <- i }
+doesnt.assign.x(4)
+x                                   # <- stayed local: not found
+assigns.x <- function(i) { x <<- i }
+assigns.x(4)
+x                                   # <<- escaped to the global environment
+```
+
+## I/O and Graphics
+
+Two more families of side effects round out the picture:
+
+- **Input/output.** Loading data from files or the Internet, saving data to disk — actions beyond returning an object. The full treatment is Chapter 11.
+- **Graphics.** Plotting functions may return objects, but their point is the drawing — on screen or to a file. Chapters 13 and 14 cover them.
+
+::: {.callout-tip}
+**Design habit:** keep most functions *pure* (no side effects) and concentrate the side effects in a few clearly named places. Pure functions are easier to test, reuse, and parallelize.
+:::
 
 ## Copyright Notice
 
