@@ -1,0 +1,141 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 22: Machine Learning"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch22-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Learning Without Labels**
+
+## Supervised vs. Unsupervised
+
+Chapters 20–21 *supervised* learning: a known outcome guided the fit. This chapter is the **unsupervised** side — no labels, only structure to discover:
+
+- **Market basket analysis**: which items co-occur in transactions?
+- **Clustering**: which observations belong together?
+
+Both are exploration tools: they generate hypotheses rather than test them [@hastie2009elements].
+
+## Market Basket Analysis
+
+The `arules` package mines **association rules** of the form $\{A, B\} \Rightarrow \{C\}$ from transaction data:
+
+```{r,echo=TRUE,message=FALSE}
+library(arules)
+data(Groceries)             # built into arules
+summary(Groceries)@lengths[1:5]
+```
+
+```{r,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+rules <- apriori(Groceries,
+                 parameter = list(supp = 0.005, conf = 0.5))
+```
+
+```{r,echo=TRUE}
+inspect(head(sort(rules, by = "lift"), 3))
+```
+
+## Reading a Rule
+
+Three numbers qualify every rule:
+
+::: {.callout-note}
+**Support** — share of transactions containing all the rule's items. **Confidence** — $P(\text{rhs} \mid \text{lhs})$: how often the right side appears when the left side does. **Lift** — confidence divided by the right side's base rate; lift $> 1$ means genuine association, not popularity.
+:::
+
+- High-confidence, low-lift rules ("⇒ whole milk") merely restate that milk is popular — lift is the filter that catches this.
+- Thresholds in `apriori()` trade rule quantity against quality.
+
+## k-Means Clustering
+
+Partition $n$ observations into $k$ compact groups:
+
+```{r,echo=TRUE}
+set.seed(5)
+km <- kmeans(scale(USArrests), centers = 4, nstart = 25)
+table(km$cluster)
+km$centers
+```
+
+```{r,echo=TRUE,out.width="60%"}
+plot(prcomp(scale(USArrests))$x[, 1:2], col = km$cluster, pch = 19)
+```
+
+- Scale the variables first; `nstart = 25` restarts guard against bad local optima.
+- Choose $k$ by the elbow of `km$tot.withinss` across candidate values, or by silhouette width (`cluster` package).
+
+## Hierarchical Clustering
+
+No $k$ needed in advance — build a tree of merges and cut it later:
+
+```{r,echo=TRUE,out.width="68%"}
+d  <- dist(scale(USArrests))
+hc <- hclust(d, method = "ward.D2")
+plot(hc, cex = 0.55, main = "US states by crime profile")
+rect.hclust(hc, k = 4, border = "red")
+```
+
+- `dist()` offers euclidean, manhattan, and more; linkage (`single`, `complete`, `average`, `ward.D2`) changes the tree's character.
+- `cutree(hc, k = 4)` extracts cluster labels for downstream use.
+
+## Other Unsupervised Tools
+
+- **Model-based clustering**: the `mclust` package fits Gaussian mixtures and selects $k$ by BIC.
+- **Density-based**: `dbscan` finds arbitrarily shaped clusters and flags noise points.
+- **Dimension reduction as preprocessing**: PCA (Chapter 16) before clustering often improves both speed and quality.
+- **Self-organizing maps** (`kohonen`) project high-dimensional data onto a 2-D grid.
+
+## Honest Evaluation
+
+Unsupervised results need skepticism most:
+
+1. Stability — do clusters survive resampling or a different seed?
+2. Silhouette / within-cluster variance — are groups actually compact?
+3. Interpretation — can a domain expert name each cluster?
+4. For rules: validate top rules on a held-out period before acting on them.
+
+A clustering that cannot be named, or a rule that disappears next quarter, is noise wearing a costume.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

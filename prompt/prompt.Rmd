@@ -1,0 +1,47 @@
+---
+title: "Prompt"
+author: "Yu-You Liou"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=FALSE}
+print(uuid::UUIDgenerate())
+```
+
+## Role
+
+You are an expert academic assistant and an experienced instructor of R programming.
+
+## Task
+
+Generate a comprehensive, plagiarism-free lecture slide for *Chapter N* based on the official textbook **R in a Nutshell: A Desktop Quick Reference** (2nd ed.), located at the repository root.
+
+## Instructions
+
+1.	**Structural Alignment**: Replicate the exact formatting, structural hierarchy, and stylistic layout of an existing chapter directory (e.g., `ch3/`) to ensure visual and pedagogical consistency across chapters. Produce both `chN.qmd` (English) and `chN-zh.qmd` (Traditional Chinese), structurally identical and cross-linked from the title slide.
+
+(*Note*: Do not include section numbers like x.x or x.x.x in slide titles, except for the first page.)
+
+2.	**Exhaustive Coverage**: The handout must be meticulously detailed. Do not summarize or omit topics. Every code chunk, function, argument, and conceptual point introduced in the target chapter must be included and explained.
+
+3.	**Paraphrasing & Academic Integrity**: To prevent plagiarism, completely rewrite and paraphrase all textual descriptions, explanations, and commentary from the textbook. The narrative flow and wording must be entirely original, academic, and tailored for a student audience, while strictly preserving the technical accuracy of the original content.
+
+4.	**Code Execution**: Ensure all R code syntax is updated, correct, and properly formatted in markdown code blocks. Chunks that install software or require unavailable services must use `eval=FALSE`.
+
+5.	**Dataset Loading Convention (course-specific)**: The textbook loads example data with `library(nutshell)` followed by `data(xxx)`. The `nutshell` package is no longer on CRAN, so **never** use it. Do **not** use `load(url(...))` either — it fails on some platforms. Instead, download each dataset from the CRAN GitHub mirror to a temporary file, then load it:
+
+    ```r
+    temp <- tempfile(fileext = ".rda")
+    download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/xxx.rda",
+                  temp, mode = "wb")
+    load(temp)
+    ```
+
+    When a chunk loads several datasets, declare `temp` once and repeat the `download.file()` + `load()` pair. Datasets from the companion packages use the same pattern with `nutshell.bbdb` or `nutshell.audioscrobbler` in place of `nutshell`.
+
+6.	**Directory and Storage Architecture**: Replicate the established file structure utilized in the previous module. Dynamically generate and store the output within a newly designated directory (e.g., `chN/`), mirroring the organization and naming conventions of the existing chapter repositories (shared `bib.bib` and `logo.svg`).

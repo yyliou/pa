@@ -1,0 +1,171 @@
+---
+title: "程式設計與應用"
+subtitle: "第二十四章：R 程式效能優化"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch24.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **讓 R 跑得快**
+
+## 先量測，再優化
+
+鐵則：永遠不要猜時間花在哪——量它。
+
+```{r,echo=TRUE}
+system.time({
+  x <- numeric(0)
+  for (i in 1:20000) x <- c(x, i)   # 「向量長大」之罪
+})
+system.time({
+  y <- numeric(20000)
+  for (i in 1:20000) y[i] <- i      # 預先配置
+})
+```
+
+同一個迴圈、成本天差地遠——因為 `c()` 每一輪都把整個向量重新複製一次。
+
+## 效能剖析
+
+對整支程式，剖析器把時間歸給各函式：
+
+```{r,echo=TRUE}
+slow_demo <- function(n) {
+  m <- matrix(rnorm(n * 50), ncol = 50)
+  out <- numeric(ncol(m))
+  for (j in seq_len(ncol(m))) out[j] <- mean(sort(m[, j]))
+  out
+}
+Rprof(tmp <- tempfile())
+invisible(slow_demo(20000))
+Rprof(NULL)
+head(summaryRprof(tmp)$by.self, 5)
+```
+
+- `Rprof()` 抽樣呼叫堆疊；`summaryRprof()` 把結果列表。
+- `Rprof(memory.profiling = TRUE)` 與 `tracemem()` 揭露看不見的複製。
+
+## 向量化
+
+R 最大的單一加速來源：把逐元素迴圈換成整向量運算，後者跑在編譯過的 C 裡：
+
+```{r,echo=TRUE}
+v <- rnorm(1e6)
+system.time({ s <- 0; for (xi in v) s <- s + xi^2 })
+system.time(sum(v^2))
+```
+
+- `rowSums()`、`colMeans()`、`cumsum()`、`pmax()`，以及不靠 `ifelse()` 的邏輯運算（`(x > 0) * x`）都把常見模式向量化了。
+- apply 家族比迴圈*清楚*，但本質上不更快——真正的向量運算才快。
+
+## 查找效能
+
+資料一大，「怎麼找東西」就開始要緊：
+
+```{r,echo=TRUE}
+n <- 1e5
+named.vec <- setNames(rnorm(n), paste0("k", 1:n))
+e <- new.env(hash = TRUE)
+for (k in c("k50000")) assign(k, named.vec[[k]], envir = e)
+system.time(for (i in 1:200) named.vec["k50000"])   # 名稱查找：線性掃描
+system.time(for (i in 1:200) get("k50000", envir = e))  # 雜湊：常數時間
+```
+
+- 依名稱索引向量是掃描；雜湊環境（以及 `fastmatch`/`data.table` 套件）直接跳到目標。
+- 迴圈裡 `match()` 勝過反覆 `%in%`；排序過的鍵可用 `findInterval()`。
+
+## 記憶體很重要
+
+R 把一切放在 RAM，而複製是沉默的殺手：
+
+```{r,echo=TRUE}
+gc()[, c("used", "max used")] |> head(2)
+object.size(rnorm(1e6))
+```
+
+- 用完的大物件 `rm()` 掉；`gc()` 回報（並觸發）垃圾回收。
+- 迴圈內修改欄位、別修改整個資料框；對大物件的每個「小」改動都可能整份複製。
+- 資料大過 RAM 時：`data.table`（仍在記憶體但省）、`ff`/`bigmemory`（磁碟支援）、資料庫（第十一章）、Hadoop（第二十六章）。
+
+## 位元組碼編譯器
+
+R 會把函式編成位元組碼；確保熱點函式受惠：
+
+```{r,echo=TRUE}
+library(compiler)
+f <- function(n) { s <- 0; for (i in 1:n) s <- s + i; s }
+fc <- cmpfun(f)
+system.time(f(2e6)); system.time(fc(2e6))
+```
+
+R 3.4 起 JIT 會自動編譯多數函式——但這個差距顯示了直譯器的成本，也說明為何躲不掉的迴圈最終要靠 `Rcpp` 套件的 C++ 重砲。
+
+## 平行運算
+
+許多工作是「尷尬地平行」——彼此獨立、無需溝通：
+
+```{r,echo=TRUE}
+library(parallel)
+detectCores()
+system.time(res1 <- lapply(1:8, function(i) mean(rnorm(4e5))))
+cl <- makeCluster(2)
+system.time(res2 <- parLapply(cl, 1:8, function(i) mean(rnorm(4e5))))
+stopCluster(cl)
+```
+
+- `mclapply()`（Unix/macOS 的 fork）是一行版；`parLapply()` 各平台通用。
+- 模擬、拔靴、交叉驗證折、網格搜尋都完美平行；但開銷意味著太小的工作未必划算。
+
+## 優化檢查清單
+
+1. **量測**（`system.time`、`Rprof`）——找出真正的瓶頸。
+2. **向量化**熱點迴圈；預先配置結果。
+3. **避免複製**——當心長大的物件與對大資料框的反覆切片。
+4. **更好的演算法／結構**——雜湊、排序、`data.table`。
+5. **平行化**獨立的工作。
+6. 以上都不夠時才**下探 C++**（`Rcpp`）。
+
+可讀又快勝過聰明而脆弱：優化那要緊的 5%，其餘保持清楚。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

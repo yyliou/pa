@@ -1,0 +1,141 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 25: Bioconductor"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch25-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **R for Genomics**
+
+## What Is Bioconductor?
+
+**Bioconductor** is a separate ecosystem of R packages for the analysis of high-throughput biological data — gene expression, sequencing, flow cytometry, and more. It has its own repository, release cycle, and installation route.
+
+::: {.callout-note}
+**A parallel CRAN.** Bioconductor packages are not installed with `install.packages()` from CRAN. They share specialized data structures so tools interoperate, and they are versioned together for reproducibility.
+:::
+
+This chapter is a conceptual tour; the code is shown for reference and does not run without the (large) Bioconductor packages installed.
+
+## Installation
+
+The modern entry point is the `BiocManager` package:
+
+```{r,eval=FALSE,echo=TRUE}
+install.packages("BiocManager")        # once, from CRAN
+BiocManager::install()                 # core infrastructure
+BiocManager::install(c("Biobase",      # base classes
+                       "affy",         # microarray preprocessing
+                       "limma",        # differential expression
+                       "GEOquery"))    # download public data
+```
+
+`BiocManager::version()` reports the Bioconductor release; `BiocManager::valid()` checks that your installed packages are mutually compatible.
+
+## Core Data Structures
+
+Bioconductor's power comes from shared S4 classes (Chapter 10) that bundle related data together:
+
+- **`ExpressionSet` / `eSet`** — an assay matrix (genes × samples) plus **phenotype data** (sample annotations) and **feature data** (gene annotations) in one object;
+- **`SummarizedExperiment`** — the modern successor, the standard container for sequencing assays;
+- **`GRanges`** — genomic intervals (chromosome, start, end, strand) with metadata.
+
+Keeping measurements and their annotations in a single object is what prevents the classic bioinformatics error: sample labels drifting out of sync with sample data.
+
+## A Typical Workflow
+
+```{r,eval=FALSE,echo=TRUE}
+library(Biobase); library(GEOquery)
+# 1. Download a public expression study from GEO
+gse <- getGEO("GSE2034")[[1]]
+
+# 2. Inspect the bundled object
+exprs(gse)[1:5, 1:3]      # the expression matrix
+pData(gse)[1:3, 1:4]      # phenotype (sample) data
+fData(gse)[1:3, 1:2]      # feature (gene) data
+```
+
+`exprs()`, `pData()`, and `fData()` are the three accessor verbs you use constantly — assay values, sample annotations, and gene annotations, respectively.
+
+## Differential Expression with limma
+
+The signature analysis: which genes differ between two conditions?
+
+```{r,eval=FALSE,echo=TRUE}
+library(limma)
+group  <- factor(pData(gse)$status)         # e.g. tumor vs. normal
+design <- model.matrix(~ group)
+fit    <- lmFit(exprs(gse), design)         # a linear model PER GENE
+fit    <- eBayes(fit)                       # borrow strength across genes
+topTable(fit, coef = 2, number = 10)        # top differential genes
+```
+
+`limma` fits the regression of Chapter 20 to *every gene at once*, then uses an empirical-Bayes step to stabilize variance estimates across thousands of genes — essential when samples are few.
+
+## The Course Connection
+
+The companion `nutshell` package includes a microarray data set used in the book's Bioconductor example; we load it the course way, no Bioconductor required:
+
+```{r,echo=TRUE,eval=FALSE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/GSE2034.rda", temp, mode = "wb")
+load(temp)
+# GSE2034: breast-cancer expression measurements used to illustrate
+# the analysis pipeline described above.
+```
+
+This lets us discuss the *shape* of genomic data — a wide matrix of genes against samples — without installing the full Bioconductor stack.
+
+## Why It Matters Beyond Biology
+
+Even outside genomics, Bioconductor teaches transferable lessons:
+
+- **Bundle data with its metadata** in one object — applicable to any analysis where labels can desync.
+- **Borrow strength across many parallel models** (the empirical-Bayes idea) — useful wherever you fit thousands of small models.
+- **Reproducibility through coordinated versioning** — a discipline the wider R world increasingly adopts.
+
+For genuine bioinformatics work, the Bioconductor website's workflows and vignettes are the definitive, continually updated reference.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

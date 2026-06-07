@@ -1,0 +1,150 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 16: Analyzing Data"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch16-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **First Numbers from the Data**
+
+## Summary Statistics
+
+The basic vocabulary of description, each one function away:
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda", temp, mode = "wb")
+load(temp)
+x <- dow30$Open
+mean(x); median(x)
+var(x); sd(x)
+range(x); quantile(x, c(0.25, 0.5, 0.75))
+```
+
+- `mean(x, trim = 0.1)` resists outliers; every function here accepts `na.rm=TRUE`.
+- `fivenum()` gives Tukey's five-number summary; `IQR()` the interquartile range.
+
+## summary() Everywhere
+
+`summary()` adapts to its argument — numeric vectors, factors, data frames, models:
+
+```{r,echo=TRUE}
+summary(dow30[, c("Open", "Close", "Volume")])
+```
+
+For a fast all-in-one look at any new data set: `summary(df)` plus `str(df)` answers "what am I holding?" in two lines.
+
+## Correlation and Covariance
+
+How do two series move together?
+
+```{r,echo=TRUE}
+cov(dow30$Open, dow30$Close)
+cor(dow30$Open, dow30$Close)
+cor(dow30[, c("Open", "High", "Low", "Close")])[1:4, 1:4]
+```
+
+- `cor()` defaults to Pearson; `method = "spearman"` or `"kendall"` ranks instead — robust to outliers and nonlinearity.
+- A correlation matrix is the standard reconnaissance before regression (Chapter 20).
+
+::: {.callout-warning}
+**Correlation is not causation.** It is also blind to nonlinear structure — always look at the scatter plot too.
+:::
+
+## Principal Components Analysis
+
+PCA re-expresses correlated variables as orthogonal **components** ordered by explained variance:
+
+```{r,echo=TRUE}
+pca <- prcomp(USArrests, scale. = TRUE)
+summary(pca)
+```
+
+```{r,echo=TRUE,out.width="60%"}
+biplot(pca, cex = 0.6)
+```
+
+- `scale.=TRUE` standardizes first — essential when units differ.
+- The first two components often capture most of the structure: a built-in dimensionality reduction for plotting and modeling.
+
+## Factor Analysis
+
+Where PCA is pure variance bookkeeping, **factor analysis** posits latent variables that explain observed correlations:
+
+```{r,echo=TRUE}
+fa <- factanal(mtcars[, c("mpg", "disp", "hp", "wt", "qsec", "drat")],
+               factors = 2)
+fa$loadings
+```
+
+- Loadings show how strongly each observed variable reflects each hidden factor.
+- Common in psychometrics and survey research: "do these 20 questions measure 2 underlying traits?"
+
+## Bootstrap Resampling
+
+When no formula exists for a statistic's uncertainty, **resample**: draw observations with replacement, recompute, repeat:
+
+```{r,echo=TRUE,message=FALSE}
+library(boot)
+med.fun <- function(d, i) median(d[i])
+set.seed(1)
+b <- boot(dow30$Open, med.fun, R = 1000)
+b
+boot.ci(b, type = "perc")$percent
+```
+
+The spread of the 1,000 recomputed medians estimates the sampling distribution — no normality assumption required.
+
+## A Workflow
+
+1. `str()` and `summary()` — types, ranges, missingness.
+2. Plots — histograms and scatter plots (Chapters 13–15).
+3. Correlations — what moves together?
+4. Reduce — PCA/factors if there are many variables.
+5. Quantify uncertainty — bootstrap when in doubt.
+
+Then, and only then, the formal tests of Chapter 18 and the models of Chapters 20–21.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

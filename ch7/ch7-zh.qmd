@@ -1,0 +1,211 @@
+---
+title: "程式設計與應用"
+subtitle: "第七章：R 物件"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch7.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **物件型錄**
+
+## 原始物件型別
+
+每個 R 物件都有底層的**型別**，可用 `typeof()` 查看。整個型錄可分成幾個自然的家族：
+
+- **基本向量**：`logical`、`integer`、`double`、`complex`、`character`、`raw`；
+- **複合物件**：`list` 以及一切以串列為基礎的結構；
+- **語言物件**：`symbol`、`call`、`expression`；
+- **函式**：`closure`（R 層級）、`builtin` 與 `special`（以 C 實作）；
+- **特殊物件**：`NULL`、環境，以及少數內部型別。
+
+```{r,echo=TRUE}
+typeof(1.5); typeof(1L); typeof("a"); typeof(list()); typeof(mean)
+```
+
+## 向量
+
+向量是 R 的原子：有順序、同型別的集合。`c()` 會遞迴攤平它的引數：
+
+```{r,echo=TRUE}
+v <- c(1, 2, c(3, 4, c(5)))
+v
+length(v)
+```
+
+名稱可以跟著元素走：
+
+```{r,echo=TRUE}
+prices <- c(apple = 30, banana = 12, cherry = 95)
+prices["banana"]
+```
+
+## 串列
+
+串列是異質容器，是 R 中一切複雜結構的骨幹：
+
+```{r,echo=TRUE}
+rec <- list(name = "Kim", scores = c(88, 92), pass = TRUE)
+rec$scores
+rec[["name"]]
+rec[1]          # 單層中括號回傳（子）串列
+```
+
+::: {.callout-note}
+**`[ ]` 與 `[[ ]]` 的差別。** 單層中括號是*切片*，回傳串列；雙層中括號是*取出*單一元件，回傳元件本身。混淆兩者是最常見的串列錯誤。
+:::
+
+## 矩陣與陣列
+
+矩陣是帶著長度為 2 的 `dim` 屬性的向量；陣列推廣到任意維度：
+
+```{r,echo=TRUE}
+m <- matrix(1:6, nrow = 2)
+m
+dim(m)
+t(m)            # 轉置
+m %*% t(m)      # 矩陣乘法
+```
+
+列名與欄名讓矩陣能自我說明：`dimnames(m) <- list(c("r1","r2"), c("a","b","c"))`。
+
+## 因子
+
+**因子**（factor）儲存類別資料：內部是整數代碼，加上把代碼對應到標籤的 `levels` 屬性。
+
+```{r,echo=TRUE}
+sizes <- factor(c("S", "L", "M", "L", "S"), levels = c("S", "M", "L"))
+sizes
+table(sizes)
+as.integer(sizes)     # 底層的代碼
+```
+
+- `ordered = TRUE` 建立有序因子（`S < M < L`），比較運算子會尊重順序。
+- 因子是迴歸函式辨識「這欄是類別變數」的依據——虛擬變數會自動產生。
+
+## 資料框
+
+資料框——一列一筆觀測、一欄一個變數——技術上是一個等長向量的串列，類別為 `data.frame`：
+
+```{r,echo=TRUE}
+df <- data.frame(player = c("A", "B", "C"),
+                 yards  = c(43, 28, 51),
+                 good   = c(TRUE, FALSE, TRUE))
+str(df)
+df[df$good, "yards"]
+```
+
+`str()` 是 R 裡最有用的檢視工具：結構、型別、預覽一次看完。
+
+## 公式
+
+公式*不經求值*地保存一段模型描述：
+
+```{r,echo=TRUE}
+f <- yards ~ player + good
+class(f)
+```
+
+公式語法：`+` 加入項、`-` 移除項、`*` 交叉（`a*b` = `a + b + a:b`）、`:` 是交互作用、`.` 代表「其餘所有欄位」、`I()` 保護算術（`I(x^2)`）。模型、lattice 圖與彙總函式都接受公式。
+
+## 時間序列
+
+`ts` 物件替向量加上規律的時間中繼資料。依課程慣例，從 GitHub 載入課本的火雞價格序列：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
+load(temp)
+class(turkey.price.ts)
+start(turkey.price.ts); frequency(turkey.price.ts)
+```
+
+```{r,echo=TRUE,out.width="60%"}
+plot(turkey.price.ts)
+```
+
+## 日期與時間
+
+```{r,echo=TRUE}
+d <- as.Date("2026-09-22")
+d + 7                          # 日期運算以天為單位
+weekdays(d)
+now <- Sys.time()
+class(now)                     # POSIXct：自 1970 起的秒數
+format(now, "%Y-%m-%d %H:%M")
+```
+
+- 日資料用 `Date`；時間戳用 `POSIXct`。
+- `difftime` 物件表示時間長度；`seq(d, by = "month", length.out = 3)` 能產生日曆序列。
+
+## 連線
+
+連線（connection）把資料來源抽象化——檔案、URL、壓縮檔、管線——讓讀取函式不必在意位元組從哪裡來：
+
+```{r,eval=FALSE,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda",
+              temp, mode = "wb")
+load(temp)           # 我們的 GitHub 慣例：先下載、再載入
+
+gz <- gzfile("big.csv.gz")    # 透明解壓縮
+read.csv(gz)
+```
+
+課程慣例——先 `download.file()` 到暫存檔、再 `load()`——底層用的正是連線；`mode = "wb"` 確保二進位檔在各平台都完好無損。
+
+## 屬性
+
+屬性是讓普通向量升級成豐富結構的中繼資料：
+
+```{r,echo=TRUE}
+x <- 1:6
+attr(x, "dim") <- c(2, 3)     # 它變成矩陣了！
+x
+class(x)
+attributes(x)
+```
+
+`names`、`dim`、`dimnames`、`levels`、`class` 全都只是屬性——第十章的整套物件系統，就建立在這一個機制之上。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

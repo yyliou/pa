@@ -1,0 +1,214 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 20: Regression Models"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch20-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Modeling Relationships**
+
+## A Question to Model
+
+How many runs does a baseball team score, given its hitting statistics? Team batting data for 2000–2008, loaded the course way:
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda", temp, mode = "wb")
+load(temp)
+names(team.batting.00to08)
+```
+
+The linear model assumes
+
+$$\text{runs} = c_0 + c_1 x_1 + \cdots + c_n x_n + \varepsilon,$$
+
+and `lm()` estimates the coefficients by least squares.
+
+## Fitting a Model
+
+```{r,echo=TRUE}
+runs.mdl <- lm(runs ~ singles + doubles + triples + homeruns +
+                 walks + hitbypitch + sacrificeflies +
+                 stolenbases + caughtstealing,
+               data = team.batting.00to08)
+runs.mdl
+```
+
+Each coefficient reads "extra runs per extra unit, holding the rest fixed" — a home run is worth roughly three times a single.
+
+## Evaluating the Fit
+
+```{r,echo=TRUE}
+summary(runs.mdl)
+```
+
+Read in this order: residual spread, coefficient significance (stars), then $R^2$ — the share of variance explained.
+
+## Diagnostic Plots
+
+`plot(model)` produces the standard panel:
+
+```{r,echo=TRUE,out.width="72%"}
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
+plot(runs.mdl)
+par(mfrow = c(1, 1))
+```
+
+Look for: curvature in *Residuals vs. Fitted* (nonlinearity), departures in the *Q–Q plot* (non-normal errors), funnels in *Scale–Location* (heteroskedasticity), and influential points in *Leverage*.
+
+## Refining the Model
+
+Drop weak terms and compare nested models:
+
+```{r,echo=TRUE}
+runs.mdl2 <- update(runs.mdl, . ~ . - caughtstealing - stolenbases)
+anova(runs.mdl2, runs.mdl)
+AIC(runs.mdl, runs.mdl2)
+```
+
+- `update()` edits a formula without retyping it.
+- `anova()` tests whether the extra terms earn their keep; `AIC`/`BIC` balance fit against complexity.
+- `step(runs.mdl)` automates the search by AIC.
+
+## Details of lm
+
+Useful arguments and extractors:
+
+```{r,eval=FALSE,echo=TRUE}
+lm(formula, data, subset = year > 2003,   # fit on a subset
+   weights = w, na.action = na.exclude)
+```
+
+```{r,echo=TRUE}
+coef(runs.mdl2)[1:4]
+head(residuals(runs.mdl2), 3)
+predict(runs.mdl2, newdata = team.batting.00to08[1:2, ],
+        interval = "prediction")
+```
+
+`confint()`, `fitted()`, `model.matrix()` complete the extraction toolkit.
+
+## Robust and Resistant Regression
+
+Outliers can drag least squares anywhere. Robust alternatives down-weight them:
+
+```{r,echo=TRUE,message=FALSE}
+library(MASS)
+runs.rlm <- rlm(runs ~ singles + doubles + triples + homeruns + walks,
+                data = team.batting.00to08)
+round(coef(runs.rlm), 3)
+```
+
+- `rlm()` — M-estimation (`MASS`); `lqs()` — resistant fits like least trimmed squares.
+- If robust and ordinary fits disagree sharply, investigate the influential observations before trusting either.
+
+## Subset Selection and Shrinkage
+
+With many correlated predictors, three strategies tame variance:
+
+- **Subset selection**: `step()`, or exhaustive search via the `leaps` package.
+- **Ridge regression**: keep all terms, shrink coefficients ($L_2$ penalty) — `lm.ridge()` in `MASS`.
+- **Lasso**: shrink *and* select ($L_1$ penalty) — the `glmnet` package fits whole regularization paths efficiently.
+
+```{r,eval=FALSE,echo=TRUE}
+library(glmnet)
+fit <- glmnet(x = as.matrix(predictors), y = runs, alpha = 1)  # lasso
+cv  <- cv.glmnet(as.matrix(predictors), runs)   # pick lambda by CV
+```
+
+Principal-components and partial-least-squares regression (`pls` package) are the projection-based cousins.
+
+## Generalized Linear Models
+
+`glm()` extends the linear model through a **link function** and an error **family** — one interface for counts, rates, and probabilities:
+
+```{r,echo=TRUE}
+counts <- data.frame(events = c(2, 1, 4, 7, 9, 14),
+                     exposure = 1:6)
+fit.pois <- glm(events ~ exposure, family = poisson, data = counts)
+coef(summary(fit.pois))
+```
+
+- `gaussian` reproduces `lm()`; `poisson` models counts; `binomial` gives logistic regression (Chapter 21).
+- Coefficients live on the link scale — exponentiate Poisson/logit coefficients to interpret.
+
+## Nonlinear and Smooth Models
+
+When the relationship is genuinely curved:
+
+```{r,echo=TRUE,out.width="60%",message=FALSE}
+fit.lo <- loess(dist ~ speed, data = cars)
+plot(cars, pch = 19)
+lines(seq(4, 25), predict(fit.lo, data.frame(speed = seq(4, 25))),
+      col = "red", lwd = 2)
+```
+
+- `nls()` fits parametric nonlinear curves (you supply the formula and starting values).
+- `loess()` fits local polynomials; `smooth.spline()` penalized splines; `mgcv::gam()` full generalized additive models.
+
+## Survival Models
+
+Time-to-event data with censoring use the `survival` package:
+
+```{r,echo=TRUE,message=FALSE,out.width="60%"}
+library(survival)
+fit.km <- survfit(Surv(time, status) ~ x, data = aml)
+plot(fit.km, lty = 1:2, xlab = "Weeks", ylab = "Survival")
+legend("topright", c("Maintained", "Nonmaintained"), lty = 1:2)
+```
+
+- `survfit()` — Kaplan–Meier curves; `survdiff()` — log-rank test; `coxph()` — Cox proportional hazards regression.
+- The `Surv(time, status)` object encodes censoring; ignoring censoring biases everything.
+
+## A Modeling Recipe
+
+1. Plot first (Chapters 13–15); guess the functional form.
+2. Fit the simplest plausible model with `lm()`/`glm()`.
+3. Diagnose: `plot(model)`, residuals, influence.
+4. Refine: transform, add/drop terms, or regularize.
+5. Validate on held-out data (Chapter 22's discipline).
+6. Report effect sizes with `confint()`, not just stars [@hastie2009elements].
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

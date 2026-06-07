@@ -1,0 +1,9 @@
+logo:
+  medium: hex/pa.svg
+
+color:
+  palette:
+    hex-pine: "#2f5d50"
+    hex-pine-dark: "#1f4036"
+    hex-pine-light: "#a8cfc2"
+  primary: hex-pine

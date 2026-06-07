@@ -1,0 +1,175 @@
+---
+title: "程式設計與應用"
+subtitle: "第十八章：統計檢定"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch18.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **向資料提出是非題**
+
+## 檢定的邏輯
+
+每個古典檢定都遵循同一套劇本：設定**虛無假設** $H_0$，計算一個在 $H_0$ 下分布已知（第十七章）的統計量，回報 **p 值**——若 $H_0$ 為真，出現至少這麼極端結果的機率。
+
+::: {.callout-note}
+**怎麼讀 p 值。** p 很小（慣例上 $< 0.05$）代表資料在 $H_0$ 下很令人意外，因此拒絕它。p 很大永遠不能*證明* $H_0$，只能說資料與它相容。
+:::
+
+以下每個檢定都回傳 `htest` 類別的物件——同樣的結構，同一套閱讀技巧。
+
+## 單樣本 t 檢定
+
+某型輪胎的失效時間平均值是否異於基準？
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda", temp, mode = "wb")
+load(temp)
+spd <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "E"]
+t.test(spd, mu = 8)
+```
+
+輸出打包了統計量、自由度、p 值、信賴區間與樣本平均——可用 `$p.value`、`$conf.int` 取出。
+
+## 雙樣本與成對 t 檢定
+
+```{r,echo=TRUE}
+b <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "B"]
+d <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "D"]
+t.test(b, d)                      # 預設為 Welch 雙樣本
+```
+
+```{r,echo=TRUE}
+before <- c(198, 201, 210, 185, 192)
+after  <- before - c(3, 7, 2, 9, 1)
+t.test(before, after, paired = TRUE)
+```
+
+配對消除了個體間差異——測量天然成對時，務必說出來。
+
+## 比較變異數與多組平均
+
+```{r,echo=TRUE}
+var.test(b, d)                    # 變異數相等的 F 檢定
+```
+
+超過兩組時，單因子**變異數分析（ANOVA）**推廣了 t 檢定：
+
+```{r,echo=TRUE}
+fit <- aov(Time_To_Failure ~ Tire_Type, data = tires.sus)
+summary(fit)
+```
+
+p 值小代表*某些*平均不同；接著用 `TukeyHSD(fit)` 找出是*哪幾對*。
+
+## 常態性與分布檢定
+
+```{r,echo=TRUE}
+set.seed(3); z <- rnorm(100)
+shapiro.test(z)                       # H0：資料為常態
+ks.test(z, "pnorm")                   # 對照任何具名分布
+```
+
+```{r,echo=TRUE,out.width="55%"}
+qqnorm(z); qqline(z)
+```
+
+Q–Q 圖是視覺搭檔：點貼著直線支持常態——還能看出偏離發生在*哪裡*。
+
+## 無母數檢定
+
+常態性可疑或資料是等級時，換上不依賴分布的對應檢定：
+
+| 母數 | 無母數 |
+|:---|:---|
+| 單／雙樣本 t | `wilcox.test()` |
+| 單因子 ANOVA | `kruskal.test()` |
+| 成對 t | `wilcox.test(..., paired = TRUE)` |
+
+```{r,echo=TRUE}
+wilcox.test(b, d)
+kruskal.test(Time_To_Failure ~ Tire_Type, data = tires.sus)
+```
+
+用一點檢定力換來大量穩健性。
+
+## 比例與二項檢定
+
+射門員 974 次嘗試成功 787 次。真實成功率是 80% 嗎？
+
+```{r,echo=TRUE}
+prop.test(787, 974, p = 0.80)
+binom.test(787, 974, p = 0.80)     # 精確版本
+```
+
+給 `prop.test()` 兩組計數就是比較兩個比例——一行完成 A/B 測試。
+
+## 表格資料：卡方與夥伴
+
+兩個類別變數有關聯嗎？
+
+```{r,echo=TRUE}
+tbl <- matrix(c(45, 15, 30, 40), nrow = 2,
+              dimnames = list(group = c("treat", "control"),
+                              outcome = c("yes", "no")))
+tbl
+chisq.test(tbl)
+fisher.test(tbl)        # 精確檢定；小格子也安全
+```
+
+- 經驗法則：期望次數低於 5 → 改用 `fisher.test()`。
+- `mcnemar.test()` 處理成對的類別資料（同一群受試者的前後比較）。
+
+## 選擇檢定的地圖
+
+1. **單一數值樣本**對照基準：`t.test(x, mu=)`；非常態 → `wilcox.test`。
+2. **兩個數值樣本**：獨立 → `t.test(x, y)`；成對 → `paired=TRUE`；非常態 → `wilcox.test`。
+3. **三組以上**：`aov()` → `TukeyHSD()`；非常態 → `kruskal.test`。
+4. **比例**：`prop.test` / `binom.test`。
+5. **兩個類別變數**：`chisq.test` / `fisher.test`。
+
+在相信 p 值*之前*先檢查假設（常態、等變異、獨立）——並記住統計顯著不等於實務重要。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

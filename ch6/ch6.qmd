@@ -1,0 +1,220 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 6: R Syntax"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch6-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Constants**
+
+## Numeric Vectors
+
+Literal numbers default to double-precision floating point; suffixes and prefixes change the interpretation:
+
+```{r,echo=TRUE}
+1.1                 # double
+123L                # the L suffix forces an integer
+1e3                 # scientific notation
+0xFF                # hexadecimal
+1+2i                # complex
+```
+
+- `class()` distinguishes `numeric` (double), `integer`, and `complex`.
+- Very large or very small magnitudes print in scientific notation automatically.
+
+## Character Vectors
+
+Strings may be quoted with double or single quotes; special characters are written with backslash escapes:
+
+```{r,echo=TRUE}
+"hello"
+'also a string'
+cat("tab:\tnewline:\nquote:\"done\"\n")
+```
+
+- `\t`, `\n`, `\\`, `\"` are the escapes you will actually use.
+- `nchar()` counts characters; `paste()` glues strings together.
+
+## Logical Constants and Symbols
+
+```{r,echo=TRUE}
+TRUE; FALSE
+```
+
+- Always spell out `TRUE`/`FALSE`. The shortcuts `T`/`F` are ordinary variables that someone can reassign — a classic trap.
+- A **syntactic name** starts with a letter (or a dot not followed by a digit) and contains letters, digits, dots, and underscores.
+- Any other name can still be used if wrapped in backquotes:
+
+```{r,echo=TRUE}
+`my odd name` <- 42
+`my odd name`
+```
+
+# Operators
+
+## The Operator Zoo
+
+```{r,echo=TRUE}
+7 %% 3              # modulus
+7 %/% 3             # integer division
+2 ^ 5               # exponentiation
+1:3 %in% c(2, 3, 5) # set membership
+```
+
+Comparison (`<`, `<=`, `==`, `!=`) and logical operators (`!`, `&`, `|`, `&&`, `||`) return logical vectors:
+
+```{r,echo=TRUE}
+c(1, 5, 10) > 4
+TRUE & c(TRUE, FALSE)
+```
+
+- Single `&`/`|` are vectorized; double `&&`/`||` examine one condition only and are reserved for `if()` tests.
+- Users can define new binary operators named `%anything%`.
+
+## Order of Operations
+
+Operator precedence mostly matches school algebra — `^` before `*`/`/` before `+`/`-`, arithmetic before comparison before logic, assignment last:
+
+```{r,echo=TRUE}
+2 + 3 * 4 ^ 2
+-2 ^ 2              # unary minus binds AFTER ^: this is -(2^2)
+(-2) ^ 2
+```
+
+::: {.callout-tip}
+**When in doubt, parenthesize.** Parentheses cost nothing and document intent; see `?Syntax` for the full precedence table.
+:::
+
+## Assignments
+
+Several assignment forms exist:
+
+```{r,echo=TRUE}
+x <- 5              # the standard
+6 -> y              # rightward (rare)
+z = 7               # allowed at top level
+assign("w", 8)      # assignment as a function call
+c(x, y, z, w)
+```
+
+- Inside function calls, `=` names an argument, it does not assign — one more reason to standardize on `<-`.
+- The superassignment operator `<<-` modifies a variable in an enclosing environment (Chapter 8); use sparingly.
+- Replacement forms like `names(x) <- ...` and `dim(x) <- ...` look like magic but are ordinary function calls (`"names<-"`).
+
+# Expressions
+
+## Separating and Grouping Expressions
+
+```{r,echo=TRUE}
+a <- 1; b <- 2          # semicolons separate expressions on one line
+{                       # braces group; value = last expression
+  s <- a + b
+  s * 10
+}
+```
+
+- Parentheses both override precedence and return their contents visibly:
+
+```{r,echo=TRUE}
+(v <- c(1, 2, 3))       # assign AND print in one stroke
+```
+
+# Control Structures
+
+## Conditional Statements
+
+```{r,echo=TRUE}
+x <- 7
+if (x > 5) "big" else "small"
+
+# vectorized version: one test per element
+ifelse(c(1, 9, 3) > 5, "big", "small")
+```
+
+`switch()` selects among named alternatives:
+
+```{r,echo=TRUE}
+grade <- function(letter)
+  switch(letter, A = "excellent", B = "good", "see me")
+grade("A"); grade("C")
+```
+
+The unnamed final argument is the default case.
+
+## Loops: for, while, repeat
+
+```{r,echo=TRUE}
+total <- 0
+for (i in 1:5) total <- total + i
+total
+
+n <- 1
+while (n < 100) n <- n * 2
+n
+```
+
+- `repeat { }` loops forever until `break`; `next` skips to the following iteration.
+- `for` iterates over any vector or list, not just numbers.
+
+::: {.callout-note}
+**Loops are often unnecessary.** Vectorized arithmetic (`x * 2`) and the apply family (`sapply`, `lapply`, Chapter 9) express most iterations more clearly — and usually faster.
+:::
+
+## Loop Accumulators Done Right
+
+Growing an object inside a loop re-allocates memory at every step. Pre-allocate instead:
+
+```{r,echo=TRUE}
+squares <- numeric(10)       # pre-allocate
+for (i in 1:10) squares[i] <- i^2
+squares
+
+# the idiomatic one-liner
+sapply(1:10, function(i) i^2)
+```
+
+This habit matters enormously for performance (Chapter 24).
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

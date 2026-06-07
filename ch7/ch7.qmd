@@ -1,0 +1,211 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 7: R Objects"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch7-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **The Object Catalog**
+
+## Primitive Object Types
+
+Every R object has an underlying **type**, visible with `typeof()`. The catalog falls into natural families:
+
+- **Basic vectors**: `logical`, `integer`, `double`, `complex`, `character`, `raw`;
+- **Compound objects**: `list` and everything built on lists;
+- **Language objects**: `symbol`, `call`, `expression`;
+- **Functions**: `closure` (R-level), `builtin` and `special` (implemented in C);
+- **Special objects**: `NULL`, environments, and a few internals.
+
+```{r,echo=TRUE}
+typeof(1.5); typeof(1L); typeof("a"); typeof(list()); typeof(mean)
+```
+
+## Vectors
+
+Vectors are R's atoms: ordered, homogeneous collections. `c()` flattens its arguments recursively:
+
+```{r,echo=TRUE}
+v <- c(1, 2, c(3, 4, c(5)))
+v
+length(v)
+```
+
+Names can travel with the elements:
+
+```{r,echo=TRUE}
+prices <- c(apple = 30, banana = 12, cherry = 95)
+prices["banana"]
+```
+
+## Lists
+
+Lists are heterogeneous containers, the backbone of every complex structure in R:
+
+```{r,echo=TRUE}
+rec <- list(name = "Kim", scores = c(88, 92), pass = TRUE)
+rec$scores
+rec[["name"]]
+rec[1]          # single brackets return a (sub)list
+```
+
+::: {.callout-note}
+**`[ ]` vs. `[[ ]]`.** Single brackets *slice* a list and return a list; double brackets *extract* one component and return the component itself. Confusing the two is the most common list error.
+:::
+
+## Matrices and Arrays
+
+A matrix is a vector with a `dim` attribute of length 2; arrays generalize to any number of dimensions:
+
+```{r,echo=TRUE}
+m <- matrix(1:6, nrow = 2)
+m
+dim(m)
+t(m)            # transpose
+m %*% t(m)      # matrix product
+```
+
+Row and column names make matrices self-documenting: `dimnames(m) <- list(c("r1","r2"), c("a","b","c"))`.
+
+## Factors
+
+A **factor** stores categorical data: integer codes plus a `levels` attribute mapping codes to labels.
+
+```{r,echo=TRUE}
+sizes <- factor(c("S", "L", "M", "L", "S"), levels = c("S", "M", "L"))
+sizes
+table(sizes)
+as.integer(sizes)     # the codes underneath
+```
+
+- `ordered = TRUE` creates ordinal factors (`S < M < L`), which comparison operators respect.
+- Factors are how regression functions know a column is categorical — they generate dummy variables automatically.
+
+## Data Frames
+
+The data frame — one row per observation, one column per variable — is technically a list of equal-length vectors with class `data.frame`:
+
+```{r,echo=TRUE}
+df <- data.frame(player = c("A", "B", "C"),
+                 yards  = c(43, 28, 51),
+                 good   = c(TRUE, FALSE, TRUE))
+str(df)
+df[df$good, "yards"]
+```
+
+`str()` is the single most useful inspection tool in R: structure, types, and a preview in one view.
+
+## Formulas
+
+A formula captures a model description *without evaluating it*:
+
+```{r,echo=TRUE}
+f <- yards ~ player + good
+class(f)
+```
+
+Formula syntax: `+` adds terms, `-` removes them, `*` crosses (`a*b` = `a + b + a:b`), `:` is an interaction, `.` means "all other columns", and `I()` protects arithmetic (`I(x^2)`). Models, lattice plots, and aggregation functions all accept formulas.
+
+## Time Series
+
+`ts` objects attach regular time metadata to a vector. The course convention loads the textbook's turkey-price series from GitHub:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
+load(temp)
+class(turkey.price.ts)
+start(turkey.price.ts); frequency(turkey.price.ts)
+```
+
+```{r,echo=TRUE,out.width="60%"}
+plot(turkey.price.ts)
+```
+
+## Dates and Times
+
+```{r,echo=TRUE}
+d <- as.Date("2026-09-22")
+d + 7                          # date arithmetic in days
+weekdays(d)
+now <- Sys.time()
+class(now)                     # POSIXct: seconds since 1970
+format(now, "%Y-%m-%d %H:%M")
+```
+
+- `Date` for daily data; `POSIXct` for timestamps.
+- `difftime` objects represent durations; `seq(d, by = "month", length.out = 3)` builds calendars.
+
+## Connections
+
+Connections abstract over data sources — files, URLs, compressed archives, pipes — so reading functions need not care where bytes come from:
+
+```{r,eval=FALSE,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda",
+              temp, mode = "wb")
+load(temp)           # our GitHub convention: download, then load
+
+gz <- gzfile("big.csv.gz")    # transparent decompression
+read.csv(gz)
+```
+
+The course convention — `download.file()` to a temporary file, then `load()` — uses connections under the hood; `mode = "wb"` keeps the binary file intact on every platform.
+
+## Attributes
+
+Attributes are the metadata that turn plain vectors into richer structures:
+
+```{r,echo=TRUE}
+x <- 1:6
+attr(x, "dim") <- c(2, 3)     # now it's a matrix!
+x
+class(x)
+attributes(x)
+```
+
+`names`, `dim`, `dimnames`, `levels`, and `class` are all just attributes — the entire object system of Chapter 10 rests on this one mechanism.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

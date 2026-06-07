@@ -1,0 +1,141 @@
+---
+title: "程式設計與應用"
+subtitle: "第二十三章：時間序列分析"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch23.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **帶著時鐘的資料**
+
+## 時間序列物件
+
+依時間排序的觀測值違反了其他章節到處假設的獨立性——需要專屬工具 [@shumway2011time]。課程資料集裡有兩條月度價格序列：
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
+load(temp)
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/ham.price.ts.rda", temp, mode = "wb")
+load(temp)
+turkey.price.ts
+```
+
+```{r,echo=TRUE,out.width="62%"}
+plot(turkey.price.ts, ylab = "US cents/lb")
+```
+
+## 自相關函數
+
+序列與*自己的過去*相關有多強？
+
+```{r,echo=TRUE,out.width="62%"}
+acf(turkey.price.ts)
+```
+
+- 落後 12（與 24）期的尖峰：年度季節性——十一月的折扣年年迴響。
+- `pacf()` 顯示*偏*自相關——移除較短落後期後，落後 $k$ 期的直接效果——是挑選 AR 階數的標準工具。
+
+```{r,echo=TRUE,out.width="62%"}
+pacf(turkey.price.ts)
+```
+
+## 交叉相關
+
+兩條序列是否同步波動，甚至帶有延遲？
+
+```{r,echo=TRUE,out.width="62%"}
+ccf(turkey.price.ts, ham.price.ts, main = "Turkey vs. ham prices")
+```
+
+`ccf()` 把一條序列與另一條的各種落後版本求相關——尖峰偏離 0 落後期，暗示其中一條領先另一條。
+
+## 分解與平滑
+
+把序列拆成趨勢＋季節＋餘項：
+
+```{r,echo=TRUE,out.width="65%"}
+plot(stl(turkey.price.ts, s.window = "periodic"))
+```
+
+- `stl()` 用 loess 平滑；`decompose()` 是移動平均的經典版。
+- `filter()` 直接計算移動平均；`diff()` 以差分移除趨勢——ARIMA 裡的那個「I」。
+
+## ARIMA 模型
+
+ARMA 家族把（差分後的）序列建模為自迴歸加移動平均雜訊：
+
+$$x_t = \phi_1 x_{t-1} + \cdots + \phi_p x_{t-p} + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}$$
+
+```{r,echo=TRUE}
+fit <- arima(turkey.price.ts, order = c(1, 0, 0),
+             seasonal = list(order = c(1, 0, 0), period = 12))
+fit
+```
+
+- `order = c(p, d, q)`：AR 階數、差分次數、MA 階數；`seasonal=` 加上季節對應項。
+- 階數可從 ACF/PACF 的形狀推測，或對候選模型比 AIC；`tsdiag(fit)` 檢查殘差。
+
+## 預測
+
+```{r,echo=TRUE,out.width="65%"}
+pr <- predict(fit, n.ahead = 24)
+ts.plot(turkey.price.ts, pr$pred,
+        pr$pred + 2 * pr$se, pr$pred - 2 * pr$se,
+        lty = c(1, 2, 3, 3), col = c("black", "red", "grey", "grey"))
+```
+
+- `predict()` 回傳點預測與標準誤；錐形隨期數張開——對「不確定性會長大」誠實以告。
+- `forecast` 套件能自動選階（`auto.arima()`）並補上指數平滑（`ets()`）。
+
+## 時間序列檢查清單
+
+1. 先畫序列；記下趨勢、季節性、斷點。
+2. 穩定化：變異數隨水準成長就取對數；差分到平稳為止。
+3. 檢視 `acf()`/`pacf()`；提出 ARIMA 階數。
+4. 用 `arima()` 配適；以 AIC 比較候選模型。
+5. 驗證殘差（`tsdiag`、Ljung–Box）——它們該長得像白雜訊。
+6. 預測一定附區間，絕不只給點預測線。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

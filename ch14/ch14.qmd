@@ -1,0 +1,183 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 14: Lattice Graphics"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch14-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+library(lattice)
+```
+
+# **Trellis Plots in R**
+
+## History and Idea
+
+The `lattice` package [@sarkar2008lattice] implements **trellis graphics**, Cleveland's framework for visualizing *conditioned* data [@cleveland1993visualizing]: the same panel repeated for every subset of the data, arranged in a grid for instant comparison.
+
+- Formula interface: `y ~ x | condition` reads "y against x, one panel per level of condition."
+- Lattice functions **return objects**; the plot appears when the object is printed — remember this inside scripts and functions.
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda", temp, mode = "wb")
+load(temp)
+dim(births2006.smpl)
+```
+
+## A Simple Example
+
+US births in 2006 (a 10% sample): how does birth weight relate to delivery method?
+
+```{r,echo=TRUE,out.width="70%"}
+histogram(~ DBWT | DMETH_REC, data = births2006.smpl,
+          xlab = "Birth weight (g)")
+```
+
+One formula produced three aligned panels — conditioning without loops.
+
+## Using Lattice Functions
+
+All high-level lattice functions share the same anatomy:
+
+```{r,eval=FALSE,echo=TRUE}
+xyplot(y ~ x | g,            # formula with optional conditioning
+       data = df,            # where the variables live
+       groups = h,           # overlay groups within panels
+       layout = c(3, 1),     # panel arrangement
+       main = "...", xlab = "...", ylab = "...")
+```
+
+- `groups=` distinguishes subsets *inside* a panel (with `auto.key=TRUE` for a legend); `|` separates subsets *across* panels.
+- The returned `"trellis"` object can be stored, updated with `update()`, and printed later.
+
+## Univariate Plots: Histograms and Densities
+
+```{r,echo=TRUE,out.width="68%"}
+densityplot(~ DBWT | DPLURAL, data = births2006.smpl,
+            plot.points = FALSE, layout = c(1, 5),
+            xlab = "Birth weight (g)")
+```
+
+Stacking the panels vertically (one per plurality: singles, twins, triplets...) aligns the x-axes — multiples are born lighter, and the whole story is one column tall.
+
+## Univariate Plots: Strips and Quantiles
+
+- `stripplot()` — one point per observation, ideal for small groups;
+- `qqmath()` — quantiles of a sample against a theoretical distribution;
+- `bwplot()` — box-and-whisker, the lattice cousin of `boxplot()`:
+
+```{r,echo=TRUE,out.width="68%"}
+bwplot(DBWT ~ factor(APGAR5), data = births2006.smpl,
+       xlab = "5-minute Apgar score", ylab = "Birth weight (g)")
+```
+
+Weight and Apgar score rise together — visible across twenty boxes at once.
+
+## Bivariate Plots
+
+`xyplot()` is the conditioned scatter plot. Average birth weight by day of week, split by delivery method:
+
+```{r,echo=TRUE,out.width="70%"}
+wt <- aggregate(DBWT ~ DOB_WK + DMETH_REC, data = births2006.smpl, mean)
+xyplot(DBWT ~ DOB_WK | DMETH_REC, data = wt, type = "h",
+       layout = c(3, 1), xlab = "Day of week", ylab = "Mean weight (g)")
+```
+
+Other bivariate friends: `barchart()`, `dotplot()` (Cleveland's dot plot — often the best replacement for both pies and bars).
+
+## Trivariate Plots
+
+For three numeric dimensions:
+
+```{r,echo=TRUE,out.width="62%"}
+x <- seq(-2, 2, length.out = 40)
+grid <- expand.grid(x = x, y = x)
+grid$z <- with(grid, exp(-(x^2 + y^2)))
+levelplot(z ~ x * y, data = grid)
+```
+
+- `levelplot()` — colored tiles; `contourplot()` — labeled contour lines;
+- `cloud()` — 3-D point clouds; `wireframe()` — 3-D surfaces.
+
+## Custom Panel Functions
+
+A panel function decides what gets drawn inside each rectangle. Wrap the default and add to it:
+
+```{r,echo=TRUE,out.width="65%"}
+xyplot(DBWT ~ WTGAIN | DSEX,
+       data = births2006.smpl[sample(nrow(births2006.smpl), 2000), ],
+       alpha = 0.2,
+       panel = function(x, y, ...) {
+         panel.xyplot(x, y, ...)
+         panel.lmline(x, y, col = "red", lwd = 2)
+       },
+       xlab = "Maternal weight gain (lb)", ylab = "Birth weight (g)")
+```
+
+`panel.lmline`, `panel.loess`, `panel.abline`, and `panel.grid` are ready-made building blocks.
+
+## Customizing Lattice
+
+- `trellis.par.get()` / `trellis.par.set()` adjust the theme (colors, fonts, symbols) globally.
+- `show.settings()` displays the current theme at a glance.
+- Per-plot: `par.settings=` injects theme tweaks into a single call;
+- `update(plot_object, ...)` modifies an existing trellis object — handy for polishing a stored plot without recomputing.
+
+```{r,eval=FALSE,echo=TRUE}
+my.theme <- trellis.par.get()
+my.theme$plot.symbol$pch <- 19
+trellis.par.set(my.theme)
+```
+
+## Lattice vs. Base Graphics
+
+| | Base | Lattice |
+|:---|:---|:---|
+| Conditioning | manual loops + `par(mfrow)` | `| g` in the formula |
+| Return value | none (ink on paper) | trellis object |
+| Legends | manual `legend()` | `auto.key = TRUE` |
+| Consistency across panels | your job | automatic |
+
+Lattice shines exactly when the question is "does this pattern hold *within every subgroup*?" — Chapter 15 shows `ggplot2`, a third system built on a full grammar.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

@@ -1,0 +1,140 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 26: R and Hadoop"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch26-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **R at Scale**
+
+## When Data Outgrows One Machine
+
+Everything so far assumed your data fits in one computer's memory. When it does not — terabytes of logs, billions of records — computation must be **distributed** across a cluster. **Hadoop** is the classic open-source platform for this, built on two pieces:
+
+- **HDFS** — a distributed file system that stores data in blocks replicated across many machines;
+- **MapReduce** — a programming model for processing that data in parallel, close to where it lives.
+
+This chapter explains the model and how R connects to it; the code illustrates concepts rather than running locally.
+
+## The MapReduce Model
+
+Many computations factor into two stages:
+
+::: {.callout-note}
+**Map** applies a function to each record independently, emitting **key–value** pairs. **Reduce** gathers all values sharing a key and combines them. The framework handles the hard parts in between — distributing data, sorting by key, and recovering from failures.
+:::
+
+The canonical example — word count — captures the whole idea: map each line to `(word, 1)` pairs; reduce by summing the 1s for each word.
+
+## Word Count in Pseudo-R
+
+```{r,eval=FALSE,echo=TRUE}
+# MAP: emit (word, 1) for every word in a line
+map_fn <- function(key, line) {
+  words <- strsplit(tolower(line), "\\W+")[[1]]
+  lapply(words, function(w) keyval(w, 1))
+}
+
+# REDUCE: sum the counts for each distinct word
+reduce_fn <- function(word, counts) {
+  keyval(word, sum(unlist(counts)))
+}
+```
+
+Because each map runs on one record and each reduce on one key, the framework can run thousands of them in parallel across the cluster — the programmer never writes scheduling or networking code.
+
+## RHadoop
+
+**RHadoop** is a family of packages letting you write MapReduce jobs in R instead of Java:
+
+| Package | Role |
+|:---|:---|
+| `rhdfs` | read/write HDFS from R |
+| `rmr2` | write MapReduce jobs in R (`mapreduce()`) |
+| `rhbase` | access the HBase database |
+| `plyrmr` | dplyr-style data manipulation over Hadoop |
+
+```{r,eval=FALSE,echo=TRUE}
+library(rmr2)
+wordcount <- mapreduce(
+  input    = "hdfs://input/books",
+  map      = map_fn,
+  reduce   = reduce_fn)
+from.dfs(wordcount)        # pull the (small) result back into R
+```
+
+## The Pattern: Reduce, Then Pull
+
+The recurring strategy across big-data tools:
+
+1. **Push computation to the data** — run map/reduce where the blocks live, avoiding network transfer of terabytes.
+2. **Shrink on the cluster** — aggregation, filtering, and summarization collapse big data into small results.
+3. **Pull the summary into R** — once the data is small, all of Chapters 13–23 apply normally.
+
+`from.dfs()` and `to.dfs()` move data between R's memory and HDFS; you bring back only what fits.
+
+## The Modern Landscape
+
+Hadoop MapReduce was the pioneer; today's ecosystem has moved on, but the *principles* are unchanged:
+
+- **Apache Spark** with the `sparklyr` package — in-memory distributed computing, far faster than disk-based MapReduce, with a `dplyr` front end and built-in machine learning.
+- **`arrow` / `duckdb`** — query larger-than-memory data efficiently on a single machine, often removing the need for a cluster at all.
+- **Cloud data warehouses** (BigQuery, Snowflake) queried from R via DBI — push SQL to the warehouse, retrieve summaries.
+
+The decision rule is the same as in Chapter 11: do the heavy lifting where the data lives, bring back only the answer.
+
+## Course Wrap-Up
+
+Over twenty-six chapters this course traveled from `1 + 1` to distributed computing:
+
+- **Parts I–II** — installing R and the structure of the language;
+- **Part III** — getting real data in and cleaning it;
+- **Part IV** — three graphics systems;
+- **Part V** — the statistical toolkit, from t-tests to random forests to ARIMA;
+- **Part VI** — performance and scale.
+
+The same language spans all of it. From here, depth comes from practice and from the focused follow-on courses — and every data set in these slides is one `download.file()` + `load()` away whenever you want to experiment.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

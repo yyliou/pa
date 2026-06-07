@@ -1,0 +1,236 @@
+---
+title: "程式設計與應用"
+subtitle: "第十二章：資料整備"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch12.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **資料科學的那 80%**
+
+## 為什麼整備很重要
+
+真實資料總是凌亂的：分散在多張表、型別錯誤、重複、滿是缺漏。在任何模型或圖表之前，你都得先合併、轉換、清理、取子集、彙總與重塑。本章就是那個工具箱。貫穿本章的例子是舊金山房屋成交資料：
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda", temp, mode = "wb")
+load(temp)
+dim(sanfrancisco.home.sales)
+names(sanfrancisco.home.sales)[1:10]
+```
+
+# 合併資料集
+
+## 表格拼接
+
+```{r,echo=TRUE}
+a <- data.frame(id = 1:3, x = c(10, 20, 30))
+b <- data.frame(id = 4:5, x = c(40, 50))
+rbind(a, b)                  # 疊加列（欄位需相同）
+cbind(a, flag = c(TRUE, FALSE, TRUE))   # 增加欄（長度需相同）
+```
+
+`rbind()` 依名稱對齊欄位；面對許多檔案時，`do.call(rbind, list_of_frames)` 能一次疊完整個串列。
+
+## 依共同欄位合併
+
+`merge()` 是 R 的關聯式 join：
+
+```{r,echo=TRUE}
+sales <- data.frame(id = c(1, 2, 3, 4), price = c(300, 150, 220, 410))
+zips  <- data.frame(id = c(1, 2, 3, 5), zip = c("94114", "94110", "94117", "94109"))
+merge(sales, zips)                       # 以共同欄位做 inner join
+merge(sales, zips, all.x = TRUE)         # left join：保留所有 sales
+```
+
+- `by=`、`by.x=`、`by.y=` 控制鍵欄位；`all=TRUE` 是 full outer join。
+- 合併後務必檢查列數——鍵意外重複會讓列數倍增。
+
+# 轉換
+
+## 建立與修改欄位
+
+```{r,echo=TRUE}
+sales$price.per.k <- sales$price / 1000
+sales <- transform(sales, log.price = log(price))
+sales
+```
+
+`transform()` 在資料框內部求值運算式，省去一再重複的 `sales$` 前綴。
+
+## apply 家族處理資料
+
+```{r,echo=TRUE}
+nums <- data.frame(a = 1:4, b = c(2, 4, 6, 8))
+sapply(nums, mean)             # 每欄一個摘要
+mapply(function(x, y) x * y, nums$a, nums$b)
+```
+
+- `lapply()` 回傳串列；`sapply()` 在可行時簡化成向量。
+- 矩陣的逐列運算用 `apply(m, 1, f)`。
+
+## 資料分組（binning）
+
+`cut()` 把連續值變成類別：
+
+```{r,echo=TRUE}
+price <- sanfrancisco.home.sales$price
+bins <- cut(price, breaks = c(0, 5e5, 1e6, 2e6, Inf),
+            labels = c("<500K", "500K-1M", "1M-2M", ">2M"))
+table(bins)
+```
+
+lattice 的 `shingle()` 製作*互相重疊*的分組；`tabulate()` 與 `table()` 負責計數。
+
+# 清理資料
+
+## 找出並移除重複
+
+```{r,echo=TRUE}
+v <- c("a", "b", "a", "c", "b")
+duplicated(v)
+unique(v)
+```
+
+對資料框而言，`duplicated(df)` 標記重複的*列*——每次合併或從可能重複餵資料的系統匯入後都該跑一次。
+
+## 排序
+
+```{r,echo=TRUE}
+sort(c(3, 1, 2))
+o <- order(sales$price, decreasing = TRUE)   # 排序索引
+sales[o, ]
+```
+
+::: {.callout-tip}
+**向量用 `sort()`，資料框用 `order()`。** `order()` 回傳排序所需的排列，因此能重排整列——還能用額外鍵打破平手：`order(zip, -price)`。
+:::
+
+## 缺失值
+
+```{r,echo=TRUE}
+x <- c(2, NA, 5, 9)
+is.na(x)
+mean(x); mean(x, na.rm = TRUE)
+complete.cases(data.frame(a = c(1, NA), b = c(2, 3)))
+```
+
+- `na.omit(df)` 丟掉不完整的列；記得記錄你丟了幾筆。
+- 要刻意決定：刪除、補值，或為缺漏建模——唯一錯誤的選擇是默不作聲。
+
+# 子集與抽樣
+
+## 取子集
+
+```{r,echo=TRUE}
+expensive <- subset(sales, price > 200, select = c(id, price))
+expensive
+# 中括號等價寫法：
+sales[sales$price > 200, c("id", "price")]
+```
+
+`subset()` 讀起來順；中括號利於程式化。兩者都要會。
+
+## 隨機抽樣
+
+```{r,echo=TRUE}
+set.seed(42)                       # 可重現性！
+sample(1:10, 4)                    # 不放回抽樣
+idx <- sample(nrow(sanfrancisco.home.sales), 5)
+sanfrancisco.home.sales[idx, c("city", "price")]
+```
+
+抽樣是訓練／測試切分（第二十一、二十二章）的基礎——而 `set.seed()` 讓結果可以重現給閱卷者看。
+
+# 彙總資料
+
+## tapply 與 aggregate
+
+分組摘要一行搞定：
+
+```{r,echo=TRUE,cache=TRUE}
+tapply(sanfrancisco.home.sales$price,
+       sanfrancisco.home.sales$bedrooms, median, na.rm = TRUE)[1:6]
+
+aggregate(price ~ bedrooms, data = sanfrancisco.home.sales,
+          FUN = median)[1:6, ]
+```
+
+- `tapply(values, groups, f)` 回傳陣列；`aggregate(formula, data, f)` 回傳整齊的資料框。
+- `by()` 是對整個資料框區塊的 `tapply`。
+
+## rowsum 與計數
+
+```{r,echo=TRUE}
+rowsum(sales$price, group = c("g1", "g1", "g2", "g2"))
+table(sanfrancisco.home.sales$bedrooms)[1:8]
+```
+
+給 `table()` 兩個引數就是交叉表——通往第十八章列聯表檢定的大門。
+
+# 重塑資料
+
+## 寬與長
+
+同一份資料可以排成**寬格式**（一個測量一欄）或**長格式**（一筆測量一列）。建模與 `ggplot2` 通常偏好長格式。
+
+```{r,echo=TRUE}
+wide <- data.frame(id = 1:2, q1 = c(90, 70), q2 = c(85, 95))
+long <- reshape(wide, direction = "long",
+                varying = c("q1", "q2"), v.names = "score",
+                timevar = "quiz", times = c("q1", "q2"))
+long
+```
+
+## stack 與現代工具
+
+```{r,echo=TRUE}
+stack(wide, select = c(q1, q2))
+```
+
+- Base R：簡單情況用 `stack()`/`unstack()`，一般情況用 `reshape()`。
+- 現代實務上，`tidyr` 套件（`pivot_longer()`、`pivot_wider()`）以更易讀的方式表達同樣的操作；進入 tidyverse 世界時就會遇到它。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

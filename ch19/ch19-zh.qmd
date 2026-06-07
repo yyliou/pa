@@ -1,0 +1,138 @@
+---
+title: "程式設計與應用"
+subtitle: "第十九章：檢定力分析"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch19.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **設計實驗**
+
+## 檢定力：被遺忘的量
+
+檢定有兩種失敗方式：拒絕了為真的 $H_0$（**型一錯誤**，機率 $\alpha$），或漏掉真實存在的效果（**型二錯誤**，機率 $\beta$）。
+
+::: {.callout-note}
+**檢定力** $= 1 - \beta$：偵測到真實效果的機率。四個量彼此鎖死——樣本數 $n$、顯著水準 $\alpha$、效果量、檢定力。固定其中三個，第四個就被決定。
+:::
+
+檢定力分析回答每個實驗都要面對的規劃問題：**我需要多少觀測值？**
+
+## power.t.test()
+
+要以 80% 檢定力偵測 5 單位的差異（sd = 10），需要多少樣本？
+
+```{r,echo=TRUE}
+power.t.test(delta = 5, sd = 10, sig.level = 0.05, power = 0.80)
+```
+
+*每組*約 64 人。少給任何一個引數，R 就解出它：
+
+```{r,echo=TRUE}
+power.t.test(n = 30, delta = 5, sd = 10)$power
+```
+
+每組只有 30 人時，檢定力跌破五成——找到效果的機會跟擲銅板差不多。
+
+## power.prop.test()
+
+比較兩個比例——某改版能把轉換率從 10% 拉到 12% 嗎？
+
+```{r,echo=TRUE}
+power.prop.test(p1 = 0.10, p2 = 0.12, power = 0.80)
+```
+
+每組需要數千筆觀測：小基準上的小效果*很貴*。這一個計算就能避免 A/B 測試最常見的錯誤——訪客太少就急著下結論。
+
+## power.anova.test()
+
+比較多組平均時：
+
+```{r,echo=TRUE}
+power.anova.test(groups = 4,
+                 between.var = 1, within.var = 9,
+                 power = 0.80)
+```
+
+- `between.var` / `within.var` 編碼了效果量：各組平均相對於雜訊拉得多開。
+- 總樣本數固定時，組數越多、每組越少——檢定力越低。
+
+## 效果量與檢定力曲線
+
+效果量是你必須*猜*的輸入——根據前導研究、過往文獻，或「值得在意的最小差異」。在合理範圍內畫出檢定力曲線：
+
+```{r,echo=TRUE,out.width="65%"}
+deltas <- seq(1, 10, 0.5)
+pw <- sapply(deltas, function(d)
+  power.t.test(n = 50, delta = d, sd = 10)$power)
+plot(deltas, pw, type = "l", lwd = 2,
+     xlab = "True difference", ylab = "Power (n = 50/group)")
+abline(h = 0.8, lty = 2)
+```
+
+## 用模擬算檢定力
+
+當設計超出現成公式的範圍，就模擬它（第十七章的工具箱）：
+
+```{r,echo=TRUE}
+set.seed(9)
+one_run <- function(n, delta) {
+  t.test(rnorm(n), rnorm(n, mean = delta))$p.value < 0.05
+}
+mean(replicate(2000, one_run(64, 5/10 * 10)))   # 與 power.t.test 相符
+```
+
+把 `rnorm()` 換成你真正的設計——不等組、偏態誤差、群聚資料——同一個迴圈照樣能量出檢定力。
+
+## 規劃檢查清單
+
+1. 決定 $\alpha$（通常 0.05）與目標檢定力（通常 0.80 以上）。
+2. 指明**值得偵測的最小效果**——這是科學判斷，不是統計判斷。
+3. 估計雜訊（標準差或基準比例）。
+4. 用 `power.*.test()` 或模擬算出 $n$。
+5. 為流失留餘裕——然後在偷看 p 值*之前*把資料收完。
+
+檢定力不足的研究兩頭賠：漏掉真效果，而偶爾「顯著」的發現又會誇大效果。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

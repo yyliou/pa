@@ -1,0 +1,138 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 19: Power Tests"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch19-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Designing Experiments**
+
+## Power: the Missing Quantity
+
+A test can fail two ways: rejecting a true $H_0$ (**Type I error**, probability $\alpha$) or missing a real effect (**Type II error**, probability $\beta$).
+
+::: {.callout-note}
+**Power** $= 1 - \beta$: the probability of detecting an effect that truly exists. Four quantities are locked together — sample size $n$, significance level $\alpha$, effect size, and power. Fix any three and the fourth is determined.
+:::
+
+Power analysis answers the planning question every experiment faces: **how many observations do I need?**
+
+## power.t.test()
+
+Sample size for detecting a 5-unit difference (sd = 10) with 80% power:
+
+```{r,echo=TRUE}
+power.t.test(delta = 5, sd = 10, sig.level = 0.05, power = 0.80)
+```
+
+About 64 subjects *per group*. Leave out any one argument and R solves for it:
+
+```{r,echo=TRUE}
+power.t.test(n = 30, delta = 5, sd = 10)$power
+```
+
+With only 30 per group, power falls below 50% — a coin flip's chance of finding the effect.
+
+## power.prop.test()
+
+Comparing two proportions — does a change lift conversion from 10% to 12%?
+
+```{r,echo=TRUE}
+power.prop.test(p1 = 0.10, p2 = 0.12, power = 0.80)
+```
+
+Thousands of observations per arm: small effects on small baselines are *expensive*. This single calculation prevents the most common A/B-testing mistake — calling a test after too few visitors.
+
+## power.anova.test()
+
+For comparing several group means:
+
+```{r,echo=TRUE}
+power.anova.test(groups = 4,
+                 between.var = 1, within.var = 9,
+                 power = 0.80)
+```
+
+- `between.var` / `within.var` encode the effect size: how far apart the group means are relative to the noise.
+- More groups at fixed total $n$ means fewer observations per group — and less power.
+
+## Effect Sizes and Curves
+
+Effect size is the input you must *guess* — from pilot data, past studies, or the smallest difference that would matter. Plot power across the plausible range:
+
+```{r,echo=TRUE,out.width="65%"}
+deltas <- seq(1, 10, 0.5)
+pw <- sapply(deltas, function(d)
+  power.t.test(n = 50, delta = d, sd = 10)$power)
+plot(deltas, pw, type = "l", lwd = 2,
+     xlab = "True difference", ylab = "Power (n = 50/group)")
+abline(h = 0.8, lty = 2)
+```
+
+## Power by Simulation
+
+When no canned formula fits your design, simulate it (Chapter 17 toolkit):
+
+```{r,echo=TRUE}
+set.seed(9)
+one_run <- function(n, delta) {
+  t.test(rnorm(n), rnorm(n, mean = delta))$p.value < 0.05
+}
+mean(replicate(2000, one_run(64, 5/10 * 10)))   # matches power.t.test
+```
+
+Replace `rnorm()` with your actual design — unequal groups, skewed errors, clustered data — and the same loop still measures power.
+
+## Planning Checklist
+
+1. Decide $\alpha$ (usually 0.05) and target power (usually 0.80+).
+2. Specify the **smallest effect worth detecting** — a scientific judgment, not a statistical one.
+3. Estimate the noise (sd or baseline proportion).
+4. Compute $n$ with `power.*.test()` or simulation.
+5. Add margin for dropouts — then collect data *before* peeking at p-values.
+
+Underpowered studies waste effort coming and going: they miss real effects, and their occasional "significant" findings exaggerate them.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

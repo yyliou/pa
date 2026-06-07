@@ -1,0 +1,141 @@
+---
+title: "程式設計與應用"
+subtitle: "第二十二章：機器學習"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch22.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **沒有標籤的學習**
+
+## 監督式與非監督式
+
+第二十、二十一章是*監督式*學習：已知的結果引導配適。本章是**非監督式**的那一面——沒有標籤，只有等待發現的結構：
+
+- **購物籃分析**：哪些品項在交易中一起出現？
+- **分群**：哪些觀測值屬於同一掛？
+
+兩者都是探索工具：它們產生假設，而非檢定假設 [@hastie2009elements]。
+
+## 購物籃分析
+
+`arules` 套件從交易資料中挖掘形如 $\{A, B\} \Rightarrow \{C\}$ 的**關聯規則**：
+
+```{r,echo=TRUE,message=FALSE}
+library(arules)
+data(Groceries)             # arules 內建
+summary(Groceries)@lengths[1:5]
+```
+
+```{r,echo=TRUE,results='hide',message=FALSE,warning=FALSE}
+rules <- apriori(Groceries,
+                 parameter = list(supp = 0.005, conf = 0.5))
+```
+
+```{r,echo=TRUE}
+inspect(head(sort(rules, by = "lift"), 3))
+```
+
+## 讀懂一條規則
+
+每條規則由三個數字鑑定：
+
+::: {.callout-note}
+**支持度（support）**——包含規則所有品項的交易比例。**信賴度（confidence）**——$P(\text{rhs} \mid \text{lhs})$：左邊出現時右邊跟著出現的頻率。**提升度（lift）**——信賴度除以右邊的基準率；lift $> 1$ 才是真關聯，而非單純的高人氣。
+:::
+
+- 高信賴、低提升的規則（「⇒ 全脂牛奶」）只是重述牛奶很熱門——lift 正是過濾這種假象的濾網。
+- `apriori()` 的門檻在規則數量與品質之間取捨。
+
+## k-means 分群
+
+把 $n$ 筆觀測切成 $k$ 個緊湊的群：
+
+```{r,echo=TRUE}
+set.seed(5)
+km <- kmeans(scale(USArrests), centers = 4, nstart = 25)
+table(km$cluster)
+km$centers
+```
+
+```{r,echo=TRUE,out.width="60%"}
+plot(prcomp(scale(USArrests))$x[, 1:2], col = km$cluster, pch = 19)
+```
+
+- 變數先標準化；`nstart = 25` 多次重啟以避開差勁的局部最佳解。
+- $k$ 的選法：對候選值畫 `km$tot.withinss` 找手肘點，或用輪廓係數（`cluster` 套件）。
+
+## 階層式分群
+
+不必預先給 $k$——先長出合併樹，之後再剪：
+
+```{r,echo=TRUE,out.width="68%"}
+d  <- dist(scale(USArrests))
+hc <- hclust(d, method = "ward.D2")
+plot(hc, cex = 0.55, main = "US states by crime profile")
+rect.hclust(hc, k = 4, border = "red")
+```
+
+- `dist()` 提供 euclidean、manhattan 等距離；連結方式（`single`、`complete`、`average`、`ward.D2`）改變樹的性格。
+- `cutree(hc, k = 4)` 萃取群標籤供後續使用。
+
+## 其他非監督工具
+
+- **模型式分群**：`mclust` 套件配適高斯混合，並以 BIC 自動選 $k$。
+- **密度式**：`dbscan` 找出任意形狀的群，並標記雜訊點。
+- **降維當前處理**：分群前先 PCA（第十六章）常能同時改善速度與品質。
+- **自組織映射圖**（`kohonen`）把高維資料投影到二維網格上。
+
+## 誠實的評估
+
+非監督式的結果最需要懷疑精神：
+
+1. 穩定性——換個種子或重抽樣後，群還在嗎？
+2. 輪廓係數／群內變異——群真的緊湊嗎？
+3. 詮釋——領域專家能替每個群命名嗎？
+4. 規則類：先在保留期間驗證頂尖規則，再依它行動。
+
+無法命名的分群、下一季就消失的規則，都是穿著戲服的雜訊。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

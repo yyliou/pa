@@ -1,0 +1,219 @@
+---
+title: "程式設計與應用"
+subtitle: "第十三章：圖形"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch13.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **基礎繪圖**
+
+## 畫家模型
+
+基礎繪圖採「筆在紙上」的模型：高階函式畫出一張完整圖表，低階函式在其上疊加筆墨，畫上去就擦不掉——只能重畫 [@tukey1977exploratory; @cleveland1993visualizing]。
+
+- **高階**：`plot()`、`hist()`、`barplot()`、`pie()`、`boxplot()`……
+- **低階**：`points()`、`lines()`、`text()`、`legend()`、`abline()`……
+- 輸出送往作用中的**繪圖裝置**（螢幕、PDF、PNG）。
+
+本章範例資料，依課程慣例載入：
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda", temp, mode = "wb")
+load(temp)
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda", temp, mode = "wb")
+load(temp)
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
+load(temp)
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda", temp, mode = "wb")
+load(temp)
+```
+
+## 散佈圖
+
+環境毒物排放與癌症死亡率有關嗎？一個問題、一個 `plot()`：
+
+```{r,echo=TRUE,out.width="65%"}
+plot(toxins.and.cancer$total_toxic_chemicals / toxins.and.cancer$Surface_Area,
+     toxins.and.cancer$deaths_total / toxins.and.cancer$Population,
+     xlab = "Toxins released per sq mile",
+     ylab = "Deaths per capita")
+```
+
+`plot(x, y)` 是萬用入口；公式寫法 `plot(y ~ x, data = df)` 也可以。
+
+## 標示資料點
+
+用低階函式替有趣的觀測值加上標籤：
+
+```{r,echo=TRUE,out.width="62%"}
+attach(toxins.and.cancer)
+plot(air_on_site / Surface_Area, deaths_lung / Population,
+     xlab = "Air toxins", ylab = "Lung-cancer deaths per capita")
+text(air_on_site / Surface_Area, deaths_lung / Population,
+     labels = State_Abbrev, cex = 0.6, pos = 4)
+detach(toxins.and.cancer)
+```
+
+互動模式下，`identify()` 與 `locator()` 讓你直接在繪圖視窗點選，找出資料點與座標。
+
+## 繪製時間序列
+
+`plot()` 認得 `ts` 物件，會沿著日曆畫出折線：
+
+```{r,echo=TRUE,out.width="65%"}
+plot(turkey.price.ts, ylab = "US cents per pound",
+     main = "Average turkey price by month")
+```
+
+節慶需求一眼可見——價格每年十一月都下探。
+
+## 長條圖
+
+```{r,echo=TRUE,out.width="65%"}
+doubles.by.team <- tapply(batting.2008$`2B`, batting.2008$teamID, sum)
+barplot(sort(doubles.by.team, decreasing = TRUE)[1:8],
+        las = 2, main = "Doubles by team, 2008 (top 8)")
+```
+
+- `horiz=TRUE` 翻成橫向；輸入矩陣可畫分組或堆疊長條（`beside=`）。
+- `las=2` 旋轉座標軸標籤——小小旗標，大大提升可讀性。
+
+## 圓餅圖與馬賽克圖
+
+```{r,echo=TRUE,out.width="55%"}
+pie(c(Good = 787, Missed = 163, Blocked = 24),
+    main = "Field goal outcomes, 2005")
+```
+
+- 知覺研究對圓餅圖很不留情：人類比較長度遠勝於比較角度。數值接近時請改用長條圖。
+- 兩個類別變數時，`mosaicplot(~ cut + color, data = ...)` 依交叉表比例鋪滿平面。
+
+## 三維資料
+
+曲面與網格有三位朋友：`image()`、`contour()`、`persp()`。優勝美地山谷的高程網格：
+
+```{r,echo=TRUE,out.width="60%"}
+image(yosemite, col = terrain.colors(64), asp = 1,
+      main = "Half Dome (elevation raster)")
+```
+
+```{r,echo=TRUE,out.width="55%"}
+persp(yosemite[seq(1, 253, 6), seq(1, 562, 6)],
+      expand = 0.2, theta = 225, phi = 20, shade = 0.6, border = NA)
+```
+
+## 繪製分布
+
+```{r,echo=TRUE,out.width="60%"}
+hist(batting.2008$AVG[batting.2008$AB > 100], breaks = 30,
+     xlab = "Batting average", main = "Hitters with 100+ at-bats")
+```
+
+```{r,echo=TRUE,out.width="60%"}
+plot(density(batting.2008$AVG[batting.2008$AB > 100]),
+     main = "Kernel density estimate")
+rug(batting.2008$AVG[batting.2008$AB > 100])
+```
+
+`qqnorm()` 把樣本與常態分布對照——點落在直線上代表「常態尚屬合理」。
+
+## 盒鬚圖
+
+五數摘要的圖像化，一組一個盒子：
+
+```{r,echo=TRUE,out.width="68%"}
+boxplot(AVG ~ teamID, data = batting.2008[batting.2008$AB > 100, ],
+        las = 2, cex.axis = 0.7, ylab = "Batting average")
+```
+
+鬚延伸到 1.5 × IQR；其外的點被標為離群值——Tukey 的配方，自 1977 年以來不曾改變。
+
+## 繪圖裝置
+
+圖表呈現在**裝置**上。螢幕是預設；檔案則是要開啟與關閉的裝置：
+
+```{r,eval=FALSE,echo=TRUE}
+pdf("figure.pdf", width = 7, height = 5)    # 向量圖：任意縮放都銳利
+plot(turkey.price.ts)
+dev.off()                                    # 一定要關閉裝置
+
+png("figure.png", width = 800, height = 600) # 點陣圖：適合網頁
+plot(turkey.price.ts)
+dev.off()
+```
+
+忘記 `dev.off()` 會留下寫到一半的檔案——腳本中最常見的繪圖錯誤。
+
+## 自訂圖表
+
+多數繪圖函式共享同一批引數；`par()` 設定整個工作階段的繪圖參數：
+
+```{r,echo=TRUE,out.width="60%"}
+oldpar <- par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))   # 1x2 版面
+plot(cars, pch = 19, col = "steelblue", main = "pch & col")
+plot(cars, type = "l", lty = 2, lwd = 2, main = "lines")
+par(oldpar)
+```
+
+- 單次呼叫：`pch`（符號）、`col`、`lty`/`lwd`（線型／線寬）、`cex`（大小）、`xlim`/`ylim`、`main`/`xlab`/`ylab`。
+- 全階段：`par(mfrow=)` 排版多圖、`par(mar=)` 調邊界。像上面那樣保存並還原 `par()`。
+
+## 註解函式
+
+一層一層把圖蓋起來：
+
+```{r,echo=TRUE,out.width="60%"}
+plot(cars, pch = 19)
+abline(lm(dist ~ speed, data = cars), col = "red", lwd = 2)
+text(8, 100, "fitted line", col = "red")
+legend("topleft", legend = c("data", "fit"),
+       pch = c(19, NA), lty = c(NA, 1), col = c("black", "red"))
+title(main = "Stopping distance vs. speed")
+```
+
+`points()`、`lines()`、`segments()`、`arrows()`、`rect()` 與 `polygon()` 補齊這套加墨工具箱。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

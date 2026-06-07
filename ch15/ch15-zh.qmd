@@ -1,0 +1,173 @@
+---
+title: "程式設計與應用"
+subtitle: "第十五章：ggplot2"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch15.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+library(ggplot2)
+```
+
+# **圖形的文法**
+
+## 第三套系統
+
+`ggplot2` [@wickham2016ggplot2] 實作了 Wilkinson 的**圖形文法** [@wilkinson2011grammar]：你不是從圖表型錄中挑選，而是用獨立的零件*組裝*出一張圖——
+
+- **資料**與**美學映射**（哪個變數驅動位置、顏色、大小、形狀）；
+- **geoms**（點、線、長條——看得見的圖形元素）；
+- **stats**（分組、平滑等統計轉換）；
+- **尺度**、**座標**、**分面**與**主題**。
+
+這正是姊妹課程（資料分析，`da`）整學期鑽研的系統；本章先掌握精髓。
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda", temp, mode = "wb")
+load(temp)
+hitters <- subset(batting.2008, AB > 100)
+```
+
+## 一個 ggplot 呼叫的解剖
+
+```{r,echo=TRUE,out.width="62%"}
+ggplot(hitters, aes(x = AB, y = H)) +
+  geom_point(alpha = 0.4)
+```
+
+- `ggplot(data, aes(...))` 確立資料與映射；
+- `+ geom_*()` 加上一層把它們畫出來；
+- 後續的 `+` 項再細修尺度、標籤、分面與主題。
+
+## 美學映射
+
+把第三個變數映射到顏色，圖例自己長出來：
+
+```{r,echo=TRUE,out.width="62%"}
+ggplot(hitters, aes(x = AB, y = H, color = HR)) +
+  geom_point() +
+  labs(x = "At-bats", y = "Hits", color = "Home runs")
+```
+
+::: {.callout-note}
+**映射與設定的差別。** `aes(color = HR)` 把資料*映射*到顏色（有圖例、有尺度）；`geom_point(color = "red")` 是*設定*常數。混淆兩者是 ggplot 新手的經典錯誤。
+:::
+
+## 直方圖與密度圖
+
+每個 geom 都隱含一個預設 stat——`geom_histogram()` 自動分組：
+
+```{r,echo=TRUE,out.width="62%",message=FALSE}
+ggplot(hitters, aes(x = H / AB)) +
+  geom_histogram(bins = 30)
+```
+
+```{r,echo=TRUE,out.width="62%"}
+ggplot(hitters, aes(x = H / AB)) +
+  geom_density(fill = "steelblue", alpha = 0.3)
+```
+
+## 平滑圖層
+
+圖層會疊加——原始資料在下，模型在上：
+
+```{r,echo=TRUE,out.width="65%",message=FALSE}
+ggplot(hitters, aes(x = AB, y = H)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm")
+```
+
+`geom_smooth()` 預設是帶信賴區間緞帶的 loess；`method = "lm"` 改配直線。
+
+## 長條與盒鬚
+
+```{r,echo=TRUE,out.width="65%"}
+team.hr <- aggregate(HR ~ teamID, data = batting.2008, sum)
+top8 <- head(team.hr[order(-team.hr$HR), ], 8)
+ggplot(top8, aes(x = reorder(teamID, -HR), y = HR)) +
+  geom_col() +
+  labs(x = NULL, y = "Team home runs (top 8)")
+```
+
+`geom_boxplot()`、`geom_violin()` 與 `geom_jitter()` 以文法形式涵蓋第十三章「分組看分布」的所有情境。
+
+## 分面
+
+lattice 的招式，文法版本：
+
+```{r,echo=TRUE,out.width="70%",message=FALSE}
+ggplot(hitters, aes(x = AB, y = H)) +
+  geom_point(alpha = 0.3) +
+  facet_wrap(~ bats) +
+  labs(title = "Hits vs. at-bats by batting side")
+```
+
+`facet_wrap(~ g)` 把面板捲成網格；`facet_grid(rows ~ cols)` 交叉兩個因子。
+
+## 尺度與主題
+
+每個映射都有可替換的尺度；主題控制非資料的筆墨：
+
+```{r,echo=TRUE,out.width="65%"}
+ggplot(hitters, aes(x = AB, y = H, color = HR)) +
+  geom_point() +
+  scale_color_gradient(low = "grey80", high = "red") +
+  scale_x_log10() +
+  theme_minimal(base_size = 13) +
+  labs(title = "Hits vs. at-bats", subtitle = "color = home runs")
+```
+
+`theme_bw()`、`theme_classic()` 與可做精準微調的 `theme()` 補齊工具箱；`ggsave("fig.pdf")` 把最後一張圖寫入磁碟。
+
+## 三套系統並排看
+
+| | 基礎繪圖 | Lattice | ggplot2 |
+|:---|:---|:---|:---|
+| 模型 | 筆墨上紙 | 條件化面板 | 圖層文法 |
+| 組合方式 | 依序呼叫 | 一條公式 | `+` 管線 |
+| 圖例 | 手動 | 大多自動 | 自動 |
+| 擴充性 | 低階 | 面板函式 | 自訂 geoms/stats |
+
+三套系統可以在同一份分析中和平共處。本課程的建議：快速檢視用基礎繪圖、條件化用 lattice、出版圖用 `ggplot2`——更深入的內容交給專門的資料分析課。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

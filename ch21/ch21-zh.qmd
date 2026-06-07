@@ -1,0 +1,191 @@
+---
+title: "程式設計與應用"
+subtitle: "第二十一章：分類模型"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch21.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **預測類別**
+
+## 垃圾郵件問題
+
+分類預測的是**類別**而非數字。貫穿本章的例子：4,601 封郵件、57 個數值特徵、一個標籤——是不是垃圾郵件：
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/spambase.rda", temp, mode = "wb")
+load(temp)
+dim(spambase)
+table(spambase$is_spam)
+```
+
+切成訓練集與測試集——衡量分類器唯一誠實的方式：
+
+```{r,echo=TRUE}
+set.seed(11)
+idx   <- sample(nrow(spambase), 3000)
+train <- spambase[idx, ]
+test  <- spambase[-idx, ]
+```
+
+## 邏輯斯迴歸
+
+透過 logit 連結建模垃圾郵件的*機率*：
+
+$$\log \frac{p}{1-p} = c_0 + c_1 x_1 + \cdots + c_n x_n$$
+
+```{r,echo=TRUE,warning=FALSE}
+spam.glm <- glm(is_spam ~ word_freq_free + word_freq_money +
+                  capital_run_length_total + char_freq_exclamation,
+                family = binomial, data = train)
+coef(summary(spam.glm))
+```
+
+正係數提高垃圾郵件的勝算；`exp(coef)` 給出勝算比。
+
+## 從機率到決策
+
+```{r,echo=TRUE}
+p.hat <- predict(spam.glm, newdata = test, type = "response")
+pred  <- ifelse(p.hat > 0.5, 1, 0)
+tab   <- table(actual = test$is_spam, predicted = pred)
+tab
+sum(diag(tab)) / sum(tab)        # 準確率
+```
+
+**混淆矩陣**把偽陽性（好信被攔）與偽陰性（垃圾信放行）分開——多數應用中兩種錯誤代價不同，門檻值應據此調整。
+
+## 線性判別分析
+
+LDA 把每個類別建模為高斯分布，畫出最佳線性邊界：
+
+```{r,echo=TRUE,message=FALSE}
+library(MASS)
+spam.lda <- lda(is_spam ~ word_freq_free + word_freq_money +
+                  capital_run_length_total + char_freq_exclamation,
+                data = train)
+mean(predict(spam.lda, test)$class == test$is_spam)
+```
+
+- 類別分得開且接近高斯時很穩定；`qda()` 允許彎曲邊界。
+- 純列聯表資料則由對數線性模型（`loglin()`／`poisson` 家族的 `glm`）扮演對應角色。
+
+## k 最近鄰
+
+完全不建模型：每個點由 $k$ 個最近的訓練點投票決定：
+
+```{r,echo=TRUE,message=FALSE}
+library(class)
+vars <- c("word_freq_free", "word_freq_money",
+          "capital_run_length_total", "char_freq_exclamation")
+pred.knn <- knn(scale(train[, vars]), scale(test[, vars]),
+                cl = train$is_spam, k = 5)
+mean(pred.knn == test$is_spam)
+```
+
+::: {.callout-tip}
+**kNN 要先標準化特徵。** 距離法會被單位最大的變數宰制；先 scale 再上。
+:::
+
+## 分類樹
+
+樹用一連串是非題切割特徵空間——完全可解釋：
+
+```{r,echo=TRUE,out.width="62%"}
+library(rpart)
+spam.tree <- rpart(factor(is_spam) ~ ., data = train)
+plot(spam.tree, uniform = TRUE, margin = 0.05)
+text(spam.tree, cex = 0.7)
+mean(predict(spam.tree, test, type = "class") == test$is_spam)
+```
+
+`printcp()` 與 `prune()` 以成本複雜度修剪控制過度配適。
+
+## 類神經網路與 SVM
+
+```{r,echo=TRUE,message=FALSE,results='hide'}
+library(nnet)
+set.seed(11)
+spam.nn <- nnet(factor(is_spam) ~ ., data = train,
+                size = 4, decay = 0.1, maxit = 200, MaxNWts = 2000)
+```
+
+```{r,echo=TRUE}
+mean(predict(spam.nn, test, type = "class") == test$is_spam)
+```
+
+- `nnet()` 配適單隱藏層網路——經典主力。
+- 支援向量機（`e1071` 套件的 `svm()`）尋找最大邊界，並以核函數處理非線性。
+
+## 隨機森林
+
+數百棵樹建立在拔靴樣本上，投票平均：
+
+```{r,echo=TRUE,message=FALSE}
+library(randomForest)
+set.seed(11)
+spam.rf <- randomForest(factor(is_spam) ~ ., data = train, ntree = 200)
+mean(predict(spam.rf, test) == test$is_spam)
+```
+
+```{r,echo=TRUE,out.width="60%"}
+varImpPlot(spam.rf, n.var = 10, main = "Top 10 features")
+```
+
+通常是開箱即用準確率最高的選擇，還免費附贈特徵重要性排名——代價是可解釋性。
+
+## 如何挑選分類器
+
+| 需求 | 選擇 |
+|:---|:---|
+| 可解釋的係數／勝算 | 邏輯斯迴歸 |
+| 可解釋的規則 | 分類樹 |
+| 即插即用的最佳準確率 | 隨機森林 |
+| 小資料、平滑邊界 | LDA / kNN |
+| 高維度、重視邊界 | SVM |
+
+不論用哪個模型：訓練／測試切分（或交叉驗證）、混淆矩陣與錯誤成本永遠優先 [@hastie2009elements]。第二十二章將視野擴大到機器學習的其他面向。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

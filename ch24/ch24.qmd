@@ -1,0 +1,171 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 24: Optimizing R Programs"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch24-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Making R Fast**
+
+## Measure Before You Optimize
+
+The cardinal rule: never guess where time goes — measure it.
+
+```{r,echo=TRUE}
+system.time({
+  x <- numeric(0)
+  for (i in 1:20000) x <- c(x, i)   # the growing-vector sin
+})
+system.time({
+  y <- numeric(20000)
+  for (i in 1:20000) y[i] <- i      # pre-allocated
+})
+```
+
+Same loop, wildly different cost — because `c()` re-copies the whole vector every iteration.
+
+## Profiling
+
+For whole programs, the profiler attributes time to functions:
+
+```{r,echo=TRUE}
+slow_demo <- function(n) {
+  m <- matrix(rnorm(n * 50), ncol = 50)
+  out <- numeric(ncol(m))
+  for (j in seq_len(ncol(m))) out[j] <- mean(sort(m[, j]))
+  out
+}
+Rprof(tmp <- tempfile())
+invisible(slow_demo(20000))
+Rprof(NULL)
+head(summaryRprof(tmp)$by.self, 5)
+```
+
+- `Rprof()` samples the call stack; `summaryRprof()` tabulates it.
+- `Rprof(memory.profiling = TRUE)` and `tracemem()` expose hidden copying.
+
+## Vectorize
+
+The single biggest R speedup: replace element-by-element loops with whole-vector operations, which run in compiled C:
+
+```{r,echo=TRUE}
+v <- rnorm(1e6)
+system.time({ s <- 0; for (xi in v) s <- s + xi^2 })
+system.time(sum(v^2))
+```
+
+- `rowSums()`, `colMeans()`, `cumsum()`, `pmax()`, `ifelse()`-free logical math (`(x > 0) * x`) all vectorize common patterns.
+- The apply family is *clearer* than loops but not inherently faster — true vector ops are.
+
+## Lookup Performance
+
+How you find things matters as data grows:
+
+```{r,echo=TRUE}
+n <- 1e5
+named.vec <- setNames(rnorm(n), paste0("k", 1:n))
+e <- new.env(hash = TRUE)
+for (k in c("k50000")) assign(k, named.vec[[k]], envir = e)
+system.time(for (i in 1:200) named.vec["k50000"])   # name lookup: linear
+system.time(for (i in 1:200) get("k50000", envir = e))  # hash: constant
+```
+
+- Name-based vector indexing scans; hashed environments (and the `fastmatch`/`data.table` packages) jump straight there.
+- `match()` beats repeated `%in%` in loops; sorted keys enable `findInterval()`.
+
+## Memory Matters
+
+R keeps everything in RAM, and copying is the silent killer:
+
+```{r,echo=TRUE}
+gc()[, c("used", "max used")] |> head(2)
+object.size(rnorm(1e6))
+```
+
+- `rm()` big objects you are done with; `gc()` reports (and triggers) garbage collection.
+- Modify columns rather than whole data frames inside loops; each "small" change of a big object may copy all of it.
+- For data bigger than RAM: `data.table` (in-memory but frugal), `ff`/`bigmemory` (disk-backed), databases (Chapter 11), or Hadoop (Chapter 26).
+
+## The Byte-Code Compiler
+
+R compiles functions to byte code; ensure hot functions benefit:
+
+```{r,echo=TRUE}
+library(compiler)
+f <- function(n) { s <- 0; for (i in 1:n) s <- s + i; s }
+fc <- cmpfun(f)
+system.time(f(2e6)); system.time(fc(2e6))
+```
+
+Since R 3.4 the JIT compiles most functions automatically — but the gap shows what the interpreter costs, and why C++ via the `Rcpp` package remains the heavy artillery for unavoidable loops.
+
+## Parallel Computation
+
+Many tasks are embarrassingly parallel — independent pieces, no communication:
+
+```{r,echo=TRUE}
+library(parallel)
+detectCores()
+system.time(res1 <- lapply(1:8, function(i) mean(rnorm(4e5))))
+cl <- makeCluster(2)
+system.time(res2 <- parLapply(cl, 1:8, function(i) mean(rnorm(4e5))))
+stopCluster(cl)
+```
+
+- `mclapply()` (Unix/macOS forking) is the one-line version; `parLapply()` works everywhere.
+- Simulations, bootstraps, cross-validation folds, and grid searches parallelize perfectly; overhead means small tasks may not.
+
+## An Optimization Checklist
+
+1. **Measure** (`system.time`, `Rprof`) — find the real bottleneck.
+2. **Vectorize** the hot loop; pre-allocate results.
+3. **Avoid copies** — beware growing objects and repeated subsetting of big frames.
+4. **Better algorithms/structures** — hashing, sorting, `data.table`.
+5. **Parallelize** independent work.
+6. **Drop to C++** (`Rcpp`) only when all of the above still isn't enough.
+
+Readable-but-fast beats clever-but-fragile: optimize the 5% that matters and leave the rest clear.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

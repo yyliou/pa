@@ -1,0 +1,140 @@
+---
+title: "程式設計與應用"
+subtitle: "第二十六章：R 與 Hadoop"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch26.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **規模化的 R**
+
+## 當資料大過一台機器
+
+至此一切都假設資料塞得進一台電腦的記憶體。塞不下時——數 TB 的日誌、數十億筆記錄——運算必須**分散**到一個叢集上。**Hadoop** 是處理這件事的經典開源平台，由兩個部分構成：
+
+- **HDFS**——分散式檔案系統，把資料切成區塊複製到許多機器上；
+- **MapReduce**——一種程式模型，在資料所在之處就近平行處理它。
+
+本章解釋這個模型以及 R 如何接上它；程式碼用以說明概念，而非在本機執行。
+
+## MapReduce 模型
+
+許多運算可以拆成兩階段：
+
+::: {.callout-note}
+**Map** 對每筆記錄獨立套用函式，發出**鍵–值**對。**Reduce** 收集共享同一鍵的所有值並加以合併。中間最難的部分——分配資料、依鍵排序、從故障中復原——交給框架處理。
+:::
+
+經典範例——字數統計——就濃縮了整個想法：把每行 map 成 `(word, 1)` 對；reduce 時把每個字的 1 加總。
+
+## 偽 R 的字數統計
+
+```{r,eval=FALSE,echo=TRUE}
+# MAP：為一行中每個字發出 (word, 1)
+map_fn <- function(key, line) {
+  words <- strsplit(tolower(line), "\\W+")[[1]]
+  lapply(words, function(w) keyval(w, 1))
+}
+
+# REDUCE：為每個相異字加總計數
+reduce_fn <- function(word, counts) {
+  keyval(word, sum(unlist(counts)))
+}
+```
+
+由於每個 map 跑一筆記錄、每個 reduce 跑一個鍵，框架能在叢集上平行執行成千上萬個——程式設計師從不撰寫排程或網路程式碼。
+
+## RHadoop
+
+**RHadoop** 是一組套件，讓你用 R 而非 Java 撰寫 MapReduce 工作：
+
+| 套件 | 角色 |
+|:---|:---|
+| `rhdfs` | 從 R 讀寫 HDFS |
+| `rmr2` | 以 R 撰寫 MapReduce 工作（`mapreduce()`） |
+| `rhbase` | 存取 HBase 資料庫 |
+| `plyrmr` | 在 Hadoop 上做 dplyr 風格的資料操作 |
+
+```{r,eval=FALSE,echo=TRUE}
+library(rmr2)
+wordcount <- mapreduce(
+  input    = "hdfs://input/books",
+  map      = map_fn,
+  reduce   = reduce_fn)
+from.dfs(wordcount)        # 把（很小的）結果拉回 R
+```
+
+## 模式：先化簡，再拉回
+
+跨大資料工具反覆出現的策略：
+
+1. **把運算推向資料**——在區塊所在之處跑 map/reduce，避免透過網路搬動數 TB 資料。
+2. **在叢集上縮小**——彙總、過濾、摘要把大資料壓成小結果。
+3. **把摘要拉進 R**——資料一小，第十三～二十三章的一切便照常適用。
+
+`from.dfs()` 與 `to.dfs()` 在 R 記憶體與 HDFS 間搬資料；你只帶回塞得下的部分。
+
+## 現代地景
+
+Hadoop MapReduce 是先驅；如今的生態系已往前走，但*原則*不變：
+
+- **Apache Spark** 搭配 `sparklyr` 套件——記憶體內分散式運算，遠快於以磁碟為基礎的 MapReduce，附 `dplyr` 前端與內建機器學習。
+- **`arrow` / `duckdb`**——在單機上有效率地查詢大過記憶體的資料，常常根本免去叢集的需要。
+- **雲端資料倉儲**（BigQuery、Snowflake）透過 DBI 從 R 查詢——把 SQL 推給倉儲，取回摘要。
+
+決策法則與第十一章相同：在資料所在之處做粗重工作，只帶回答案。
+
+## 課程總結
+
+二十六章一路從 `1 + 1` 走到分散式運算：
+
+- **第一、二部分**——安裝 R 與語言結構；
+- **第三部分**——把真實資料讀進來並清理；
+- **第四部分**——三套繪圖系統；
+- **第五部分**——統計工具箱，從 t 檢定到隨機森林到 ARIMA；
+- **第六部分**——效能與規模。
+
+同一套語言貫穿全程。從這裡開始，深度來自練習與後續的專題課程——而這些講義裡的每一份資料集，只要 `download.file()` 加 `load()` 兩行就能隨時拿來實驗。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

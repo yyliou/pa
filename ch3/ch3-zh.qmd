@@ -1,0 +1,306 @@
+---
+title: "程式設計與應用"
+subtitle: "第三章：R 快速入門"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch3.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **用 R 的第一個半小時**
+
+## 基本運算
+
+在提示字元輸入運算式，R 便會求值並印出結果。算術運算與直覺完全一致，並遵守一般的優先順序：
+
+```{r,echo=TRUE}
+1 + 2 + 3
+1 + 2 * 3
+(1 + 2) * 3
+```
+
+每個答案前面的 `[1]` 透露了 R 最核心的設計決策：**每個數字都是向量**。方括號裡的數字是該列第一個元素的索引——這裡每個結果都是長度為一的向量。
+
+## 向量
+
+向量（vector）是一串有順序的值。用 `c()`（combine 的縮寫）建立向量，或用冒號運算子產生整數序列：
+
+```{r,echo=TRUE}
+c(0, 1, 1, 2, 3, 5, 8)
+1:50
+```
+
+向量較長時，每列開頭的 `[23]` 之類的標記，顯示的是該列第一個元素的索引。
+
+## 向量運算
+
+兩個向量間的運算是**逐元素**進行的：
+
+```{r,echo=TRUE}
+c(1, 2, 3, 4) + c(10, 20, 30, 40)
+c(1, 2, 3, 4) * c(10, 20, 30, 40)
+```
+
+長度不同時，較短的向量會被**回收**（recycled）——反覆使用直到補滿較長者：
+
+```{r,echo=TRUE,warning=TRUE}
+c(1, 2, 3, 4) + 1
+c(1, 2, 3, 4) + c(10, 100)
+c(1, 2, 3, 4, 5) + c(10, 100)
+```
+
+當較長者的長度不是較短者的整數倍時，R 會發出警告——這通常是程式有錯的徵兆。
+
+## 字元向量與註解
+
+文字值是**字元向量**；其他語言所謂的「字串」，在 R 裡是單一個字元值：
+
+```{r,echo=TRUE}
+"Hello world."
+c("Hello world", "Hello R interpreter")
+```
+
+一行中 `#` 之後的內容都是註解，直譯器會忽略：
+
+```{r,echo=TRUE}
+1 + 2 + # 註解甚至可以放在運算式中間
+  3
+```
+
+## 函式
+
+R 的工作都由**函式**完成，呼叫形式就是數學課熟悉的 `f(argument1, argument2, ...)`：
+
+```{r,echo=TRUE}
+exp(1)
+cos(pi)
+log2(1)
+```
+
+引數可以**依名稱**或**依位置**對應：
+
+```{r,echo=TRUE}
+log(x = 64, base = 4)
+log(64, 4)
+```
+
+::: {.callout-note}
+**運算子也是函式。** `+`、`^`、`==` 這些符號會被直譯器轉換成函式呼叫；`2 ^ 10` 與 `"^"(2, 10)` 是同一個計算。
+:::
+
+```{r,echo=TRUE}
+2 ^ 10
+3 == 4
+```
+
+## 變數
+
+用箭頭運算子 `<-` 把值指派給名稱，之後便能重複使用：
+
+```{r,echo=TRUE}
+x <- 1
+y <- c(2, 4, 6)
+x + y
+```
+
+- 名稱區分大小寫：`x` 與 `X` 是不同的變數。
+- 變數可以存放任何物件——向量、函式、模型結果、整個資料集。
+- `ls()` 列出目前定義的變數；`rm(x)` 刪除變數。
+- 最外層也可以用 `=` 指派，但 `<-` 是 R 的通用慣例，本課程一律使用它。
+
+# 資料結構
+
+## 陣列與矩陣
+
+**陣列**（array）是帶有 `dim` 屬性（描述形狀）的向量；**矩陣**（matrix）是二維的特例：
+
+```{r,echo=TRUE}
+a <- array(1:12, dim = c(3, 4))
+a
+m <- matrix(1:12, nrow = 3, ncol = 4)
+a[2, 2]
+```
+
+陣列可以有三個以上的維度：
+
+```{r,echo=TRUE}
+w <- array(1:18, dim = c(3, 3, 2))
+w[1, 1, 2]
+```
+
+## 索引
+
+R 的下標語法非常精簡：每個維度一個索引、以逗號分隔，留空代表「全部」：
+
+```{r,echo=TRUE}
+a[1, ]          # 第一列
+a[, 1]          # 第一欄
+a[1:2, 1:2]     # 子區塊
+a[c(1, 3), ]    # 不連續的列
+```
+
+## 串列
+
+向量與陣列只能容納單一型別；**串列**（list）則可自由混合型別，元件可以命名，並以名稱或位置存取：
+
+```{r,echo=TRUE}
+e <- list(thing = "hat", size = 8.25)
+e$thing
+e[[2]]
+```
+
+串列是 R 的萬用容器：模型結果、解析後的檔案，乃至多數複雜物件，底層都是串列。
+
+## 資料框
+
+**資料框**（data frame）是一組等長向量構成的串列，以表格呈現——它是資料集的標準表示法：一列一筆觀測值、一欄一個變數：
+
+```{r,echo=TRUE}
+teams <- data.frame(
+  team   = c("PHI", "NYM", "FLA", "ATL", "WSN"),
+  wins   = c(92, 88, 84, 72, 59),
+  losses = c(70, 74, 78, 90, 102)
+)
+teams
+teams$wins
+```
+
+## 物件與類別
+
+R 的每個值都是**物件**，每個物件都有描述其身分的**類別**（class）：
+
+```{r,echo=TRUE}
+class(c(1, 2, 3))
+class("hello")
+class(teams)
+class(sin)
+```
+
+`print()`、`summary()` 這類泛型函式會檢查引數的類別並分派到對應的方法——這就是為什麼對向量與對迴歸結果呼叫 `summary()`，輸出完全不同。第十章會深入剖析這套機制。
+
+# 模型與圖形
+
+## 模型與公式
+
+統計關係在 R 中以**公式記號**表達：`y ~ x1 + x2` 讀作「以 `x1` 與 `x2` 為解釋變數建模 `y`」。對線性模型
+
+$$y = c_0 + c_1 x_1 + c_2 x_2 + \cdots + c_n x_n + \varepsilon,$$
+
+我們用 `lm()` 估計。內建的經典資料集 `cars`（1920 年代的煞車距離）正好拿來示範：
+
+```{r,echo=TRUE}
+cars.lm <- lm(formula = dist ~ speed, data = cars)
+cars.lm
+```
+
+## 檢視模型
+
+直接列印只會顯示呼叫式與係數；`summary()` 則報告殘差、標準誤、$t$ 統計量、$p$ 值與 $R^2$：
+
+```{r,echo=TRUE}
+summary(cars.lm)
+```
+
+配適好的模型本身也是資料——你可以從中萃取係數、殘差與預測值。本課程的第五部分將專門討論這類模型。
+
+## 載入課程資料集
+
+教科書把範例資料放在 `nutshell` 套件中，以 `library(nutshell); data(...)` 載入。該套件已自 CRAN 下架，因此**本課程改用更簡單的慣例**：先把資料集從 CRAN 的 GitHub 鏡像下載到暫存檔，再載入。
+
+```{r,echo=TRUE}
+# 課本寫法（不要用）：  library(nutshell); data(field.goals)
+# 課程寫法：
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda", temp, mode = "wb")
+load(temp)
+names(field.goals)
+```
+
+::: {.callout-tip}
+**記住這個模式。** 把 `xxx` 換成資料集名稱即可：
+`temp <- tempfile(fileext = ".rda")`
+`download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/xxx.rda", temp, mode = "wb")`
+`load(temp)`
+:::
+
+## 圖表與圖形
+
+`field.goals` 記錄了 2005 年 NFL 的每一次射門（field goal，踢進可得 3 分；`yards` 是嘗試距離）。畫直方圖只要一行：
+
+```{r,echo=TRUE,out.width="70%"}
+hist(field.goals$yards)
+```
+
+## 調整圖表
+
+增加組距數能看出更多結構——多數射門集中在 20 到 50 碼之間：
+
+```{r,echo=TRUE,out.width="70%"}
+hist(field.goals$yards, breaks = 35)
+```
+
+## 次數表與點條圖
+
+`table()` 統計類別變數的次數；點條圖（strip chart）為每筆觀測值畫一個點——這裡看的是被攔阻射門的距離：
+
+```{r,echo=TRUE,out.width="65%"}
+table(field.goals$play.type)
+stripchart(field.goals[field.goals$play.type == "FG blocked", "yards"],
+           pch = 19, method = "jitter")
+```
+
+## 取得協助
+
+三個工具可以在不離開 R 的情況下回答大多數問題：
+
+```{r,eval=FALSE,echo=TRUE}
+?hist              # 已知函式的說明頁
+help.search("regression")   # 搜尋已安裝的文件
+example(hist)      # 執行函式的範例
+```
+
+- 說明頁記載每個引數，結尾附可執行的範例。
+- `??topic` 是 `help.search("topic")` 的縮寫。
+- 線上資源：CRAN 上的 R 手冊，以及 Stack Overflow 上龐大的問答庫。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

@@ -1,0 +1,214 @@
+---
+title: "程式設計與應用"
+subtitle: "第二十章：迴歸模型"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch20.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **為關係建模**
+
+## 一個值得建模的問題
+
+棒球隊的得分能由打擊數據解釋多少？2000–2008 年的球隊打擊資料，依課程慣例載入：
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda", temp, mode = "wb")
+load(temp)
+names(team.batting.00to08)
+```
+
+線性模型假設
+
+$$\text{runs} = c_0 + c_1 x_1 + \cdots + c_n x_n + \varepsilon,$$
+
+`lm()` 以最小平方法估計係數。
+
+## 配適模型
+
+```{r,echo=TRUE}
+runs.mdl <- lm(runs ~ singles + doubles + triples + homeruns +
+                 walks + hitbypitch + sacrificeflies +
+                 stolenbases + caughtstealing,
+               data = team.batting.00to08)
+runs.mdl
+```
+
+每個係數讀作「其餘不變下，多一單位帶來的額外得分」——一支全壘打約值三支一壘安打。
+
+## 評估配適
+
+```{r,echo=TRUE}
+summary(runs.mdl)
+```
+
+依序看：殘差的散布、係數顯著性（星號），最後是 $R^2$——被解釋的變異比例。
+
+## 診斷圖
+
+`plot(model)` 產生標準四圖：
+
+```{r,echo=TRUE,out.width="72%"}
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
+plot(runs.mdl)
+par(mfrow = c(1, 1))
+```
+
+要找的訊號：*Residuals vs. Fitted* 的彎曲（非線性）、*Q–Q 圖*的偏離（誤差非常態）、*Scale–Location* 的漏斗（異質變異）、*Leverage* 的高影響點。
+
+## 精煉模型
+
+剔除弱項並比較巢狀模型：
+
+```{r,echo=TRUE}
+runs.mdl2 <- update(runs.mdl, . ~ . - caughtstealing - stolenbases)
+anova(runs.mdl2, runs.mdl)
+AIC(runs.mdl, runs.mdl2)
+```
+
+- `update()` 修改公式而不必重打。
+- `anova()` 檢定多出來的項是否值回票價；`AIC`/`BIC` 在配適與複雜度間取捨。
+- `step(runs.mdl)` 以 AIC 自動搜尋。
+
+## lm 的細節
+
+實用的引數與萃取器：
+
+```{r,eval=FALSE,echo=TRUE}
+lm(formula, data, subset = year > 2003,   # 只用子集配適
+   weights = w, na.action = na.exclude)
+```
+
+```{r,echo=TRUE}
+coef(runs.mdl2)[1:4]
+head(residuals(runs.mdl2), 3)
+predict(runs.mdl2, newdata = team.batting.00to08[1:2, ],
+        interval = "prediction")
+```
+
+`confint()`、`fitted()`、`model.matrix()` 補齊這套萃取工具。
+
+## 穩健與抗性迴歸
+
+離群值能把最小平方法拖去任何地方。穩健方法會調降它們的權重：
+
+```{r,echo=TRUE,message=FALSE}
+library(MASS)
+runs.rlm <- rlm(runs ~ singles + doubles + triples + homeruns + walks,
+                data = team.batting.00to08)
+round(coef(runs.rlm), 3)
+```
+
+- `rlm()`——M 估計（`MASS`）；`lqs()`——least trimmed squares 等抗性配適。
+- 穩健配適與普通配適差很大時，先調查高影響觀測值，再決定相信誰。
+
+## 子集選擇與收縮
+
+預測變數多且相關時，三種策略控制變異：
+
+- **子集選擇**：`step()`，或 `leaps` 套件的窮舉搜尋。
+- **脊迴歸**：保留所有項、收縮係數（$L_2$ 懲罰）——`MASS` 的 `lm.ridge()`。
+- **Lasso**：又收縮*又*選擇（$L_1$ 懲罰）——`glmnet` 套件能有效率地算出整條正則化路徑。
+
+```{r,eval=FALSE,echo=TRUE}
+library(glmnet)
+fit <- glmnet(x = as.matrix(predictors), y = runs, alpha = 1)  # lasso
+cv  <- cv.glmnet(as.matrix(predictors), runs)   # 以交叉驗證挑 lambda
+```
+
+主成分迴歸與偏最小平方迴歸（`pls` 套件）是投影法的表親。
+
+## 廣義線性模型
+
+`glm()` 透過**連結函數**與誤差**家族**擴充線性模型——計數、比率、機率共用一個介面：
+
+```{r,echo=TRUE}
+counts <- data.frame(events = c(2, 1, 4, 7, 9, 14),
+                     exposure = 1:6)
+fit.pois <- glm(events ~ exposure, family = poisson, data = counts)
+coef(summary(fit.pois))
+```
+
+- `gaussian` 重現 `lm()`；`poisson` 建模計數；`binomial` 是邏輯斯迴歸（第二十一章）。
+- 係數活在連結尺度上——Poisson／logit 係數要取指數才好詮釋。
+
+## 非線性與平滑模型
+
+關係真的彎曲時：
+
+```{r,echo=TRUE,out.width="60%",message=FALSE}
+fit.lo <- loess(dist ~ speed, data = cars)
+plot(cars, pch = 19)
+lines(seq(4, 25), predict(fit.lo, data.frame(speed = seq(4, 25))),
+      col = "red", lwd = 2)
+```
+
+- `nls()` 配適參數式非線性曲線（公式與起始值由你提供）。
+- `loess()` 局部多項式；`smooth.spline()` 懲罰式樣條；`mgcv::gam()` 完整的廣義可加模型。
+
+## 存活模型
+
+含設限的事件時間資料用 `survival` 套件：
+
+```{r,echo=TRUE,message=FALSE,out.width="60%"}
+library(survival)
+fit.km <- survfit(Surv(time, status) ~ x, data = aml)
+plot(fit.km, lty = 1:2, xlab = "Weeks", ylab = "Survival")
+legend("topright", c("Maintained", "Nonmaintained"), lty = 1:2)
+```
+
+- `survfit()`——Kaplan–Meier 曲線；`survdiff()`——log-rank 檢定；`coxph()`——Cox 比例風險迴歸。
+- `Surv(time, status)` 物件編碼設限；忽略設限會讓一切結果偏誤。
+
+## 一份建模食譜
+
+1. 先畫圖（第十三～十五章）；猜函數形式。
+2. 用 `lm()`/`glm()` 配適最簡單的合理模型。
+3. 診斷：`plot(model)`、殘差、影響度。
+4. 精煉：轉換、增刪項，或正則化。
+5. 在保留資料上驗證（第二十二章的紀律）。
+6. 用 `confint()` 報告效果量，別只報星號 [@hastie2009elements]。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

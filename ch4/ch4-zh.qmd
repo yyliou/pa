@@ -1,0 +1,162 @@
+---
+title: "程式設計與應用"
+subtitle: "第四章：R 套件"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch4.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **擴充 R 的能力**
+
+## 什麼是套件？
+
+**套件**（package）把相關的函式、說明文件與資料集打包成一個可安裝的單位——相當於 Perl 的 module、C 的 library 或 Java 的類別庫。
+
+- 有些套件隨 R 一起出貨（`stats`、`graphics`、`utils` 等）。
+- 公開軟體庫中還有數以萬計的套件，涵蓋金融、基因體學到最新的機器學習方法。
+- 你也可以自己打造套件。
+
+::: {.callout-note}
+**兩個分開的步驟。** 套件必須先*安裝*到磁碟上的本地函式庫（一次性），再於每個要使用它的工作階段中*載入*。把兩者分開能節省記憶體、維持說明系統的速度，並避免套件之間的名稱衝突。
+:::
+
+## 函式庫
+
+**函式庫**（library）是磁碟上存放已安裝套件的目錄。
+
+- R 一定有一個系統層級的函式庫；其上可再疊加個人函式庫（沒有管理員權限時特別有用）。
+- `.libPaths()` 顯示 R 目前搜尋的函式庫。
+
+```{r,echo=TRUE}
+.libPaths()
+```
+
+注意用語：你是把*套件*安裝進*函式庫*——儘管載入函式偏偏叫 `library()`。
+
+## 列出套件
+
+```{r,echo=TRUE,eval=FALSE}
+library()                    # 安裝了哪些？
+installed.packages()[1:5, c("Package", "Version")]
+```
+
+```{r,echo=TRUE}
+# 目前載入了哪些？
+(.packages())
+```
+
+- `installed.packages()` 回傳一個矩陣，一列一個已安裝套件——名稱、版本、相依性、授權。
+- 新開的工作階段會自動載入一小組基礎套件。
+
+## 載入套件
+
+用 `library()` 載入已安裝的套件（或用 `require()`，套件不存在時回傳 `FALSE` 而非報錯）：
+
+```{r,echo=TRUE}
+library(lattice)         # lattice 的函式現在可見了
+"package:lattice" %in% search()
+```
+
+- 載入會把套件掛上**搜尋路徑**（search path），即 R 解析名稱時查找的位置清單（第八章）。
+- `detach("package:lattice")` 可將其移除。
+- 各平台指令相同；GUI 只是提供同一個呼叫的選單捷徑。
+
+## CRAN
+
+**Comprehensive R Archive Network** 是核心的公開軟體庫：
+
+- 超過兩萬個貢獻套件，各自附有文件與平台對應的編譯版。
+- 每個套件頁面列出相依性、手冊與長篇導覽（vignettes）。
+- **Task Views**（<https://cran.r-project.org/web/views/>）按領域整理套件——計量經濟、機器學習、時間序列、繪圖——是探索生態系的最佳入口。
+
+你還會遇到其他軟體庫：**Bioconductor**（基因體學；第二十五章）與 **GitHub**（開發版）。
+
+## 安裝套件
+
+一個函式就能完成下載與相依性解析：
+
+```{r,eval=FALSE,echo=TRUE}
+install.packages("ggplot2")                     # 單一套件
+install.packages(c("dplyr", "lattice"))         # 一次多個
+update.packages()                               # 全部更新
+```
+
+- 在 RStudio：*Tools → Install Packages...* 不過是同一個呼叫包上對話框。
+- 每台機器安裝一次；每個工作階段 `library()` 一次。
+- 要從非 CRAN 軟體庫安裝可加 `repos=` 參數；GitHub 開發版則用 `remotes` 套件的 `install_github()`。
+
+## 套件資料與課程慣例
+
+許多套件附帶範例資料集，以 `data()` 載入：
+
+```{r,echo=TRUE}
+data(cars)        # 來自 datasets 套件
+head(cars, 3)
+```
+
+教科書的配套套件（`nutshell`、`nutshell.bbdb`、`nutshell.audioscrobbler`）已自 CRAN 下架，因此本課程改從 CRAN 的 GitHub 鏡像直接串流資料集：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/doctorates.rda", temp, mode = "wb")
+load(temp)
+doctorates[, 1:6]
+```
+
+## 自製套件
+
+當你累積了一批常用函式，打包成套件是自然的歸宿：
+
+- 套件就是一個目錄：`DESCRIPTION` 檔（中繼資料）、`R/` 資料夾（程式碼）、`man/`（說明頁），可選的 `data/`。
+- `package.skeleton()` 能從工作空間的物件產生骨架；現代流程多用 `devtools` 與 `roxygen2`。
+- `R CMD build` 產生可散布的壓縮檔；`R CMD check` 執行完整的品質檢查。
+
+```{bash,eval=FALSE,echo=TRUE}
+R CMD build mypackage/
+R CMD check mypackage_1.0.0.tar.gz
+```
+
+就算永遠不上架 CRAN，打包也是與隊友——或未來的自己——分享程式碼最乾淨的方式。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

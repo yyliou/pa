@@ -1,0 +1,141 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 23: Time Series Analysis"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch23-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Data with a Clock**
+
+## Time Series Objects
+
+Observations ordered in time violate the independence assumed everywhere else — they need their own tools [@shumway2011time]. The course data sets include two monthly price series:
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
+load(temp)
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/ham.price.ts.rda", temp, mode = "wb")
+load(temp)
+turkey.price.ts
+```
+
+```{r,echo=TRUE,out.width="62%"}
+plot(turkey.price.ts, ylab = "US cents/lb")
+```
+
+## Autocorrelation Functions
+
+How strongly does a series correlate *with its own past*?
+
+```{r,echo=TRUE,out.width="62%"}
+acf(turkey.price.ts)
+```
+
+- Spikes at lag 12 (and 24): annual seasonality — November discounts echo every year.
+- `pacf()` shows *partial* autocorrelations — the direct effect of lag $k$ after removing shorter lags — the standard tool for choosing AR order.
+
+```{r,echo=TRUE,out.width="62%"}
+pacf(turkey.price.ts)
+```
+
+## Cross-Correlation
+
+Do two series move together, possibly at a delay?
+
+```{r,echo=TRUE,out.width="62%"}
+ccf(turkey.price.ts, ham.price.ts, main = "Turkey vs. ham prices")
+```
+
+`ccf()` correlates one series with lagged copies of another — peaks away from lag 0 suggest one series leads the other.
+
+## Decomposition and Smoothing
+
+Split a series into trend + seasonal + remainder:
+
+```{r,echo=TRUE,out.width="65%"}
+plot(stl(turkey.price.ts, s.window = "periodic"))
+```
+
+- `stl()` uses loess smoothing; `decompose()` is the moving-average classic.
+- `filter()` computes moving averages directly; `diff()` removes trend by differencing — the "I" in ARIMA.
+
+## ARIMA Models
+
+The ARMA family models a (differenced) series as autoregression plus moving-average noise:
+
+$$x_t = \phi_1 x_{t-1} + \cdots + \phi_p x_{t-p} + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}$$
+
+```{r,echo=TRUE}
+fit <- arima(turkey.price.ts, order = c(1, 0, 0),
+             seasonal = list(order = c(1, 0, 0), period = 12))
+fit
+```
+
+- `order = c(p, d, q)`: AR order, differencing, MA order; `seasonal=` adds the seasonal counterpart.
+- Choose orders from ACF/PACF shapes, or by AIC comparison across candidates; `tsdiag(fit)` checks the residuals.
+
+## Forecasting
+
+```{r,echo=TRUE,out.width="65%"}
+pr <- predict(fit, n.ahead = 24)
+ts.plot(turkey.price.ts, pr$pred,
+        pr$pred + 2 * pr$se, pr$pred - 2 * pr$se,
+        lty = c(1, 2, 3, 3), col = c("black", "red", "grey", "grey"))
+```
+
+- `predict()` returns point forecasts and standard errors; the cone widens — honesty about growing uncertainty.
+- The `forecast` package automates order selection (`auto.arima()`) and adds exponential smoothing (`ets()`).
+
+## A Time Series Checklist
+
+1. Plot the series; note trend, seasonality, breaks.
+2. Stabilize: log-transform if variance grows; difference until stationary.
+3. Inspect `acf()`/`pacf()`; propose ARIMA orders.
+4. Fit `arima()`; compare candidates by AIC.
+5. Validate residuals (`tsdiag`, Ljung–Box) — they should look like white noise.
+6. Forecast with intervals, never just the point line.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

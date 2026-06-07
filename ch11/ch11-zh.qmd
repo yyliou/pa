@@ -1,0 +1,193 @@
+---
+title: "程式設計與應用"
+subtitle: "第十一章：資料的儲存、載入與編輯"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch11.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **資料進，資料出**
+
+## 在 R 內輸入資料
+
+小型資料集用第二部分學過的建構函式就夠了：
+
+```{r,echo=TRUE}
+salary <- c(18700000, 14626720, 14137500)
+position <- c("QB", "QB", "DE")
+top.contracts <- data.frame(position, salary)
+top.contracts
+```
+
+- `rbind()` 增加列；`cbind()` 增加欄。
+- `scan()` 可互動式逐筆輸入——快速實驗很方便。
+
+## 編輯 GUI
+
+R 內建一個陽春的試算表式編輯器：
+
+```{r,eval=FALSE,echo=TRUE}
+top.contracts <- edit(top.contracts)  # edit 回傳「新的」物件
+fix(top.contracts)                    # fix 會自己把結果存回去
+```
+
+::: {.callout-warning}
+**`edit()` 不會就地修改。** 忘記把它的結果指派回去是經典的資料遺失時刻；`fix()` 的存在正是為了避免這件事。
+:::
+
+- 編輯器外觀依平台而異（Windows 表格、macOS 表單、X11 視窗），但函式完全相同。
+- 真正的資料輸入用試算表軟體更舒服——編輯器最適合快速檢視與修一兩個儲存格。
+
+## 儲存物件
+
+`save()` 把任意一組 R 物件寫成可攜的二進位檔；`load()` 連名稱一起還原：
+
+```{r,echo=TRUE}
+tmp <- tempfile(fileext = ".RData")
+save(top.contracts, file = tmp)       # `file =` 必須具名
+rm(top.contracts)
+load(tmp)
+top.contracts[1, ]
+```
+
+- 檔案跨平台通用；預設開啟壓縮。
+- `save.image()` 快照整個工作空間（離開時的「Save workspace?」就是它）。
+- `saveRDS()`/`readRDS()` 儲存*單一*物件且不含名稱——程式化使用往往更乾淨。
+
+## 從網路載入：課程慣例
+
+`download.file()` 把任何 URL 上的檔案抓到磁碟（二進位檔要用 `mode = "wb"`）；接著用 `load()` 還原。本課程所有資料集正是這樣載入的：
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/top.bacon.searching.cities.rda", temp, mode = "wb")
+load(temp)
+top.bacon.searching.cities
+```
+
+課本的 `library(nutshell); data(...)` 一律以這三行模式取代。
+
+## 匯入文字檔
+
+`read.table()` 家族把分隔文字剖析成資料框：
+
+```{r,eval=FALSE,echo=TRUE}
+df  <- read.table("file.txt", header = TRUE, sep = "\t")
+csv <- read.csv("file.csv")             # 逗號分隔
+eu  <- read.csv2("file.csv")            # ; 分隔、, 小數點
+fwf <- read.fwf("file.dat", widths = c(8, 4, 4))
+```
+
+值得背起來的引數：`header`、`sep`、`na.strings`、`stringsAsFactors`、`skip`、`colClasses`（大檔案的速度利器）。
+
+```{r,echo=TRUE}
+# readLines 顯示原始文字行——剖析前一定先看檔案長相
+readLines(textConnection("a,b\n1,2\n3,4"))
+```
+
+## 其他軟體與試算表
+
+- `foreign` 套件可讀傳統統計軟體格式：SAS（`read.xport`）、SPSS（`read.spss`）、Stata（`read.dta`）等。
+- Excel 檔：`readxl` 套件（`read_excel("book.xlsx")`）不需安裝 Excel；`openxlsx` 還能寫出。
+- 土法煉鋼依然有效：先把工作表匯出成 CSV，再 `read.csv()`。
+
+```{r,eval=FALSE,echo=TRUE}
+library(readxl)
+roster <- read_excel("stu/roster.xlsx", sheet = 1)
+```
+
+## 匯出資料
+
+每個匯入函式都有鏡像：
+
+```{r,eval=FALSE,echo=TRUE}
+write.csv(top.contracts, "contracts.csv", row.names = FALSE)
+write.table(top.contracts, "contracts.txt", sep = "\t")
+saveRDS(top.contracts, "contracts.rds")
+```
+
+- `row.names = FALSE` 可避免那個讓試算表使用者一頭霧水的多餘首欄。
+- 與其他語言交換資料，CSV 仍是通用語；R 對 R，請用 `.rds`。
+
+## 從資料庫匯入
+
+三種策略，整合度遞增：
+
+1. **先匯出再匯入**：在資料庫工具中把查詢結果倒成 CSV，再 `read.csv()`。粗糙但可靠。
+2. **RODBC**：透過 ODBC 驅動程式連線——幾乎所有有驅動程式的資料庫都行。
+3. **DBI**：R 原生的資料庫介面，依引擎搭配後端套件（`RSQLite`、`RPostgres`、`RMariaDB`……）。
+
+## RODBC 速覽
+
+```{r,eval=FALSE,echo=TRUE}
+library(RODBC)
+ch <- odbcConnect("dsn_name", uid = "user", pwd = "pass")
+df <- sqlQuery(ch, "SELECT player, yards FROM kicks WHERE good = 1")
+sqlTables(ch)              # 列出資料表
+close(ch)
+```
+
+- `sqlFetch(ch, "tbl")` 抓整張表；`sqlSave()` 把資料框寫回去。
+- ODBC 的設定發生在 R *之外*（驅動程式＋資料來源名稱），實務上那才是主要工作量。
+
+## DBI 速覽
+
+```{r,echo=TRUE,message=FALSE}
+library(DBI)
+con <- dbConnect(RSQLite::SQLite(), ":memory:")   # 用完即丟的資料庫
+dbWriteTable(con, "contracts", top.contracts)
+dbGetQuery(con, "SELECT position, MAX(salary) AS top FROM contracts GROUP BY position")
+dbDisconnect(con)
+```
+
+- 一套泛用 API——`dbConnect`、`dbGetQuery`、`dbWriteTable`、`dbDisconnect`——背後是可互換的引擎。
+- 預備敘述（prepared statements）與分批擷取（`dbSendQuery` + `dbFetch`）能處理塞不進記憶體的結果集。
+
+## 更大的管線
+
+- **TSDBI** 提供時間序列專用的資料庫介面。
+- 存放在 **Hadoop**／分散式儲存的資料是第二十六章的主題——常見模式是先在叢集上化簡，再把摘要拉進 R。
+- 經驗法則：把吃重的過濾與合併推給資料庫（`WHERE`、`GROUP BY`），只把分析真正需要的部分帶進 R。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

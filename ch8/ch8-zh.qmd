@@ -1,0 +1,170 @@
+---
+title: "程式設計與應用"
+subtitle: "第八章：符號與環境"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch8.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **名稱住在哪裡**
+
+## 符號與繫結
+
+定義變數的真正意義是：**在某個環境中，把符號繫結到值**。
+
+```{r,echo=TRUE}
+x <- 1            # 在目前環境把符號 `x` 繫結到 1
+y <- quote(x + 1) # 一段提到 `x` 的未求值運算式
+eval(y)           # 求值：`x` 此刻才被查找
+x <- 100
+eval(y)           # 同一運算式，新的答案
+```
+
+運算式在被求值之前只是資料；其中符號的值，要到求值當下、在某個環境裡才會決定。
+
+## 延遲求值與承諾
+
+求值可以刻意延後：
+
+```{r,echo=TRUE}
+delayedAssign("lazy", {message("computing now!"); 42})
+# 目前什麼都沒印……
+lazy             # 第一次觸碰才強制執行承諾
+```
+
+::: {.callout-note}
+**承諾（promise）。** 承諾打包了一段運算式與求值它的環境，直到第一次需要時才計算值。R *所有的*函式引數都以承諾傳遞——這就是「惰性求值」，也是未被使用的引數即使含有錯誤也不會讓呼叫失敗的原因。
+:::
+
+## 什麼是環境？
+
+**環境**（environment）是一組「符號到值」的繫結，外加一個指向**父環境**的指標。查找名稱會沿著鏈走：先看目前環境，再看父環境、祖父環境，直到 `emptyenv()`。
+
+```{r,echo=TRUE}
+e <- new.env()
+assign("z", 99, envir = e)
+get("z", envir = e)
+exists("z", envir = e)
+ls(envir = e)
+```
+
+其他工具：`rm(..., envir=)` 移除繫結；`environmentName()` 標示常見環境的名字。
+
+## 全域環境
+
+每個工作階段都從**全域環境**——你的工作空間——開始：
+
+```{r,echo=TRUE}
+environment()             # 我在哪？
+ls()[1:5]                 # 我定義了什麼？
+```
+
+全域環境之上的鏈，正是已掛載的套件——也就是**搜尋路徑**：
+
+```{r,echo=TRUE}
+search()
+```
+
+這就是載入套件後函式變得可見的原因：它在查找鏈中插入了一個環境。
+
+## 環境與函式
+
+呼叫函式會替區域變數建立一個*全新的*環境，其父環境是函式**被定義**之處（而非被呼叫之處）：
+
+```{r,echo=TRUE}
+make_counter <- function() {
+  count <- 0
+  function() {
+    count <<- count + 1   # 寫入外層環境
+    count
+  }
+}
+tick <- make_counter()
+tick(); tick(); tick()
+```
+
+內層函式在多次呼叫之間*記得* `count`——這就是**閉包**（closure）。這條詞法作用域規則是 R 函式語意的核心。
+
+## 全域指派與詞法指派
+
+```{r,echo=TRUE}
+v <- "global"
+f <- function() { v <- "local"; v }
+g <- function() { v <<- "overwritten"; v }
+f(); v          # 區域指派不動全域
+g(); v          # <<- 往上爬並取而代之
+```
+
+::: {.callout-warning}
+**節制使用 `<<-`。** 偷偷修改外部狀態的函式難以測試與除錯。閉包（前頁）是它紀律良好的使用場景。
+:::
+
+## 操作呼叫堆疊
+
+函式*被呼叫*之處的環境也能取得——對需要在呼叫者脈絡中解讀運算式的函式至關重要：
+
+```{r,echo=TRUE}
+whodunit <- function() sys.function(-1)   # 誰呼叫了我？
+show_caller_x <- function() {
+  eval(quote(x), envir = parent.frame())
+}
+x <- "caller's x"
+show_caller_x()
+```
+
+- `sys.call()`——目前的呼叫式；`match.call()`——補齊引數名稱的版本。
+- `parent.frame()`——呼叫端環境。`lm()` 之類的函式正是用這招，把公式對著你的資料求值。
+
+## 套件中的環境
+
+- 每個載入的套件都在搜尋路徑上貢獻一個環境；查找順序解釋了遮蔽現象——工作空間裡的名稱會蓋住套件裡的同名者。
+- 用 `::` 運算子明確指定來源：
+
+```{r,echo=TRUE}
+stats::sd(c(1, 2, 3, 4))
+```
+
+- 套件以**命名空間**讓內部輔助函式保持隱形，並用*承諾*（惰性資料載入）讓大型資料集在被觸碰前不佔任何成本。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

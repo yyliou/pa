@@ -1,0 +1,189 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 5: An Overview of the R Language"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch5-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **How R Thinks**
+
+## The Big Picture
+
+Chapter 3 showed you R phrase by phrase; this chapter is the grammar lesson. Four ideas organize everything that follows in Part II:
+
+- programs are built from **expressions**;
+- expressions operate on **objects**;
+- names are **symbols** bound to objects;
+- work is done by **functions** — and functions are objects too.
+
+Master these and the detailed syntax of Chapter 6 will feel inevitable rather than arbitrary.
+
+## Expressions
+
+An R program is a sequence of expressions, each evaluated to produce a value:
+
+```{r,echo=TRUE}
+x <- 3 * 7          # an assignment expression
+if (x > 20) "big" else "small"   # even control flow returns a value
+```
+
+- Separate expressions with newlines or semicolons.
+- Group several expressions into one with braces `{ }`; the block's value is its last expression.
+- Because everything returns a value, expressions compose: you can nest an `if` inside a function call inside an assignment.
+
+## Objects
+
+Every value an expression touches is an **object**: vectors, lists, functions, models, environments.
+
+```{r,echo=TRUE}
+v <- c(8, 6, 7)
+class(v)
+attributes(matrix(1:6, 2, 3))
+```
+
+Objects carry **attributes** — metadata such as dimensions, names, or class — that change how generic functions treat them. A matrix is literally a vector wearing a `dim` attribute.
+
+## Symbols
+
+A variable name is itself an object: a **symbol** bound to a value within some environment.
+
+```{r,echo=TRUE}
+fortune <- "When in doubt, make a data frame."
+fortune
+```
+
+- Evaluating the symbol `fortune` looks up what it is bound to.
+- The binding lives in an **environment** (Chapter 8); the same name can be bound to different values in different environments.
+- This is why R can treat code as data: `quote(x + y)` returns the unevaluated expression, symbols and all.
+
+```{r,echo=TRUE}
+quote(x + y)
+```
+
+## Functions
+
+A function is an object that accepts **arguments** and returns a **value**:
+
+```{r,echo=TRUE}
+f <- function(x, y) {
+  x + 2 * y
+}
+f(1, 10)
+f(y = 1, x = 10)        # arguments may be named
+```
+
+- Functions can be assigned to variables, stored in lists, passed to other functions, and returned as results — the trait that makes R a *functional* language.
+- Default values make arguments optional: `function(x, base = 10)`.
+
+## Objects Are Copied in Assignment
+
+R behaves as though assignment and argument-passing **copy** objects, rather than sharing references:
+
+```{r,echo=TRUE}
+w <- c(1, 2, 3)
+double_it <- function(z) { z <- z * 2; z }
+double_it(w)
+w                       # untouched
+```
+
+::: {.callout-note}
+**Call by value.** A function cannot accidentally modify your data; it works on its own copy. (Internally R delays the physical copy until something is actually modified, so this is cheaper than it sounds.)
+:::
+
+## Everything Is an Object
+
+Beyond data, the language's own machinery is made of objects:
+
+```{r,echo=TRUE}
+class(mean)             # functions are objects
+class(quote(x + y))     # unevaluated code is an object
+formals(double_it)      # a function's argument list, as data
+```
+
+A function name is just a symbol pointing at a function object — which is why you can do `apply(m, 1, mean)`: you are passing the function itself.
+
+## Special Values
+
+A few special constants appear throughout real data work:
+
+```{r,echo=TRUE}
+NA + 1                  # NA: missing value, infects calculations
+1 / 0                   # Inf
+-1 / 0                  # -Inf
+0 / 0                   # NaN: not a number
+is.null(NULL)           # NULL: the empty object
+```
+
+- `NA` means "unknown"; most summary functions offer `na.rm=TRUE` to skip missing values.
+- `NULL` means "nothing at all" — assigning `x$col <- NULL` deletes a component.
+
+## Coercion
+
+When types do not match, R converts — **coerces** — values according to fixed rules, moving toward the more general type:
+
+```{r,echo=TRUE}
+c(1, 2, TRUE)           # logical -> numeric
+c(1, 2, "three")        # numeric -> character
+as.numeric("3.14")      # explicit coercion
+```
+
+- Implicit coercion follows the hierarchy logical → integer → numeric → character.
+- The `as.*` family (`as.numeric`, `as.character`, `as.factor`, ...) coerces on demand; `I()` (AsIs) suppresses unwanted conversion, e.g., when building data frames.
+
+## The R Interpreter
+
+R is an **interpreted** language: expressions are parsed and evaluated on the fly, with no separate compile step.
+
+- That is what makes the console possible — and what makes R slower than compiled languages for tight loops (Chapter 24 shows the cures, including the built-in byte-code compiler).
+- Parsing turns text into expression objects; evaluation walks those objects. You can do both yourself:
+
+```{r,echo=TRUE}
+ex <- parse(text = "7 * 6")[[1]]
+eval(ex)
+```
+
+This "code is data" property powers R's formula notation, `quote()`, and much of its metaprogramming.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

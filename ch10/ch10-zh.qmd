@@ -1,0 +1,184 @@
+---
+title: "程式設計與應用"
+subtitle: "第十章：物件導向程式設計"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch10.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **有教養的物件**
+
+## 兩套系統，一個概念
+
+R 本質上是函數式語言，但內建了物件導向機制——而且有兩套：
+
+- **S3**：非正式、輕量、無所不在。類別只是一個 `class` 屬性；分派靠命名慣例。
+- **S4**：正式類別，具備宣告的槽位（slots）、有效性檢查與註冊式方法 [@chambers2008software]。
+
+::: {.callout-note}
+**核心概念。** **類別**（class）描述一種物件；物件是其類別的**實例**（instance）。**泛型函式**（如 `print`、`summary`）透過**分派**（dispatch）到類別專屬的**方法**（method）決定行為。**繼承**（inheritance）讓一個類別擴充另一個。
+:::
+
+S3 撐起了 base R 的大半江山；S4 撐起 Bioconductor 與講究嚴謹的程式。我們先看 S4，再看 S3。
+
+## 貫穿全章的例子
+
+假設要追蹤多位使用者的體重變化。自然的設計是：
+
+- 一個 `TimeSeries` 類別，存放數值與起迄時間戳；
+- 一個 `WeightHistory` 類別，**擴充** `TimeSeries` 並加上人名；
+- 各類別實作泛型操作——`period()`、`series()`。
+
+這個例子會把本章所有 S4 功能演練一遍。
+
+## 定義 S4 類別
+
+`setClass()` 宣告類別名稱與**槽位**（具型別的欄位）：
+
+```{r,echo=TRUE}
+library(methods)
+setClass("TimeSeries",
+  representation(data = "numeric", start = "POSIXct", end = "POSIXct"))
+
+my.ts <- new("TimeSeries",
+  data  = c(1, 2, 1, 4, 5),
+  start = as.POSIXct("2026-09-22 09:00:00"),
+  end   = as.POSIXct("2026-09-22 09:04:00"))
+my.ts@data            # 槽位以 @ 存取
+```
+
+`new()` 建構實例；列印 S4 物件會列出槽位。
+
+## 有效性檢查
+
+有效性函式能在建構當下擋掉不合法的物件：
+
+```{r,echo=TRUE,error=TRUE}
+setValidity("TimeSeries", function(object) {
+  if (object@start <= object@end) TRUE
+  else "start must precede end"
+})
+new("TimeSeries", data = 1:3 + 0,
+    start = as.POSIXct("2026-01-02"), end = as.POSIXct("2026-01-01"))
+```
+
+這是 S4 相對 S3 最實際的優勢：系統替你強制執行不變條件。
+
+## 泛型函式與方法（S4）
+
+`setGeneric()` 宣告泛型；`setMethod()` 替某個類別註冊實作：
+
+```{r,echo=TRUE}
+setGeneric("period", function(object) standardGeneric("period"))
+setMethod("period", "TimeSeries", function(object) {
+  (object@end - object@start) / (length(object@data) - 1)
+})
+period(my.ts)
+```
+
+你也可以為*既有的*泛型新增方法——例如替 `TimeSeries` 寫一個 `summary` 方法——R 會自動分派。
+
+## 繼承（S4）
+
+`contains=` 讓一個類別擴充另一個；子類別繼承槽位、有效性與方法：
+
+```{r,echo=TRUE}
+setClass("WeightHistory",
+  contains = "TimeSeries",
+  representation(name = "character"))
+
+kim <- new("WeightHistory",
+  data  = c(63, 62.5, 62),
+  start = as.POSIXct("2026-01-01"), end = as.POSIXct("2026-03-01"),
+  name  = "Kim")
+period(kim)        # 繼承來的方法直接可用
+kim@name
+```
+
+類別可以繼承多個父類別；方法分派會挑選最特定的匹配。
+
+## S3：靠慣例的類別
+
+在 S3 中，「類別」不過是一個屬性，「方法」不過是叫做 `generic.class` 的函式：
+
+```{r,echo=TRUE}
+cat_record <- list(name = "Mochi", weight = 4.2)
+class(cat_record) <- "cat"
+
+print.cat <- function(x, ...) {
+  cat("Cat:", x$name, "—", x$weight, "kg\n")
+}
+print(cat_record)        # print() 分派到 print.cat
+```
+
+沒有宣告、沒有驗證——從頭到尾都是慣例。函式內呼叫 `UseMethod()` 就讓它成為泛型。
+
+## S3 分派的運作方式
+
+```{r,echo=TRUE}
+describe <- function(x) UseMethod("describe")
+describe.default <- function(x) "some object"
+describe.numeric <- function(x) paste("numbers, mean =", mean(x))
+describe(letters)
+describe(c(1, 2, 3))
+```
+
+- `class()` 向量由左至右搜尋是否存在對應的 `generic.class` 函式；`.default` 是後備。
+- `methods("describe")` 列出現有方法；`inherits(x, "cat")` 檢查類別歸屬。
+
+## S3 與 S4 的比較
+
+| 面向 | S3 | S4 |
+|:---|:---|:---|
+| 類別定義 | `class(x) <- "name"` | `setClass()` 加上具型別槽位 |
+| 欄位存取 | `x$field` | `x@slot` |
+| 方法 | 名為 `generic.class` 的函式 | `setMethod()` |
+| 驗證 | 無 | `setValidity()` |
+| 成本 | 極低 | 較繁瑣 |
+
+- 日常工作與快速多型用 **S3**；`lm`、`data.frame` 與多數 CRAN 套件都是它。
+- 當正確性比簡潔更重要——大型系統、複雜階層、Bioconductor——用 **S4**。
+- 還有更新的系統（R5 參照類別、R6、S7），全都建立在同一套屬性機制上。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

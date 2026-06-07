@@ -1,0 +1,189 @@
+---
+title: "程式設計與應用"
+subtitle: "第五章：R 語言概觀"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch5.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **R 的思考方式**
+
+## 整體圖像
+
+第三章帶你逐句體驗 R；本章則是文法課。接下來第二部分的一切，都由四個概念組織起來：
+
+- 程式由**運算式**（expression）構成；
+- 運算式操作**物件**（object）；
+- 名稱是繫結到物件的**符號**（symbol）；
+- 工作由**函式**完成——而函式本身也是物件。
+
+掌握這四點之後，第六章的細部語法會顯得理所當然，而非武斷的規定。
+
+## 運算式
+
+一支 R 程式是一連串依序求值的運算式：
+
+```{r,echo=TRUE}
+x <- 3 * 7          # 指派運算式
+if (x > 20) "big" else "small"   # 連流程控制都會回傳值
+```
+
+- 運算式之間以換行或分號分隔。
+- 大括號 `{ }` 能把多個運算式組成一個，整個區塊的值是最後一個運算式的值。
+- 因為一切都會回傳值，運算式可以層層組合：`if` 可以嵌在函式呼叫裡，再嵌在指派中。
+
+## 物件
+
+運算式接觸到的每個值都是**物件**：向量、串列、函式、模型、環境。
+
+```{r,echo=TRUE}
+v <- c(8, 6, 7)
+class(v)
+attributes(matrix(1:6, 2, 3))
+```
+
+物件帶有**屬性**（attributes）——維度、名稱、類別等中繼資料——決定泛型函式如何對待它們。矩陣其實就是戴著 `dim` 屬性的向量。
+
+## 符號
+
+變數名稱本身也是物件：在某個環境中繫結到值的**符號**。
+
+```{r,echo=TRUE}
+fortune <- "When in doubt, make a data frame."
+fortune
+```
+
+- 對符號 `fortune` 求值，就是查出它繫結到什麼。
+- 繫結存放在**環境**（environment）中（第八章）；同一個名稱在不同環境裡可以繫結到不同的值。
+- 這正是 R 能「把程式碼當資料」的原因：`quote(x + y)` 會回傳未求值的運算式，符號原封不動。
+
+```{r,echo=TRUE}
+quote(x + y)
+```
+
+## 函式
+
+函式是接受**引數**、回傳**值**的物件：
+
+```{r,echo=TRUE}
+f <- function(x, y) {
+  x + 2 * y
+}
+f(1, 10)
+f(y = 1, x = 10)        # 引數可以用名稱指定
+```
+
+- 函式可以指派給變數、放進串列、傳給其他函式、當成結果回傳——這正是 R 作為*函數式*語言的特徵。
+- 預設值讓引數變成選填：`function(x, base = 10)`。
+
+## 指派時物件會被複製
+
+R 的行為就像指派與傳遞引數都會**複製**物件，而不是共享參照：
+
+```{r,echo=TRUE}
+w <- c(1, 2, 3)
+double_it <- function(z) { z <- z * 2; z }
+double_it(w)
+w                       # 原封不動
+```
+
+::: {.callout-note}
+**傳值呼叫（call by value）。** 函式不可能不小心改壞你的資料；它操作的是自己的副本。（R 內部其實會延後實際複製，直到真的有修改發生，所以成本比想像中低。）
+:::
+
+## 一切皆物件
+
+不只資料，語言自身的機制也由物件構成：
+
+```{r,echo=TRUE}
+class(mean)             # 函式是物件
+class(quote(x + y))     # 未求值的程式碼是物件
+formals(double_it)      # 函式的引數清單，本身就是資料
+```
+
+函式名稱只是指向函式物件的符號——所以才能寫 `apply(m, 1, mean)`：你傳遞的是函式本身。
+
+## 特殊值
+
+幾個特殊常數在實務資料工作中無所不在：
+
+```{r,echo=TRUE}
+NA + 1                  # NA：缺失值，會感染整個計算
+1 / 0                   # Inf
+-1 / 0                  # -Inf
+0 / 0                   # NaN：非數
+is.null(NULL)           # NULL：空物件
+```
+
+- `NA` 的意思是「未知」；多數摘要函式提供 `na.rm=TRUE` 跳過缺失值。
+- `NULL` 的意思是「什麼都沒有」——`x$col <- NULL` 可以刪除一個欄位。
+
+## 強制轉型
+
+型別不符時，R 會依固定規則**強制轉型**（coerce），往較一般的型別移動：
+
+```{r,echo=TRUE}
+c(1, 2, TRUE)           # logical -> numeric
+c(1, 2, "three")        # numeric -> character
+as.numeric("3.14")      # 明確轉型
+```
+
+- 隱性轉型遵循 logical → integer → numeric → character 的階層。
+- `as.*` 家族（`as.numeric`、`as.character`、`as.factor`……）可隨需轉型；`I()`（AsIs）能抑制不想要的轉換，例如建立資料框時。
+
+## R 直譯器
+
+R 是**直譯式**語言：運算式即時剖析、即時求值，沒有獨立的編譯步驟。
+
+- 主控台因此成為可能——也因此 R 在緊湊迴圈上比編譯語言慢（第二十四章會介紹解方，包括內建的位元組碼編譯器）。
+- 剖析（parsing）把文字變成運算式物件；求值（evaluation）走訪這些物件。兩件事你都可以自己做：
+
+```{r,echo=TRUE}
+ex <- parse(text = "7 * 6")[[1]]
+eval(ex)
+```
+
+這種「程式碼即資料」的性質，支撐著 R 的公式記號、`quote()` 與大量的後設程式設計（metaprogramming）能力。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

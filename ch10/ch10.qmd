@@ -1,0 +1,184 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 10: Object-Oriented Programming"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch10-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Objects with Manners**
+
+## Two Systems, One Idea
+
+R is functional at heart, but ships with object-oriented machinery — twice over:
+
+- **S3**: informal, lightweight, ubiquitous. A class is just a `class` attribute; dispatch is by naming convention.
+- **S4**: formal classes with declared slots, validity checking, and registered methods [@chambers2008software].
+
+::: {.callout-note}
+**Key ideas.** A **class** describes a kind of object; an object is an **instance** of its class. A **generic function** (like `print` or `summary`) decides what to do by **dispatching** to a class-specific **method**. **Inheritance** lets one class extend another.
+:::
+
+S3 powers most of base R; S4 powers Bioconductor and code that needs rigor. We look at S4 first, then S3.
+
+## A Running Example
+
+Suppose we track people's body-weight history over time. A natural design:
+
+- a `TimeSeries` class holding values plus start/end timestamps;
+- a `WeightHistory` class that **extends** `TimeSeries` with a person's name;
+- generic operations — `period()`, `series()` — implemented per class.
+
+This example exercises every S4 feature in the chapter.
+
+## Defining an S4 Class
+
+`setClass()` declares the class name and its **slots** (typed fields):
+
+```{r,echo=TRUE}
+library(methods)
+setClass("TimeSeries",
+  representation(data = "numeric", start = "POSIXct", end = "POSIXct"))
+
+my.ts <- new("TimeSeries",
+  data  = c(1, 2, 1, 4, 5),
+  start = as.POSIXct("2026-09-22 09:00:00"),
+  end   = as.POSIXct("2026-09-22 09:04:00"))
+my.ts@data            # slots are accessed with @
+```
+
+`new()` constructs instances; printing an S4 object lists its slots.
+
+## Validity Checking
+
+A validity function rejects malformed objects at construction time:
+
+```{r,echo=TRUE,error=TRUE}
+setValidity("TimeSeries", function(object) {
+  if (object@start <= object@end) TRUE
+  else "start must precede end"
+})
+new("TimeSeries", data = 1:3 + 0,
+    start = as.POSIXct("2026-01-02"), end = as.POSIXct("2026-01-01"))
+```
+
+This is the major practical advantage of S4 over S3: the system enforces your invariants for you.
+
+## Generic Functions and Methods (S4)
+
+`setGeneric()` declares a generic; `setMethod()` registers an implementation for a class:
+
+```{r,echo=TRUE}
+setGeneric("period", function(object) standardGeneric("period"))
+setMethod("period", "TimeSeries", function(object) {
+  (object@end - object@start) / (length(object@data) - 1)
+})
+period(my.ts)
+```
+
+You can also add methods for *existing* generics — e.g., a `summary` method for `TimeSeries` — and R will dispatch automatically.
+
+## Inheritance (S4)
+
+`contains=` makes one class extend another; the child inherits slots, validity, and methods:
+
+```{r,echo=TRUE}
+setClass("WeightHistory",
+  contains = "TimeSeries",
+  representation(name = "character"))
+
+kim <- new("WeightHistory",
+  data  = c(63, 62.5, 62),
+  start = as.POSIXct("2026-01-01"), end = as.POSIXct("2026-03-01"),
+  name  = "Kim")
+period(kim)        # inherited method just works
+kim@name
+```
+
+A class can inherit from several parents; method dispatch picks the most specific match.
+
+## S3: Classes by Convention
+
+In S3, the "class" is nothing but an attribute, and a method is nothing but a function named `generic.class`:
+
+```{r,echo=TRUE}
+cat_record <- list(name = "Mochi", weight = 4.2)
+class(cat_record) <- "cat"
+
+print.cat <- function(x, ...) {
+  cat("Cat:", x$name, "—", x$weight, "kg\n")
+}
+print(cat_record)        # print() dispatches to print.cat
+```
+
+No declarations, no validation — convention all the way down. `UseMethod()` inside a function makes it a generic.
+
+## How S3 Dispatch Works
+
+```{r,echo=TRUE}
+describe <- function(x) UseMethod("describe")
+describe.default <- function(x) "some object"
+describe.numeric <- function(x) paste("numbers, mean =", mean(x))
+describe(letters)
+describe(c(1, 2, 3))
+```
+
+- The `class()` vector is searched left to right for a matching `generic.class` function; `.default` is the fallback.
+- `methods("describe")` lists available methods; `inherits(x, "cat")` tests class membership.
+
+## S3 and S4 Compared
+
+| Aspect | S3 | S4 |
+|:---|:---|:---|
+| Class definition | `class(x) <- "name"` | `setClass()` with typed slots |
+| Field access | `x$field` | `x@slot` |
+| Method | function named `generic.class` | `setMethod()` |
+| Validation | none | `setValidity()` |
+| Cost | minimal | ceremony |
+
+- Use **S3** for everyday work and quick polymorphism; it is what `lm`, `data.frame`, and most of CRAN use.
+- Use **S4** when correctness matters more than brevity — large systems, complex hierarchies, Bioconductor.
+- Newer systems exist (R5 reference classes, R6, S7), all built on the same attribute machinery.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

@@ -1,0 +1,150 @@
+---
+title: "程式設計與應用"
+subtitle: "第十六章：分析資料"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch16.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **從資料擠出第一批數字**
+
+## 摘要統計量
+
+描述統計的基本詞彙，每個都只差一個函式：
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda", temp, mode = "wb")
+load(temp)
+x <- dow30$Open
+mean(x); median(x)
+var(x); sd(x)
+range(x); quantile(x, c(0.25, 0.5, 0.75))
+```
+
+- `mean(x, trim = 0.1)` 抵抗離群值；這裡每個函式都接受 `na.rm=TRUE`。
+- `fivenum()` 給出 Tukey 五數摘要；`IQR()` 是四分位距。
+
+## 無所不在的 summary()
+
+`summary()` 會順應它的引數——數值向量、因子、資料框、模型：
+
+```{r,echo=TRUE}
+summary(dow30[, c("Open", "Close", "Volume")])
+```
+
+想快速摸清任何新資料集：`summary(df)` 加 `str(df)`，兩行回答「我手上拿的是什麼？」。
+
+## 相關與共變異
+
+兩個序列如何一起波動？
+
+```{r,echo=TRUE}
+cov(dow30$Open, dow30$Close)
+cor(dow30$Open, dow30$Close)
+cor(dow30[, c("Open", "High", "Low", "Close")])[1:4, 1:4]
+```
+
+- `cor()` 預設 Pearson；`method = "spearman"` 或 `"kendall"` 改用等級——對離群值與非線性都更穩健。
+- 相關矩陣是迴歸（第二十章）前的標準偵察。
+
+::: {.callout-warning}
+**相關不是因果。** 它也看不見非線性結構——散佈圖永遠要一起看。
+:::
+
+## 主成分分析
+
+PCA 把彼此相關的變數重新表達成依解釋變異量排序的正交**主成分**：
+
+```{r,echo=TRUE}
+pca <- prcomp(USArrests, scale. = TRUE)
+summary(pca)
+```
+
+```{r,echo=TRUE,out.width="60%"}
+biplot(pca, cex = 0.6)
+```
+
+- `scale.=TRUE` 先標準化——單位不同時必須做。
+- 前兩個主成分常已捕捉大部分結構：替繪圖與建模內建了降維。
+
+## 因素分析
+
+PCA 是純粹的變異量記帳；**因素分析**則假設存在解釋觀測相關性的潛在變數：
+
+```{r,echo=TRUE}
+fa <- factanal(mtcars[, c("mpg", "disp", "hp", "wt", "qsec", "drat")],
+               factors = 2)
+fa$loadings
+```
+
+- 負荷量（loadings）顯示每個觀測變數反映各潛在因素的強度。
+- 常見於心理計量與問卷研究：「這 20 題是不是其實在量 2 個潛在特質？」
+
+## 拔靴法重抽樣
+
+當統計量的不確定性沒有現成公式時，就**重抽**：放回地抽取觀測值、重算、重複：
+
+```{r,echo=TRUE,message=FALSE}
+library(boot)
+med.fun <- function(d, i) median(d[i])
+set.seed(1)
+b <- boot(dow30$Open, med.fun, R = 1000)
+b
+boot.ci(b, type = "perc")$percent
+```
+
+一千次重算的中位數的散布，就是抽樣分布的估計——完全不需要常態假設。
+
+## 一套工作流程
+
+1. `str()` 與 `summary()`——型別、範圍、缺漏。
+2. 畫圖——直方圖與散佈圖（第十三～十五章）。
+3. 相關——什麼跟什麼一起動？
+4. 降維——變數很多時用 PCA／因素分析。
+5. 量化不確定性——有疑慮就拔靴。
+
+之後——也只有在之後——才輪到第十八章的正式檢定與第二十、二十一章的模型。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

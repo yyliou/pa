@@ -1,0 +1,183 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 9: Functions"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch9-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Building Your Own Tools**
+
+## The Function Keyword
+
+The `function` keyword creates a function object; assigning it to a name is optional:
+
+```{r,echo=TRUE}
+square <- function(x) x ^ 2
+square(12)
+```
+
+A multi-expression body needs braces; the function's value is the last expression evaluated:
+
+```{r,echo=TRUE}
+zscore <- function(v) {
+  m <- mean(v)
+  s <- sd(v)
+  (v - m) / s
+}
+round(zscore(c(2, 4, 6, 8)), 2)
+```
+
+## Arguments and Defaults
+
+```{r,echo=TRUE}
+trim_mean <- function(v, trim = 0.1, digits = 2) {
+  round(mean(v, trim = trim), digits)
+}
+trim_mean(c(1, 2, 3, 100))            # defaults used
+trim_mean(c(1, 2, 3, 100), trim = 0.25)
+```
+
+- Arguments match first by exact name, then by partial name, then by position.
+- An argument with no default and no supplied value triggers an error **only if the body actually uses it** — lazy evaluation again.
+- Defaults may reference other arguments: `function(x, n = length(x))`.
+
+## The ... Argument
+
+The ellipsis `...` absorbs any extra arguments and can forward them onward:
+
+```{r,echo=TRUE}
+loud_plot_summary <- function(v, ...) {
+  cat("n =", length(v), "\n")
+  summary(v, ...)
+}
+loud_plot_summary(c(1, 5, 9, NA), na.rm = TRUE)
+```
+
+This is how wrapper functions pass options through to `plot()`, `mean()`, and friends without naming every possibility.
+
+## Return Values
+
+```{r,echo=TRUE}
+sign_word <- function(x) {
+  if (x > 0) return("positive")     # explicit, early return
+  if (x < 0) return("negative")
+  "zero"                            # implicit: last value
+}
+sign_word(-3); sign_word(0)
+```
+
+- `return()` exits immediately — useful for guard clauses.
+- Otherwise the last evaluated expression is the value; idiomatic R leans on this.
+- `invisible(x)` returns a value without printing it at the console — what `assign()` and plotting functions do.
+
+## Functions as Arguments
+
+Higher-order functions take functions as inputs. The `sapply`/`lapply` family applies a function over a vector or list:
+
+```{r,echo=TRUE}
+sapply(1:5, sqrt)
+lapply(list(a = 1:3, b = 4:6), mean)
+```
+
+`apply()` works over matrix margins (1 = rows, 2 = columns):
+
+```{r,echo=TRUE}
+m <- matrix(1:6, nrow = 2)
+apply(m, 1, sum)     # row sums
+apply(m, 2, max)     # column maxima
+```
+
+`mapply()` zips several vectors through one function in parallel.
+
+## Anonymous Functions
+
+When a helper is needed exactly once, skip the name:
+
+```{r,echo=TRUE}
+sapply(1:5, function(i) i * (i + 1) / 2)
+
+# applied directly at the point of definition
+(function(x) x ^ x)(3)
+```
+
+Since R 4.1 there is a compact backslash shorthand:
+
+```{r,echo=TRUE}
+sapply(1:5, \(i) i ^ 2)
+```
+
+Anonymous functions keep one-off logic exactly where it is used.
+
+## Properties of Functions
+
+A function object dissects into three parts:
+
+```{r,echo=TRUE}
+args(trim_mean)        # human-readable signature
+formals(trim_mean)     # arguments + defaults, as a list
+body(zscore)           # the code
+environment(zscore)    # where it was defined
+```
+
+You can even *modify* these pieces programmatically — `body(f) <- ...` — which is occasionally useful and always impressive at parties.
+
+## Argument Verification
+
+Robust functions check their inputs early and fail informatively:
+
+```{r,echo=TRUE,error=TRUE}
+safe_log <- function(x) {
+  stopifnot(is.numeric(x), all(x > 0))
+  log(x)
+}
+safe_log(c(1, 10))
+safe_log(-5)
+```
+
+- `stop("message")` raises an error; `warning()` raises a warning but continues.
+- `missing(arg)` tests whether the caller supplied an argument.
+- `match.arg()` validates an argument against a fixed set of choices.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

@@ -1,0 +1,173 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 15: ggplot2"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch15-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+library(ggplot2)
+```
+
+# **A Grammar of Graphics**
+
+## The Third System
+
+`ggplot2` [@wickham2016ggplot2] implements Wilkinson's **grammar of graphics** [@wilkinson2011grammar]: instead of choosing from a menu of chart types, you *compose* a chart from independent parts —
+
+- **data** and **aesthetic mappings** (which variable drives position, color, size, shape);
+- **geoms** (points, lines, bars — the visible marks);
+- **stats** (transformations like binning or smoothing);
+- **scales**, **coordinates**, **facets**, and **themes**.
+
+This is the system our companion textbook (and the `da` course) is devoted to; here we meet its essentials.
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda", temp, mode = "wb")
+load(temp)
+hitters <- subset(batting.2008, AB > 100)
+```
+
+## Anatomy of a ggplot Call
+
+```{r,echo=TRUE,out.width="62%"}
+ggplot(hitters, aes(x = AB, y = H)) +
+  geom_point(alpha = 0.4)
+```
+
+- `ggplot(data, aes(...))` establishes the data and mappings;
+- `+ geom_*()` adds a layer that draws them;
+- further `+` terms refine scales, labels, facets, and themes.
+
+## Aesthetic Mappings
+
+Map a third variable to color and the legend writes itself:
+
+```{r,echo=TRUE,out.width="62%"}
+ggplot(hitters, aes(x = AB, y = H, color = HR)) +
+  geom_point() +
+  labs(x = "At-bats", y = "Hits", color = "Home runs")
+```
+
+::: {.callout-note}
+**Mapping vs. setting.** `aes(color = HR)` *maps* data to color (legend, scale); `geom_point(color = "red")` *sets* a constant. Mixing these up is the classic ggplot beginner error.
+:::
+
+## Histograms and Densities
+
+Each geom implies a default stat — `geom_histogram()` bins for you:
+
+```{r,echo=TRUE,out.width="62%",message=FALSE}
+ggplot(hitters, aes(x = H / AB)) +
+  geom_histogram(bins = 30)
+```
+
+```{r,echo=TRUE,out.width="62%"}
+ggplot(hitters, aes(x = H / AB)) +
+  geom_density(fill = "steelblue", alpha = 0.3)
+```
+
+## Smoothing Layers
+
+Layers stack — raw data underneath, a model on top:
+
+```{r,echo=TRUE,out.width="65%",message=FALSE}
+ggplot(hitters, aes(x = AB, y = H)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm")
+```
+
+`geom_smooth()` defaults to loess with a confidence ribbon; `method = "lm"` fits a straight line.
+
+## Bars and Boxes
+
+```{r,echo=TRUE,out.width="65%"}
+team.hr <- aggregate(HR ~ teamID, data = batting.2008, sum)
+top8 <- head(team.hr[order(-team.hr$HR), ], 8)
+ggplot(top8, aes(x = reorder(teamID, -HR), y = HR)) +
+  geom_col() +
+  labs(x = NULL, y = "Team home runs (top 8)")
+```
+
+`geom_boxplot()`, `geom_violin()`, and `geom_jitter()` cover the distribution-by-group cases of Chapter 13 in grammar form.
+
+## Faceting
+
+The lattice trick, grammar style:
+
+```{r,echo=TRUE,out.width="70%",message=FALSE}
+ggplot(hitters, aes(x = AB, y = H)) +
+  geom_point(alpha = 0.3) +
+  facet_wrap(~ bats) +
+  labs(title = "Hits vs. at-bats by batting side")
+```
+
+`facet_wrap(~ g)` wraps panels into a grid; `facet_grid(rows ~ cols)` crosses two factors.
+
+## Scales and Themes
+
+Every mapping has a scale you may replace; themes control the non-data ink:
+
+```{r,echo=TRUE,out.width="65%"}
+ggplot(hitters, aes(x = AB, y = H, color = HR)) +
+  geom_point() +
+  scale_color_gradient(low = "grey80", high = "red") +
+  scale_x_log10() +
+  theme_minimal(base_size = 13) +
+  labs(title = "Hits vs. at-bats", subtitle = "color = home runs")
+```
+
+`theme_bw()`, `theme_classic()`, and the `theme()` function (for surgical adjustments) round out the toolkit; `ggsave("fig.pdf")` writes the last plot to disk.
+
+## Three Systems Side by Side
+
+| | Base | Lattice | ggplot2 |
+|:---|:---|:---|:---|
+| Model | ink on paper | conditioned panels | grammar of layers |
+| Composition | sequential calls | one formula | `+` pipeline |
+| Legends | manual | mostly automatic | automatic |
+| Extensibility | low-level | panel functions | new geoms/stats |
+
+All three live happily in one analysis. For this course: base for quick looks, lattice for conditioning, `ggplot2` for publication figures — and the dedicated Data Analysis course for everything deeper.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

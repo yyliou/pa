@@ -1,0 +1,170 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 1: Getting and Installing R"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch1-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Welcome to R**
+
+## What Is R?
+
+R [@rcore2024] is a free, open-source environment for statistical computing and graphics, descended from the S language developed at Bell Laboratories [@becker1988new]. Throughout this course, the single name "R" actually bundles several things together:
+
+- a **programming language** designed around data;
+- an **interpreter** that executes programs written in that language;
+- a **graphics system** for producing statistical figures;
+- a desktop **application** for Windows, macOS, or Linux that wraps the interpreter, the standard packages, and a user interface into one install.
+
+Our textbook is *R in a Nutshell* (2nd ed.) [@adler2012r]. This first chapter has one practical goal: get a working copy of R onto your machine.
+
+## Why R?
+
+::: {.callout-note}
+**Three reasons R dominates applied data work.** It is free of license fees, it runs on every major platform, and it is surrounded by an enormous ecosystem of contributed packages covering nearly every statistical method ever published.
+:::
+
+- R is maintained by an international core team of developers and distributed through **CRAN** (the Comprehensive R Archive Network).
+- Because the source code is open, anyone can inspect how a method is implemented — and port R to new platforms.
+- Everything you need for this course costs exactly zero dollars.
+
+# R Versions
+
+## The Release Cycle
+
+- The R Core Team publishes official releases on a regular schedule: a major `x.y.0` release each spring, followed by patch releases (`x.y.1`, `x.y.2`, ...) that fix bugs.
+- Version numbers follow the pattern **major.minor.patch**, e.g., `4.4.2`.
+- The language itself is very stable. Release-to-release changes are mostly bug fixes, performance work, and a handful of new functions, so code written for one recent version almost always runs unchanged on another.
+- The textbook was written against a much older release (2.15.1); essentially every example still behaves the same way today. Where modern R differs, the slides use the modern behavior.
+
+## Which Version Should You Use?
+
+- For this course: **the latest released version** from CRAN.
+- You can check what you are running at any time:
+
+```{r,echo=TRUE}
+R.version.string
+```
+
+- Do not worry if your patch number differs from your neighbor's — results will be identical for everything we do.
+
+# Getting and Installing R Binaries
+
+## Where to Download
+
+R has been ported to every major desktop platform, and prebuilt installers ("binaries") are the easiest way to get it:
+
+1. Visit the official site: <https://cran.r-project.org>.
+2. CRAN is replicated on **mirror sites** around the world. Any mirror works; a geographically close one is usually fastest. The default "0-Cloud" mirror automatically routes you to a good server.
+3. Pick the download link matching your operating system and run the installer.
+
+::: {.callout-tip}
+**Filenames contain version numbers.** Links look like `R-4.4.2-win.exe` — the exact number will have moved on by the time you look. Always just take the newest one.
+:::
+
+## Windows
+
+- Click *Download R for Windows* → *base* → run the `.exe` installer.
+- The default settings are fine: R installs under `C:\Program Files\R\` and appears in the Start menu.
+- Both the installer and R itself are 64-bit on any modern machine; no choices need to be made.
+
+```{r,eval=FALSE,echo=TRUE}
+# After installing, launch "R x.y.z" from the Start menu,
+# or better: install RStudio (Chapter 2) and launch that instead.
+```
+
+## macOS
+
+- Click *Download R for macOS* and choose the build that matches your hardware:
+  - **Apple Silicon** (M-series chips): the `arm64` package.
+  - **Intel** Macs: the `x86_64` package.
+- The `.pkg` installer places an application called **R** in your Applications folder and a command-line `R` on your path.
+- If you mix the two builds up, R will refuse to start — when in doubt, check *About This Mac*.
+
+## Linux and Unix: Package Managers
+
+On Linux, the cleanest route is your distribution's package-management system, which also keeps R updated automatically:
+
+```{bash,eval=FALSE,echo=TRUE}
+# Debian / Ubuntu
+sudo apt-get update
+sudo apt-get install r-base r-base-dev
+
+# Fedora / Red Hat
+sudo dnf install R
+```
+
+- CRAN maintains its own repositories with newer builds than most distributions ship; instructions for adding them are on the CRAN Linux pages.
+- `r-base-dev` (or the equivalent) is worth installing too — it provides the compilers needed to build contributed packages from source.
+
+## Linux and Unix: Installing from Files
+
+If no package manager is available, two alternatives remain:
+
+- **Precompiled binaries** for several distributions can be downloaded from CRAN and installed manually (e.g., with `dpkg` or `rpm`).
+- **Building from source**: download the source tarball from CRAN and run the classic sequence:
+
+```{bash,eval=FALSE,echo=TRUE}
+tar -xzf R-4.4.2.tar.gz
+cd R-4.4.2
+./configure
+make
+sudo make install
+```
+
+This is rarely necessary on a desktop, but it is how R reaches unusual platforms — a direct benefit of R being open source.
+
+## Checking Your Installation
+
+Launch R and confirm the console responds:
+
+```{r,echo=TRUE}
+1 + 1
+sessionInfo()$R.version$version.string
+```
+
+If you see sensible output, your installation works and you are ready for Chapter 2, where we tour the user interface.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

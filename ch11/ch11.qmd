@@ -1,0 +1,193 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 11: Saving, Loading, and Editing Data"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch11-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Data In, Data Out**
+
+## Entering Data Within R
+
+For small data sets, the constructors from Part II are all you need:
+
+```{r,echo=TRUE}
+salary <- c(18700000, 14626720, 14137500)
+position <- c("QB", "QB", "DE")
+top.contracts <- data.frame(position, salary)
+top.contracts
+```
+
+- `rbind()` appends rows; `cbind()` appends columns.
+- `scan()` reads values typed interactively — handy for quick experiments.
+
+## The Edit GUI
+
+R ships a minimal spreadsheet-style editor:
+
+```{r,eval=FALSE,echo=TRUE}
+top.contracts <- edit(top.contracts)  # edit returns the NEW object
+fix(top.contracts)                    # fix saves the result back itself
+```
+
+::: {.callout-warning}
+**`edit()` does not modify in place.** Forgetting to assign its result is a classic data-loss moment; `fix()` exists precisely to avoid that.
+:::
+
+- The editor's look differs by platform (Windows grid, macOS sheet, X11 window), but the function is identical.
+- For real data entry, a spreadsheet program is more comfortable — the editor is best for quick inspection and one-cell fixes.
+
+## Saving Objects
+
+`save()` writes any set of R objects to a portable binary file; `load()` restores them, names and all:
+
+```{r,echo=TRUE}
+tmp <- tempfile(fileext = ".RData")
+save(top.contracts, file = tmp)       # `file =` must be NAMED
+rm(top.contracts)
+load(tmp)
+top.contracts[1, ]
+```
+
+- Files are cross-platform; compression is on by default.
+- `save.image()` snapshots the whole workspace (what "Save workspace?" does on exit).
+- `saveRDS()`/`readRDS()` save a *single* object without its name — often cleaner for programmatic use.
+
+## Loading from the Web: the Course Convention
+
+`download.file()` fetches any file from a URL to disk (`mode = "wb"` for binary files); `load()` then restores it. This is exactly how all course data sets are loaded:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/top.bacon.searching.cities.rda", temp, mode = "wb")
+load(temp)
+top.bacon.searching.cities
+```
+
+The textbook's `library(nutshell); data(...)` is always replaced by this three-line pattern.
+
+## Importing Text Files
+
+The `read.table()` family parses delimited text into data frames:
+
+```{r,eval=FALSE,echo=TRUE}
+df  <- read.table("file.txt", header = TRUE, sep = "\t")
+csv <- read.csv("file.csv")             # comma-separated
+eu  <- read.csv2("file.csv")            # ; separator, , decimal
+fwf <- read.fwf("file.dat", widths = c(8, 4, 4))
+```
+
+Key arguments worth memorizing: `header`, `sep`, `na.strings`, `stringsAsFactors`, `skip`, `colClasses` (huge speed win on big files).
+
+```{r,echo=TRUE}
+# readLines shows raw lines — always look at a file before parsing it
+readLines(textConnection("a,b\n1,2\n3,4"))
+```
+
+## Other Software and Spreadsheets
+
+- The `foreign` package reads legacy statistics formats: SAS (`read.xport`), SPSS (`read.spss`), Stata (`read.dta`), and more.
+- Excel files: the `readxl` package (`read_excel("book.xlsx")`) needs no Excel installation; `openxlsx` also writes.
+- The quick-and-dirty route still works: export a sheet to CSV, then `read.csv()`.
+
+```{r,eval=FALSE,echo=TRUE}
+library(readxl)
+roster <- read_excel("stu/roster.xlsx", sheet = 1)
+```
+
+## Exporting Data
+
+Every importer has a mirror image:
+
+```{r,eval=FALSE,echo=TRUE}
+write.csv(top.contracts, "contracts.csv", row.names = FALSE)
+write.table(top.contracts, "contracts.txt", sep = "\t")
+saveRDS(top.contracts, "contracts.rds")
+```
+
+- `row.names = FALSE` avoids the mysterious extra first column that surprises spreadsheet users.
+- For data interchange with other languages, CSV remains the lingua franca; for R-to-R, use `.rds`.
+
+## Importing from Databases
+
+Three strategies, in increasing order of integration:
+
+1. **Export then import**: dump a query result to CSV from the database tool, then `read.csv()` it. Crude but dependable.
+2. **RODBC**: connect through ODBC drivers — works with virtually any database that has a driver.
+3. **DBI**: R's native database interface, with backend packages per engine (`RSQLite`, `RPostgres`, `RMariaDB`, ...).
+
+## RODBC in Brief
+
+```{r,eval=FALSE,echo=TRUE}
+library(RODBC)
+ch <- odbcConnect("dsn_name", uid = "user", pwd = "pass")
+df <- sqlQuery(ch, "SELECT player, yards FROM kicks WHERE good = 1")
+sqlTables(ch)              # list tables
+close(ch)
+```
+
+- `sqlFetch(ch, "tbl")` grabs a whole table; `sqlSave()` writes a data frame back.
+- ODBC setup happens *outside* R (driver + data source name), which is most of the work in practice.
+
+## DBI in Brief
+
+```{r,echo=TRUE,message=FALSE}
+library(DBI)
+con <- dbConnect(RSQLite::SQLite(), ":memory:")   # a throwaway database
+dbWriteTable(con, "contracts", top.contracts)
+dbGetQuery(con, "SELECT position, MAX(salary) AS top FROM contracts GROUP BY position")
+dbDisconnect(con)
+```
+
+- One generic API — `dbConnect`, `dbGetQuery`, `dbWriteTable`, `dbDisconnect` — over interchangeable backends.
+- Prepared statements and incremental fetching (`dbSendQuery` + `dbFetch`) handle result sets too large for memory.
+
+## Bigger Pipelines
+
+- **TSDBI** offers a database interface specialized for time series.
+- Data living in **Hadoop**/distributed storage is the subject of Chapter 26 — the usual pattern is to reduce it first, then pull the summary into R.
+- Rule of thumb: push heavy filtering and joins into the database (`WHERE`, `GROUP BY`), and bring into R only what analysis actually needs.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

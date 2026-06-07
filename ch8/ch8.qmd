@@ -1,0 +1,170 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 8: Symbols and Environments"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch8-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Where Names Live**
+
+## Symbols and Bindings
+
+Defining a variable really means **binding a symbol to a value inside an environment**:
+
+```{r,echo=TRUE}
+x <- 1            # bind symbol `x` to 1 in the current environment
+y <- quote(x + 1) # an unevaluated expression mentioning `x`
+eval(y)           # evaluate it: `x` is looked up NOW
+x <- 100
+eval(y)           # same expression, new answer
+```
+
+An expression is data until evaluated; the value of its symbols is decided at evaluation time, in some environment.
+
+## Delayed Evaluation and Promises
+
+Evaluation can be postponed deliberately:
+
+```{r,echo=TRUE}
+delayedAssign("lazy", {message("computing now!"); 42})
+# nothing printed yet ...
+lazy             # first touch forces the promise
+```
+
+::: {.callout-note}
+**Promises.** A promise packages an expression plus the environment to evaluate it in, and computes its value only when first needed. R passes *all* function arguments as promises — that is "lazy evaluation," and it is why an unused argument can contain an error without crashing the call.
+:::
+
+## What Is an Environment?
+
+An **environment** is a set of symbol-to-value bindings plus a pointer to a **parent environment**. Lookup walks the chain: current environment first, then parent, then grandparent, until `emptyenv()`.
+
+```{r,echo=TRUE}
+e <- new.env()
+assign("z", 99, envir = e)
+get("z", envir = e)
+exists("z", envir = e)
+ls(envir = e)
+```
+
+Other tools: `rm(..., envir=)` removes bindings; `environmentName()` labels well-known environments.
+
+## The Global Environment
+
+Each session starts in the **global environment** — your workspace:
+
+```{r,echo=TRUE}
+environment()             # where am I?
+ls()[1:5]                 # what have I defined?
+```
+
+The chain above the global environment consists of the attached packages — exactly the **search path**:
+
+```{r,echo=TRUE}
+search()
+```
+
+This is why loading a package makes its functions visible: it inserts an environment into the lookup chain.
+
+## Environments and Functions
+
+Calling a function creates a *fresh* environment for its local variables, whose parent is the environment where the function was **defined** (not where it was called):
+
+```{r,echo=TRUE}
+make_counter <- function() {
+  count <- 0
+  function() {
+    count <<- count + 1   # write to the enclosing environment
+    count
+  }
+}
+tick <- make_counter()
+tick(); tick(); tick()
+```
+
+The inner function *remembers* `count` between calls — a **closure**. This lexical scoping rule is the heart of R's function semantics.
+
+## Global vs. Lexical Assignment
+
+```{r,echo=TRUE}
+v <- "global"
+f <- function() { v <- "local"; v }
+g <- function() { v <<- "overwritten"; v }
+f(); v          # local assignment leaves global alone
+g(); v          # <<- climbed up and replaced it
+```
+
+::: {.callout-warning}
+**Use `<<-` sparingly.** Functions that silently modify state outside themselves are hard to test and debug. Closures (previous slide) are the disciplined use case.
+:::
+
+## Working with the Call Stack
+
+The environment where a function was *called* is reachable too — essential for functions that interpret expressions in their caller's context:
+
+```{r,echo=TRUE}
+whodunit <- function() sys.function(-1)   # who called me?
+show_caller_x <- function() {
+  eval(quote(x), envir = parent.frame())
+}
+x <- "caller's x"
+show_caller_x()
+```
+
+- `sys.call()` — the current call; `match.call()` — with argument names filled in.
+- `parent.frame()` — the calling environment. Functions like `lm()` use exactly this trick to evaluate formulas against your data.
+
+## Environments in Packages
+
+- Each loaded package contributes an environment to the search path; lookup explains shadowing — a name in your workspace hides one in a package.
+- Disambiguate explicitly with the `::` operator:
+
+```{r,echo=TRUE}
+stats::sd(c(1, 2, 3, 4))
+```
+
+- Packages use **namespaces** so their internal helpers stay invisible, and *promises* (via lazy data loading) so big data sets cost nothing until touched.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

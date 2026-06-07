@@ -1,0 +1,220 @@
+---
+title: "程式設計與應用"
+subtitle: "第六章：R 語法"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch6.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **常數**
+
+## 數值向量
+
+直接輸入的數字預設是雙精度浮點數；前後綴可改變解讀方式：
+
+```{r,echo=TRUE}
+1.1                 # double
+123L                # L 後綴強制為整數
+1e3                 # 科學記號
+0xFF                # 十六進位
+1+2i                # 複數
+```
+
+- `class()` 可區分 `numeric`（double）、`integer` 與 `complex`。
+- 數值過大或過小時會自動以科學記號顯示。
+
+## 字元向量
+
+字串可用雙引號或單引號；特殊字元以反斜線跳脫：
+
+```{r,echo=TRUE}
+"hello"
+'also a string'
+cat("tab:\tnewline:\nquote:\"done\"\n")
+```
+
+- 實際會用到的跳脫字元：`\t`、`\n`、`\\`、`\"`。
+- `nchar()` 計算字元數；`paste()` 黏接字串。
+
+## 邏輯常數與符號
+
+```{r,echo=TRUE}
+TRUE; FALSE
+```
+
+- 永遠寫全 `TRUE`/`FALSE`。縮寫 `T`/`F` 只是普通變數，任何人都能重新指派——經典陷阱。
+- **合法名稱**以字母（或後面不接數字的點）開頭，由字母、數字、點與底線組成。
+- 其他名稱也能使用，只要包上反引號：
+
+```{r,echo=TRUE}
+`my odd name` <- 42
+`my odd name`
+```
+
+# 運算子
+
+## 運算子動物園
+
+```{r,echo=TRUE}
+7 %% 3              # 餘數
+7 %/% 3             # 整數除法
+2 ^ 5               # 次方
+1:3 %in% c(2, 3, 5) # 集合隸屬
+```
+
+比較運算子（`<`、`<=`、`==`、`!=`）與邏輯運算子（`!`、`&`、`|`、`&&`、`||`）回傳邏輯向量：
+
+```{r,echo=TRUE}
+c(1, 5, 10) > 4
+TRUE & c(TRUE, FALSE)
+```
+
+- 單一 `&`/`|` 是向量化的；雙重 `&&`/`||` 只檢查單一條件，保留給 `if()` 的判斷式。
+- 使用者可以自訂名為 `%anything%` 的二元運算子。
+
+## 運算順序
+
+優先順序大致與中學代數相同——`^` 先於 `*`/`/`，再先於 `+`/`-`；算術先於比較、比較先於邏輯、指派最後：
+
+```{r,echo=TRUE}
+2 + 3 * 4 ^ 2
+-2 ^ 2              # 一元負號比 ^ 晚作用：這是 -(2^2)
+(-2) ^ 2
+```
+
+::: {.callout-tip}
+**有疑慮就加括號。** 括號不花成本又能表達意圖；完整優先順序表見 `?Syntax`。
+:::
+
+## 指派
+
+指派有好幾種寫法：
+
+```{r,echo=TRUE}
+x <- 5              # 標準寫法
+6 -> y              # 向右指派（罕見）
+z = 7               # 最外層允許
+assign("w", 8)      # 以函式呼叫指派
+c(x, y, z, w)
+```
+
+- 在函式呼叫中，`=` 是替引數命名，不是指派——又一個統一使用 `<-` 的理由。
+- 超指派運算子 `<<-` 會修改外層環境的變數（第八章）；請節制使用。
+- `names(x) <- ...`、`dim(x) <- ...` 這類取代式寫法看似魔法，其實是普通的函式呼叫（`"names<-"`）。
+
+# 運算式
+
+## 分隔與組合運算式
+
+```{r,echo=TRUE}
+a <- 1; b <- 2          # 分號可在同一行分隔運算式
+{                       # 大括號組合；值為最後一個運算式
+  s <- a + b
+  s * 10
+}
+```
+
+- 圓括號既能改變優先順序，也會讓內容顯示出來：
+
+```{r,echo=TRUE}
+(v <- c(1, 2, 3))       # 一筆完成指派並列印
+```
+
+# 流程控制
+
+## 條件判斷
+
+```{r,echo=TRUE}
+x <- 7
+if (x > 5) "big" else "small"
+
+# 向量化版本：逐元素判斷
+ifelse(c(1, 9, 3) > 5, "big", "small")
+```
+
+`switch()` 在多個具名選項間挑選：
+
+```{r,echo=TRUE}
+grade <- function(letter)
+  switch(letter, A = "excellent", B = "good", "see me")
+grade("A"); grade("C")
+```
+
+最後一個未命名引數是預設情況。
+
+## 迴圈：for、while、repeat
+
+```{r,echo=TRUE}
+total <- 0
+for (i in 1:5) total <- total + i
+total
+
+n <- 1
+while (n < 100) n <- n * 2
+n
+```
+
+- `repeat { }` 無限重複直到 `break`；`next` 跳到下一輪。
+- `for` 可走訪任何向量或串列，不限於數字。
+
+::: {.callout-note}
+**迴圈常常是多餘的。** 向量化運算（`x * 2`）與 apply 家族（`sapply`、`lapply`，第九章）能更清楚地表達多數迭代——而且通常更快。
+:::
+
+## 正確累積迴圈結果
+
+在迴圈中讓物件逐步長大，每一步都會重新配置記憶體。應先配置好空間：
+
+```{r,echo=TRUE}
+squares <- numeric(10)       # 預先配置
+for (i in 1:10) squares[i] <- i^2
+squares
+
+# 慣用的一行解
+sapply(1:10, function(i) i^2)
+```
+
+這個習慣對效能影響極大（第二十四章）。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

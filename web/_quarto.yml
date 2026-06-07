@@ -1,0 +1,28 @@
+project:
+  type: website
+  output-dir: .
+
+website:
+  title: "Programming for Applications"
+  favicon: hex/pa.svg
+  navbar:
+    logo: hex/pa.svg
+    left:
+      - href: sylla.qmd
+        text: Syllabus
+      - href: slide.qmd
+        text: Slides
+      - href: prob.qmd
+        text: Problem sets
+      - href: r.qmd
+        text: R
+
+format:
+  html:
+    theme:
+      - Minty
+      - brand
+    toc: true
+    toc-depth: 3
+
+editor: visual

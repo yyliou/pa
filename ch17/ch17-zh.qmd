@@ -1,0 +1,152 @@
+---
+title: "程式設計與應用"
+subtitle: "第十七章：機率分布"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch17.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **d-p-q-r 系統**
+
+## 四個字母，所有分布
+
+對每個分布 `xxx`，R 提供四個函式：
+
+| 字首 | 函式 | 回答的問題 |
+|:---|:---|:------|
+| `d` | 密度／質量 | 值 $x$ 出現的可能性多大？ |
+| `p` | 累積分布 | $P(X \le q)$？ |
+| `q` | 分位數 | 哪個值以下累積了機率 $p$？ |
+| `r` | 隨機生成 | 給我 $n$ 個隨機值 |
+
+```{r,echo=TRUE}
+dnorm(0)              # 標準常態在 0 的密度
+pnorm(1.96)           # P(Z <= 1.96)
+qnorm(0.975)          # 把著名的 1.96 找回來
+set.seed(1); rnorm(3) # 三個常態隨機數
+```
+
+## 常態分布
+
+$$f(x) = \frac{1}{\sigma\sqrt{2\pi}}\, e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
+
+```{r,echo=TRUE,out.width="65%"}
+x <- seq(-4, 4, length.out = 200)
+plot(x, dnorm(x), type = "l", lwd = 2, ylab = "density")
+lines(x, dnorm(x, sd = 1.5), lty = 2)
+legend("topright", c("sd = 1", "sd = 1.5"), lty = 1:2)
+```
+
+`mean=` 平移、`sd=` 伸縮；預設值就是標準常態。
+
+## 看見 p 與 q
+
+著色面積*就是* `pnorm()`；`qnorm()` 是反向查表：
+
+```{r,echo=TRUE,out.width="65%"}
+x <- seq(-4, 4, length.out = 200)
+plot(x, dnorm(x), type = "l", lwd = 2, ylab = "density")
+xs <- seq(-4, qnorm(0.975), length.out = 120)
+polygon(c(xs, rev(xs)), c(dnorm(xs), rep(0, 120)),
+        col = "lightsteelblue", border = NA)
+abline(v = qnorm(0.975), lty = 2)
+text(2.6, 0.1, "97.5%")
+```
+
+## 連續分布家族
+
+同一套四字母模式涵蓋所有經典連續家族：
+
+```{r,echo=TRUE}
+punif(0.5)                  # [0,1] 上的均勻分布
+pexp(1, rate = 1)           # 指數分布
+pt(2.086, df = 20)          # Student's t
+pchisq(3.84, df = 1)        # 卡方
+pf(4.35, df1 = 2, df2 = 20) # F
+```
+
+- `t`、`chisq`、`f` 是第十八章檢定的主力——它們的 `q` 函式就能生成你以前在附錄查的臨界值表。
+- 還有：`lnorm`、`gamma`、`beta`、`weibull`、`cauchy` 等等。
+
+## 離散分布家族
+
+```{r,echo=TRUE}
+dbinom(7, size = 10, prob = 0.5)   # 10 次擲幣恰好 7 次正面
+pbinom(7, size = 10, prob = 0.5)   # 至多 7 次
+dpois(3, lambda = 2)               # 卜瓦松：平均 2 件時發生 3 件
+dgeom(2, prob = 0.2)               # 第 3 次嘗試才首度成功
+dhyper(2, m = 4, n = 8, k = 3)     # 不放回抽樣
+```
+
+```{r,echo=TRUE,out.width="60%"}
+barplot(dbinom(0:10, 10, 0.5), names.arg = 0:10,
+        main = "Binomial(10, 0.5)")
+```
+
+## 隨機數與可重現性
+
+```{r,echo=TRUE}
+set.seed(2026)
+rbinom(5, size = 10, prob = 0.3)
+sample(c("H", "T"), 5, replace = TRUE)
+```
+
+::: {.callout-tip}
+**作業與報告永遠先 `set.seed()`。** 偽隨機序列從種子出發完全可重播，閱卷者——以及未來的你——才能一字不差地重現每個模擬。
+:::
+
+## 模擬作為工具
+
+理論算不動時，就模擬。擲五顆骰子，最大值是 6 的機率是多少？
+
+```{r,echo=TRUE}
+set.seed(7)
+sims <- replicate(10000, max(sample(1:6, 5, replace = TRUE)))
+mean(sims == 6)
+1 - (5/6)^5          # 精確答案，拿來對照
+```
+
+`replicate()` 加上 `r` 函式，把機率謎題變成十秒鐘的實驗——拔靴法（第十六章）與檢定力分析（第十九章）用的正是同一招。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

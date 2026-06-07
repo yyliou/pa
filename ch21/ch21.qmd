@@ -1,0 +1,191 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 21: Classification Models"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch21-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Predicting Categories**
+
+## The Spam Problem
+
+Classification predicts a **category** rather than a number. Our running example: 4,601 emails, 57 numeric features, one label — spam or not:
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/spambase.rda", temp, mode = "wb")
+load(temp)
+dim(spambase)
+table(spambase$is_spam)
+```
+
+Split into training and test sets — the only honest way to measure a classifier:
+
+```{r,echo=TRUE}
+set.seed(11)
+idx   <- sample(nrow(spambase), 3000)
+train <- spambase[idx, ]
+test  <- spambase[-idx, ]
+```
+
+## Logistic Regression
+
+Model the *probability* of spam through the logit link:
+
+$$\log \frac{p}{1-p} = c_0 + c_1 x_1 + \cdots + c_n x_n$$
+
+```{r,echo=TRUE,warning=FALSE}
+spam.glm <- glm(is_spam ~ word_freq_free + word_freq_money +
+                  capital_run_length_total + char_freq_exclamation,
+                family = binomial, data = train)
+coef(summary(spam.glm))
+```
+
+Positive coefficients raise the spam odds; `exp(coef)` gives odds ratios.
+
+## From Probabilities to Decisions
+
+```{r,echo=TRUE}
+p.hat <- predict(spam.glm, newdata = test, type = "response")
+pred  <- ifelse(p.hat > 0.5, 1, 0)
+tab   <- table(actual = test$is_spam, predicted = pred)
+tab
+sum(diag(tab)) / sum(tab)        # accuracy
+```
+
+The **confusion matrix** separates false positives (good mail flagged) from false negatives (spam passed) — in most applications the two errors cost differently, so choose the cutoff accordingly.
+
+## Linear Discriminant Analysis
+
+LDA models each class as a Gaussian and draws the optimal linear boundary:
+
+```{r,echo=TRUE,message=FALSE}
+library(MASS)
+spam.lda <- lda(is_spam ~ word_freq_free + word_freq_money +
+                  capital_run_length_total + char_freq_exclamation,
+                data = train)
+mean(predict(spam.lda, test)$class == test$is_spam)
+```
+
+- Stable when classes are well-separated and roughly Gaussian; `qda()` allows curved boundaries.
+- Log-linear models (`loglin()`/`glm` with `poisson`) play the analogous role for pure contingency-table data.
+
+## k Nearest Neighbors
+
+No model at all: classify each point by a vote of its $k$ closest training points:
+
+```{r,echo=TRUE,message=FALSE}
+library(class)
+vars <- c("word_freq_free", "word_freq_money",
+          "capital_run_length_total", "char_freq_exclamation")
+pred.knn <- knn(scale(train[, vars]), scale(test[, vars]),
+                cl = train$is_spam, k = 5)
+mean(pred.knn == test$is_spam)
+```
+
+::: {.callout-tip}
+**Scale your features for kNN.** Distance-based methods are dominated by whichever variable has the biggest units; standardize first.
+:::
+
+## Classification Trees
+
+Trees split the feature space by a sequence of yes/no questions — fully interpretable:
+
+```{r,echo=TRUE,out.width="62%"}
+library(rpart)
+spam.tree <- rpart(factor(is_spam) ~ ., data = train)
+plot(spam.tree, uniform = TRUE, margin = 0.05)
+text(spam.tree, cex = 0.7)
+mean(predict(spam.tree, test, type = "class") == test$is_spam)
+```
+
+`printcp()` and `prune()` control overfitting by cost-complexity pruning.
+
+## Neural Networks and SVMs
+
+```{r,echo=TRUE,message=FALSE,results='hide'}
+library(nnet)
+set.seed(11)
+spam.nn <- nnet(factor(is_spam) ~ ., data = train,
+                size = 4, decay = 0.1, maxit = 200, MaxNWts = 2000)
+```
+
+```{r,echo=TRUE}
+mean(predict(spam.nn, test, type = "class") == test$is_spam)
+```
+
+- `nnet()` fits a single-hidden-layer network — the classical workhorse.
+- Support vector machines (`svm()` in the `e1071` package) find maximum-margin boundaries and handle nonlinearity through kernels.
+
+## Random Forests
+
+Hundreds of trees on bootstrap samples, votes averaged:
+
+```{r,echo=TRUE,message=FALSE}
+library(randomForest)
+set.seed(11)
+spam.rf <- randomForest(factor(is_spam) ~ ., data = train, ntree = 200)
+mean(predict(spam.rf, test) == test$is_spam)
+```
+
+```{r,echo=TRUE,out.width="60%"}
+varImpPlot(spam.rf, n.var = 10, main = "Top 10 features")
+```
+
+Usually the best out-of-the-box accuracy, plus a free feature-importance ranking — at the price of interpretability.
+
+## Choosing a Classifier
+
+| Need | Reach for |
+|:---|:---|
+| interpretable coefficients / odds | logistic regression |
+| interpretable rules | classification tree |
+| best plug-and-play accuracy | random forest |
+| small data, smooth boundary | LDA / kNN |
+| high-dimensional, margins matter | SVM |
+
+Whatever the model: train/test split (or cross-validation), confusion matrix, and error costs come first [@hastie2009elements]. Chapter 22 widens the view to the rest of machine learning.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

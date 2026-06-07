@@ -1,0 +1,1 @@
+quarto render '/Users/oliverliou/pCloud Drive/!-git/teach/pa/ch*/ch*.qmd'

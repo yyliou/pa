@@ -1,0 +1,162 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 4: R Packages"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch4-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Extending R**
+
+## What Is a Package?
+
+A **package** bundles related functions, documentation, and data sets into a single installable unit — the R counterpart of a Perl module, a C library, or a Java class collection.
+
+- Some packages ship with R itself (`stats`, `graphics`, `utils`, ...).
+- Thousands more live in public repositories, covering everything from finance to genomics to the latest machine-learning methods.
+- You can also build your own.
+
+::: {.callout-note}
+**Two separate steps.** A package must first be *installed* into a local library on disk (once), and then *loaded* into each session that uses it. Keeping the two apart saves memory, keeps the help system fast, and avoids name collisions between packages.
+:::
+
+## Libraries
+
+A **library** is a directory on disk where installed packages live.
+
+- R always has a system-level library; you can add personal libraries on top (useful when you lack admin rights).
+- `.libPaths()` shows the libraries R is currently searching.
+
+```{r,echo=TRUE}
+.libPaths()
+```
+
+Note the vocabulary: you install a *package* into a *library* — despite the name of the `library()` function.
+
+## Listing Packages
+
+```{r,echo=TRUE,eval=FALSE}
+library()                    # what is installed?
+installed.packages()[1:5, c("Package", "Version")]
+```
+
+```{r,echo=TRUE}
+# what is loaded right now?
+(.packages())
+```
+
+- `installed.packages()` returns a matrix with one row per installed package — name, version, dependencies, license.
+- A fresh session automatically loads a small set of base packages.
+
+## Loading Packages
+
+Load an installed package with `library()` (or `require()`, which returns `FALSE` instead of an error when the package is missing):
+
+```{r,echo=TRUE}
+library(lattice)         # now lattice functions are visible
+"package:lattice" %in% search()
+```
+
+- Loading attaches the package to the **search path**, the list of places R looks when resolving a name (Chapter 8).
+- `detach("package:lattice")` removes it again.
+- On all platforms the command is the same; the GUIs merely offer menu shortcuts for it.
+
+## CRAN
+
+The **Comprehensive R Archive Network** is the central public repository:
+
+- Over 20,000 contributed packages, each with documentation and platform-specific builds.
+- Every package page lists its dependencies, manuals, and vignettes.
+- **Task Views** (<https://cran.r-project.org/web/views/>) group packages by field — Econometrics, MachineLearning, TimeSeries, Graphics — and are the best way to discover what exists.
+
+Other repositories you will meet: **Bioconductor** (genomics; Chapter 25) and **GitHub** (development versions).
+
+## Installing Packages
+
+One function does the work, downloading from CRAN and resolving dependencies automatically:
+
+```{r,eval=FALSE,echo=TRUE}
+install.packages("ggplot2")                     # one package
+install.packages(c("dplyr", "lattice"))         # several at once
+update.packages()                               # refresh everything
+```
+
+- In RStudio: *Tools → Install Packages...* is the same call behind a dialog box.
+- Install once per machine; `library()` once per session.
+- To install from a non-CRAN repository, pass `repos=`; for GitHub development versions, the `remotes` package provides `install_github()`.
+
+## Package Data and the Course Convention
+
+Many packages carry example data sets, loaded with `data()`:
+
+```{r,echo=TRUE}
+data(cars)        # from the datasets package
+head(cars, 3)
+```
+
+The textbook's companion packages (`nutshell`, `nutshell.bbdb`, `nutshell.audioscrobbler`) were archived from CRAN, so this course streams their data sets directly from the CRAN GitHub mirror instead:
+
+```{r,echo=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/doctorates.rda", temp, mode = "wb")
+load(temp)
+doctorates[, 1:6]
+```
+
+## Custom Packages
+
+Building a package is the natural endpoint once you accumulate functions you reuse:
+
+- A package is a directory with a `DESCRIPTION` file (metadata), an `R/` folder (code), `man/` (help pages), and optionally `data/`.
+- `package.skeleton()` generates the layout from objects in your workspace; modern workflows use the `devtools` and `roxygen2` packages.
+- `R CMD build` creates the distributable archive; `R CMD check` runs an extensive quality audit.
+
+```{bash,eval=FALSE,echo=TRUE}
+R CMD build mypackage/
+R CMD check mypackage_1.0.0.tar.gz
+```
+
+Even if you never publish to CRAN, packaging is the cleanest way to share code with teammates — or with your future self.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

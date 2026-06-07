@@ -1,0 +1,166 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 2: The R User Interface"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch2-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Meeting R Face to Face**
+
+## Many Faces of One System
+
+When people say they "use R," they may be interacting with it in quite different ways. This chapter tours the main options:
+
+- the **graphical user interface (GUI)** that ships with R on Windows and macOS;
+- the **R console**, the interactive prompt at the heart of every interface;
+- **batch mode**, for running scripts without any interaction;
+- **RStudio**, the integrated development environment (IDE) we will use in this course;
+- a few other front ends you may encounter in the wild.
+
+Whichever wrapper you choose, the engine underneath — the interpreter — is identical.
+
+# The R Graphical User Interface
+
+## Windows
+
+- The Windows build of R installs a program called **RGui**. It opens a window containing a menu bar, a toolbar, and — most importantly — the R console.
+- The menus offer conveniences such as loading and saving workspaces, installing packages, and basic script editing.
+- The GUI is serviceable but minimal; almost everyone moves to RStudio quickly.
+
+## macOS
+
+- The macOS installer provides **R.app**, a native application with a console window, a simple editor with syntax highlighting, and menus for package management and plotting devices.
+- Plots appear in a separate Quartz graphics window.
+- As on Windows, the bundled GUI covers the basics, and serious work tends to happen in an IDE.
+
+## Linux and Unix
+
+- On most Linux systems there is no bundled GUI at all: typing `R` in a terminal starts the console directly on the command line.
+- Plots open in an X11 window; everything else happens at the prompt.
+- This is a perfectly complete way to use R — the GUI elements are conveniences, not requirements.
+
+# The R Console
+
+## The Interactive Prompt
+
+The console is where R actually happens. You type an expression after the `>` prompt; R evaluates it and prints the result:
+
+```{r,echo=TRUE}
+17 %% 5
+"hello, world"
+```
+
+- If a line is syntactically incomplete, the prompt changes to `+` and R waits for the rest.
+- Results that are not assigned to a variable are simply printed and discarded.
+
+::: {.callout-note}
+**The read–eval–print loop (REPL).** The console endlessly repeats three steps: *read* what you typed, *evaluate* it, and *print* the value. Interactive languages like R make exploration cheap — you can poke at your data one line at a time.
+:::
+
+## Command-Line Editing
+
+The console includes line-editing conveniences that save enormous amounts of typing:
+
+- **Up/Down arrows** scroll through your command history; recall a previous command, edit it, and resubmit.
+- **Tab completion** finishes function and variable names — type `summ` then *Tab*.
+- `history()` displays recent commands.
+- On all platforms, *Ctrl+C* (or *Esc*) interrupts a running computation and returns you to the prompt.
+
+## Batch Mode
+
+For repetitive jobs — nightly reports, simulations, grading scripts — you do not want an interactive session at all. R can execute a script from the operating-system shell:
+
+```{bash,eval=FALSE,echo=TRUE}
+# classic interface
+R CMD BATCH myscript.R output.txt
+
+# modern, more flexible interface
+Rscript myscript.R arg1 arg2
+```
+
+- `Rscript` prints to standard output and accepts command-line arguments, making it the natural choice for automation and pipelines.
+- Everything you can do interactively can be done in a script.
+
+## R Inside Other Applications
+
+- R can be embedded in **Microsoft Excel** through third-party add-ins, letting spreadsheet users call R functions on worksheet ranges.
+- Database systems, web servers, and other languages (Python, Java) all have bridges to R.
+- The common pattern: another program prepares the data, R does the statistics, and results flow back.
+
+# RStudio
+
+## The IDE We Will Use
+
+**RStudio Desktop** is a free, open-source IDE that has become the de facto standard front end for R. One window organizes four panes:
+
+- **Source editor** — scripts and documents, with completion and highlighting;
+- **Console** — the same R prompt as always;
+- **Environment / History** — the objects in your workspace;
+- **Files / Plots / Packages / Help** — everything else.
+
+```{r,eval=FALSE,echo=TRUE}
+# RStudio is an interface to R, not a replacement for it:
+# install R first (Chapter 1), then RStudio from
+# https://posit.co/download/rstudio-desktop
+```
+
+## Why an IDE Matters
+
+- One-keystroke execution of the current line or selection (*Ctrl/Cmd+Enter*) keeps you in flow between editor and console.
+- Integrated help, plots, and package management remove constant window-switching.
+- Projects keep each analysis in its own folder with its own workspace — a habit that will keep your coursework organized.
+- RStudio also builds the course's document formats (R Markdown, Quarto) with a single click.
+
+## Other Ways to Run R
+
+You may also meet:
+
+- **ESS (Emacs Speaks Statistics)** — R inside the Emacs editor; beloved by long-time users.
+- **Jupyter notebooks** — R kernels run inside the notebook interface popular in data science.
+- **Visual Studio Code** — extensions provide R editing and an integrated terminal.
+
+All of them drive the same interpreter; choose whatever keeps you productive. In this course, demonstrations use RStudio.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

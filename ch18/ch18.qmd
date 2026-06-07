@@ -1,0 +1,175 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 18: Statistical Tests"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch18-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Asking Yes/No Questions of Data**
+
+## The Logic of a Test
+
+Every classical test follows one script: state a **null hypothesis** $H_0$, compute a statistic whose distribution under $H_0$ is known (Chapter 17), and report a **p-value** — the probability of a result at least this extreme if $H_0$ were true.
+
+::: {.callout-note}
+**Reading a p-value.** Small $p$ (conventionally $< 0.05$) means the data are surprising under $H_0$, so we reject it. A large $p$ never *proves* $H_0$; it only says the data are compatible with it.
+:::
+
+Every test below returns an object of class `htest` — same structure, same reading skills.
+
+## One-Sample t-Test
+
+Is the mean tire-test score different from a benchmark?
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda", temp, mode = "wb")
+load(temp)
+spd <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "E"]
+t.test(spd, mu = 8)
+```
+
+The output bundles the statistic, df, p-value, confidence interval, and sample mean — extract pieces with `$p.value`, `$conf.int`.
+
+## Two-Sample and Paired t-Tests
+
+```{r,echo=TRUE}
+b <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "B"]
+d <- tires.sus$Time_To_Failure[tires.sus$Tire_Type == "D"]
+t.test(b, d)                      # Welch two-sample by default
+```
+
+```{r,echo=TRUE}
+before <- c(198, 201, 210, 185, 192)
+after  <- before - c(3, 7, 2, 9, 1)
+t.test(before, after, paired = TRUE)
+```
+
+Pairing removes between-subject variation — when measurements come in natural pairs, always say so.
+
+## Comparing Variances and Many Means
+
+```{r,echo=TRUE}
+var.test(b, d)                    # F test for equal variances
+```
+
+For more than two groups, one-way **ANOVA** generalizes the t-test:
+
+```{r,echo=TRUE}
+fit <- aov(Time_To_Failure ~ Tire_Type, data = tires.sus)
+summary(fit)
+```
+
+A small p-value says *some* means differ; `TukeyHSD(fit)` then reports *which* pairs.
+
+## Normality and Distribution Tests
+
+```{r,echo=TRUE}
+set.seed(3); z <- rnorm(100)
+shapiro.test(z)                       # H0: data are normal
+ks.test(z, "pnorm")                   # against any named distribution
+```
+
+```{r,echo=TRUE,out.width="55%"}
+qqnorm(z); qqline(z)
+```
+
+The Q–Q plot is the visual companion: points hugging the line support normality — and it shows *where* departures occur.
+
+## Non-Parametric Tests
+
+When normality is doubtful or data are ranks, swap in distribution-free analogues:
+
+| Parametric | Non-parametric |
+|:---|:---|
+| one/two-sample t | `wilcox.test()` |
+| one-way ANOVA | `kruskal.test()` |
+| paired t | `wilcox.test(..., paired = TRUE)` |
+
+```{r,echo=TRUE}
+wilcox.test(b, d)
+kruskal.test(Time_To_Failure ~ Tire_Type, data = tires.sus)
+```
+
+They trade a little power for a lot of robustness.
+
+## Proportion and Binomial Tests
+
+Field-goal kickers succeeded 787 times in 974 attempts. Is the true success rate 80%?
+
+```{r,echo=TRUE}
+prop.test(787, 974, p = 0.80)
+binom.test(787, 974, p = 0.80)     # exact version
+```
+
+`prop.test()` with two counts compares two proportions — the A/B test in one line.
+
+## Tabular Data: Chi-Squared and Friends
+
+Do two categorical variables associate?
+
+```{r,echo=TRUE}
+tbl <- matrix(c(45, 15, 30, 40), nrow = 2,
+              dimnames = list(group = c("treat", "control"),
+                              outcome = c("yes", "no")))
+tbl
+chisq.test(tbl)
+fisher.test(tbl)        # exact; safe for small cells
+```
+
+- Rule of thumb: expected counts below 5 → prefer `fisher.test()`.
+- `mcnemar.test()` handles paired categorical data (before/after on the same subjects).
+
+## Choosing a Test: a Map
+
+1. **One numeric sample** vs. a reference: `t.test(x, mu=)`; non-normal → `wilcox.test`.
+2. **Two numeric samples**: independent → `t.test(x, y)`; paired → `paired=TRUE`; non-normal → `wilcox.test`.
+3. **3+ groups**: `aov()` → `TukeyHSD()`; non-normal → `kruskal.test`.
+4. **Proportions**: `prop.test` / `binom.test`.
+5. **Two categorical variables**: `chisq.test` / `fisher.test`.
+
+Check assumptions (normality, equal variance, independence) *before* trusting p-values — and remember that statistical significance is not practical importance.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

@@ -1,0 +1,170 @@
+---
+title: "程式設計與應用"
+subtitle: "第一章：取得與安裝 R"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch1.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **歡迎來到 R 的世界**
+
+## 什麼是 R？
+
+R [@rcore2024] 是一套自由、開源的統計運算與繪圖環境，源自貝爾實驗室開發的 S 語言 [@becker1988new]。在本課程中，「R」這個名字其實同時指涉好幾件事：
+
+- 一種以資料為核心設計的**程式語言**；
+- 執行這種語言的**直譯器**（interpreter）；
+- 一套產生統計圖形的**繪圖系統**；
+- 一個把直譯器、標準套件與使用者介面包裝在一起的桌面**應用程式**（Windows、macOS、Linux 皆有）。
+
+本課程的教科書為 *R in a Nutshell*（第二版）[@adler2012r]。本章的目標非常實際：在你的電腦上裝好一份可以運作的 R。
+
+## 為什麼選 R？
+
+::: {.callout-note}
+**R 在實務資料工作中勝出的三個理由：** 完全免費、跨所有主流平台，且擁有涵蓋幾乎所有統計方法的龐大套件生態系。
+:::
+
+- R 由跨國的核心開發團隊維護，透過 **CRAN**（Comprehensive R Archive Network）發佈。
+- 由於原始碼公開，任何人都能檢視方法的實作細節，也能把 R 移植到新的平台上。
+- 本課程所需的一切軟體，花費都是零元。
+
+# R 的版本
+
+## 發行週期
+
+- R 核心團隊依固定節奏發佈版本：每年春季推出一個主要版本 `x.y.0`，之後陸續釋出修正錯誤的小版本（`x.y.1`、`x.y.2`……）。
+- 版本號採 **major.minor.patch** 格式，例如 `4.4.2`。
+- R 語言本身非常穩定，版本間的差異多半是錯誤修正、效能改善與少數新函式，所以為某個版本寫的程式碼，幾乎都能在其他版本原封不動地執行。
+- 教科書是以相當舊的版本（2.15.1）撰寫的；書中的範例至今幾乎全數照常運作。少數現代 R 行為不同之處，講義一律以現代行為為準。
+
+## 該用哪個版本？
+
+- 本課程的答案：**CRAN 上最新的正式版**。
+- 隨時可以查看自己執行的版本：
+
+```{r,echo=TRUE}
+R.version.string
+```
+
+- 你的修正版號與同學不同沒有關係——本課程的所有操作結果都會一致。
+
+# 取得並安裝 R
+
+## 去哪裡下載
+
+R 已被移植到所有主流桌面平台，預先編譯好的安裝檔（binaries）是最省事的途徑：
+
+1. 前往官方網站：<https://cran.r-project.org>。
+2. CRAN 在世界各地設有**鏡像站**（mirror）。任何鏡像站都可以用，地理位置近的通常較快；預設的「0-Cloud」鏡像會自動把你導向合適的伺服器。
+3. 點選符合你作業系統的下載連結並執行安裝程式。
+
+::: {.callout-tip}
+**檔名內含版本號。** 連結看起來像 `R-4.4.2-win.exe`——等你下載時數字一定又往前跑了。永遠直接拿最新的那個即可。
+:::
+
+## Windows
+
+- 點 *Download R for Windows* → *base* → 執行 `.exe` 安裝程式。
+- 預設設定即可：R 會安裝在 `C:\Program Files\R\`，並出現在開始選單中。
+- 現代機器上安裝程式與 R 都是 64 位元，不需要做任何選擇。
+
+```{r,eval=FALSE,echo=TRUE}
+# 安裝完成後，從開始選單啟動「R x.y.z」，
+# 或者更好：安裝 RStudio（第二章）改用它來操作。
+```
+
+## macOS
+
+- 點 *Download R for macOS*，選擇符合你硬體的版本：
+  - **Apple Silicon**（M 系列晶片）：`arm64` 安裝包。
+  - **Intel** Mac：`x86_64` 安裝包。
+- `.pkg` 安裝程式會在「應用程式」資料夾放入名為 **R** 的應用程式，並在路徑中加入命令列的 `R`。
+- 如果裝錯架構，R 會無法啟動——不確定時請查看「關於這台 Mac」。
+
+## Linux 與 Unix：套件管理系統
+
+在 Linux 上，最乾淨的途徑是發行版的套件管理系統，它還會自動幫你更新 R：
+
+```{bash,eval=FALSE,echo=TRUE}
+# Debian / Ubuntu
+sudo apt-get update
+sudo apt-get install r-base r-base-dev
+
+# Fedora / Red Hat
+sudo dnf install R
+```
+
+- CRAN 自行維護的軟體庫通常比發行版內建的更新；加入方式見 CRAN 的 Linux 說明頁。
+- 建議同時安裝 `r-base-dev`（或對應套件）——它提供從原始碼編譯外掛套件所需的編譯器。
+
+## Linux 與 Unix：手動安裝
+
+若沒有套件管理系統可用，還有兩條路：
+
+- 從 CRAN 下載特定發行版的**預編譯安裝檔**，再以 `dpkg` 或 `rpm` 等工具手動安裝。
+- **從原始碼編譯**：自 CRAN 下載原始碼壓縮檔，執行經典的編譯流程：
+
+```{bash,eval=FALSE,echo=TRUE}
+tar -xzf R-4.4.2.tar.gz
+cd R-4.4.2
+./configure
+make
+sudo make install
+```
+
+桌面環境幾乎用不到這招，但 R 之所以能登上各種冷門平台，靠的正是開放原始碼帶來的這種彈性。
+
+## 檢查安裝結果
+
+啟動 R，確認主控台有回應：
+
+```{r,echo=TRUE}
+1 + 1
+sessionInfo()$R.version$version.string
+```
+
+若輸出正常，表示安裝成功，可以進入第二章——認識 R 的使用者介面。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

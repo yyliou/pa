@@ -1,0 +1,219 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 13: Graphics"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch13-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **Base Graphics**
+
+## The Painter's Model
+
+Base graphics follow a "pen on paper" model: high-level functions draw a complete chart, low-level functions add ink on top, and nothing can be erased — only redrawn [@tukey1977exploratory; @cleveland1993visualizing].
+
+- **High-level**: `plot()`, `hist()`, `barplot()`, `pie()`, `boxplot()`, ...
+- **Low-level**: `points()`, `lines()`, `text()`, `legend()`, `abline()`, ...
+- Output goes to the active **graphics device** (screen, PDF, PNG).
+
+Our example data, loaded the course way:
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda", temp, mode = "wb")
+load(temp)
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda", temp, mode = "wb")
+load(temp)
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda", temp, mode = "wb")
+load(temp)
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda", temp, mode = "wb")
+load(temp)
+```
+
+## Scatter Plots
+
+Does environmental toxin release relate to cancer mortality? One `plot()` call per question:
+
+```{r,echo=TRUE,out.width="65%"}
+plot(toxins.and.cancer$total_toxic_chemicals / toxins.and.cancer$Surface_Area,
+     toxins.and.cancer$deaths_total / toxins.and.cancer$Population,
+     xlab = "Toxins released per sq mile",
+     ylab = "Deaths per capita")
+```
+
+`plot(x, y)` is the universal entry point; formula notation `plot(y ~ x, data = df)` works too.
+
+## Identifying Points
+
+Label interesting observations with low-level additions:
+
+```{r,echo=TRUE,out.width="62%"}
+attach(toxins.and.cancer)
+plot(air_on_site / Surface_Area, deaths_lung / Population,
+     xlab = "Air toxins", ylab = "Lung-cancer deaths per capita")
+text(air_on_site / Surface_Area, deaths_lung / Population,
+     labels = State_Abbrev, cex = 0.6, pos = 4)
+detach(toxins.and.cancer)
+```
+
+Interactively, `identify()` and `locator()` let you click on the device to find points and coordinates.
+
+## Plotting Time Series
+
+`plot()` knows what a `ts` object is and draws lines against the calendar:
+
+```{r,echo=TRUE,out.width="65%"}
+plot(turkey.price.ts, ylab = "US cents per pound",
+     main = "Average turkey price by month")
+```
+
+Holiday demand is visible at a glance — prices dip every November.
+
+## Bar Charts
+
+```{r,echo=TRUE,out.width="65%"}
+doubles.by.team <- tapply(batting.2008$X2B, batting.2008$teamID, sum)
+barplot(sort(doubles.by.team, decreasing = TRUE)[1:8],
+        las = 2, main = "Doubles by team, 2008 (top 8)")
+```
+
+- `horiz=TRUE` flips the bars; matrix input draws grouped or stacked bars (`beside=`).
+- `las=2` rotates axis labels — small flag, big readability gain.
+
+## Pie Charts and Mosaic Plots
+
+```{r,echo=TRUE,out.width="55%"}
+pie(c(Good = 787, Missed = 163, Blocked = 24),
+    main = "Field goal outcomes, 2005")
+```
+
+- Perception research is brutal to pie charts: humans compare lengths better than angles. Prefer bars when values are close.
+- For two categorical variables, `mosaicplot(~ cut + color, data = ...)` tiles the plane proportionally to the cross-tabulation.
+
+## Three-Dimensional Data
+
+Surfaces and grids have three friends: `image()`, `contour()`, and `persp()`. Yosemite Valley's elevation grid:
+
+```{r,echo=TRUE,out.width="60%"}
+image(yosemite, col = terrain.colors(64), asp = 1,
+      main = "Half Dome (elevation raster)")
+```
+
+```{r,echo=TRUE,out.width="55%"}
+persp(yosemite[seq(1, 253, 6), seq(1, 562, 6)],
+      expand = 0.2, theta = 225, phi = 20, shade = 0.6, border = NA)
+```
+
+## Plotting Distributions
+
+```{r,echo=TRUE,out.width="60%"}
+hist(batting.2008$AVG[batting.2008$AB > 100], breaks = 30,
+     xlab = "Batting average", main = "Hitters with 100+ at-bats")
+```
+
+```{r,echo=TRUE,out.width="60%"}
+plot(density(batting.2008$AVG[batting.2008$AB > 100]),
+     main = "Kernel density estimate")
+rug(batting.2008$AVG[batting.2008$AB > 100])
+```
+
+`qqnorm()` compares a sample against the normal distribution — points on the line mean "plausibly normal."
+
+## Box Plots
+
+The five-number summary as a picture, one box per group:
+
+```{r,echo=TRUE,out.width="68%"}
+boxplot(AVG ~ teamID, data = batting.2008[batting.2008$AB > 100, ],
+        las = 2, cex.axis = 0.7, ylab = "Batting average")
+```
+
+Whiskers extend to 1.5 × IQR; dots beyond are flagged as outliers — Tukey's recipe, unchanged since 1977.
+
+## Graphics Devices
+
+Charts render on a **device**. The screen is the default; files are devices you open and close:
+
+```{r,eval=FALSE,echo=TRUE}
+pdf("figure.pdf", width = 7, height = 5)    # vector: crisp at any size
+plot(turkey.price.ts)
+dev.off()                                    # ALWAYS close the device
+
+png("figure.png", width = 800, height = 600) # raster: for web pages
+plot(turkey.price.ts)
+dev.off()
+```
+
+Forgetting `dev.off()` leaves a half-written file — the most common graphics bug in scripts.
+
+## Customizing Charts
+
+Most chart functions share arguments; `par()` sets session-wide graphical parameters:
+
+```{r,echo=TRUE,out.width="60%"}
+oldpar <- par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))   # 1x2 layout
+plot(cars, pch = 19, col = "steelblue", main = "pch & col")
+plot(cars, type = "l", lty = 2, lwd = 2, main = "lines")
+par(oldpar)
+```
+
+- Per-call: `pch` (symbol), `col`, `lty`/`lwd` (line type/width), `cex` (size), `xlim`/`ylim`, `main`/`xlab`/`ylab`.
+- Session: `par(mfrow=)` for panel grids, `par(mar=)` for margins. Save and restore `par()` like we did above.
+
+## Annotation Functions
+
+Build up a figure layer by layer:
+
+```{r,echo=TRUE,out.width="60%"}
+plot(cars, pch = 19)
+abline(lm(dist ~ speed, data = cars), col = "red", lwd = 2)
+text(8, 100, "fitted line", col = "red")
+legend("topleft", legend = c("data", "fit"),
+       pch = c(19, NA), lty = c(NA, 1), col = c("black", "red"))
+title(main = "Stopping distance vs. speed")
+```
+
+`points()`, `lines()`, `segments()`, `arrows()`, `rect()`, and `polygon()` complete the ink-adding toolkit.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

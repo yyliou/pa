@@ -1,0 +1,63 @@
+## Part I: R Basics
+
+- [**Chapter 1**: Getting and Installing R](https://yyliou.github.io/pa/ch1/ch1.html)
+
+- [**Chapter 2**: The R User Interface](https://yyliou.github.io/pa/ch2/ch2.html)
+
+- [**Chapter 3**: A Short R Tutorial](https://yyliou.github.io/pa/ch3/ch3.html)
+
+- [**Chapter 4**: R Packages](https://yyliou.github.io/pa/ch4/ch4.html)
+
+## Part II: The R Language
+
+- [**Chapter 5**: An Overview of the R Language](https://yyliou.github.io/pa/ch5/ch5.html)
+
+- [**Chapter 6**: R Syntax](https://yyliou.github.io/pa/ch6/ch6.html)
+
+- [**Chapter 7**: R Objects](https://yyliou.github.io/pa/ch7/ch7.html)
+
+- [**Chapter 8**: Symbols and Environments](https://yyliou.github.io/pa/ch8/ch8.html)
+
+- [**Chapter 9**: Functions](https://yyliou.github.io/pa/ch9/ch9.html)
+
+- [**Chapter 10**: Object-Oriented Programming](https://yyliou.github.io/pa/ch10/ch10.html)
+
+## Part III: Working with Data
+
+- [**Chapter 11**: Saving, Loading, and Editing Data](https://yyliou.github.io/pa/ch11/ch11.html)
+
+- [**Chapter 12**: Preparing Data](https://yyliou.github.io/pa/ch12/ch12.html)
+
+## Part IV: Data Visualization
+
+- [**Chapter 13**: Graphics](https://yyliou.github.io/pa/ch13/ch13.html)
+
+- [**Chapter 14**: Lattice Graphics](https://yyliou.github.io/pa/ch14/ch14.html)
+
+- [**Chapter 15**: ggplot2](https://yyliou.github.io/pa/ch15/ch15.html)
+
+## Part V: Statistics with R
+
+- [**Chapter 16**: Analyzing Data](https://yyliou.github.io/pa/ch16/ch16.html)
+
+- [**Chapter 17**: Probability Distributions](https://yyliou.github.io/pa/ch17/ch17.html)
+
+- [**Chapter 18**: Statistical Tests](https://yyliou.github.io/pa/ch18/ch18.html)
+
+- [**Chapter 19**: Power Tests](https://yyliou.github.io/pa/ch19/ch19.html)
+
+- [**Chapter 20**: Regression Models](https://yyliou.github.io/pa/ch20/ch20.html)
+
+- [**Chapter 21**: Classification Models](https://yyliou.github.io/pa/ch21/ch21.html)
+
+- [**Chapter 22**: Machine Learning](https://yyliou.github.io/pa/ch22/ch22.html)
+
+- [**Chapter 23**: Time Series Analysis](https://yyliou.github.io/pa/ch23/ch23.html)
+
+## Part VI: Additional Topics
+
+- [**Chapter 24**: Optimizing R Programs](https://yyliou.github.io/pa/ch24/ch24.html)
+
+- [**Chapter 25**: Bioconductor](https://yyliou.github.io/pa/ch25/ch25.html)
+
+- [**Chapter 26**: R and Hadoop](https://yyliou.github.io/pa/ch26/ch26.html)

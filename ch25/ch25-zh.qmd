@@ -1,0 +1,140 @@
+---
+title: "程式設計與應用"
+subtitle: "第二十五章：Bioconductor"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch25.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **基因體學的 R**
+
+## 什麼是 Bioconductor？
+
+**Bioconductor** 是一套獨立的 R 套件生態系，用於分析高通量生物資料——基因表現、定序、流式細胞術等等。它有自己的軟體庫、發行週期與安裝途徑。
+
+::: {.callout-note}
+**平行於 CRAN 的世界。** Bioconductor 套件不是用 CRAN 的 `install.packages()` 安裝。它們共用專屬資料結構讓工具彼此互通，並一起版本化以確保可重現性。
+:::
+
+本章是概念導覽；程式碼供參考，未安裝（龐大的）Bioconductor 套件時不會執行。
+
+## 安裝
+
+現代入口是 `BiocManager` 套件：
+
+```{r,eval=FALSE,echo=TRUE}
+install.packages("BiocManager")        # 一次性，從 CRAN
+BiocManager::install()                 # 核心基礎建設
+BiocManager::install(c("Biobase",      # 基礎類別
+                       "affy",         # 微陣列前處理
+                       "limma",        # 差異表現
+                       "GEOquery"))    # 下載公開資料
+```
+
+`BiocManager::version()` 回報 Bioconductor 版本；`BiocManager::valid()` 檢查已安裝套件是否彼此相容。
+
+## 核心資料結構
+
+Bioconductor 的威力來自共用的 S4 類別（第十章），把相關資料綁在一起：
+
+- **`ExpressionSet` / `eSet`**——一個檢測矩陣（基因 × 樣本），加上**表型資料**（樣本註解）與**特徵資料**（基因註解），全在一個物件裡；
+- **`SummarizedExperiment`**——現代繼承者，定序檢測的標準容器；
+- **`GRanges`**——帶中繼資料的基因組區間（染色體、起、迄、股）。
+
+把測量值與其註解放在單一物件裡，正是避免那個經典生物資訊錯誤的關鍵：樣本標籤與樣本資料逐漸對不上。
+
+## 典型工作流程
+
+```{r,eval=FALSE,echo=TRUE}
+library(Biobase); library(GEOquery)
+# 1. 從 GEO 下載一份公開表現研究
+gse <- getGEO("GSE2034")[[1]]
+
+# 2. 檢視打包好的物件
+exprs(gse)[1:5, 1:3]      # 表現矩陣
+pData(gse)[1:3, 1:4]      # 表型（樣本）資料
+fData(gse)[1:3, 1:2]      # 特徵（基因）資料
+```
+
+`exprs()`、`pData()`、`fData()` 是你會不斷使用的三個存取動詞——分別取出檢測值、樣本註解、基因註解。
+
+## 用 limma 做差異表現
+
+招牌分析：哪些基因在兩種條件間有差異？
+
+```{r,eval=FALSE,echo=TRUE}
+library(limma)
+group  <- factor(pData(gse)$status)         # 例如腫瘤 vs. 正常
+design <- model.matrix(~ group)
+fit    <- lmFit(exprs(gse), design)         # 對「每個基因」配適線性模型
+fit    <- eBayes(fit)                       # 跨基因借力
+topTable(fit, coef = 2, number = 10)        # 最具差異的基因
+```
+
+`limma` 把第二十章的迴歸*一次套用到每個基因*，再以經驗貝氏步驟跨數千個基因穩定變異數估計——樣本數少時尤其關鍵。
+
+## 與課程的連結
+
+配套的 `nutshell` 套件收錄了書中 Bioconductor 範例所用的微陣列資料集；我們依課程慣例載入，不需 Bioconductor：
+
+```{r,echo=TRUE,eval=FALSE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/GSE2034.rda", temp, mode = "wb")
+load(temp)
+# GSE2034：乳癌表現測量，用以說明上述分析流程。
+```
+
+這讓我們得以討論基因體資料的*形狀*——基因對樣本的寬矩陣——而不必安裝整套 Bioconductor。
+
+## 為何超越生物學也重要
+
+即使在基因體學之外，Bioconductor 仍教給我們可遷移的教訓：
+
+- **把資料與其中繼資料綁在一個物件**——適用於任何標籤可能脫節的分析。
+- **跨眾多並行模型借力**（經驗貝氏的想法）——凡是配適數千個小模型之處都用得上。
+- **以協調的版本化達成可重現性**——這項紀律正被更廣的 R 世界日益採用。
+
+真正的生物資訊工作，Bioconductor 網站的工作流程與導覽是最權威、持續更新的參考。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。

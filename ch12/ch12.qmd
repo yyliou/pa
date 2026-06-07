@@ -1,0 +1,236 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 12: Preparing Data"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch12-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **The 80% of Data Science**
+
+## Why Preparation Matters
+
+Real data arrives messy: scattered across tables, wrongly typed, duplicated, and full of holes. Before any model or chart, you will combine, transform, clean, subset, summarize, and reshape. This chapter is the toolbox. Our running example is the San Francisco home-sales data:
+
+```{r,echo=TRUE,cache=TRUE}
+temp <- tempfile(fileext = ".rda")
+download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda", temp, mode = "wb")
+load(temp)
+dim(sanfrancisco.home.sales)
+names(sanfrancisco.home.sales)[1:10]
+```
+
+# Combining Data Sets
+
+## Pasting Tables Together
+
+```{r,echo=TRUE}
+a <- data.frame(id = 1:3, x = c(10, 20, 30))
+b <- data.frame(id = 4:5, x = c(40, 50))
+rbind(a, b)                  # stack rows (same columns required)
+cbind(a, flag = c(TRUE, FALSE, TRUE))   # add columns (same length)
+```
+
+`rbind()` matches columns by name; for many files, `do.call(rbind, list_of_frames)` stacks a whole list at once.
+
+## Merging by Common Fields
+
+`merge()` is R's relational join:
+
+```{r,echo=TRUE}
+sales <- data.frame(id = c(1, 2, 3, 4), price = c(300, 150, 220, 410))
+zips  <- data.frame(id = c(1, 2, 3, 5), zip = c("94114", "94110", "94117", "94109"))
+merge(sales, zips)                       # inner join on shared column
+merge(sales, zips, all.x = TRUE)         # left join: keep all sales
+```
+
+- `by=`, `by.x=`, `by.y=` control the key columns; `all=TRUE` gives a full outer join.
+- Always check row counts after a merge — unexpected duplication of keys multiplies rows.
+
+# Transformations
+
+## Creating and Changing Columns
+
+```{r,echo=TRUE}
+sales$price.per.k <- sales$price / 1000
+sales <- transform(sales, log.price = log(price))
+sales
+```
+
+`transform()` evaluates expressions inside the data frame, sparing the repeated `sales$` prefix.
+
+## The Apply Family on Data
+
+```{r,echo=TRUE}
+nums <- data.frame(a = 1:4, b = c(2, 4, 6, 8))
+sapply(nums, mean)             # one summary per column
+mapply(function(x, y) x * y, nums$a, nums$b)
+```
+
+- `lapply()` returns lists; `sapply()` simplifies to vectors when possible.
+- For row-wise work on matrices use `apply(m, 1, f)`.
+
+## Binning Data
+
+Continuous values become categories with `cut()`:
+
+```{r,echo=TRUE}
+price <- sanfrancisco.home.sales$price
+bins <- cut(price, breaks = c(0, 5e5, 1e6, 2e6, Inf),
+            labels = c("<500K", "500K-1M", "1M-2M", ">2M"))
+table(bins)
+```
+
+`shingle()` (lattice) makes *overlapping* bins; `tabulate()` and `table()` count occurrences.
+
+# Cleaning Data
+
+## Finding and Removing Duplicates
+
+```{r,echo=TRUE}
+v <- c("a", "b", "a", "c", "b")
+duplicated(v)
+unique(v)
+```
+
+For data frames, `duplicated(df)` flags repeated *rows* — run it after every merge or import from a system that might double-feed records.
+
+## Sorting
+
+```{r,echo=TRUE}
+sort(c(3, 1, 2))
+o <- order(sales$price, decreasing = TRUE)   # ordering indices
+sales[o, ]
+```
+
+::: {.callout-tip}
+**`sort()` for vectors, `order()` for data frames.** `order()` returns the permutation that sorts, so it can rearrange whole rows — and break ties with extra keys: `order(zip, -price)`.
+:::
+
+## Missing Values
+
+```{r,echo=TRUE}
+x <- c(2, NA, 5, 9)
+is.na(x)
+mean(x); mean(x, na.rm = TRUE)
+complete.cases(data.frame(a = c(1, NA), b = c(2, 3)))
+```
+
+- `na.omit(df)` drops incomplete rows; document how many you dropped.
+- Decide deliberately: drop, impute, or model missingness — silence is the only wrong choice.
+
+# Subsets and Sampling
+
+## Taking Subsets
+
+```{r,echo=TRUE}
+expensive <- subset(sales, price > 200, select = c(id, price))
+expensive
+# the bracket equivalent:
+sales[sales$price > 200, c("id", "price")]
+```
+
+`subset()` reads nicely; brackets are programmable. Know both.
+
+## Random Sampling
+
+```{r,echo=TRUE}
+set.seed(42)                       # reproducibility!
+sample(1:10, 4)                    # without replacement
+idx <- sample(nrow(sanfrancisco.home.sales), 5)
+sanfrancisco.home.sales[idx, c("city", "price")]
+```
+
+Sampling underlies train/test splits (Chapters 21–22) — and `set.seed()` makes results repeatable for graders.
+
+# Summarizing Data
+
+## tapply and aggregate
+
+Group-wise summaries are one call away:
+
+```{r,echo=TRUE,cache=TRUE}
+tapply(sanfrancisco.home.sales$price,
+       sanfrancisco.home.sales$bedrooms, median, na.rm = TRUE)[1:6]
+
+aggregate(price ~ bedrooms, data = sanfrancisco.home.sales,
+          FUN = median)[1:6, ]
+```
+
+- `tapply(values, groups, f)` returns an array; `aggregate(formula, data, f)` returns a tidy data frame.
+- `by()` is `tapply` for whole data-frame chunks.
+
+## rowsum and Counting
+
+```{r,echo=TRUE}
+rowsum(sales$price, group = c("g1", "g1", "g2", "g2"))
+table(sanfrancisco.home.sales$bedrooms)[1:8]
+```
+
+`table()` with two arguments cross-tabulates — the gateway to Chapter 18's contingency tests.
+
+# Reshaping Data
+
+## Wide and Long
+
+The same data can be laid out **wide** (one column per measurement) or **long** (one row per measurement). Modeling and `ggplot2` usually want long.
+
+```{r,echo=TRUE}
+wide <- data.frame(id = 1:2, q1 = c(90, 70), q2 = c(85, 95))
+long <- reshape(wide, direction = "long",
+                varying = c("q1", "q2"), v.names = "score",
+                timevar = "quiz", times = c("q1", "q2"))
+long
+```
+
+## Stack and Modern Tools
+
+```{r,echo=TRUE}
+stack(wide, select = c(q1, q2))
+```
+
+- Base R: `stack()`/`unstack()` for the simple cases, `reshape()` for the general one.
+- In modern practice the `tidyr` package (`pivot_longer()`, `pivot_wider()`) expresses the same operations more readably; you will meet it whenever you work in the tidyverse.
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

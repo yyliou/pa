@@ -1,0 +1,152 @@
+---
+title: "Programming for Applications"
+subtitle: "Chapter 17: Probability Distributions"
+author: "Yu-You Liou (NTU)"
+institute: "Shih Chien University"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch17-zh.html"  style="color:#555;">[中文版由此去]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **The d-p-q-r System**
+
+## Four Letters, Every Distribution
+
+For each distribution `xxx`, R supplies four functions:
+
+| Prefix | Function | Question answered |
+|:---|:---|:------|
+| `d` | density / mass | how likely is the value $x$? |
+| `p` | cumulative distribution | $P(X \le q)$? |
+| `q` | quantile | which value has probability $p$ below it? |
+| `r` | random generation | give me $n$ draws |
+
+```{r,echo=TRUE}
+dnorm(0)              # standard normal density at 0
+pnorm(1.96)           # P(Z <= 1.96)
+qnorm(0.975)          # the famous 1.96, recovered
+set.seed(1); rnorm(3) # three random normals
+```
+
+## The Normal Distribution
+
+$$f(x) = \frac{1}{\sigma\sqrt{2\pi}}\, e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
+
+```{r,echo=TRUE,out.width="65%"}
+x <- seq(-4, 4, length.out = 200)
+plot(x, dnorm(x), type = "l", lwd = 2, ylab = "density")
+lines(x, dnorm(x, sd = 1.5), lty = 2)
+legend("topright", c("sd = 1", "sd = 1.5"), lty = 1:2)
+```
+
+`mean=` and `sd=` shift and stretch; defaults give the standard normal.
+
+## Visualizing p and q
+
+The shaded area *is* `pnorm()`; `qnorm()` runs the lookup backwards:
+
+```{r,echo=TRUE,out.width="65%"}
+x <- seq(-4, 4, length.out = 200)
+plot(x, dnorm(x), type = "l", lwd = 2, ylab = "density")
+xs <- seq(-4, qnorm(0.975), length.out = 120)
+polygon(c(xs, rev(xs)), c(dnorm(xs), rep(0, 120)),
+        col = "lightsteelblue", border = NA)
+abline(v = qnorm(0.975), lty = 2)
+text(2.6, 0.1, "97.5%")
+```
+
+## Continuous Families
+
+The same four-letter pattern covers every classic continuous family:
+
+```{r,echo=TRUE}
+punif(0.5)                  # uniform on [0,1]
+pexp(1, rate = 1)           # exponential
+pt(2.086, df = 20)          # Student's t
+pchisq(3.84, df = 1)        # chi-squared
+pf(4.35, df1 = 2, df2 = 20) # F
+```
+
+- `t`, `chisq`, and `f` are the workhorses of Chapter 18's tests — their `q` functions generate the critical-value tables you once looked up in appendices.
+- Also available: `lnorm`, `gamma`, `beta`, `weibull`, `cauchy`, and more.
+
+## Discrete Families
+
+```{r,echo=TRUE}
+dbinom(7, size = 10, prob = 0.5)   # exactly 7 heads in 10 tosses
+pbinom(7, size = 10, prob = 0.5)   # at most 7
+dpois(3, lambda = 2)               # Poisson: 3 events when mean is 2
+dgeom(2, prob = 0.2)               # first success on 3rd trial
+dhyper(2, m = 4, n = 8, k = 3)     # sampling without replacement
+```
+
+```{r,echo=TRUE,out.width="60%"}
+barplot(dbinom(0:10, 10, 0.5), names.arg = 0:10,
+        main = "Binomial(10, 0.5)")
+```
+
+## Random Numbers and Reproducibility
+
+```{r,echo=TRUE}
+set.seed(2026)
+rbinom(5, size = 10, prob = 0.3)
+sample(c("H", "T"), 5, replace = TRUE)
+```
+
+::: {.callout-tip}
+**Always `set.seed()` in homework and reports.** Pseudo-random sequences restart identically from a seed, so your graders — and your future self — can reproduce every simulation exactly.
+:::
+
+## Simulation as a Tool
+
+When theory gets hard, simulate. What is the chance that the maximum of five dice is 6?
+
+```{r,echo=TRUE}
+set.seed(7)
+sims <- replicate(10000, max(sample(1:6, 5, replace = TRUE)))
+mean(sims == 6)
+1 - (5/6)^5          # exact answer, for comparison
+```
+
+`replicate()` plus the `r` functions turn probability puzzles into ten-second experiments — the same pattern that powers the bootstrap (Chapter 16) and power analysis (Chapter 19).
+
+## Copyright Notice
+
+- **Copyright.** These slides are adapted from *R in a Nutshell: A Desktop Quick Reference* (2nd ed.) by Joseph Adler, O'Reilly Media. All rights reserved by the original author and publisher.
+
+- **Non-commercial use only.** These materials are strictly for educational purposes and may not be used for commercial gain.
+
+- **Attribution.** Any reproduction, distribution, or use of these materials must properly credit the original source.

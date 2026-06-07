@@ -1,0 +1,183 @@
+---
+title: "程式設計與應用"
+subtitle: "第九章：函式"
+author: "劉昱佑"
+institute: "實踐大學"
+date: "`r Sys.Date()`"
+format: revealjs
+smaller: true
+theme: serif
+footer: "R in a Nutshell: A Desktop Quick Reference"
+logo: "logo.svg"
+editor: source
+bibliography: bib.bib
+suppress-bibliography: true
+slide-number: true
+scrollable: false
+transition: "none"
+menu:
+  useTextContentForMissingTitles: false
+  hideMissingTitles: true
+  side: 'left'
+  titleSelector: 'h1'
+title-slide-attributes:
+  data-notes: ""
+include-after-body:
+  text: |
+    <script>
+    Reveal.on('ready', function() {
+      var title = Reveal.getSlides()[0];
+      if (title) {
+        title.insertAdjacentHTML('beforeend',
+          '<p style="font-size:0.5em; margin-top:1.5em;">' +
+          '<a href="ch9.html"  style="color:#555;">[English version]</a>' +
+          '</p>');
+      }
+    });
+    </script>
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center")
+```
+
+# **打造自己的工具**
+
+## function 關鍵字
+
+`function` 關鍵字建立函式物件；指派給名稱與否都可以：
+
+```{r,echo=TRUE}
+square <- function(x) x ^ 2
+square(12)
+```
+
+多個運算式的主體需要大括號；函式的值是最後求值的那個運算式：
+
+```{r,echo=TRUE}
+zscore <- function(v) {
+  m <- mean(v)
+  s <- sd(v)
+  (v - m) / s
+}
+round(zscore(c(2, 4, 6, 8)), 2)
+```
+
+## 引數與預設值
+
+```{r,echo=TRUE}
+trim_mean <- function(v, trim = 0.1, digits = 2) {
+  round(mean(v, trim = trim), digits)
+}
+trim_mean(c(1, 2, 3, 100))            # 使用預設值
+trim_mean(c(1, 2, 3, 100), trim = 0.25)
+```
+
+- 引數比對順序：先精確名稱、再部分名稱、最後位置。
+- 沒有預設值又沒被提供的引數，**只有主體真的用到它時**才會報錯——又是惰性求值。
+- 預設值可以引用其他引數：`function(x, n = length(x))`。
+
+## 點點點引數
+
+省略號 `...` 吸收所有多出來的引數，並可原樣轉交：
+
+```{r,echo=TRUE}
+loud_plot_summary <- function(v, ...) {
+  cat("n =", length(v), "\n")
+  summary(v, ...)
+}
+loud_plot_summary(c(1, 5, 9, NA), na.rm = TRUE)
+```
+
+包裝函式（wrapper）正是靠這一招，把選項一路傳給 `plot()`、`mean()` 等函式，而不必逐一列舉。
+
+## 回傳值
+
+```{r,echo=TRUE}
+sign_word <- function(x) {
+  if (x > 0) return("positive")     # 明確的提早回傳
+  if (x < 0) return("negative")
+  "zero"                            # 隱含：最後的值
+}
+sign_word(-3); sign_word(0)
+```
+
+- `return()` 立即離開函式——適合寫前置防衛判斷。
+- 否則最後求值的運算式就是回傳值；道地的 R 寫法仰賴這一點。
+- `invisible(x)` 回傳值但不在主控台列印——`assign()` 與繪圖函式就是這麼做的。
+
+## 函式作為引數
+
+高階函式以函式為輸入。`sapply`/`lapply` 家族把函式套用到向量或串列上：
+
+```{r,echo=TRUE}
+sapply(1:5, sqrt)
+lapply(list(a = 1:3, b = 4:6), mean)
+```
+
+`apply()` 沿矩陣的邊作用（1 = 列，2 = 欄）：
+
+```{r,echo=TRUE}
+m <- matrix(1:6, nrow = 2)
+apply(m, 1, sum)     # 列總和
+apply(m, 2, max)     # 欄最大值
+```
+
+`mapply()` 則把多個向量並行送進同一個函式。
+
+## 匿名函式
+
+只用一次的輔助函式，不必命名：
+
+```{r,echo=TRUE}
+sapply(1:5, function(i) i * (i + 1) / 2)
+
+# 定義完當場套用
+(function(x) x ^ x)(3)
+```
+
+R 4.1 起有更精簡的反斜線縮寫：
+
+```{r,echo=TRUE}
+sapply(1:5, \(i) i ^ 2)
+```
+
+匿名函式讓一次性的邏輯留在使用它的地方。
+
+## 函式的性質
+
+函式物件可以拆解成三部分：
+
+```{r,echo=TRUE}
+args(trim_mean)        # 可讀的簽名
+formals(trim_mean)     # 引數與預設值（串列形式）
+body(zscore)           # 程式碼
+environment(zscore)    # 定義它的環境
+```
+
+這些零件甚至可以用程式*修改*——`body(f) <- ...`——偶爾有用，而且在聚會上永遠很炫。
+
+## 引數驗證
+
+健壯的函式會及早檢查輸入，並給出有用的錯誤訊息：
+
+```{r,echo=TRUE,error=TRUE}
+safe_log <- function(x) {
+  stopifnot(is.numeric(x), all(x > 0))
+  log(x)
+}
+safe_log(c(1, 10))
+safe_log(-5)
+```
+
+- `stop("message")` 拋出錯誤；`warning()` 發出警告但繼續執行。
+- `missing(arg)` 檢查呼叫者是否提供了某個引數。
+- `match.arg()` 對照固定選項集合驗證引數。
+
+## 版權聲明
+
+- **版權聲明。** 本教材改編自 Joseph Adler 所著 *R in a Nutshell: A Desktop Quick Reference*（第二版，O'Reilly Media）。所有權利均由原作者與出版者保留。
+
+- **僅供非商業用途。** 本教材嚴格限定用於教育目的，不得用於商業獲利。
+
+- **適當標註出處。** 任何對本教材的重製、散布或使用，都必須適當標註原始出處。
