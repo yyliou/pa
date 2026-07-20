@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -57,7 +57,7 @@ This chapter is a readable, not exhaustive, guide to writing valid R expressions
 
 # Constants
 
-## Numeric Vectors
+## Numeric Vectors {.tight}
 
 Numbers are interpreted literally — and hexadecimal works with the `0x` prefix:
 
@@ -203,7 +203,7 @@ x[3]
 max(1, 2)
 ```
 
-## Order of Operations
+## Order of Operations {.tight}
 
 Just as in school math (`1 + 2 × 5` multiplies first), R resolves ambiguity with fixed **precedence** rules. From highest to lowest, roughly: function calls and grouping; indexing and lookup; arithmetic; comparison; formulas; assignment; help.
 
@@ -401,7 +401,7 @@ i                                        # 2. the loop variable leaks into the c
 
 Like conditionals, `repeat`, `while`, and `for` have type **special** — their body is not necessarily evaluated.
 
-## Looping Extensions: iterators and foreach
+## Looping Extensions: iterators and foreach {.tight}
 
 ::: {.callout-note}
 Missing Java-style iterators or foreach? CRAN add-on packages supply both — and they make code easier to parallelize.
@@ -464,7 +464,7 @@ l[1:3]
 l[-7:-1]
 ```
 
-## Integer Indexing of Matrices
+## Integer Indexing of Matrices {.tight}
 
 For multidimensional structures, give one index per dimension — or omit one to take everything along it:
 
@@ -523,7 +523,7 @@ Lists too:
 l[(l > 7)]
 ```
 
-## Indexing by Name
+## Indexing by Name {.tight}
 
 List elements may be named; index them with `$`, or by name vectors in single brackets:
 
@@ -556,7 +556,7 @@ shopping.list[[c(1, 2)]]
 
 # R Code Style Standards
 
-## Readable Code Is Maintainable Code
+## Readable Code Is Maintainable Code {.tight}
 
 Style isn't syntax, but it decides whether others (and future you) can read your code. The book follows Google's R Style Guide; the highlights:
 

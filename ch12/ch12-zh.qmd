@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -247,7 +247,7 @@ apply(X=x, MARGIN=c(1,2), FUN=paste, collapse=",")
 
 最後一個呼叫的意思：對每組 (i, j)，計算 `x[i, j, 1], x[i, j, 2], x[i, j, 3]` 的 `FUN`。
 
-## lapply 與 sapply：串列、向量、資料框
+## lapply 與 sapply：串列、向量、資料框 {.tight}
 
 `lapply(X, FUN, ...)` 對每個元素套用 `FUN`、回傳**串列**——資料框就是欄位的串列：
 

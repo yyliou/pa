@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -102,7 +102,7 @@ R ships with a curated set of packages. The first group implements the language 
 | `tcltk` |  | Tcl/Tk interface for platform-independent UIs |
 | `codetools` |  | Code-analysis tools |
 
-## Included Packages (2): Statistics and Modeling
+## Included Packages (2): Statistics and Modeling {.tight}
 
 The second group provides widely used statistical methods — for many analyses you never need anything else:
 

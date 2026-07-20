@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source

@@ -6,11 +6,11 @@
 <script src="ch16-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch16-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch16-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch16-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch16-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch16-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch16-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch16-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch16-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch16-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="第一輪分析" class="title-slide slide level1 center">
@@ -408,7 +408,7 @@
 <h1>主成分分析</h1>
 
 </section>
-<section id="prcomp-與-princomp" class="slide level2">
+<section id="prcomp-與-princomp" class="slide level2 tight">
 <h2>prcomp 與 princomp</h2>
 <p><strong>PCA</strong> 把（可能相關的）變數改寫成互不相關的成分。兩個實作：<code>prcomp</code>（建議使用；公式法 <code>prcomp(~..., data=, subset=, na.action=)</code>，預設法有 <code>retx</code>、<code>center=TRUE</code>、<code>scale.</code>、<code>tol</code>）與 S-PLUS 相容的 <code>princomp</code>（對相關／共變異矩陣做特徵分解）——書中示範的是後者。</p>
 <p>資料：2000–2008 各隊打擊統計，從 Baseball Databank 以 SQL 取出（縮寫改成易讀的名稱），打包為 <code>team.batting.00to08</code>：</p>
@@ -436,7 +436,7 @@ Cumulative Proportion   0.98338107 0.990263099 0.995903002 1.000000000</code></p
 </div>
 <p>兩個成分已扛起約 78% 的變異；四個約 92%。</p>
 </section>
-<section id="loadings碎石圖雙標圖" class="slide level2">
+<section id="loadings碎石圖雙標圖" class="slide level2 tight fit-d">
 <h2>loadings、碎石圖、雙標圖</h2>
 <p><code>loadings</code> 顯示各變數對各成分的貢獻：</p>
 <div class="cell" data-layout-align="center">
@@ -550,7 +550,7 @@ Cumulative Var  0.111  0.222  0.333  0.444  0.556  0.667  0.778  0.889  1.000</c
 </div>
 <p>重點引數：<code>data</code>；<code>statistic</code>——一個<em>（資料, 選擇）的函式</em>，第二個引數的意義由 <code>stype</code> 決定（<code>"i"</code> 索引、<code>"f"</code> 次數、<code>"w"</code> 權重）；<code>R</code>——重抽次數；<code>sim</code>——<code>"ordinary"</code>、<code>"parametric"</code>、<code>"balanced"</code>、<code>"permutation"</code>、<code>"antithetic"</code>；多樣本問題用 <code>strata</code>；參數化模擬用 <code>ran.gen</code>／<code>mle</code>；<code>simple=TRUE</code> 以時間換記憶體。</p>
 </section>
-<section id="範例中位數有多偏" class="slide level2">
+<section id="範例中位數有多偏" class="slide level2 tight">
 <h2>範例：中位數有多偏？</h2>
 <p>媒體報導房價<em>中位數</em>。對 2008 年 6 月舊金山成交價拔靴：</p>
 <div class="cell" data-layout-align="center">
@@ -579,7 +579,7 @@ boot(data = home.sale.prices.june2008, statistic = function(d,
 
 Bootstrap Statistics :
     original  bias    std. error
-t1*   845000 -2696.5    22071.14</code></pre>
+t1*   845000   -3124       22127</code></pre>
 </div>
 </div>
 <p>結論：在這裡中位數是非常輕微有偏的估計量——而且我們順便拿到了它的標準誤，完全不靠常態假設。</p>

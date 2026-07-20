@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -66,7 +66,7 @@ summary(first.ggplot2.example)
 
 summary 把圖表解剖得一清二楚：資料、**映射**（x ＝ a、y ＝ b）、分面，以及圖層（`geom_point` ＋ `stat_identity` ＋ identity 位置）。
 
-## 分面與顏色
+## 分面與顏色 {.tight .fit-d}
 
 面板（lattice 的條件）在這裡叫**分面（facet）**，以公式指定；按組上色則只是另一種映射：
 
@@ -78,7 +78,7 @@ qplot(x=a, y=b, data=d, color=c)       # 用顏色取代面板
 
 （Hadley 偏好的第一種寫法：`qplot(x=a, y=b, data=d) + facet_wrap(~c)`。）
 
-## 單變量：直方圖與密度圖
+## 單變量：直方圖與密度圖 {.tight .fit-a}
 
 只給 `x` 時，`qplot` 預設畫直方圖；想換**geom** 就點名：
 
@@ -107,7 +107,7 @@ qplot(x=f, data=e, geom="density")
 
 # 較複雜的範例：Medicare 資料
 
-## 資料
+## 資料 {.wrap}
 
 真實又複雜的資料：美國 **Medicare** 的費用與療效，打包成三份——`outcome.of.care.measures.national`（心臟病發、心衰竭、肺炎的全國死亡率／再入院率）、`medicare.payments`（各醫院 × 70 種病症的平均給付；140,722 筆）、`medicare.payments.by.state`：
 

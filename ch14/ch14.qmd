@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -63,7 +63,7 @@ The vocabulary: rectangular drawing areas are **panels**; the data sent to a pan
 **Inside functions and scripts, lattice plots nothing unless you `print` the object** — the classic lattice gotcha (first met in Chapter 3).
 :::
 
-## A Simple Example: Formula, Conditioning, Groups
+## A Simple Example: Formula, Conditioning, Groups {.tight .fit-d}
 
 Lattice arguments are consistent: a **formula** first (positional — its name has changed before!), then `data`. The same toy data three ways:
 
@@ -121,7 +121,7 @@ load(temp)
 dim(births2006.smpl)
 ```
 
-## barchart
+## barchart {.tight .fit-b}
 
 Births by day of week (1 = Sunday):
 
@@ -140,7 +140,7 @@ dob.dm.tbl <- table(WK=births2006.dm$DOB_WK, MM=births2006.dm$DMETH_REC)
 barchart(dob.dm.tbl)            # default: stacked groups, no key
 ```
 
-## Iterating to the Right Display
+## Iterating to the Right Display {.tight .fit-a}
 
 Unstack and add a key; still hard to compare — so drop the color groups and switch to columns in **two panels**:
 
@@ -179,7 +179,7 @@ dotplot(as.factor(Speed_At_Failure_km_h)~Time_To_Failure|Tire_Type,
 
 All type D tires died fast at 180 km/h; some type H tires endured. (Revisited in Chapter 18.)
 
-## histogram
+## histogram {.tight .fit-b}
 
 Birth weight by plurality — note alphabetical panel order (hence the numbered level names) and the space-filling square panels:
 
@@ -195,7 +195,7 @@ histogram(~DBWT|DPLURAL, data=births2006.smpl, layout=c(1, 5))
 
 Roughly normal within groups; mean weight falls as plurality rises. (Other arguments: `type` = `"percent"`/`"count"`/`"density"`, `nint`/`breaks`/`endpoints`/`equal.widths` for binning.)
 
-## densityplot
+## densityplot {.tight .fit-a}
 
 One smooth line instead of bins — and stackable. With 427k observations we suppress the per-point strip (`plot.points=FALSE`):
 
@@ -222,7 +222,7 @@ stripplot(~DBWT, data=births2006.smpl,
           jitter.data=TRUE)
 ```
 
-## qqmath
+## qqmath {.tight .fit-b}
 
 `qqmath` compares sample quantiles to a theoretical distribution (default: normal via `qnorm`; also `f.value`, `distribution`, `qtype`). Sanity check with actual normals, then the births:
 
@@ -247,7 +247,7 @@ download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfr
 load(temp)
 ```
 
-## qqmath on Prices: Finding the Log-Normal
+## qqmath on Prices: Finding the Log-Normal {.tight .fit-e}
 
 Prices range $100,000–$9,500,000 — intuitively not normal:
 
@@ -269,7 +269,7 @@ Separated lines, higher for more bedrooms — the same trick works for square-fo
 
 # Bivariate Trellis Plots
 
-## xyplot
+## xyplot {.tight .fit-c}
 
 Price vs. size — first naively, then trimmed (price < $4M, < 6,000 sq ft) and conditioned by zip code with custom strips:
 
@@ -306,7 +306,7 @@ Medians wandered; the interquartile range moved less; the high end visibly thinn
 
 # Trivariate Plots
 
-## levelplot
+## levelplot {.tight .fit-b}
 
 Flat grids colored by a third value (drawn by `panel.levelplot`; key arguments `at`, `cuts=15`, `region`, `colorkey`, `col.regions`, `contour`). Coordinates are too precise to plot raw — bin first with `cut` + `table`:
 
@@ -393,7 +393,7 @@ names(trellis.par.get())           # 30+ groups, ~380 parameters
 
 Groups include `superpose.symbol`/`superpose.line` (groups), `plot.polygon` (bars/histograms), `box.rectangle`/`box.umbrella` (bwplot), `plot.line`/`plot.symbol` (xyplot et al.), `reference.line`, `regions`+`shade.colors` (levelplot/wireframe), `strip.background`/`strip.shingle`, `fontsize`, `par.main.text` and friends.
 
-## plot.trellis, strip.default, simpleKey
+## plot.trellis, strip.default, simpleKey {.wrap .tight}
 
 - **`plot.trellis`** — arguments controlling drawing: `position`/`split`/`more` (plot several trellis objects on one page), `panel.height`/`panel.width`, `packet.panel` (which packet lands in which panel; default `packet.panel.default`), `panel.error`.
 - **`strip.default(which.given, which.panel, var.name, factor.levels, shingle.intervals, strip.names, strip.levels, style, bg, fg, par.strip.text)`** — how strips display conditioning levels; customize via `strip.custom`.

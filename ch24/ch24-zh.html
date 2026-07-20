@@ -6,11 +6,11 @@
 <script src="ch24-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch24-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch24-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch24-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch24-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch24-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch24-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch24-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch24-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch24-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="讓-r-更快" class="title-slide slide level1 center">
@@ -234,7 +234,7 @@
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">system.time</span>(<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fl">1e6</span>) <span class="fu">sqrt</span>(i))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-  0.015   0.000   0.015 </code></pre>
+  0.008   0.000   0.008 </code></pre>
 </div>
 </div>
 <p>三個數字：<strong>user time</strong>（R 本身做的工）、<strong>system time</strong>（OS 替 R 做的工）、<strong>elapsed time</strong>（牆上時鐘）。<code>gcFirst=TRUE</code>（預設）先做垃圾回收，讀數更乾淨。（嚴謹的微基準請用現代的 <code>microbenchmark</code> 與 <code>bench</code>，會重複並比較。）</p>
@@ -256,8 +256,8 @@
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">gc</span>()                             <span class="co"># 垃圾回收「並」回報用量</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-Ncells  626460 33.5    1420424 75.9         NA  1420424 75.9
-Vcells 1158800  8.9    8388608 64.0      16384  2013854 15.4</code></pre>
+Ncells  626473 33.5    1420558 75.9         NA  1420558 75.9
+Vcells 1158733  8.9    8388608 64.0      24576  2014259 15.4</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">object.size</span>(<span class="st">"Hello world!"</span>)      <span class="co"># 單一物件的約略大小</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -285,7 +285,7 @@ Vcells 1158800  8.9    8388608 64.0      16384  2013854 15.4</code></pre>
 <span id="cb8-3"><a href=""></a><span class="fu">system.time</span>(<span class="fu">slow</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>elapsed 
-  0.007 </code></pre>
+  0.004 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href=""></a><span class="fu">system.time</span>(<span class="fu">fast</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -308,7 +308,7 @@ Vcells 1158800  8.9    8388608 64.0      16384  2013854 15.4</code></pre>
 <span id="cb12-2"><a href=""></a><span class="fu">system.time</span>(<span class="fu">apply</span>(m, <span class="dv">2</span>, sum))[<span class="st">"elapsed"</span>]      <span class="co"># 易讀</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>elapsed 
-  0.005 </code></pre>
+  0.004 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">system.time</span>(<span class="fu">colSums</span>(m))[<span class="st">"elapsed"</span>]            <span class="co"># 內建，快得多</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -340,7 +340,7 @@ Vcells 1158800  8.9    8388608 64.0      16384  2013854 15.4</code></pre>
 <span id="cb18-3"><a href=""></a><span class="fu">system.time</span>(<span class="fu">slow.c</span>(<span class="dv">50000</span>))[<span class="st">"elapsed"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>elapsed 
-  0.005 </code></pre>
+  0.004 </code></pre>
 </div>
 </div>
 <div class="callout callout-tip callout-titled callout-style-default">

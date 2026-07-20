@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -361,7 +361,7 @@ slot(birthdate, "month", check=FALSE) <- "June"   # 跳過驗證：通常不智
 
 # 老派 OOP：S3
 
-## S3 類別不過是屬性
+## S3 類別不過是屬性 {.tight}
 
 S3 物件＝基本物件＋額外屬性，其中一個叫 `class`。沒有正式定義；屬性（包括 class）可以徒手改。（S3 很像 JavaScript 這類原型語言。）解剖內建的 `ts` 類別：
 
@@ -410,7 +410,7 @@ plot(my.TimeSeries)
 
 `plot(my.TimeSeries)` 默默變成 `plot.TimeSeries(my.TimeSeries)`。
 
-## S4 裡用 S3：setOldClass
+## S4 裡用 S3：setOldClass {.wrap .tight}
 
 S4 槽位不能直接放 S3 類別——得先用 `setOldClass(Classes, prototype, where, test=FALSE, S4Class)` 包裝：
 

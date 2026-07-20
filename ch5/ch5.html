@@ -6,11 +6,11 @@
 <script src="ch5_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch5_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch5_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch5_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch5_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch5_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch5_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch5_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch5_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch5_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="how-r-thinks" class="title-slide slide level1 center">
@@ -323,7 +323,7 @@ Yu-You Liou (NTU)
 </div>
 <p>(One subtle difference: written this way the result isn’t auto-printed — but the effect is the same.)</p>
 </section>
-<section id="why-care-that-everything-is-a-function-call" class="slide level2">
+<section id="why-care-that-everything-is-a-function-call" class="slide level2 tight">
 <h2>Why Care That Everything Is a Function Call?</h2>
 <p>In practice you would never write <code>`[&lt;-`(animals, 4, "duck")</code> — bracket notation is far easier to read. But knowing the function is there means you can <strong>inspect its code</strong>, <strong>read its help page</strong>, or <strong>write methods with the same name</strong> for your own classes (Chapter 10). More pretty-vs-functional pairs:</p>
 <div class="cell" data-layout-align="center">
@@ -578,7 +578,7 @@ i^2</code></pre>
 </div>
 <p>The interpreter parses the line as an if-then-else structure, evaluates the <strong>condition</strong> <code>(x &gt; 1)</code> first — false — and therefore <em>never evaluates</em> <code>"orange"</code>; it evaluates the expression after <code>else</code> and returns <code>"apple"</code>. In special cases like this, <strong>not all arguments are evaluated</strong> — which is why <code>if</code> cannot be an ordinary function. And whatever an expression returns at the console gets handed to <code>print</code>.</p>
 </section>
-<section id="internal-and-.primitive" class="slide level2">
+<section id="internal-and-.primitive" class="slide level2 tight">
 <h2>.Internal and .Primitive</h2>
 <p>Some functionality lives inside the R system itself:</p>
 <ul>
@@ -605,7 +605,7 @@ i^2</code></pre>
     invisible(.External.graphics(C_plotXY, xy, t, pch, lty, col, 
         bg, cex, lwd, ...))
 }
-&lt;bytecode: 0xa2825c6d0&gt;
+&lt;bytecode: 0x80ecd6548&gt;
 &lt;environment: namespace:graphics&gt;</code></pre>
 </div>
 </div>
@@ -638,7 +638,7 @@ i^2</code></pre>
 </div>
 </div>
 </section>
-<section id="the-parse-tree" class="slide level2">
+<section id="the-parse-tree" class="slide level2 tight">
 <h2>The Parse Tree</h2>
 <p>…but convert the language object <strong>to a list</strong> and the structure appears — this is the expression’s parse tree:</p>
 <div class="cell" data-layout-align="center">
@@ -676,7 +676,7 @@ x &gt; 1
 </div>
 <p>Observations: the <code>else</code> keyword vanishes in parsing; the first element is a <strong>symbol</strong> referring to the <code>if</code> function — so even special syntax becomes <em>function name first, arguments after</em>, exactly like any call. For constants, the list has a single item: <code>as.list(quote(1))</code>.</p>
 </section>
-<section id="sugar-exposed-and-deparse" class="slide level2">
+<section id="sugar-exposed-and-deparse" class="slide level2 tight">
 <h2>Sugar Exposed, and deparse</h2>
 <p>The bracket lookup <code>x[2]</code> and its functional twin parse to the <em>identical</em> tree:</p>
 <div class="cell" data-layout-align="center">

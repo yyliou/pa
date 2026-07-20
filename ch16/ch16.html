@@ -6,11 +6,11 @@
 <script src="ch16_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch16_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch16_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch16_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch16_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch16_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch16_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch16_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch16_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch16_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="first-analyses" class="title-slide slide level1 center">
@@ -408,7 +408,7 @@ Yu-You Liou (NTU)
 <h1>Principal Components Analysis</h1>
 
 </section>
-<section id="prcomp-and-princomp" class="slide level2">
+<section id="prcomp-and-princomp" class="slide level2 tight">
 <h2>prcomp and princomp</h2>
 <p><strong>PCA</strong> rewrites possibly-correlated variables as uncorrelated components. Two implementations: <code>prcomp</code> (preferred; formula method <code>prcomp(~..., data=, subset=, na.action=)</code>, default method with <code>retx</code>, <code>center=TRUE</code>, <code>scale.</code>, <code>tol</code>) and the S-PLUS-compatible <code>princomp</code> (eigendecomposition of the correlation/covariance matrix) — the book demonstrates the latter.</p>
 <p>Data: team batting statistics 2000–2008, extracted from the Baseball Databank by SQL (renamed to readable play names) and packaged as <code>team.batting.00to08</code>:</p>
@@ -436,7 +436,7 @@ Cumulative Proportion   0.98338107 0.990263099 0.995903002 1.000000000</code></p
 </div>
 <p>Two components already carry ~78% of the variance; four carry ~92%.</p>
 </section>
-<section id="loadings-scree-plot-biplot" class="slide level2">
+<section id="loadings-scree-plot-biplot" class="slide level2 tight fit-e">
 <h2>loadings, Scree Plot, Biplot</h2>
 <p><code>loadings</code> shows each variable’s contribution to each component:</p>
 <div class="cell" data-layout-align="center">
@@ -550,7 +550,7 @@ Cumulative Var  0.111  0.222  0.333  0.444  0.556  0.667  0.778  0.889  1.000</c
 </div>
 <p>Key arguments: <code>data</code>; <code>statistic</code> — a <em>function of (data, selection)</em> where <code>stype</code> defines the second argument (<code>"i"</code> indices, <code>"f"</code> frequencies, <code>"w"</code> weights); <code>R</code> — number of replicates; <code>sim</code> — <code>"ordinary"</code>, <code>"parametric"</code>, <code>"balanced"</code>, <code>"permutation"</code>, <code>"antithetic"</code>; <code>strata</code> for multisample problems; <code>ran.gen</code>/<code>mle</code> for parametric simulation; <code>simple=TRUE</code> trades time for memory.</p>
 </section>
-<section id="example-how-biased-is-the-median" class="slide level2">
+<section id="example-how-biased-is-the-median" class="slide level2 tight">
 <h2>Example: How Biased Is the Median?</h2>
 <p>Media report <em>median</em> home prices. Bootstrapping June 2008 San Francisco sale prices:</p>
 <div class="cell" data-layout-align="center">
@@ -579,7 +579,7 @@ boot(data = home.sale.prices.june2008, statistic = function(d,
 
 Bootstrap Statistics :
     original  bias    std. error
-t1*   845000 -3457.5    23134.49</code></pre>
+t1*   845000 -4604.5    23878.67</code></pre>
 </div>
 </div>
 <p>Verdict: the median is a very slightly biased estimator here — and now we also know its standard error, free of any normality assumption.</p>

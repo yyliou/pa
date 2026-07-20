@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -63,7 +63,7 @@ lattice 的真本事：用條件或分組變數把圖**拆成多個面板**（�
 **在函式或腳本裡，不明確 `print` 物件，lattice 什麼都不畫**——經典陷阱（第三章初次見面）。
 :::
 
-## 簡單範例：公式、條件、分組
+## 簡單範例：公式、條件、分組 {.tight .fit-d}
 
 lattice 的引數很一致：先放**公式**（用位置傳——它的名字改過！），再放 `data`。同一份玩具資料三種畫法：
 
@@ -121,7 +121,7 @@ load(temp)
 dim(births2006.smpl)
 ```
 
-## barchart
+## barchart {.tight .fit-b}
 
 各星期幾的出生數（1＝週日）：
 
@@ -140,7 +140,7 @@ dob.dm.tbl <- table(WK=births2006.dm$DOB_WK, MM=births2006.dm$DMETH_REC)
 barchart(dob.dm.tbl)            # 預設：堆疊分組、沒有圖例
 ```
 
-## 迭代逼近正確的呈現
+## 迭代逼近正確的呈現 {.tight .fit-a}
 
 先解開堆疊、加圖例；還是難比較——乾脆放棄顏色分組，改成**兩個面板**的直條：
 
@@ -179,7 +179,7 @@ dotplot(as.factor(Speed_At_Failure_km_h)~Time_To_Failure|Tire_Type,
 
 D 型胎在 180 km/h 全數速死；某些 H 型胎撐得很久。（第十八章再會。）
 
-## histogram
+## histogram {.tight .fit-b}
 
 出生體重按胎數分——注意面板按字母序排列（所以水準名前面加了數字），且預設以方形面板填滿空間：
 
@@ -195,7 +195,7 @@ histogram(~DBWT|DPLURAL, data=births2006.smpl, layout=c(1, 5))
 
 各組內大致常態；平均體重隨胎數遞減。（其他引數：`type` ＝ `"percent"`／`"count"`／`"density"`，分組距用 `nint`／`breaks`／`endpoints`／`equal.widths`。）
 
-## densityplot
+## densityplot {.tight .fit-a}
 
 一條平滑曲線取代長條——而且能疊。42.7 萬筆觀測，關掉逐點帶狀（`plot.points=FALSE`）：
 
@@ -222,7 +222,7 @@ stripplot(~DBWT, data=births2006.smpl,
           jitter.data=TRUE)
 ```
 
-## qqmath
+## qqmath {.tight .fit-b}
 
 `qqmath` 把樣本分位數對理論分布作圖（預設常態 `qnorm`；另有 `f.value`、`distribution`、`qtype`）。先用真常態數驗證，再看出生資料：
 
@@ -247,7 +247,7 @@ download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfr
 load(temp)
 ```
 
-## 房價的 qqmath：發現對數常態
+## 房價的 qqmath：發現對數常態 {.tight .fit-e}
 
 價格從 10 萬到 950 萬美元——直覺上就不會常態：
 
@@ -269,7 +269,7 @@ qqmath(~log(price), groups=bedrooms,
 
 # 雙變量 Trellis 圖
 
-## xyplot
+## xyplot {.tight .fit-b}
 
 價格 vs. 坪數——先天真地畫，再修剪（價格 < 400 萬、< 6,000 平方英尺）並按郵遞區號分面板、自訂 strip：
 
@@ -306,7 +306,7 @@ bwplot(log(price)~cut(date, "month"),
 
 # 三變量圖
 
-## levelplot
+## levelplot {.tight .fit-b}
 
 平面網格、第三維上色（由 `panel.levelplot` 繪製；重點引數 `at`、`cuts=15`、`region`、`colorkey`、`col.regions`、`contour`）。座標太精細不能直接畫——先 `cut` 分箱再 `table`：
 
@@ -393,7 +393,7 @@ names(trellis.par.get())           # 30 多組、約 380 個參數
 
 參數組包括 `superpose.symbol`／`superpose.line`（分組）、`plot.polygon`（長條／直方）、`box.rectangle`／`box.umbrella`（bwplot）、`plot.line`／`plot.symbol`（xyplot 等）、`reference.line`、`regions` 與 `shade.colors`（levelplot／wireframe）、`strip.background`／`strip.shingle`、`fontsize`、`par.main.text` 等。
 
-## plot.trellis、strip.default、simpleKey
+## plot.trellis、strip.default、simpleKey {.wrap .tight}
 
 - **`plot.trellis`**——控制繪製的引數：`position`／`split`／`more`（同頁畫多個 trellis 物件）、`panel.height`／`panel.width`、`packet.panel`（哪個封包進哪個面板；預設 `packet.panel.default`）、`panel.error`。
 - **`strip.default(which.given, which.panel, var.name, factor.levels, shingle.intervals, strip.names, strip.levels, style, bg, fg, par.strip.text)`**——strip 如何顯示條件水準；用 `strip.custom` 客製。

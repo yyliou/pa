@@ -1,0 +1,85 @@
+/*-- scss:rules --*/
+
+/* =========================================================
+   講義版面修正
+   投影片為 1050x700、center:false（內容靠上）。
+   以下規則皆經無頭瀏覽器逐頁實測確認可降低內容高度且不使圖片變形。
+   ========================================================= */
+
+/* ---------- 1) R 繪圖：等比例限高 ----------
+   width/height 皆設 auto，讓 max-* 在保持長寬比的前提下生效；
+   max-width 鎖在 960px，避免被 1050px 的容器撐大。 */
+.reveal .slides section .cell-output-display img,
+.reveal .slides section figure img {
+  width: auto !important;
+  height: auto !important;
+  max-width: min(100%, 960px) !important;
+  max-height: 330px !important;
+}
+
+/* 同一頁有兩張以上繪圖時再縮一級。
+   註：:has() 不可巢狀，兩種情形必須分開寫，
+   否則整條規則會被瀏覽器視為無效而整組丟棄。 */
+/* (a) 同一個 chunk 產生多張圖 */
+.reveal .slides section:has(.cell-output-display ~ .cell-output-display) .cell-output-display img,
+/* (b) 跨 chunk：第二個以後的 cell 內的圖 */
+.reveal .slides section .cell ~ .cell .cell-output-display img {
+  max-height: 210px !important;
+}
+
+/* ---------- 2) 表格：縮字並收緊列高 ---------- */
+.reveal .slides section table { font-size: 0.82em; }
+.reveal .slides section table :is(td, th) {
+  padding-top: 0.12em;
+  padding-bottom: 0.12em;
+  line-height: 1.25;
+}
+.reveal .slides section:has(tr:nth-child(11)) table { font-size: 0.68em; }
+.reveal .slides section:has(tr:nth-child(16)) table { font-size: 0.58em; }
+
+/* ---------- 3) 文字：收緊垂直間距（不改字級） ---------- */
+.reveal .slides section p { margin-top: 0.25em; margin-bottom: 0.25em; }
+.reveal .slides section ul,
+.reveal .slides section ol { margin-top: 0.25em; margin-bottom: 0.25em; }
+.reveal .slides section li { line-height: 1.2; margin-bottom: 0; }
+.reveal .slides section h2 { margin-bottom: 8px; }
+
+/* ---------- 4) 程式碼行高微收 ----------
+   注意：不要對 pre / div.sourceCode 加 margin，實測會反而使頁面高度暴增。 */
+.reveal .slides section pre code { line-height: 1.2; }
+
+/* 行內 code（如 `pairwise.t.test(x, g, ...)`）的長 token 允許斷行，
+   否則會突出右緣。只在原本就會溢出時生效，一般情況無影響。 */
+.reveal .slides section :not(pre) > code { overflow-wrap: anywhere; }
+
+
+/* =========================================================
+   單頁輔助類別
+   用法：在該頁標題後加註，例如
+       ## 運算順序 {.tight}
+       ## qqmath {.tight .fit-b}
+   類別選擇器刻意重複兩次以提高特異度，確保勝過上方的 :has() 規則。
+   ========================================================= */
+
+/* 內文字級由 28px 收到 24px（標題不變） */
+.reveal .slides section.tight.tight { font-size: 0.602em !important; }
+
+/* 繪圖高度上限，由鬆到緊 */
+.reveal .slides section[class*="fit-"] .cell-output-display img {
+  width: auto !important;
+  height: auto !important;
+  max-width: min(100%, 960px) !important;
+}
+/* 長程式碼行改為換行，避免被右緣切掉。
+   只在需要的頁面加註 {.wrap}——全域開啟會使頁面高度暴增。 */
+.reveal .slides section.wrap pre code,
+.reveal .slides section.wrap pre.sourceCode code {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+}
+
+.reveal .slides section.fit-a.fit-a .cell-output-display img { max-height: 200px !important; }
+.reveal .slides section.fit-b.fit-b .cell-output-display img { max-height: 160px !important; }
+.reveal .slides section.fit-c.fit-c .cell-output-display img { max-height: 125px !important; }
+.reveal .slides section.fit-d.fit-d .cell-output-display img { max-height: 100px !important; }
+.reveal .slides section.fit-e.fit-e .cell-output-display img { max-height: 78px !important; }

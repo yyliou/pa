@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -138,7 +138,7 @@ bartlett.test(yards~outside, data=field.goals.inout)
 
 兩個 p 值都約 0.03：室內外的變異數差異*顯著*——平均沒差，散布有差。
 
-## ANOVA：比較多組平均
+## ANOVA：比較多組平均 {.tight}
 
 **變異數分析**比較多組的平均（名字來自方法、不是結果！）。快速工具是 `aov(formula, data, projections=, qr=, contrasts=)`。2006 年美國死亡年齡按死因（`mort06.smpl`，作者從 CDC 檔案重編碼）：
 
@@ -166,7 +166,7 @@ anova(mort06.smpl.lm)
 - 變異數不等？`oneway.test(formula, data, var.equal=FALSE)`——Welch 思想的推廣。
 - `aov` 的其他配件：`proj`（投影）、`TukeyHSD`（成對水準差的信賴區間）、`se.contrast`（對比的標準誤）。
 
-## 成對 t 檢定
+## 成對 t 檢定 {.wrap .tight}
 
 想知道*哪些*組不同、不只*有沒有*不同：`pairwise.t.test(x, g, p.adjust.method=, pool.sd=, paired=, alternative=)` 跑所有配對並校正多重檢定（預設 Holm 法）：
 
@@ -202,7 +202,7 @@ ks.test(jitter(subset(SPECint2006, Num.Chips==1&Num.Cores==2)$Baseline),
 
 「有同值」的警告本身就是線索——真常態的值幾乎不會撞值。（第二個檢定加 `jitter` 把警告壓掉。）基準與最佳化成績：不太可能來自同一分布（p = 0.012）。
 
-## 相關檢定：cor.test
+## 相關檢定：cor.test {.tight}
 
 第十六章的 `cor` 給數字；`cor.test(x, y, alternative=, method=, exact=, conf.level=)`（或公式形式）給**顯著性**：
 
@@ -237,7 +237,7 @@ wilcox.test(yards~outside, data=good)
 
 對照 t 檢定的結果：E 對 D 在這裡*差一點點*不顯著（p = 0.0505）。有同值時改用常態近似（所以有警告）。
 
-## kruskal.test 與 fligner.test
+## kruskal.test 與 fligner.test {.wrap .tight}
 
 - **Kruskal-Wallis 等級和檢定**——無母數版 ANOVA：`kruskal.test(formula, data)`；
 - **Fligner-Killeen（中位數）檢定**——無母數的變異數比較：`fligner.test(formula, data)`。
@@ -267,7 +267,7 @@ prop.test(field.goals.table.t)
 
 p = 0.31：Both／In／Out 三組成功率無顯著差異。
 
-## binom.test：白努利試驗
+## binom.test：白努利試驗 {.wrap .tight}
 
 一串只有兩種結果的相同試驗（丟硬幣）服從**二項**分布。`binom.test(x, n, p=0.5, alternative=, conf.level=)` 檢驗觀測到的成功次數。David Ortiz 2008 年打擊率 .264（416 打數 110 安）——若他「真實」是 .300 打者，打出 .264 以下的機率多大？
 
@@ -277,7 +277,7 @@ binom.test(x=110, n=416, p=0.3, alternative="less")
 
 p = 0.062：約 6%。注意：這個 p 值是「至少偏到這麼遠（往指定方向）」的機率——`alternative` 要讀仔細。
 
-## fisher.test：精確的獨立性檢定
+## fisher.test：精確的獨立性檢定 {.tight}
 
 列聯表的假設是兩變數**獨立**。小表用 **Fisher 精確檢定**最好。引數：`x`（矩陣或因子）、`y`（`x` 為因子時的因子）、`workspace`、`hybrid`（>2×2 時用近似）、`or`（假設的勝算比）、`alternative`、`conf.int`／`conf.level`、`simulate.p.value`／`B`（蒙地卡羅）。2006 年 7 月的生產方式×性別：
 

@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -331,7 +331,7 @@ ts(data = NA, start = 1, end = numeric(0), frequency = 1,
 ts(1:8, start=c(2008, 2), frequency=4)
 ```
 
-## 真實的時間序列：火雞價格
+## 真實的時間序列：火雞價格 {.tight}
 
 美國農業部追蹤肉品零售價（涵蓋約 20% 市場的超市，按月與地區平均）。書中把火雞月價格包成 `turkey.price.ts`：
 

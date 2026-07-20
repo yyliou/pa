@@ -6,11 +6,11 @@
 <script src="ch18-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch18-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch18-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch18-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch18-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch18-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch18-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch18-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch18-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch18-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="假設受審" class="title-slide slide level1 center">
@@ -395,7 +395,7 @@ Bartlett's K-squared = 4.5808, df = 1, p-value = 0.03233</code></pre>
 </div>
 <p>兩個 p 值都約 0.03：室內外的變異數差異<em>顯著</em>——平均沒差，散布有差。</p>
 </section>
-<section id="anova比較多組平均" class="slide level2">
+<section id="anova比較多組平均" class="slide level2 tight">
 <h2>ANOVA：比較多組平均</h2>
 <p><strong>變異數分析</strong>比較多組的平均（名字來自方法、不是結果！）。快速工具是 <code>aov(formula, data, projections=, qr=, contrasts=)</code>。2006 年美國死亡年齡按死因（<code>mort06.smpl</code>，作者從 CDC 檔案重編碼）：</p>
 <div class="cell" data-layout-align="center">
@@ -455,7 +455,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <li><code>aov</code> 的其他配件：<code>proj</code>（投影）、<code>TukeyHSD</code>（成對水準差的信賴區間）、<code>se.contrast</code>（對比的標準誤）。</li>
 </ul>
 </section>
-<section id="成對-t-檢定" class="slide level2">
+<section id="成對-t-檢定" class="slide level2 wrap tight">
 <h2>成對 t 檢定</h2>
 <p>想知道<em>哪些</em>組不同、不只<em>有沒有</em>不同：<code>pairwise.t.test(x, g, p.adjust.method=, pool.sd=, paired=, alternative=)</code> 跑所有配對並校正多重檢定（預設 Holm 法）：</p>
 <div class="cell" data-layout-align="center">
@@ -528,7 +528,7 @@ alternative hypothesis: two-sided</code></pre>
 </div>
 <p>「有同值」的警告本身就是線索——真常態的值幾乎不會撞值。（第二個檢定加 <code>jitter</code> 把警告壓掉。）基準與最佳化成績：不太可能來自同一分布（p = 0.012）。</p>
 </section>
-<section id="相關檢定cor.test" class="slide level2">
+<section id="相關檢定cor.test" class="slide level2 tight">
 <h2>相關檢定：cor.test</h2>
 <p>第十六章的 <code>cor</code> 給數字；<code>cor.test(x, y, alternative=, method=, exact=, conf.level=)</code>（或公式形式）給<strong>顯著性</strong>：</p>
 <div class="cell" data-layout-align="center">
@@ -595,7 +595,7 @@ alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <p>對照 t 檢定的結果：E 對 D 在這裡<em>差一點點</em>不顯著（p = 0.0505）。有同值時改用常態近似（所以有警告）。</p>
 </section>
-<section id="kruskal.test-與-fligner.test" class="slide level2">
+<section id="kruskal.test-與-fligner.test" class="slide level2 wrap tight">
 <h2>kruskal.test 與 fligner.test</h2>
 <ul>
 <li><strong>Kruskal-Wallis 等級和檢定</strong>——無母數版 ANOVA：<code>kruskal.test(formula, data)</code>；</li>
@@ -660,7 +660,7 @@ sample estimates:
 </div>
 <p>p = 0.31：Both／In／Out 三組成功率無顯著差異。</p>
 </section>
-<section id="binom.test白努利試驗" class="slide level2">
+<section id="binom.test白努利試驗" class="slide level2 wrap tight">
 <h2>binom.test：白努利試驗</h2>
 <p>一串只有兩種結果的相同試驗（丟硬幣）服從<strong>二項</strong>分布。<code>binom.test(x, n, p=0.5, alternative=, conf.level=)</code> 檢驗觀測到的成功次數。David Ortiz 2008 年打擊率 .264（416 打數 110 安）——若他「真實」是 .300 打者，打出 .264 以下的機率多大？</p>
 <div class="cell" data-layout-align="center">
@@ -681,7 +681,7 @@ probability of success
 </div>
 <p>p = 0.062：約 6%。注意：這個 p 值是「至少偏到這麼遠（往指定方向）」的機率——<code>alternative</code> 要讀仔細。</p>
 </section>
-<section id="fisher.test精確的獨立性檢定" class="slide level2">
+<section id="fisher.test精確的獨立性檢定" class="slide level2 tight">
 <h2>fisher.test：精確的獨立性檢定</h2>
 <p>列聯表的假設是兩變數<strong>獨立</strong>。小表用 <strong>Fisher 精確檢定</strong>最好。引數：<code>x</code>（矩陣或因子）、<code>y</code>（<code>x</code> 為因子時的因子）、<code>workspace</code>、<code>hybrid</code>（&gt;2×2 時用近似）、<code>or</code>（假設的勝算比）、<code>alternative</code>、<code>conf.int</code>／<code>conf.level</code>、<code>simulate.p.value</code>／<code>B</code>（蒙地卡羅）。2006 年 7 月的生產方式×性別：</p>
 <div class="cell" data-layout-align="center">

@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -149,7 +149,7 @@ cov(births2006.cln$WTGAIN, births2006.cln$DBWT)
 
 # 主成分分析
 
-## prcomp 與 princomp
+## prcomp 與 princomp {.tight}
 
 **PCA** 把（可能相關的）變數改寫成互不相關的成分。兩個實作：`prcomp`（建議使用；公式法 `prcomp(~..., data=, subset=, na.action=)`，預設法有 `retx`、`center=TRUE`、`scale.`、`tol`）與 S-PLUS 相容的 `princomp`（對相關／共變異矩陣做特徵分解）——書中示範的是後者。
 
@@ -169,7 +169,7 @@ summary(batting.pca)
 
 兩個成分已扛起約 78% 的變異；四個約 92%。
 
-## loadings、碎石圖、雙標圖
+## loadings、碎石圖、雙標圖 {.tight .fit-d}
 
 `loadings` 顯示各變數對各成分的貢獻：
 
@@ -221,7 +221,7 @@ boot(data, statistic, R, sim="ordinary", stype="i",
 
 重點引數：`data`；`statistic`——一個*（資料, 選擇）的函式*，第二個引數的意義由 `stype` 決定（`"i"` 索引、`"f"` 次數、`"w"` 權重）；`R`——重抽次數；`sim`——`"ordinary"`、`"parametric"`、`"balanced"`、`"permutation"`、`"antithetic"`；多樣本問題用 `strata`；參數化模擬用 `ran.gen`／`mle`；`simple=TRUE` 以時間換記憶體。
 
-## 範例：中位數有多偏？
+## 範例：中位數有多偏？ {.tight}
 
 媒體報導房價*中位數*。對 2008 年 6 月舊金山成交價拔靴：
 

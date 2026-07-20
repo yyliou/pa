@@ -6,11 +6,11 @@
 <script src="ch7_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch7_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch7_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch7_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch7_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch7_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch7_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch7_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch7_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch7_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="the-building-blocks" class="title-slide slide level1 center">
@@ -327,7 +327,7 @@ Yu-You Liou (NTU)
 </tbody>
 </table>
 </section>
-<section id="primitive-types-3-special-and-language" class="slide level2">
+<section id="primitive-types-3-special-and-language" class="slide level2 tight">
 <h2>Primitive Types (3): Special and Language</h2>
 <table class="caption-top">
 <colgroup>
@@ -662,7 +662,7 @@ Levels: blue brown green</code></pre>
 </div>
 </div>
 </section>
-<section id="data-frames" class="slide level2">
+<section id="data-frames" class="slide level2 tight">
 <h2>Data Frames</h2>
 <p>A <strong>data frame</strong> represents a table: scientific observations with several measurements each, or a database table of rows and typed columns. Each column (“variable”) may have a different type, but all must have the same length:</p>
 <div class="cell" data-layout-align="center">
@@ -779,7 +779,7 @@ Levels: blue brown green</code></pre>
 </table>
 <p>Some functions add their own vocabulary (e.g., <code>s()</code> for smoothing splines in <code>gam</code>). Formulas return in Chapters 14 and 20.</p>
 </section>
-<section id="time-series" class="slide level2">
+<section id="time-series" class="slide level2 tight">
 <h2>Time Series</h2>
 <p>Many problems track a variable <strong>over time</strong>; class <code>ts</code> represents this, feeding regression functions (<code>ar</code>, <code>arima</code>) and specialized plot methods.</p>
 <div class="cell" data-layout-align="center">
@@ -839,7 +839,7 @@ Levels: blue brown green</code></pre>
 </div>
 </div>
 </section>
-<section id="a-real-time-series-turkey-prices" class="slide level2">
+<section id="a-real-time-series-turkey-prices" class="slide level2 tight">
 <h2>A Real Time Series: Turkey Prices</h2>
 <p>The USDA tracks retail meat prices (supermarkets covering ~20% of the US market, averaged by month). The book packages monthly turkey prices as <code>turkey.price.ts</code>:</p>
 <div class="cell" data-layout-align="center">
@@ -902,7 +902,7 @@ Levels: blue brown green</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href=""></a>today <span class="ot">&lt;-</span> <span class="fu">Sys.Date</span>()</span>
 <span id="cb74-2"><a href=""></a>today <span class="sc">-</span> date.I.started.writing</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time difference of 6324 days</code></pre>
+<pre><code>Time difference of 6366 days</code></pre>
 </div>
 </div>
 </section>

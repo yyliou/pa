@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -113,7 +113,7 @@ table(km$cluster, iris$Species)   # clusters vs. true species
 km$centers[, 1:2]
 ```
 
-## Cluster Quality and Hierarchical Clustering
+## Cluster Quality and Hierarchical Clustering {.tight}
 
 - **`cluster::silhouette`** measures how well each point fits its cluster (−1 to 1); the average silhouette width helps **choose `k`**.
 - **Hierarchical clustering** needs no `k` up front — `hclust(dist_object, method=)` builds a tree (dendrogram), merging closest clusters step by step; `cluster::agnes` (agglomerative) and `diana` (divisive) are richer alternatives.

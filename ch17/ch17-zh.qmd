@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -121,7 +121,7 @@ hist(rnorm(10000), breaks=50)
 | 均勻 | `dunif` `punif` `qunif` `runif` | `min`、`max` |
 | Weibull | `dweibull` `pweibull` `qweibull` `rweibull` | `shape`、`scale` |
 
-## 離散與特殊分布
+## 離散與特殊分布 {.tight}
 
 | 家族 | R 函式 | 家族引數 |
 |---|---|---|

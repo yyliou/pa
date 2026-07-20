@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -52,7 +52,7 @@ Before collecting data, two questions decide an experiment's fate:
 
 R's `power.*` family answers both. The vocabulary: **significance level** = Type I error probability (false positive); **power** = 1 − Type II error probability (1 − false negative). Each function computes whichever parameter you leave as `NULL`.
 
-## A Worked Example: Designing a Drug Trial
+## A Worked Example: Designing a Drug Trial {.tight}
 
 Testing an antidepressant, with depression measured on the HAMD scale (0–48). Assume sd = 8.9 (from FDA materials), significance 0.05, desired power 0.95. With 25 subjects per arm, what group difference would be detectable?
 
@@ -108,7 +108,7 @@ power.prop.test(n = NULL, p1 = NULL, p2 = NULL, sig.level = 0.05,
 
 `p1`/`p2` are the success probabilities in the two groups; the rest as before. Again: four of `n`, `p1`, `p2`, `sig.level`, `power` given, the `NULL` one computed.
 
-## Are Situational Baseball Stats Nonsense?
+## Are Situational Baseball Stats Nonsense? {.tight}
 
 ESPN flashes stats like "3-for-10 with two on and two out." Suppose a batter hits .300 in some situation but .260 otherwise — how many situational at-bats make .300 significant (α = 0.05, power 0.95, one-sided)?
 
@@ -130,7 +130,7 @@ Significance level 0.93, or power 0.07. The book's verdict: most situational sta
 
 # ANOVA Test Design
 
-## power.anova.test
+## power.anova.test {.tight}
 
 For multi-group designs analyzed with ANOVA:
 

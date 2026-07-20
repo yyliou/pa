@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -112,7 +112,7 @@ animals <- c("cow", "chicken", "pig", "tuba")
 
 （一個細微差異：這樣寫結果不會自動印出——但效果完全相同。）
 
-## 為什麼要知道「一切都是函式呼叫」？
+## 為什麼要知道「一切都是函式呼叫」？ {.tight}
 
 實務上你絕不會寫 `` `[<-`(animals, 4, "duck") ``——中括號好讀太多了。但知道背後有個函式，意味著你能**檢視它的程式碼**、**查它的說明頁**，或**為自己的類別寫同名方法**（第十章）。更多「漂亮寫法 vs 函式寫法」的對照：
 
@@ -270,7 +270,7 @@ if (x > 1) "orange" else "apple"
 
 直譯器把整行剖析成 if-then-else 結構，先評估**條件** `(x > 1)`——為假——因此*從未評估* `"orange"`；它評估 `else` 之後的運算式並回傳 `"apple"`。在這類特殊情況下，**不是所有引數都會被評估**——這正是 `if` 不能是普通函式的原因。而主控台上運算式回傳的東西，一律交給 `print` 處理。
 
-## .Internal 與 .Primitive
+## .Internal 與 .Primitive {.tight}
 
 有些功能實作在 R 系統內部：
 
@@ -297,7 +297,7 @@ typeof(quote(if (x > 1) "orange" else "apple"))
 quote(if (x > 1) "orange" else "apple")   # 語言物件的 print 方法不太有料……
 ```
 
-## 剖析樹
+## 剖析樹 {.tight}
 
 ……但把語言物件**轉成串列**，結構就現形了——這是運算式的剖析樹：
 
@@ -313,7 +313,7 @@ lapply(as(quote(if (x > 1) "orange" else "apple"), "list"), typeof)
 
 觀察：`else` 關鍵字在剖析中消失了；第一個元素是指向 `if` 函式的**符號**——所以連特殊語法都化成*函式名在前、引數在後*，跟任何呼叫一模一樣。常數的話，串列只有一項：`as.list(quote(1))`。
 
-## 語法糖現形，以及 deparse
+## 語法糖現形，以及 deparse {.tight}
 
 中括號查值 `x[2]` 和它的函式雙胞胎，剖析出*完全相同*的樹：
 

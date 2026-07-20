@@ -6,11 +6,11 @@
 <script src="ch19-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch19-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch19-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch19-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch19-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch19-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch19-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch19-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch19-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch19-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="設計實驗" class="title-slide slide level1 center">
@@ -227,7 +227,7 @@
 </ul>
 <p>R 的 <code>power.*</code> 家族兩者都能回答。詞彙：<strong>顯著水準</strong> ＝ 型一錯誤機率（偽陽性）；<strong>檢定力（power）</strong> ＝ 1 − 型二錯誤機率（1 − 偽陰性）。每個函式都會計算你留成 <code>NULL</code> 的那個參數。</p>
 </section>
-<section id="實作範例設計藥物試驗" class="slide level2">
+<section id="實作範例設計藥物試驗" class="slide level2 tight">
 <h2>實作範例：設計藥物試驗</h2>
 <p>測試抗憂鬱藥，以 HAMD 量表（0–48）度量憂鬱程度。假設標準差 8.9（出自 FDA 資料）、顯著水準 0.05、目標檢定力 0.95。每組 25 名受試者時，偵測得到多大的組間差異？</p>
 <div class="cell" data-layout-align="center">
@@ -339,7 +339,7 @@ NOTE: n is number in *each* group</code></pre>
 </div>
 <p><code>p1</code>／<code>p2</code> 是兩組的成功機率；其餘同前。一樣：<code>n</code>、<code>p1</code>、<code>p2</code>、<code>sig.level</code>、<code>power</code> 給四個、算 <code>NULL</code> 的那個。</p>
 </section>
-<section id="棒球的情境數據是不是鬼扯" class="slide level2">
+<section id="棒球的情境數據是不是鬼扯" class="slide level2 tight">
 <h2>棒球的情境數據是不是鬼扯？</h2>
 <p>ESPN 愛閃「兩出局二壘有人時 10 打數 3 安打」這種數據。假設某打者在某情境打 .300、其他情境打 .260——要多少情境打數才能讓 .300 顯著（α ＝ 0.05、檢定力 0.95、單尾）？</p>
 <div class="cell" data-layout-align="center">
@@ -379,7 +379,7 @@ NOTE: n is number in *each* group</code></pre>
 <h1>ANOVA 檢定設計</h1>
 
 </section>
-<section id="power.anova.test" class="slide level2">
+<section id="power.anova.test" class="slide level2 tight">
 <h2>power.anova.test</h2>
 <p>供以 ANOVA 分析的多組設計使用：</p>
 <div class="cell" data-layout-align="center">

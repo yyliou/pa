@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -67,7 +67,7 @@ for (d in c("tires.sus", "field.goals", "SPECint2006",
 
 # Continuous Data: Normal-Theory Tests
 
-## t.test: One Sample Against a Hypothesized Mean
+## t.test: One Sample Against a Hypothesized Mean {.tight}
 
 `t.test(x, y=NULL, alternative=c("two.sided","less","greater"), mu=0, paired=FALSE, var.equal=FALSE, conf.level=0.95)` — `y=NULL` compares one vector against `mu`; `var.equal` chooses pooled variance vs. the Welch method. Suppose type-H tires "should" last 9 hours:
 
@@ -125,7 +125,7 @@ t.test(subset(SPECint2006, Num.Chips==1 & Num.Cores==2)$Baseline,
 
 Resoundingly significant — no shock: tuning helps, and submitting optimized results is voluntary.
 
-## Comparing Variances: var.test and bartlett.test
+## Comparing Variances: var.test and bartlett.test {.tight}
 
 - **`var.test(x, y, ratio=1, alternative=, conf.level=)`** (or formula form) runs an **F-test** on two normal-population variances.
 - **`bartlett.test(x, g)`** (or formula) tests homogeneity of variance across groups.
@@ -138,7 +138,7 @@ bartlett.test(yards~outside, data=field.goals.inout)
 
 Both p-values ≈ 0.03: the indoor/outdoor variance difference *is* significant — the means weren't, the spreads are.
 
-## ANOVA: Comparing Many Means
+## ANOVA: Comparing Many Means {.tight}
 
 **Analysis of variance** compares means across multiple groups (named for the method, not the result!). The quick tool is `aov(formula, data, projections=, qr=, contrasts=)`. Age at death by cause, US 2006 (`mort06.smpl`, recoded by the author from CDC files):
 
@@ -202,7 +202,7 @@ ks.test(jitter(subset(SPECint2006, Num.Chips==1&Num.Cores==2)$Baseline),
 
 The ties warning is itself informative — true normal values almost never tie. (We `jitter` the second test to silence it.) Baseline and optimized results: unlikely to share a distribution (p = 0.012).
 
-## Correlation Tests: cor.test
+## Correlation Tests: cor.test {.tight}
 
 Chapter 16's `cor` gives a number; `cor.test(x, y, alternative=, method=, exact=, conf.level=)` (or formula form) gives **significance**:
 
@@ -251,7 +251,7 @@ fligner.test(age~Cause, data=mort06.smpl)
 
 # Discrete Data
 
-## prop.test: Comparing Proportions
+## prop.test: Comparing Proportions {.tight}
 
 `prop.test(x, n, p=NULL, alternative=, conf.level=, correct=)` tests whether success proportions differ across groups (or equal given values). Is field-goal *success* equal indoors and out? Build a successes/failures table (dropping the 8 aborted and 24 blocked kicks), transpose, test:
 
@@ -277,7 +277,7 @@ binom.test(x=110, n=416, p=0.3, alternative="less")
 
 p = 0.062: about a 6% chance. Notable: this p-value is the probability of being *at least as far* in the stated direction — read `alternative` carefully.
 
-## fisher.test: Exact Independence Testing
+## fisher.test: Exact Independence Testing {.tight}
 
 For contingency tables, the hypothesis is **independence** of the two variables. For small tables, **Fisher's exact test** is best. Arguments: `x` (matrix or factor), `y` (factor when `x` is), `workspace`, `hybrid` (approximate for >2×2), `or` (hypothesized odds ratio), `alternative`, `conf.int`/`conf.level`, `simulate.p.value`/`B` (Monte Carlo). Delivery method × sex, July 2006:
 
@@ -311,7 +311,7 @@ chisq.test(method.and.sex.twins)
 chisq.test(twins.2006$DMETH_REC, twins.2006$SEX)$p.value   # same, from factors
 ```
 
-## chisq.test: Goodness of Fit, Higher Dimensions
+## chisq.test: Goodness of Fit, Higher Dimensions {.tight}
 
 Births by weekday — could the weekend deficit be chance, if every day were equally likely (the default `p`)?
 

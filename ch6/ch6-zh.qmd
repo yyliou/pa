@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -57,7 +57,7 @@ knitr::opts_chunk$set(fig.align = "center")
 
 # 常數
 
-## 數值向量
+## 數值向量 {.tight}
 
 數字照字面解讀——加上 `0x` 前綴就是十六進位：
 
@@ -203,7 +203,7 @@ x[3]
 max(1, 2)
 ```
 
-## 運算順序
+## 運算順序 {.tight}
 
 跟中學數學一樣（`1 + 2 × 5` 先乘後加），R 以固定的**優先序**規則消除歧義。由高到低大致是：函式呼叫與分組；索引與查值；算術；比較；公式；指派；求助。
 
@@ -401,7 +401,7 @@ i                                        # 2. 迴圈變數會洩漏到呼叫環�
 
 跟條件式一樣，`repeat`、`while`、`for` 的型別都是 **special**——主體不一定會被評估。
 
-## 迴圈的擴充：iterators 與 foreach
+## 迴圈的擴充：iterators 與 foreach {.tight}
 
 ::: {.callout-note}
 想念 Java 式的 iterator 或 foreach？CRAN 的外掛套件兩者都有——而且讓程式更容易平行化。
@@ -464,7 +464,7 @@ l[1:3]
 l[-7:-1]
 ```
 
-## 矩陣的整數索引
+## 矩陣的整數索引 {.tight}
 
 多維結構每個維度給一個索引——省略某維度就是整維全取：
 
@@ -523,7 +523,7 @@ v[c(TRUE, FALSE, FALSE)]   # 回收的遮罩
 l[(l > 7)]
 ```
 
-## 以名稱索引
+## 以名稱索引 {.tight}
 
 串列元素可以命名；用 `$` 索引，或在單中括號裡放名稱向量：
 

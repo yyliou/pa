@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -107,7 +107,7 @@ turkey.forecast$pred
 ts.plot(turkey.price.ts, turkey.forecast$pred, col=c("black","blue"), lty=c(1,2))
 ```
 
-## ARIMA 及其延伸
+## ARIMA 及其延伸 {.tight}
 
 要更豐富的動態，**`arima`** 配適自我迴歸整合移動平均模型——階數 `(p, d, q)` 分別捕捉 AR 項、差分、MA 項；加上季節項即延伸為 **SARIMA**：
 

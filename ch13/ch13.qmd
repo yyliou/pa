@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -173,7 +173,7 @@ barplot(doctorates.m[1, ])
 
 Default behavior: y-axis drawn, no x-axis line, bars named from column names.
 
-## Grouped and Stacked Bars
+## Grouped and Stacked Bars {.tight .fit-a}
 
 Side-by-side horizontal bars with a legend; then stacked columns (transpose so columns = years, widen `ylim` to fit the legend):
 
@@ -295,7 +295,7 @@ Contours are commonly *added to* an image plot (`add=TRUE`).
 
 # Plotting Distributions
 
-## Histograms
+## Histograms {.tight .fit-a}
 
 Plate appearances (PA = AB+BB+HBP+SF+SH) per batter, 2008:
 

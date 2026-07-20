@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -256,7 +256,7 @@ is(john.doe, "TimeSeries")
 
 # S4 in Depth
 
-## setClass: the Full Signature
+## setClass: the Full Signature {.tight}
 
 ```{r,eval=FALSE,echo=TRUE}
 setClass(Class, representation, prototype, contains=character(),
@@ -361,7 +361,7 @@ The six vector classes all extend the virtual class `vector`.
 
 # Old-School OOP: S3
 
-## S3 Classes Are Just Attributes
+## S3 Classes Are Just Attributes {.tight}
 
 An S3 object is a primitive object wearing extra attributes — one of them named `class`. No formal definition exists; you can change the attributes by hand. (S3 resembles prototype-based languages like JavaScript.) Dissecting the built-in `ts` class:
 

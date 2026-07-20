@@ -6,11 +6,11 @@
 <script src="ch15-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch15-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch15-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch15-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch15-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch15-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch15-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch15-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch15-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch15-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="圖形文法" class="title-slide slide level1 center">
@@ -246,7 +246,7 @@ position_identity </code></pre>
 </div>
 <p>summary 把圖表解剖得一清二楚：資料、<strong>映射</strong>（x ＝ a、y ＝ b）、分面，以及圖層（<code>geom_point</code> ＋ <code>stat_identity</code> ＋ identity 位置）。</p>
 </section>
-<section id="分面與顏色" class="slide level2">
+<section id="分面與顏色" class="slide level2 tight fit-d">
 <h2>分面與顏色</h2>
 <p>面板（lattice 的條件）在這裡叫<strong>分面（facet）</strong>，以公式指定；按組上色則只是另一種映射：</p>
 <div class="cell" data-layout-align="center">
@@ -277,7 +277,7 @@ position_identity </code></pre>
 </div>
 <p>（Hadley 偏好的第一種寫法：<code>qplot(x=a, y=b, data=d) + facet_wrap(~c)</code>。）</p>
 </section>
-<section id="單變量直方圖與密度圖" class="slide level2">
+<section id="單變量直方圖與密度圖" class="slide level2 tight fit-a">
 <h2>單變量：直方圖與密度圖</h2>
 <p>只給 <code>x</code> 時，<code>qplot</code> 預設畫直方圖；想換<strong>geom</strong> 就點名：</p>
 <div class="cell" data-layout-align="center">
@@ -322,7 +322,7 @@ position_identity </code></pre>
 <h1>較複雜的範例：Medicare 資料</h1>
 
 </section>
-<section id="資料" class="slide level2">
+<section id="資料" class="slide level2 wrap">
 <h2>資料</h2>
 <p>真實又複雜的資料：美國 <strong>Medicare</strong> 的費用與療效，打包成三份——<code>outcome.of.care.measures.national</code>（心臟病發、心衰竭、肺炎的全國死亡率／再入院率）、<code>medicare.payments</code>（各醫院 × 70 種病症的平均給付；140,722 筆）、<code>medicare.payments.by.state</code>：</p>
 <div class="cell" data-layout-align="center">

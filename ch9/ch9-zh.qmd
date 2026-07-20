@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -176,7 +176,7 @@ w
 
 # 函式的性質
 
-## args 與 formals
+## args 與 formals {.tight}
 
 想看函式接受哪些引數，`args` 回傳一個主體為 `NULL` 的函式物件：
 

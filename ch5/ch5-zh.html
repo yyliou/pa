@@ -6,11 +6,11 @@
 <script src="ch5-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch5-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch5-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch5-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch5-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch5-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch5-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch5-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch5-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch5-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="r-的思考方式" class="title-slide slide level1 center">
@@ -323,7 +323,7 @@
 </div>
 <p>（一個細微差異：這樣寫結果不會自動印出——但效果完全相同。）</p>
 </section>
-<section id="為什麼要知道一切都是函式呼叫" class="slide level2">
+<section id="為什麼要知道一切都是函式呼叫" class="slide level2 tight">
 <h2>為什麼要知道「一切都是函式呼叫」？</h2>
 <p>實務上你絕不會寫 <code>`[&lt;-`(animals, 4, "duck")</code>——中括號好讀太多了。但知道背後有個函式，意味著你能<strong>檢視它的程式碼</strong>、<strong>查它的說明頁</strong>，或<strong>為自己的類別寫同名方法</strong>（第十章）。更多「漂亮寫法 vs 函式寫法」的對照：</p>
 <div class="cell" data-layout-align="center">
@@ -578,7 +578,7 @@ i^2</code></pre>
 </div>
 <p>直譯器把整行剖析成 if-then-else 結構，先評估<strong>條件</strong> <code>(x &gt; 1)</code>——為假——因此<em>從未評估</em> <code>"orange"</code>；它評估 <code>else</code> 之後的運算式並回傳 <code>"apple"</code>。在這類特殊情況下，<strong>不是所有引數都會被評估</strong>——這正是 <code>if</code> 不能是普通函式的原因。而主控台上運算式回傳的東西，一律交給 <code>print</code> 處理。</p>
 </section>
-<section id="internal-與-.primitive" class="slide level2">
+<section id="internal-與-.primitive" class="slide level2 tight">
 <h2>.Internal 與 .Primitive</h2>
 <p>有些功能實作在 R 系統內部：</p>
 <ul>
@@ -605,7 +605,7 @@ i^2</code></pre>
     invisible(.External.graphics(C_plotXY, xy, t, pch, lty, col, 
         bg, cex, lwd, ...))
 }
-&lt;bytecode: 0xc801a2200&gt;
+&lt;bytecode: 0x97ef9f428&gt;
 &lt;environment: namespace:graphics&gt;</code></pre>
 </div>
 </div>
@@ -638,7 +638,7 @@ i^2</code></pre>
 </div>
 </div>
 </section>
-<section id="剖析樹" class="slide level2">
+<section id="剖析樹" class="slide level2 tight">
 <h2>剖析樹</h2>
 <p>……但把語言物件<strong>轉成串列</strong>，結構就現形了——這是運算式的剖析樹：</p>
 <div class="cell" data-layout-align="center">
@@ -676,7 +676,7 @@ x &gt; 1
 </div>
 <p>觀察：<code>else</code> 關鍵字在剖析中消失了；第一個元素是指向 <code>if</code> 函式的<strong>符號</strong>——所以連特殊語法都化成<em>函式名在前、引數在後</em>，跟任何呼叫一模一樣。常數的話，串列只有一項：<code>as.list(quote(1))</code>。</p>
 </section>
-<section id="語法糖現形以及-deparse" class="slide level2">
+<section id="語法糖現形以及-deparse" class="slide level2 tight">
 <h2>語法糖現形，以及 deparse</h2>
 <p>中括號查值 <code>x[2]</code> 和它的函式雙胞胎，剖析出<em>完全相同</em>的樹：</p>
 <div class="cell" data-layout-align="center">

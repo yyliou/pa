@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -52,7 +52,7 @@ knitr::opts_chunk$set(fig.align = "center")
 
 R 的 `power.*` 家族兩者都能回答。詞彙：**顯著水準** ＝ 型一錯誤機率（偽陽性）；**檢定力（power）** ＝ 1 − 型二錯誤機率（1 − 偽陰性）。每個函式都會計算你留成 `NULL` 的那個參數。
 
-## 實作範例：設計藥物試驗
+## 實作範例：設計藥物試驗 {.tight}
 
 測試抗憂鬱藥，以 HAMD 量表（0–48）度量憂鬱程度。假設標準差 8.9（出自 FDA 資料）、顯著水準 0.05、目標檢定力 0.95。每組 25 名受試者時，偵測得到多大的組間差異？
 
@@ -108,7 +108,7 @@ power.prop.test(n = NULL, p1 = NULL, p2 = NULL, sig.level = 0.05,
 
 `p1`／`p2` 是兩組的成功機率；其餘同前。一樣：`n`、`p1`、`p2`、`sig.level`、`power` 給四個、算 `NULL` 的那個。
 
-## 棒球的情境數據是不是鬼扯？
+## 棒球的情境數據是不是鬼扯？ {.tight}
 
 ESPN 愛閃「兩出局二壘有人時 10 打數 3 安打」這種數據。假設某打者在某情境打 .300、其他情境打 .260——要多少情境打數才能讓 .300 顯著（α ＝ 0.05、檢定力 0.95、單尾）？
 
@@ -130,7 +130,7 @@ power.prop.test(n=10, p1=.260, p2=.300, power=NULL,
 
 # ANOVA 檢定設計
 
-## power.anova.test
+## power.anova.test {.tight}
 
 供以 ANOVA 分析的多組設計使用：
 

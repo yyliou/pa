@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -112,7 +112,7 @@ animals <- c("cow", "chicken", "pig", "tuba")
 
 (One subtle difference: written this way the result isn't auto-printed — but the effect is the same.)
 
-## Why Care That Everything Is a Function Call?
+## Why Care That Everything Is a Function Call? {.tight}
 
 In practice you would never write `` `[<-`(animals, 4, "duck") `` — bracket notation is far easier to read. But knowing the function is there means you can **inspect its code**, **read its help page**, or **write methods with the same name** for your own classes (Chapter 10). More pretty-vs-functional pairs:
 
@@ -270,7 +270,7 @@ if (x > 1) "orange" else "apple"
 
 The interpreter parses the line as an if-then-else structure, evaluates the **condition** `(x > 1)` first — false — and therefore *never evaluates* `"orange"`; it evaluates the expression after `else` and returns `"apple"`. In special cases like this, **not all arguments are evaluated** — which is why `if` cannot be an ordinary function. And whatever an expression returns at the console gets handed to `print`.
 
-## .Internal and .Primitive
+## .Internal and .Primitive {.tight}
 
 Some functionality lives inside the R system itself:
 
@@ -297,7 +297,7 @@ typeof(quote(if (x > 1) "orange" else "apple"))
 quote(if (x > 1) "orange" else "apple")   # the print method isn't very informative...
 ```
 
-## The Parse Tree
+## The Parse Tree {.tight}
 
 ...but convert the language object **to a list** and the structure appears — this is the expression's parse tree:
 
@@ -313,7 +313,7 @@ lapply(as(quote(if (x > 1) "orange" else "apple"), "list"), typeof)
 
 Observations: the `else` keyword vanishes in parsing; the first element is a **symbol** referring to the `if` function — so even special syntax becomes *function name first, arguments after*, exactly like any call. For constants, the list has a single item: `as.list(quote(1))`.
 
-## Sugar Exposed, and deparse
+## Sugar Exposed, and deparse {.tight}
 
 The bracket lookup `x[2]` and its functional twin parse to the *identical* tree:
 

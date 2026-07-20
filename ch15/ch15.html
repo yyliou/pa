@@ -6,11 +6,11 @@
 <script src="ch15_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch15_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch15_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch15_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch15_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch15_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch15_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch15_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch15_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch15_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="the-grammar-of-graphics" class="title-slide slide level1 center">
@@ -246,7 +246,7 @@ position_identity </code></pre>
 </div>
 <p>The summary lays the plot’s anatomy bare: the data, the <strong>mapping</strong> (x = a, y = b), the faceting, and the layer (<code>geom_point</code> + <code>stat_identity</code> + identity position).</p>
 </section>
-<section id="facets-and-colors" class="slide level2">
+<section id="facets-and-colors" class="slide level2 tight fit-d">
 <h2>Facets and Colors</h2>
 <p>Panels (lattice’s conditioning) are <strong>facets</strong>, specified by formula; group-by-color is just another mapping:</p>
 <div class="cell" data-layout-align="center">
@@ -277,7 +277,7 @@ position_identity </code></pre>
 </div>
 <p>(Hadley’s preferred spelling of the first: <code>qplot(x=a, y=b, data=d) + facet_wrap(~c)</code>.)</p>
 </section>
-<section id="one-variable-histogram-and-density" class="slide level2">
+<section id="one-variable-histogram-and-density" class="slide level2 tight fit-a">
 <h2>One Variable: Histogram and Density</h2>
 <p>With only <code>x</code> supplied, <code>qplot</code> defaults to a histogram; ask for another <strong>geom</strong> by name:</p>
 <div class="cell" data-layout-align="center">
@@ -322,7 +322,7 @@ position_identity </code></pre>
 <h1>A More Complex Example: Medicare Data</h1>
 
 </section>
-<section id="the-data" class="slide level2">
+<section id="the-data" class="slide level2 wrap">
 <h2>The Data</h2>
 <p>Real, complicated data: US <strong>Medicare</strong> cost and outcome measures, packaged three ways — <code>outcome.of.care.measures.national</code> (national mortality/readmission rates for heart attack, heart failure, pneumonia), <code>medicare.payments</code> (average payment per hospital × 70 conditions; 140,722 records), <code>medicare.payments.by.state</code>:</p>
 <div class="cell" data-layout-align="center">

@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -107,7 +107,7 @@ turkey.forecast$pred
 ts.plot(turkey.price.ts, turkey.forecast$pred, col=c("black","blue"), lty=c(1,2))
 ```
 
-## ARIMA and Beyond
+## ARIMA and Beyond {.tight}
 
 For richer dynamics, **`arima`** fits autoregressive integrated moving-average models — the order `(p, d, q)` capturing AR terms, differencing, and MA terms; seasonal terms extend it to **SARIMA**:
 

@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -149,7 +149,7 @@ Relatives: `cov2cor` converts a covariance matrix to a correlation matrix; `cov.
 
 # Principal Components Analysis
 
-## prcomp and princomp
+## prcomp and princomp {.tight}
 
 **PCA** rewrites possibly-correlated variables as uncorrelated components. Two implementations: `prcomp` (preferred; formula method `prcomp(~..., data=, subset=, na.action=)`, default method with `retx`, `center=TRUE`, `scale.`, `tol`) and the S-PLUS-compatible `princomp` (eigendecomposition of the correlation/covariance matrix) — the book demonstrates the latter.
 
@@ -169,7 +169,7 @@ summary(batting.pca)
 
 Two components already carry ~78% of the variance; four carry ~92%.
 
-## loadings, Scree Plot, Biplot
+## loadings, Scree Plot, Biplot {.tight .fit-e}
 
 `loadings` shows each variable's contribution to each component:
 
@@ -221,7 +221,7 @@ boot(data, statistic, R, sim="ordinary", stype="i",
 
 Key arguments: `data`; `statistic` — a *function of (data, selection)* where `stype` defines the second argument (`"i"` indices, `"f"` frequencies, `"w"` weights); `R` — number of replicates; `sim` — `"ordinary"`, `"parametric"`, `"balanced"`, `"permutation"`, `"antithetic"`; `strata` for multisample problems; `ran.gen`/`mle` for parametric simulation; `simple=TRUE` trades time for memory.
 
-## Example: How Biased Is the Median?
+## Example: How Biased Is the Median? {.tight}
 
 Media report *median* home prices. Bootstrapping June 2008 San Francisco sale prices:
 

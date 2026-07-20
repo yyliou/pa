@@ -6,11 +6,11 @@
 <script src="ch10_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch10_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch10_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch10_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch10_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch10_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch10_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch10_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch10_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch10_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="two-object-systems" class="title-slide slide level1 center">
@@ -482,7 +482,7 @@ object="TimeSeries"
 <h1>S4 in Depth</h1>
 
 </section>
-<section id="setclass-the-full-signature" class="slide level2">
+<section id="setclass-the-full-signature" class="slide level2 tight">
 <h2>setClass: the Full Signature</h2>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="fu">setClass</span>(Class, representation, prototype, <span class="at">contains=</span><span class="fu">character</span>(),</span>
@@ -727,7 +727,7 @@ object="TimeSeries"
 <h1>Old-School OOP: S3</h1>
 
 </section>
-<section id="s3-classes-are-just-attributes" class="slide level2">
+<section id="s3-classes-are-just-attributes" class="slide level2 tight">
 <h2>S3 Classes Are Just Attributes</h2>
 <p>An S3 object is a primitive object wearing extra attributes — one of them named <code>class</code>. No formal definition exists; you can change the attributes by hand. (S3 resembles prototype-based languages like JavaScript.) Dissecting the built-in <code>ts</code> class:</p>
 <div class="cell" data-layout-align="center">
@@ -780,7 +780,7 @@ attr(,"tsp")
 <div class="cell-output cell-output-stdout">
 <pre><code>function (x, y, ...) 
 UseMethod("plot")
-&lt;bytecode: 0x73860fd20&gt;
+&lt;bytecode: 0xc76cfcd28&gt;
 &lt;environment: namespace:base&gt;</code></pre>
 </div>
 </div>

@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -83,7 +83,7 @@ The built-in object types sort into a few categories:
 | `S4` | Objects supporting modern OO: inheritance, methods (Chapter 10) | — |
 | `environment` | The set of symbol–value pairs in a context, plus a pointer to an enclosing environment | `.GlobalEnv`, `new.env()` |
 
-## Primitive Types (3): Special and Language
+## Primitive Types (3): Special and Language {.tight}
 
 | Type | Description | Example |
 |---|---|---|
@@ -248,7 +248,7 @@ class(eye.colors.integer.vector) <- "factor"
 eye.colors.integer.vector
 ```
 
-## Data Frames
+## Data Frames {.tight}
 
 A **data frame** represents a table: scientific observations with several measurements each, or a database table of rows and typed columns. Each column ("variable") may have a different type, but all must have the same length:
 
@@ -306,7 +306,7 @@ This reads "y is a function of x1, x2, and x3." Chapter 3's lattice example, `Am
 
 Some functions add their own vocabulary (e.g., `s()` for smoothing splines in `gam`). Formulas return in Chapters 14 and 20.
 
-## Time Series
+## Time Series {.tight}
 
 Many problems track a variable **over time**; class `ts` represents this, feeding regression functions (`ar`, `arima`) and specialized plot methods.
 
@@ -331,7 +331,7 @@ Eight quarters starting Q2 2008 — the print method knows about quarters and mo
 ts(1:8, start=c(2008, 2), frequency=4)
 ```
 
-## A Real Time Series: Turkey Prices
+## A Real Time Series: Turkey Prices {.tight}
 
 The USDA tracks retail meat prices (supermarkets covering ~20% of the US market, averaged by month). The book packages monthly turkey prices as `turkey.price.ts`:
 

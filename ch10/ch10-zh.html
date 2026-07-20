@@ -6,11 +6,11 @@
 <script src="ch10-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch10-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch10-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch10-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch10-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-07-20">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch10-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch10-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch10-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch10-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch10-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-07-20</p>
 </section>
 <section>
 <section id="兩套物件系統" class="title-slide slide level1 center">
@@ -715,7 +715,7 @@ object="TimeSeries"
 <h1>老派 OOP：S3</h1>
 
 </section>
-<section id="s3-類別不過是屬性" class="slide level2">
+<section id="s3-類別不過是屬性" class="slide level2 tight">
 <h2>S3 類別不過是屬性</h2>
 <p>S3 物件＝基本物件＋額外屬性，其中一個叫 <code>class</code>。沒有正式定義；屬性（包括 class）可以徒手改。（S3 很像 JavaScript 這類原型語言。）解剖內建的 <code>ts</code> 類別：</p>
 <div class="cell" data-layout-align="center">
@@ -768,7 +768,7 @@ attr(,"tsp")
 <div class="cell-output cell-output-stdout">
 <pre><code>function (x, y, ...) 
 UseMethod("plot")
-&lt;bytecode: 0xc2a65bbd0&gt;
+&lt;bytecode: 0x774cf9310&gt;
 &lt;environment: namespace:base&gt;</code></pre>
 </div>
 </div>
@@ -786,7 +786,7 @@ UseMethod("plot")
 </div>
 <img data-src="ch10-zh_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><code>plot(my.TimeSeries)</code> 默默變成 <code>plot.TimeSeries(my.TimeSeries)</code>。</p>
 </section>
-<section id="s4-裡用-s3setoldclass" class="slide level2">
+<section id="s4-裡用-s3setoldclass" class="slide level2 wrap tight">
 <h2>S4 裡用 S3：setOldClass</h2>
 <p>S4 槽位不能直接放 S3 類別——得先用 <code>setOldClass(Classes, prototype, where, test=FALSE, S4Class)</code> 包裝：</p>
 <ul>

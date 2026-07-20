@@ -6,7 +6,7 @@ institute: "Shih Chien University"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -121,7 +121,7 @@ And shared arguments by type: density functions take `x`, `log`; distribution fu
 | Uniform | `dunif` `punif` `qunif` `runif` | `min`, `max` |
 | Weibull | `dweibull` `pweibull` `qweibull` `rweibull` | `shape`, `scale` |
 
-## Discrete and Special Distributions
+## Discrete and Special Distributions {.tight}
 
 | Family | R functions | Family arguments |
 |---|---|---|

@@ -6,7 +6,7 @@ institute: "實踐大學"
 date: "`r Sys.Date()`"
 format: revealjs
 smaller: true
-theme: serif
+theme: [serif, custom.scss]
 footer: "R in a Nutshell: A Desktop Quick Reference"
 logo: "logo.svg"
 editor: source
@@ -173,7 +173,7 @@ barplot(doctorates.m[1, ])
 
 預設行為：畫 y 軸、不畫 x 軸線、以欄名替長條命名。
 
-## 並排與堆疊
+## 並排與堆疊 {.tight .fit-a}
 
 並排的水平長條加圖例；然後是堆疊直條（先轉置使欄＝年份，加寬 `ylim` 容納圖例）：
 
@@ -295,7 +295,7 @@ contour(yosemite, asp=253/562, ylim=c(1, 0))
 
 # 繪製分布
 
-## 直方圖
+## 直方圖 {.tight .fit-a}
 
 2008 年每位打者的打席數（PA ＝ AB+BB+HBP+SF+SH）：
 
@@ -397,7 +397,7 @@ par(mfcol=c(1, 1))
 
 （更輕鬆的替代：`layout`、`split.screen`——或乾脆用 grid／lattice。）
 
-## 文字、線條、顏色、座標軸、點
+## 文字、線條、顏色、座標軸、點 {.tight}
 
 - **文字大小：** `ps`（點數）×`cex`（整體倍率）×`cex.axis`／`cex.lab`／`cex.main`／`cex.sub`。**字體：** `family`；樣式用 `font`（另有 `.axis`、`.lab`、`.main`、`.sub`）。對齊 `adj`、行距 `lheight`、旋轉 `crt`（單字元）／`srt`（整串）。
 - **線條：** 型式 `lty`（0 無、1 實線、2 虛線、3 點線、4 點虛、5 長虛、6 雙虛）、寬度 `lwd`、線端 `lend`、接點 `ljoin`／`lmitre`；外框樣式 `bty`（`"o"`、`"l"`、`"7"`、`"]"`、`"c"`、`"u"`、`"n"`）。
