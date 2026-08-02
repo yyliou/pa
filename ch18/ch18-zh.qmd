@@ -54,7 +54,7 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 **書中的免責聲明在此同樣適用：** 本講義提醒你*何時*、*如何*在 R 裡跑各個檢定——但取代不了一門正規的統計課：公式從哪來、何時可安全使用。
 :::
 
-```{r,echo=TRUE,results='hide'}
+```{r,echo=TRUE,results='hide',cache=TRUE}
 # 本章用到的資料集
 for (d in c("tires.sus", "field.goals", "SPECint2006",
             "mort06.smpl", "births2006.smpl")) {
@@ -213,7 +213,7 @@ cor.test(c(1,2,3,4,5,6,7,8), c(5,3,8,1,7,0,0,3))$p.value
 
 把第十三章「毒物與肺癌」的關係送審：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda",
               temp, mode = "wb")

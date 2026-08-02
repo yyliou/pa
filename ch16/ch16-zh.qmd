@@ -47,7 +47,7 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 
 之後一切的積木。用第十二章的 `dow30` 報價資料（收錄於 `nutshell`）：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda",
               temp, mode = "wb")
@@ -93,7 +93,7 @@ str(dow30)
 
 `stem(x, scale=1, width=80, atom=1e-08)` 直接在主控台畫莖葉圖。2005 年 NFL *失手*射門的距離：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda",
               temp, mode = "wb")
@@ -122,7 +122,7 @@ cor(x, y = NULL, use = "everything",
 
 母親增重與寶寶體重相關嗎？先清理（有效值、單胞胎、妊娠 > 35 週），再看圖——十萬多點得用 `smoothScatter`、不能用 `plot`：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda",
               temp, mode = "wb")
@@ -155,7 +155,7 @@ cov(births2006.cln$WTGAIN, births2006.cln$DBWT)
 
 資料：2000–2008 各隊打擊統計，從 Baseball Databank 以 SQL 取出（縮寫改成易讀的名稱），打包為 `team.batting.00to08`：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda",
               temp, mode = "wb")
@@ -169,13 +169,15 @@ summary(batting.pca)
 
 兩個成分已扛起約 78% 的變異；四個約 92%。
 
-## loadings、碎石圖、雙標圖 {.tight .fit-d}
+## loadings {.tight}
 
 `loadings` 顯示各變數對各成分的貢獻：
 
 ```{r,echo=TRUE}
 loadings(batting.pca)
 ```
+
+## 碎石圖與雙標圖 {.tight}
 
 ```{r,echo=TRUE}
 plot(batting.pca)                                      # 「碎石」圖
@@ -225,7 +227,7 @@ boot(data, statistic, R, sim="ordinary", stype="i",
 
 媒體報導房價*中位數*。對 2008 年 6 月舊金山成交價拔靴：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda",
               temp, mode = "wb")

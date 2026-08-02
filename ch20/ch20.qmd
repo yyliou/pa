@@ -59,7 +59,7 @@ This chapter starts with the simplest model — **linear regression by ordinary 
 
 Which batting metrics predict a team's runs? Team batting 2000–2008 (extracted by SQL in Chapter 16, packaged as `team.batting.00to08`):
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda",
               temp, mode = "wb")

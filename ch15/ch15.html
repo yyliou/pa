@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="the-grammar-of-graphics" class="title-slide slide level1 center">
@@ -246,9 +246,9 @@ position_identity </code></pre>
 </div>
 <p>The summary lays the plot’s anatomy bare: the data, the <strong>mapping</strong> (x = a, y = b), the faceting, and the layer (<code>geom_point</code> + <code>stat_identity</code> + identity position).</p>
 </section>
-<section id="facets-and-colors" class="slide level2 tight fit-d">
-<h2>Facets and Colors</h2>
-<p>Panels (lattice’s conditioning) are <strong>facets</strong>, specified by formula; group-by-color is just another mapping:</p>
+<section id="facets" class="slide level2 tight">
+<h2>Facets</h2>
+<p>Panels (lattice’s conditioning) are <strong>facets</strong>, specified by formula:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">facets=</span><span class="sc">~</span>c)     <span class="co"># panels left-right</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
@@ -266,17 +266,17 @@ position_identity </code></pre>
 </figure>
 </div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">color=</span>c)       <span class="co"># color instead of panels</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-3-3.png" class="quarto-figure quarto-figure-center" width="960"></p>
-</figure>
-</div>
-</div>
 </div>
 <p>(Hadley’s preferred spelling of the first: <code>qplot(x=a, y=b, data=d) + facet_wrap(~c)</code>.)</p>
 </section>
+<section id="colors-instead-of-facets" class="slide level2 tight">
+<h2>Colors Instead of Facets</h2>
+<p>Group-by-color is just another mapping — same data, one panel:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">color=</span>c)       <span class="co"># color instead of panels</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
 <section id="one-variable-histogram-and-density" class="slide level2 tight fit-a">
 <h2>One Variable: Histogram and Density</h2>
 <p>With only <code>x</code> supplied, <code>qplot</code> defaults to a histogram; ask for another <strong>geom</strong> by name:</p>
@@ -287,7 +287,7 @@ position_identity </code></pre>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -295,7 +295,7 @@ position_identity </code></pre>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-4-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch15_files/figure-revealjs/unnamed-chunk-5-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -350,7 +350,7 @@ position_identity </code></pre>
 <span id="cb11-2"><a href=""></a>      <span class="at">geom=</span><span class="st">"bar"</span>, <span class="at">weight=</span>Rate, <span class="at">facets=</span>Measure<span class="sc">~</span>., <span class="at">fill=</span>Measure)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
 <section id="or-dodging" class="slide level2">
 <h2>…or Dodging</h2>
 <p>Drop the facets, set <code>position="dodge"</code> to place bars side by side. The book wrote <code>qplot(..., position="dodge")</code>, but modern ggplot2 has removed <code>qplot</code>’s <code>position</code> argument — position adjustments now belong to the <em>layer</em>, so we write it the full-grammar way:</p>
@@ -360,7 +360,7 @@ position_identity </code></pre>
 <span id="cb12-3"><a href=""></a>  <span class="fu">geom_bar</span>(<span class="at">position=</span><span class="st">"dodge"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Both work — <em>differently</em>: faceting invites comparing conditions within each measure; dodging invites comparing measures within each condition. The display is an argument.</p>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Both work — <em>differently</em>: faceting invites comparing conditions within each measure; dodging invites comparing measures within each condition. The display is an argument.</p>
 </section>
 <section id="payments-vs.-volume" class="slide level2">
 <h2>Payments vs.&nbsp;Volume</h2>
@@ -379,7 +379,7 @@ position_identity </code></pre>
 <span id="cb13-11"><a href=""></a>payment.plot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Unreadable — everything clumps left. (Small counts are censored by HIPAA.)</p>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Unreadable — everything clumps left. (Small counts are censored by HIPAA.)</p>
 </section>
 <section id="fixing-the-plot-by-adding-layers" class="slide level2">
 <h2>Fixing the Plot by Adding Layers</h2>
@@ -392,7 +392,7 @@ position_identity </code></pre>
 <span id="cb14-5"><a href=""></a>payment.plot.scaled</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><code>summary</code> of this object now shows <strong>two</strong> geom/stat/position triples — one per layer — with the alpha aesthetic threaded through.</p>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><code>summary</code> of this object now shows <strong>two</strong> geom/stat/position triples — one per layer — with the alpha aesthetic threaded through.</p>
 </section>
 <section id="reordering-factors-for-dot-plots" class="slide level2">
 <h2>Reordering Factors for Dot Plots</h2>
@@ -411,7 +411,7 @@ position_identity </code></pre>
 <span id="cb15-11"><a href=""></a>      <span class="at">color=</span>Diagnosis.Related.Group)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Top of the list: Northern Mariana Islands, Alaska, Virgin Islands — remote and expensive — then NY, MD, CA: high cost of living <em>and</em> big hospitals. Cheapest: Puerto Rico, American Samoa. Cost and volume are both correlated <strong>with geography</strong>.</p>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>Top of the list: Northern Mariana Islands, Alaska, Virgin Islands — remote and expensive — then NY, MD, CA: high cost of living <em>and</em> big hospitals. Cheapest: Puerto Rico, American Samoa. Cost and volume are both correlated <strong>with geography</strong>.</p>
 </section>
 <section id="a-choropleth-map" class="slide level2">
 <h2>A Choropleth Map</h2>
@@ -433,7 +433,7 @@ position_identity </code></pre>
 <span id="cb16-14"><a href=""></a>  <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">"bottom"</span>, <span class="at">legend.direction=</span><span class="st">"vertical"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>(The book wrote <code>opts(...)</code> — long since replaced by <code>theme()</code>.)</p>
+<img data-src="ch15_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>(The book wrote <code>opts(...)</code> — long since replaced by <code>theme()</code>.)</p>
 </section></section>
 <section>
 <section id="quick-plot-and-the-full-grammar" class="title-slide slide level1 center">

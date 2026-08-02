@@ -7,18 +7,18 @@ institute: "Shih Chien University"
 format:
   revealjs:
     html-math-method: katex
-smaller: true
-theme: serif
-footer: "R in a Nutshell: A Desktop Quick Reference"
+    smaller: true
+    theme: serif
+    footer: "R in a Nutshell: A Desktop Quick Reference"
+    slide-number: true
+    scrollable: false
+    transition: "none"
+    menu:
+      useTextContentForMissingTitles: false
+      hideMissingTitles: true
+      side: 'left'
+      titleSelector: 'h1'
 editor: source
-slide-number: true
-scrollable: false
-transition: "none"
-menu:
-  useTextContentForMissingTitles: false
-  hideMissingTitles: true
-  side: 'left'
-  titleSelector: 'h1'
 ---
 
 ## Question 1

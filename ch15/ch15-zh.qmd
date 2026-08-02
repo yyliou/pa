@@ -66,17 +66,24 @@ summary(first.ggplot2.example)
 
 summary 把圖表解剖得一清二楚：資料、**映射**（x ＝ a、y ＝ b）、分面，以及圖層（`geom_point` ＋ `stat_identity` ＋ identity 位置）。
 
-## 分面與顏色 {.tight .fit-d}
+## 分面 {.tight}
 
-面板（lattice 的條件）在這裡叫**分面（facet）**，以公式指定；按組上色則只是另一種映射：
+面板（lattice 的條件）在這裡叫**分面（facet）**，以公式指定：
 
 ```{r,echo=TRUE}
 qplot(x=a, y=b, data=d, facets=~c)     # 面板左右排
 qplot(x=a, y=b, data=d, facets=c~.)    # 面板上下排——方向說換就換！
-qplot(x=a, y=b, data=d, color=c)       # 用顏色取代面板
 ```
 
 （Hadley 偏好的第一種寫法：`qplot(x=a, y=b, data=d) + facet_wrap(~c)`。）
+
+## 用顏色取代分面 {.tight}
+
+按組上色只是另一種映射——同一份資料、單一面板：
+
+```{r,echo=TRUE}
+qplot(x=a, y=b, data=d, color=c)       # 用顏色取代面板
+```
 
 ## 單變量：直方圖與密度圖 {.tight .fit-a}
 
@@ -111,7 +118,7 @@ qplot(x=f, data=e, geom="density")
 
 真實又複雜的資料：美國 **Medicare** 的費用與療效，打包成三份——`outcome.of.care.measures.national`（心臟病發、心衰竭、肺炎的全國死亡率／再入院率）、`medicare.payments`（各醫院 × 70 種病症的平均給付；140,722 筆）、`medicare.payments.by.state`：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/outcome.of.care.measures.national.rda",
               temp, mode = "wb")
@@ -144,7 +151,7 @@ ggplot(outcome.of.care.measures.national,
 
 問題：收治案量大的醫院，向 Medicare 收的錢是多還是少？限縮到三個心衰竭診斷組，畫給付對案量、按診斷上色：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/medicare.payments.rda",
               temp, mode = "wb")
@@ -178,7 +185,7 @@ payment.plot.scaled
 
 費用隨案量上升——也許是地理因素？看州層級資料，先把 `State` 的水準**按給付重排**（排的是*水準*、不是資料列）再畫點圖：
 
-```{r,echo=TRUE,fig.height=5}
+```{r,echo=TRUE,fig.height=5,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/medicare.payments.by.state.rda",
               temp, mode = "wb")

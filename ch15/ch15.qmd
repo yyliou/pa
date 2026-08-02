@@ -66,17 +66,24 @@ summary(first.ggplot2.example)
 
 The summary lays the plot's anatomy bare: the data, the **mapping** (x = a, y = b), the faceting, and the layer (`geom_point` + `stat_identity` + identity position).
 
-## Facets and Colors {.tight .fit-d}
+## Facets {.tight}
 
-Panels (lattice's conditioning) are **facets**, specified by formula; group-by-color is just another mapping:
+Panels (lattice's conditioning) are **facets**, specified by formula:
 
 ```{r,echo=TRUE}
 qplot(x=a, y=b, data=d, facets=~c)     # panels left-right
 qplot(x=a, y=b, data=d, facets=c~.)    # panels top-bottom — easy to flip!
-qplot(x=a, y=b, data=d, color=c)       # color instead of panels
 ```
 
 (Hadley's preferred spelling of the first: `qplot(x=a, y=b, data=d) + facet_wrap(~c)`.)
+
+## Colors Instead of Facets {.tight}
+
+Group-by-color is just another mapping — same data, one panel:
+
+```{r,echo=TRUE}
+qplot(x=a, y=b, data=d, color=c)       # color instead of panels
+```
 
 ## One Variable: Histogram and Density {.tight .fit-a}
 
@@ -111,7 +118,7 @@ Drawing a chart means doing many things at once; the grammar names each one, and
 
 Real, complicated data: US **Medicare** cost and outcome measures, packaged three ways — `outcome.of.care.measures.national` (national mortality/readmission rates for heart attack, heart failure, pneumonia), `medicare.payments` (average payment per hospital × 70 conditions; 140,722 records), `medicare.payments.by.state`:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/outcome.of.care.measures.national.rda",
               temp, mode = "wb")
@@ -144,7 +151,7 @@ Both work — *differently*: faceting invites comparing conditions within each m
 
 Question: do hospitals treating more cases charge Medicare more or less? Restrict to the three heart-failure diagnosis groups and plot payment vs. case count, colored by diagnosis:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/medicare.payments.rda",
               temp, mode = "wb")
@@ -178,7 +185,7 @@ payment.plot.scaled
 
 Costs rise with volume — geography, perhaps? State-level data, with `State` levels **reordered by payment** (sorting the *levels*, not the rows) before a dot plot:
 
-```{r,echo=TRUE,fig.height=5}
+```{r,echo=TRUE,fig.height=5,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/medicare.payments.by.state.rda",
               temp, mode = "wb")

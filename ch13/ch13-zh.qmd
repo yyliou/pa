@@ -59,7 +59,7 @@ R 繪圖的方式很多；本書聚焦三個最流行的套件：
 
 範例資料：2008 年癌症病例（美國癌症協會）與 2006 年各州毒物排放（EPA），打包成 `toxins.and.cancer`：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda",
               temp, mode = "wb")
@@ -117,7 +117,7 @@ text(air_on_site/Surface_Area, deaths_lung/Population,
 - **`smoothScatter`** 依點的*密度*塗色——點太多疊成一團時的解藥（見第十六章）。
 - **`pairs`** 替每對變數畫散布圖矩陣：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda",
               temp, mode = "wb")
@@ -131,7 +131,7 @@ pairs(batting.2008[batting.2008$AB>100, c("H", "R", "SO", "BB", "HR")])
 
 `plot` 有時間序列方法（`plot.type` 可選 `"multiple"`／`"single"`，另有 `panel`、`nc`、`yax.flip` 與邊界控制……）。第七章的火雞價格：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
               temp, mode = "wb")
@@ -252,7 +252,7 @@ mosaicplot(formula=bats~throws, data=batting.w.names.2008, color=TRUE)
 
 所有 3D 函式都畫一個**矩陣**：列索引＝x、欄索引＝y、格值＝z。書中範例：USGS 的優勝美地谷高程，以 GridFloat 下載（562×253 的 4 位元組浮點流，用 `readBin(..., size=4, endian="little")` 讀入再設 `dim`）；打包為 `yosemite`：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda",
               temp, mode = "wb")

@@ -367,7 +367,7 @@ system.file("extdata", "bb.db", package = "nutshell")
 ::: {.callout-note}
 **課程備註。** `nutshell` 已下架 CRAN，請從 GitHub 鏡像抓同一個檔案、存在本機重複使用：
 
-```{r,eval=FALSE,echo=TRUE}
+```{r,eval=FALSE,echo=TRUE,cache=TRUE}
 download.file(paste0("https://raw.githubusercontent.com/cran/nutshell/",
                      "master/inst/extdata/bb.db"), "bb.db", mode = "wb")
 ```

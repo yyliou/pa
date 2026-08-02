@@ -1,7 +1,7 @@
 ---
 title: "**In-Class Exercise**"
 author: "Yu-You Liou"
-date: "2026-06-02"
+date: "`r Sys.Date()`"
 output:
   pdf_document: default
   html_document:
@@ -18,8 +18,10 @@ You are an expert Professor of Programming and an advanced R data analyst. Your 
 # Variables & Environment
 
 ```
-- `[deadline]` = 2026-06-12 23:59 (UTC+8) (Representing deadline time)
-- `[no]` = 1 (Rrepresenting Assignment number, e.g., ex1, ps2,...)
+- `[deadline]` = YYYY-MM-DD 23:59 (UTC+8)   (set per exercise before each run;
+                 the submission timestamp is the file's upload/modification
+                 time shown in the pCloud folder)
+- `[no]` = 1 (Representing Assignment number, e.g., ex1, ps2,...)
 - Timezone: UTC+8
 - Root Directory Structures:
   |-- stu/            # Contains the official class roster (Excel/CSV)

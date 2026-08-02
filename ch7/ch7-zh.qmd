@@ -335,7 +335,7 @@ ts(1:8, start=c(2008, 2), frequency=4)
 
 美國農業部追蹤肉品零售價（涵蓋約 20% 市場的超市，按月與地區平均）。書中把火雞月價格包成 `turkey.price.ts`：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
               temp, mode = "wb")

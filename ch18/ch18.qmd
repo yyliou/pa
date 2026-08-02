@@ -54,7 +54,7 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 **The book's own disclaimer applies here too:** these slides remind you *when* and *how* to run each test in R — they are no substitute for a proper statistics course on where the formulas come from and when they're safe.
 :::
 
-```{r,echo=TRUE,results='hide'}
+```{r,echo=TRUE,results='hide',cache=TRUE}
 # data sets used throughout this chapter
 for (d in c("tires.sus", "field.goals", "SPECint2006",
             "mort06.smpl", "births2006.smpl")) {
@@ -213,7 +213,7 @@ cor.test(c(1,2,3,4,5,6,7,8), c(5,3,8,1,7,0,0,3))$p.value
 
 The Chapter 13 toxins-and-lung-cancer relationship, tested:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda",
               temp, mode = "wb")

@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="圖形文法" class="title-slide slide level1 center">
@@ -246,9 +246,9 @@ position_identity </code></pre>
 </div>
 <p>summary 把圖表解剖得一清二楚：資料、<strong>映射</strong>（x ＝ a、y ＝ b）、分面，以及圖層（<code>geom_point</code> ＋ <code>stat_identity</code> ＋ identity 位置）。</p>
 </section>
-<section id="分面與顏色" class="slide level2 tight fit-d">
-<h2>分面與顏色</h2>
-<p>面板（lattice 的條件）在這裡叫<strong>分面（facet）</strong>，以公式指定；按組上色則只是另一種映射：</p>
+<section id="分面" class="slide level2 tight">
+<h2>分面</h2>
+<p>面板（lattice 的條件）在這裡叫<strong>分面（facet）</strong>，以公式指定：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">facets=</span><span class="sc">~</span>c)     <span class="co"># 面板左右排</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
@@ -266,17 +266,17 @@ position_identity </code></pre>
 </figure>
 </div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">color=</span>c)       <span class="co"># 用顏色取代面板</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-3-3.png" class="quarto-figure quarto-figure-center" width="960"></p>
-</figure>
-</div>
-</div>
 </div>
 <p>（Hadley 偏好的第一種寫法：<code>qplot(x=a, y=b, data=d) + facet_wrap(~c)</code>。）</p>
 </section>
+<section id="用顏色取代分面" class="slide level2 tight">
+<h2>用顏色取代分面</h2>
+<p>按組上色只是另一種映射——同一份資料、單一面板：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">qplot</span>(<span class="at">x=</span>a, <span class="at">y=</span>b, <span class="at">data=</span>d, <span class="at">color=</span>c)       <span class="co"># 用顏色取代面板</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
 <section id="單變量直方圖與密度圖" class="slide level2 tight fit-a">
 <h2>單變量：直方圖與密度圖</h2>
 <p>只給 <code>x</code> 時，<code>qplot</code> 預設畫直方圖；想換<strong>geom</strong> 就點名：</p>
@@ -287,7 +287,7 @@ position_identity </code></pre>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -295,7 +295,7 @@ position_identity </code></pre>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-4-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-5-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -350,7 +350,7 @@ position_identity </code></pre>
 <span id="cb11-2"><a href=""></a>      <span class="at">geom=</span><span class="st">"bar"</span>, <span class="at">weight=</span>Rate, <span class="at">facets=</span>Measure<span class="sc">~</span>., <span class="at">fill=</span>Measure)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
 <section id="或並列" class="slide level2">
 <h2>……或並列</h2>
 <p>丟掉分面，設 <code>position="dodge"</code> 讓條並肩而立。書中寫的是 <code>qplot(..., position="dodge")</code>，但新版 ggplot2 已移除 <code>qplot</code> 的 <code>position</code> 引數——位置調整如今屬於<em>圖層</em>，所以改用完整文法寫：</p>
@@ -360,7 +360,7 @@ position_identity </code></pre>
 <span id="cb12-3"><a href=""></a>  <span class="fu">geom_bar</span>(<span class="at">position=</span><span class="st">"dodge"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>兩種都有效——但<em>論點不同</em>：分面版引導讀者在每個指標內比較病症；並列版引導在每個病症內比較指標。圖表的呈現就是一種論證。</p>
+<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>兩種都有效——但<em>論點不同</em>：分面版引導讀者在每個指標內比較病症；並列版引導在每個病症內比較指標。圖表的呈現就是一種論證。</p>
 </section>
 <section id="給付-vs.-案量" class="slide level2">
 <h2>給付 vs.&nbsp;案量</h2>
@@ -379,7 +379,7 @@ position_identity </code></pre>
 <span id="cb13-11"><a href=""></a>payment.plot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>沒法讀——全部擠在左邊。（小案量被 HIPAA 法規遮蔽。）</p>
+<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>沒法讀——全部擠在左邊。（小案量被 HIPAA 法規遮蔽。）</p>
 </section>
 <section id="加圖層修圖" class="slide level2">
 <h2>加圖層修圖</h2>
@@ -392,7 +392,7 @@ position_identity </code></pre>
 <span id="cb14-5"><a href=""></a>payment.plot.scaled</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>這個物件的 <code>summary</code> 現在有<strong>兩組</strong> geom/stat/position——一層一組——alpha 美學貫穿其中。</p>
+<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>這個物件的 <code>summary</code> 現在有<strong>兩組</strong> geom/stat/position——一層一組——alpha 美學貫穿其中。</p>
 </section>
 <section id="替點圖重排因子" class="slide level2">
 <h2>替點圖重排因子</h2>
@@ -411,7 +411,7 @@ position_identity </code></pre>
 <span id="cb15-11"><a href=""></a>      <span class="at">color=</span>Diagnosis.Related.Group)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>榜首：北馬里亞納群島、阿拉斯加、維京群島——偏遠又昂貴——接著是紐約、馬里蘭、加州：生活成本高<em>且</em>醫院大。最便宜的：波多黎各、美屬薩摩亞。費用與案量都和<strong>地理</strong>相關。</p>
+<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>榜首：北馬里亞納群島、阿拉斯加、維京群島——偏遠又昂貴——接著是紐約、馬里蘭、加州：生活成本高<em>且</em>醫院大。最便宜的：波多黎各、美屬薩摩亞。費用與案量都和<strong>地理</strong>相關。</p>
 </section>
 <section id="區域著色地圖choropleth" class="slide level2">
 <h2>區域著色地圖（Choropleth）</h2>
@@ -433,7 +433,7 @@ position_identity </code></pre>
 <span id="cb16-14"><a href=""></a>  <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">"bottom"</span>, <span class="at">legend.direction=</span><span class="st">"vertical"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>（書中寫的 <code>opts(...)</code> 早已被 <code>theme()</code> 取代。）</p>
+<img data-src="ch15-zh_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>（書中寫的 <code>opts(...)</code> 早已被 <code>theme()</code> 取代。）</p>
 </section></section>
 <section>
 <section id="quick-plot-與完整文法" class="title-slide slide level1 center">

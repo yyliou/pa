@@ -328,7 +328,7 @@ cut(x, breaks, labels = NULL, include.lowest = FALSE, right = TRUE,
 
 統計各打擊率區間的球員數——書中的 `batting.2008` 資料集，按課程慣例抓取：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda",
               temp, mode = "wb")

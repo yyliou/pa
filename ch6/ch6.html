@@ -6,11 +6,11 @@
 <script src="ch6_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch6_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch6_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch6_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch6_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch6_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch6_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch6_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch6_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch6_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="writing-valid-r" class="title-slide slide level1 center">
@@ -235,7 +235,7 @@ Yu-You Liou (NTU)
 <h1>Constants</h1>
 
 </section>
-<section id="numeric-vectors" class="slide level2">
+<section id="numeric-vectors" class="slide level2 tight">
 <h2>Numeric Vectors</h2>
 <p>Numbers are interpreted literally — and hexadecimal works with the <code>0x</code> prefix:</p>
 <div class="cell" data-layout-align="center">
@@ -462,7 +462,7 @@ Yu-You Liou (NTU)
 </div>
 </div>
 </section>
-<section id="order-of-operations" class="slide level2">
+<section id="order-of-operations" class="slide level2 tight">
 <h2>Order of Operations</h2>
 <p>Just as in school math (<code>1 + 2 × 5</code> multiplies first), R resolves ambiguity with fixed <strong>precedence</strong> rules. From highest to lowest, roughly: function calls and grouping; indexing and lookup; arithmetic; comparison; formulas; assignment; help.</p>
 <table class="caption-top">
@@ -789,7 +789,7 @@ Yu-You Liou (NTU)
 </div>
 <p>Like conditionals, <code>repeat</code>, <code>while</code>, and <code>for</code> have type <strong>special</strong> — their body is not necessarily evaluated.</p>
 </section>
-<section id="looping-extensions-iterators-and-foreach" class="slide level2">
+<section id="looping-extensions-iterators-and-foreach" class="slide level2 tight">
 <h2>Looping Extensions: iterators and foreach</h2>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
@@ -951,7 +951,7 @@ $j
 </div>
 </div>
 </section>
-<section id="integer-indexing-of-matrices" class="slide level2">
+<section id="integer-indexing-of-matrices" class="slide level2 tight">
 <h2>Integer Indexing of Matrices</h2>
 <p>For multidimensional structures, give one index per dimension — or omit one to take everything along it:</p>
 <div class="cell" data-layout-align="center">
@@ -1074,7 +1074,7 @@ $j
 </div>
 </div>
 </section>
-<section id="indexing-by-name" class="slide level2">
+<section id="indexing-by-name" class="slide level2 tight">
 <h2>Indexing by Name</h2>
 <p>List elements may be named; index them with <code>$</code>, or by name vectors in single brackets:</p>
 <div class="cell" data-layout-align="center">
@@ -1137,7 +1137,7 @@ $c
 <h1>R Code Style Standards</h1>
 
 </section>
-<section id="readable-code-is-maintainable-code" class="slide level2">
+<section id="readable-code-is-maintainable-code" class="slide level2 tight">
 <h2>Readable Code Is Maintainable Code</h2>
 <p>Style isn’t syntax, but it decides whether others (and future you) can read your code. The book follows Google’s R Style Guide; the highlights:</p>
 <ul>

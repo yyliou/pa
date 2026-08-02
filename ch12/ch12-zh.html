@@ -6,11 +6,11 @@
 <script src="ch12-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch12-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch12-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch12-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch12-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch12-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch12-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch12-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch12-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch12-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="八成時間花在哪裡" class="title-slide slide level1 center">
@@ -534,7 +534,7 @@
 </div>
 <p>最後一個呼叫的意思：對每組 (i, j)，計算 <code>x[i, j, 1], x[i, j, 2], x[i, j, 3]</code> 的 <code>FUN</code>。</p>
 </section>
-<section id="lapply-與-sapply串列向量資料框" class="slide level2">
+<section id="lapply-與-sapply串列向量資料框" class="slide level2 tight">
 <h2>lapply 與 sapply：串列、向量、資料框</h2>
 <p><code>lapply(X, FUN, ...)</code> 對每個元素套用 <code>FUN</code>、回傳<strong>串列</strong>——資料框就是欄位的串列：</p>
 <div class="cell" data-layout-align="center">
@@ -785,11 +785,11 @@ pants.sizes2 31.00 pants.sizes</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a>batting<span class="fl">.2008</span>[<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(batting<span class="fl">.2008</span>), <span class="dv">5</span>), <span class="dv">9</span><span class="sc">:</span><span class="dv">14</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     playerID yearID stint teamID lgID   G
-659 sizemgr01   2008     1    CLE   AL 157
-341 rowanaa01   2008     1    SFN   NL 152
-826 ramirha01   2008     1    FLO   NL 153
-497 tallebr01   2008     1    TOR   AL  51
-232 macdomi01   2008     1    CHA   AL  16</code></pre>
+153 griffke02   2008     2    CHA   AL  41
+894 napolmi01   2008     1    LAA   AL  78
+947 youngde03   2008     1    MIN   AL 152
+730 bottsja01   2008     1    TEX   AL  15
+814 peraljo01   2008     1    KCA   AL  40</code></pre>
 </div>
 </div>
 <p>更複雜的隨機子集也是同一招——隨機抽三支球隊的全部數據：</p>
@@ -800,7 +800,7 @@ pants.sizes2 31.00 pants.sizes</code></pre>
 <span id="cb59-4"><a href=""></a><span class="fu">summary</span>(batting.<span class="fl">2008.3</span>teams<span class="sc">$</span>teamID)[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>ARI ATL BAL BOS CHA CHN CIN CLE COL DET 
-  0   0   0   0   0   0   0   0   0   0 </code></pre>
+  0   0   0  47   0   0   0  49   0   0 </code></pre>
 </div>
 </div>
 <p>分層、群集、最大熵等進階抽樣方法，見 <code>sampling</code> 套件。</p>

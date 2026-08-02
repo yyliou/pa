@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="trellis-繪圖" class="title-slide slide level1 center">
@@ -246,9 +246,9 @@
 </div>
 </div>
 </section>
-<section id="簡單範例公式條件分組" class="slide level2 tight fit-d">
-<h2>簡單範例：公式、條件、分組</h2>
-<p>lattice 的引數很一致：先放<strong>公式</strong>（用位置傳——它的名字改過！），再放 <code>data</code>。同一份玩具資料三種畫法：</p>
+<section id="簡單範例公式與條件" class="slide level2 tight">
+<h2>簡單範例：公式與條件</h2>
+<p>lattice 的引數很一致：先放<strong>公式</strong>（用位置傳——它的名字改過！），再放 <code>data</code>。同一份玩具資料，先畫原樣、再加條件：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>d <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>), <span class="at">y=</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>), <span class="at">z=</span><span class="fu">c</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>), <span class="at">times=</span><span class="dv">5</span>)))</span>
 <span id="cb1-2"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x, <span class="at">data=</span>d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -267,17 +267,17 @@
 </figure>
 </div>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x, <span class="at">groups=</span>z, <span class="at">data=</span>d)    <span class="co"># 分組：依 z 變色／變符號</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-1-3.png" class="quarto-figure quarto-figure-center" width="960"></p>
-</figure>
-</div>
-</div>
 </div>
 <p><code>y~x|z</code> 唸作「y 對 x，以 z 為條件」。</p>
 </section>
+<section id="簡單範例分組" class="slide level2 tight">
+<h2>簡單範例：分組</h2>
+<p><strong>分組</strong>維持單一面板，改用顏色／符號區分各組——同一份資料的第三種畫法：</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">xyplot</span>(y<span class="sc">~</span>x, <span class="at">groups=</span>z, <span class="at">data=</span>d)    <span class="co"># 分組：依 z 變色／變符號</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+</div>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
 <section id="graphics-對-lattice-字典" class="slide level2">
 <h2>graphics 對 lattice 字典</h2>
 <table class="caption-top">
@@ -364,7 +364,7 @@
 <span id="cb4-5"><a href=""></a>  })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-2-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-3-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section></section>
 <section>
 <section id="單變量-trellis-圖" class="title-slide slide level1 center">
 <h1>單變量 Trellis 圖</h1>
@@ -393,7 +393,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-4-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -408,7 +408,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-5-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -422,7 +422,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-6-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -430,7 +430,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-6-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-7-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -447,7 +447,7 @@
 <span id="cb11-4"><a href=""></a><span class="fu">dotplot</span>(dob.dm.tbl.alt, <span class="at">stack=</span><span class="cn">FALSE</span>, <span class="at">auto.key=</span><span class="cn">TRUE</span>, <span class="at">groups=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-7-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>季節間略有起伏；週間型態整年不變。</p>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>季節間略有起伏；週間型態整年不變。</p>
 </section>
 <section id="dotplot輪胎失效資料" class="slide level2">
 <h2>dotplot：輪胎失效資料</h2>
@@ -461,7 +461,7 @@
 <span id="cb12-6"><a href=""></a>        <span class="at">data=</span>tires.sus)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-8-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>D 型胎在 180 km/h 全數速死；某些 H 型胎撐得很久。（第十八章再會。）</p>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>D 型胎在 180 km/h 全數速死；某些 H 型胎撐得很久。（第十八章再會。）</p>
 </section>
 <section id="histogram" class="slide level2 tight fit-b">
 <h2>histogram</h2>
@@ -471,7 +471,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-9-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -482,7 +482,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-10-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -498,7 +498,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-11-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -510,7 +510,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-12-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-13-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -526,7 +526,7 @@
 <span id="cb17-4"><a href=""></a>          <span class="at">jitter.data=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-13-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-14-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
 <section id="qqmath" class="slide level2 tight fit-b">
 <h2>qqmath</h2>
 <p><code>qqmath</code> 把樣本分位數對理論分布作圖（預設常態 <code>qnorm</code>；另有 <code>f.value</code>、<code>distribution</code>、<code>qtype</code>）。先用真常態數驗證，再看出生資料：</p>
@@ -535,7 +535,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-14-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-15-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -546,7 +546,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-14-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-15-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -563,7 +563,7 @@
 <span id="cb20-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="房價的-qqmath發現對數常態" class="slide level2 tight fit-e">
+<section id="房價的-qqmath發現對數常態" class="slide level2 tight">
 <h2>房價的 qqmath：發現對數常態</h2>
 <p>價格從 10 萬到 950 萬美元——直覺上就不會常態：</p>
 <div class="cell" data-layout-align="center">
@@ -571,7 +571,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-16-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-17-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -579,26 +579,24 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-16-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-17-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>取對數後漂亮地拉直了。再按房間數分組——以平滑線取代散點（<code>type="smooth"</code>，這個引數會流進面板函式），用明確的子集讓圖例乾淨：</p>
+<p>取對數後漂亮地拉直了。</p>
+</section>
+<section id="房價的-qqmath按房間數分組" class="slide level2 tight">
+<h2>房價的 qqmath：按房間數分組</h2>
+<p>再按房間數分組——以平滑線取代散點（<code>type="smooth"</code>，這個引數會流進面板函式），用明確的子集讓圖例乾淨：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">qqmath</span>(<span class="sc">~</span><span class="fu">log</span>(price), <span class="at">groups=</span>bedrooms,</span>
 <span id="cb23-2"><a href=""></a>       <span class="at">data=</span><span class="fu">subset</span>(sanfrancisco.home.sales,</span>
 <span id="cb23-3"><a href=""></a>                   <span class="sc">!</span><span class="fu">is.na</span>(bedrooms) <span class="sc">&amp;</span> bedrooms <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> bedrooms <span class="sc">&lt;</span> <span class="dv">7</span>),</span>
 <span id="cb23-4"><a href=""></a>       <span class="at">auto.key=</span><span class="cn">TRUE</span>, <span class="at">drop.unused.levels=</span><span class="cn">TRUE</span>, <span class="at">type=</span><span class="st">"smooth"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-17-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
-</figure>
+
 </div>
-</div>
-</div>
-<p>線各自分離、房間越多越高——同一招也適用於坪數六分位（<code>Hmisc::cut2(squarefeet, g=6)</code> 當 <code>groups</code>）與街區。</p>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>線各自分離、房間越多越高——同一招也適用於坪數六分位（<code>Hmisc::cut2(squarefeet, g=6)</code> 當 <code>groups</code>）與街區。</p>
 </section></section>
 <section>
 <section id="雙變量-trellis-圖" class="title-slide slide level1 center">
@@ -613,7 +611,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-18-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-19-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -627,7 +625,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-18-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-19-2.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -644,7 +642,7 @@
 <span id="cb27-3"><a href=""></a>       <span class="at">scales=</span><span class="fu">list</span>(<span class="at">x=</span><span class="fu">list</span>(<span class="at">rot=</span><span class="dv">90</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-19-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>中位數動得不少；四分位距動得較少；高價端明顯萎縮——但分布的基本形狀逐月穩定。（量的提醒：資料始於 2 月中、止於 7 月中——那兩個月別過度解讀。）</p>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-20-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p>中位數動得不少；四分位距動得較少；高價端明顯萎縮——但分布的基本形狀逐月穩定。（量的提醒：資料始於 2 月中、止於 7 月中——那兩個月別過度解讀。）</p>
 </section>
 <section id="splom-與-qq" class="slide level2">
 <h2>splom 與 qq</h2>
@@ -668,7 +666,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-20-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-21-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -683,7 +681,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-21-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
+<p><img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-22-1.png" class="quarto-figure quarto-figure-center" width="960"></p>
 </figure>
 </div>
 </div>
@@ -701,7 +699,7 @@
 
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href=""></a><span class="fu">detach</span>(sanfrancisco.home.sales)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-22-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><strong><code>contourplot</code></strong> 是地形圖式的手足（<code>cuts=7</code>、<code>labels</code>、<code>contour=TRUE</code>、<code>region=FALSE</code>）。</p>
+<img data-src="ch14-zh_files/figure-revealjs/unnamed-chunk-23-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><p><strong><code>contourplot</code></strong> 是地形圖式的手足（<code>cuts=7</code>、<code>labels</code>、<code>contour=TRUE</code>、<code>region=FALSE</code>）。</p>
 </section>
 <section id="cloud-與-wireframe" class="slide level2">
 <h2>cloud 與 wireframe</h2>

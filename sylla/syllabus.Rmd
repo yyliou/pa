@@ -43,7 +43,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 **[Assessment Criteria]{.underline}**
 
-1. **In-Class Exercises** (36%): 12 exercises × 3% each, submitted at the end of each session.
+1. **In-Class Exercises** (36%): 12 exercises × 3% each, begun in class and due before midnight of the following week (see Regulations).
 
 2. **Mid-Term Exam** (32%) and **Final Exam** (32%).
 
@@ -67,7 +67,7 @@ All submitted work must be the student's own. Copying from other students is str
 
 5.  **AI Policy**
 
-Students may use AI tools (e.g., ChatGPT, GitHub Copilot) as learning aids, but must be able to explain and defend any code or analysis they submit. Uncritical submission of AI-generated work without understanding constitutes academic dishonesty.
+Students may use AI tools (e.g., ChatGPT or Gemini) as learning aids, but must be able to explain and defend any code or analysis they submit. Uncritical submission of AI-generated work without understanding constitutes academic dishonesty.
 
 **[Required Software]{.underline}**
 

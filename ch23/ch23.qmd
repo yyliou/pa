@@ -47,7 +47,7 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 
 Time series carry **long-term trends** and **periodic patterns** that ordinary summary statistics miss. Analyzing them needs tools that respect *order* and *lag*. We revisit the turkey-price series from Chapter 7:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
               temp, mode = "wb")

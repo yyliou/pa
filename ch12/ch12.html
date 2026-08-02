@@ -6,11 +6,11 @@
 <script src="ch12_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch12_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch12_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch12_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch12_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch12_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch12_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch12_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch12_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch12_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="where-80-of-the-time-goes" class="title-slide slide level1 center">
@@ -539,7 +539,7 @@ Yu-You Liou (NTU)
 </div>
 <p>The last call computes, for each (i, j), <code>FUN</code> of <code>x[i, j, 1], x[i, j, 2], x[i, j, 3]</code>.</p>
 </section>
-<section id="lapply-and-sapply-lists-vectors-data-frames" class="slide level2">
+<section id="lapply-and-sapply-lists-vectors-data-frames" class="slide level2 tight">
 <h2>lapply and sapply: Lists, Vectors, Data Frames</h2>
 <p><code>lapply(X, FUN, ...)</code> applies <code>FUN</code> to each element, returning a <strong>list</strong> — and a data frame counts as a list of columns:</p>
 <div class="cell" data-layout-align="center">
@@ -795,11 +795,11 @@ pants.sizes2 31.00 pants.sizes</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a>batting<span class="fl">.2008</span>[<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(batting<span class="fl">.2008</span>), <span class="dv">5</span>), <span class="dv">9</span><span class="sc">:</span><span class="dv">14</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>      playerID yearID stint teamID lgID   G
-48    byrdpa01   2008     2    BOS   AL   8
-842  schroch01   2008     1    WAS   NL   4
-1057 ellsbja01   2008     1    BOS   AL 145
-1059 ramired01   2008     1    NYA   AL  55
-62   castrju01   2008     2    BAL   AL  54</code></pre>
+1345 gamelma01   2008     1    MIL   NL   2
+1054 delaceu01   2008     1    FLO   NL   6
+389  uribeju01   2008     1    CHA   AL 110
+767  shoppke01   2008     1    CLE   AL 112
+1190  diazro01   2008     2    PIT   NL   2</code></pre>
 </div>
 </div>
 <p>Cleverer subsets follow the same trick — all statistics for three randomly chosen teams:</p>
@@ -810,7 +810,7 @@ pants.sizes2 31.00 pants.sizes</code></pre>
 <span id="cb59-4"><a href=""></a><span class="fu">summary</span>(batting.<span class="fl">2008.3</span>teams<span class="sc">$</span>teamID)[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>ARI ATL BAL BOS CHA CHN CIN CLE COL DET 
-  0   0   0   0   0   0   0   0   0   0 </code></pre>
+  0   0  46   0   0   0   0   0   0   0 </code></pre>
 </div>
 </div>
 <p>For stratified, cluster, or maximum-entropy sampling, see the <code>sampling</code> package.</p>

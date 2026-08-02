@@ -4,3 +4,12 @@
 .Ruserdata
 
 .DS_Store
+
+# knitr caches (regenerated on every render)
+*_cache/
+
+# Student personal data — must never be published to the public repo
+stu/
+pa-ex/
+pa-mid/
+pa-fin/

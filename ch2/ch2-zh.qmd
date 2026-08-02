@@ -235,10 +235,10 @@ $ ./hello_world.R
 
 ## 在 Microsoft Excel 裡跑 R
 
-對重度 Excel 使用者（Windows），**RExcel** 軟體（rcom 專案）讓你直接在 Excel 裡執行 R。書中的安裝流程：
+對重度 Excel 使用者（Windows），**RExcel** 軟體（rcom 專案）讓你直接在 Excel 裡執行 R。該專案**已停止維護**，與現行 Excel／R 不相容——僅供歷史參考。書中的流程（原書程式碼漏了 `c()` 包裝，屬勘誤，此處已修正）：
 
 ```{r,eval=FALSE,echo=TRUE}
-install.packages("RExcelInstaller", "rcom", "rsproxy")
+install.packages(c("RExcelInstaller", "rcom", "rsproxy"))
 library(rcom)
 comRegisterRegistry()       # 設定 RCOM 伺服器
 library(RExcelInstaller)

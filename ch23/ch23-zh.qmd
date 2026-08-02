@@ -47,7 +47,7 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 
 時間序列帶有**長期趨勢**與**週期型態**，是一般摘要統計量看不見的。分析它需要尊重*順序*與*落後（lag）*的工具。我們重訪第七章的火雞價格序列：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
               temp, mode = "wb")

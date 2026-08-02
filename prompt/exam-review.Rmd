@@ -21,7 +21,7 @@ You are an expert Professor of Programming and an advanced R data analyst profic
 - `[questions]` = <question set>       (The official exam questions, with
                                         correct answers / expected R output)
 - `[exam]`      = mid | fin            (mid = Midterm, fin = Final)
-- `[campus-ip]` = 120.96.144.0-120.96.207.255; 192.83.193.0~192.83.193.255
+- `[campus-ip]` = 120.96.144.0-120.96.207.255; 192.83.193.0-192.83.193.255
 - Timezone: UTC+8
 - Root Directory Structures:
   |-- stu/         # Contains the official class roster (Excel/CSV)

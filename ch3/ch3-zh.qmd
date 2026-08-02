@@ -478,7 +478,7 @@ R 內建多套視覺化系統：**graphics**（經典的基礎系統）、**grid
 
 書中以 `library(nutshell)` 載入資料；該套件已下架 CRAN，本課程改從 CRAN 的 GitHub 鏡像抓同一份資料：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda",
               temp, mode = "wb")
@@ -552,7 +552,7 @@ library(lattice)
 
 範例資料：1980–2005 年美國飲食消費，存於 `consumption` 資料集（48 筆觀測：消費量 `Amount`、食物類別 `Food`、年份 `Year`，每 5 年一筆）。
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/consumption.rda",
               temp, mode = "wb")

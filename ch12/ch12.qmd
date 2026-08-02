@@ -328,7 +328,7 @@ cut(x, breaks, labels = NULL, include.lowest = FALSE, right = TRUE,
 
 Count players by batting-average range — the book's `batting.2008` data set, fetched per course convention:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda",
               temp, mode = "wb")

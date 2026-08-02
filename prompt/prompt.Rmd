@@ -29,6 +29,8 @@ Generate a comprehensive, plagiarism-free lecture slide for *Chapter N* based on
 
 2.	**Exhaustive Coverage**: The handout must be meticulously detailed. Do not summarize or omit topics. Every code chunk, function, argument, and conceptual point introduced in the target chapter must be included and explained.
 
+    (*Depth tiering — course-specific*: this exhaustive standard applies in full to Parts I–IV (Ch. 1–15), which each receive dedicated lecture time. Part V chapters (Ch. 16–23) are compressed into four teaching weeks and Part VI (Ch. 24–26) is self-study; for these, condensed coverage is acceptable — every *topic* must still appear, but secondary arguments and long option catalogs may be summarized, prioritizing runnable examples.)
+
 3.	**Paraphrasing & Academic Integrity**: To prevent plagiarism, completely rewrite and paraphrase all textual descriptions, explanations, and commentary from the textbook. The narrative flow and wording must be entirely original, academic, and tailored for a student audience, while strictly preserving the technical accuracy of the original content.
 
 4.	**Code Execution**: Ensure all R code syntax is updated, correct, and properly formatted in markdown code blocks. Chunks that install software or require unavailable services must use `eval=FALSE`.

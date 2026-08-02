@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="認識介面" class="title-slide slide level1 center">
@@ -463,9 +463,9 @@ Type 'q()' to quit R.</code></pre>
 </section>
 <section id="在-microsoft-excel-裡跑-r" class="slide level2">
 <h2>在 Microsoft Excel 裡跑 R</h2>
-<p>對重度 Excel 使用者（Windows），<strong>RExcel</strong> 軟體（rcom 專案）讓你直接在 Excel 裡執行 R。書中的安裝流程：</p>
+<p>對重度 Excel 使用者（Windows），<strong>RExcel</strong> 軟體（rcom 專案）讓你直接在 Excel 裡執行 R。該專案<strong>已停止維護</strong>，與現行 Excel／R 不相容——僅供歷史參考。書中的流程（原書程式碼漏了 <code>c()</code> 包裝，屬勘誤，此處已修正）：</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"RExcelInstaller"</span>, <span class="st">"rcom"</span>, <span class="st">"rsproxy"</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"RExcelInstaller"</span>, <span class="st">"rcom"</span>, <span class="st">"rsproxy"</span>))</span>
 <span id="cb13-2"><a href=""></a><span class="fu">library</span>(rcom)</span>
 <span id="cb13-3"><a href=""></a><span class="fu">comRegisterRegistry</span>()       <span class="co"># 設定 RCOM 伺服器</span></span>
 <span id="cb13-4"><a href=""></a><span class="fu">library</span>(RExcelInstaller)</span>

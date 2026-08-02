@@ -1,1 +1,4 @@
-quarto render '/Users/oliverliou/pCloud Drive/!-git/teach/pa/ch*/ch*.qmd'
+# Batch-render all chapter slides (run from the pa/ repository root).
+# Note: quarto takes one input file at a time; loop over the files
+# instead of passing a quoted glob.
+for f in ch*/ch*.qmd; do quarto render "$f"; done

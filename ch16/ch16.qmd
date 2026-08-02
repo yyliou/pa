@@ -47,7 +47,7 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 
 The building blocks for everything that follows. With the `dow30` quote data from Chapter 12 (packaged in `nutshell`):
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/dow30.rda",
               temp, mode = "wb")
@@ -93,7 +93,7 @@ str(dow30)
 
 `stem(x, scale=1, width=80, atom=1e-08)` draws a stem-and-leaf plot right in the console. Distances of *missed* NFL field goals, 2005:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/field.goals.rda",
               temp, mode = "wb")
@@ -122,7 +122,7 @@ cor(x, y = NULL, use = "everything",
 
 Does the mother's weight gain correlate with the baby's weight? Clean first (valid values, single births, gestation > 35 weeks), then look — 100k+ points need `smoothScatter`, not `plot`:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda",
               temp, mode = "wb")
@@ -155,7 +155,7 @@ Relatives: `cov2cor` converts a covariance matrix to a correlation matrix; `cov.
 
 Data: team batting statistics 2000–2008, extracted from the Baseball Databank by SQL (renamed to readable play names) and packaged as `team.batting.00to08`:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda",
               temp, mode = "wb")
@@ -169,13 +169,15 @@ summary(batting.pca)
 
 Two components already carry ~78% of the variance; four carry ~92%.
 
-## loadings, Scree Plot, Biplot {.tight .fit-e}
+## loadings {.tight}
 
 `loadings` shows each variable's contribution to each component:
 
 ```{r,echo=TRUE}
 loadings(batting.pca)
 ```
+
+## Scree Plot and Biplot {.tight}
 
 ```{r,echo=TRUE}
 plot(batting.pca)                                      # "scree" plot
@@ -225,7 +227,7 @@ Key arguments: `data`; `statistic` — a *function of (data, selection)* where `
 
 Media report *median* home prices. Bootstrapping June 2008 San Francisco sale prices:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda",
               temp, mode = "wb")

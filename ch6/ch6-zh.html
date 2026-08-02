@@ -6,11 +6,11 @@
 <script src="ch6-zh_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="ch6-zh_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="ch6-zh_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="ch6-zh_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.9.37">
+<link href="ch6-zh_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-06-08">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,7 +99,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="ch6-zh_files/libs/revealjs/dist/theme/quarto-2abc1c5b7b5c7eecd6137558e106e4c3.css">
+  <link rel="stylesheet" href="ch6-zh_files/libs/revealjs/dist/theme/quarto-188e31c110806c735a3c06ecff254cd5.css">
   <link href="ch6-zh_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="ch6-zh_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="ch6-zh_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-06-08</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="寫出合法的-r" class="title-slide slide level1 center">
@@ -235,7 +235,7 @@
 <h1>常數</h1>
 
 </section>
-<section id="數值向量" class="slide level2">
+<section id="數值向量" class="slide level2 tight">
 <h2>數值向量</h2>
 <p>數字照字面解讀——加上 <code>0x</code> 前綴就是十六進位：</p>
 <div class="cell" data-layout-align="center">
@@ -462,7 +462,7 @@
 </div>
 </div>
 </section>
-<section id="運算順序" class="slide level2">
+<section id="運算順序" class="slide level2 tight">
 <h2>運算順序</h2>
 <p>跟中學數學一樣（<code>1 + 2 × 5</code> 先乘後加），R 以固定的<strong>優先序</strong>規則消除歧義。由高到低大致是：函式呼叫與分組；索引與查值；算術；比較；公式；指派；求助。</p>
 <table class="caption-top">
@@ -789,7 +789,7 @@
 </div>
 <p>跟條件式一樣，<code>repeat</code>、<code>while</code>、<code>for</code> 的型別都是 <strong>special</strong>——主體不一定會被評估。</p>
 </section>
-<section id="迴圈的擴充iterators-與-foreach" class="slide level2">
+<section id="迴圈的擴充iterators-與-foreach" class="slide level2 tight">
 <h2>迴圈的擴充：iterators 與 foreach</h2>
 <div class="callout callout-note callout-titled callout-style-default">
 <div class="callout-body">
@@ -951,7 +951,7 @@ $j
 </div>
 </div>
 </section>
-<section id="矩陣的整數索引" class="slide level2">
+<section id="矩陣的整數索引" class="slide level2 tight">
 <h2>矩陣的整數索引</h2>
 <p>多維結構每個維度給一個索引——省略某維度就是整維全取：</p>
 <div class="cell" data-layout-align="center">
@@ -1074,7 +1074,7 @@ $j
 </div>
 </div>
 </section>
-<section id="以名稱索引" class="slide level2">
+<section id="以名稱索引" class="slide level2 tight">
 <h2>以名稱索引</h2>
 <p>串列元素可以命名；用 <code>$</code> 索引，或在單中括號裡放名稱向量：</p>
 <div class="cell" data-layout-align="center">

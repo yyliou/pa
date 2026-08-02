@@ -63,18 +63,25 @@ lattice 的真本事：用條件或分組變數把圖**拆成多個面板**（�
 **在函式或腳本裡，不明確 `print` 物件，lattice 什麼都不畫**——經典陷阱（第三章初次見面）。
 :::
 
-## 簡單範例：公式、條件、分組 {.tight .fit-d}
+## 簡單範例：公式與條件 {.tight}
 
-lattice 的引數很一致：先放**公式**（用位置傳——它的名字改過！），再放 `data`。同一份玩具資料三種畫法：
+lattice 的引數很一致：先放**公式**（用位置傳——它的名字改過！），再放 `data`。同一份玩具資料，先畫原樣、再加條件：
 
 ```{r,echo=TRUE}
 d <- data.frame(x=c(0:9), y=c(1:10), z=c(rep(c("a", "b"), times=5)))
 xyplot(y~x, data=d)
 xyplot(y~x|z, data=d)            # 條件：依 z 拆面板
-xyplot(y~x, groups=z, data=d)    # 分組：依 z 變色／變符號
 ```
 
 `y~x|z` 唸作「y 對 x，以 z 為條件」。
+
+## 簡單範例：分組 {.tight}
+
+**分組**維持單一面板，改用顏色／符號區分各組——同一份資料的第三種畫法：
+
+```{r,echo=TRUE}
+xyplot(y~x, groups=z, data=d)    # 分組：依 z 變色／變符號
+```
 
 ## graphics 對 lattice 字典
 
@@ -113,7 +120,7 @@ xyplot(y~x|z, data=d,
 
 貫穿範例：2006 年美國的每一筆出生（CDC 出生檔——原始 3.1 GB；書中作者以 Perl `unpack` 腳本預處理、在 R 重編因子，抽 10% 成 `births2006.smpl`）。變數包括 `DOB_MM`／`DOB_WK`（出生月／星期）、`MAGER`（母親年齡）、`WTGAIN`、`SEX`、`APGAR5`、`DMEDUC`、`UPREVIS`、`ESTGEST`、`DMETH_REC`（生產方式）、`DPLURAL`（單胞胎／雙胞胎……）、`DBWT`（出生體重，公克）：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda",
               temp, mode = "wb")
@@ -168,7 +175,7 @@ dotplot(dob.dm.tbl.alt, stack=FALSE, auto.key=TRUE, groups=TRUE)
 
 NHTSA 2003 年的「逐級加速至失效」測試（Firestone 召回案之後，選在炎熱的鳳凰城進行）：輪胎以遞增速度運轉直到失效。六種輪胎（B–L，各種尺寸／品牌）。變數：`Time_To_Failure`、`Speed_At_Failure_km_h`（階梯值——當因子處理！）、`Tire_Type`：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda",
               temp, mode = "wb")
@@ -240,14 +247,14 @@ qqmath(~DBWT|DPLURAL,
 
 第二個貫穿範例：3,281 筆舊金山房屋成交，2008-02-13 至 2009-07-14，作者從報紙彙整、地理編碼、再用 `sp`／`maptools` 與 `point.in.polygon` 連結 Zillow 街區圖資。變數（依套件實際打包——書中文字的命名略有出入）：`line`、`county`、`street`、`city`、`zip`、`date`（成交日）、`price`、`bedrooms`、`squarefeet`、`lotsize`、`year`（建造年）、`latitude`／`longitude`、`month`、`neighborhood`。真實資料——不完美、有缺值：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda",
               temp, mode = "wb")
 load(temp)
 ```
 
-## 房價的 qqmath：發現對數常態 {.tight .fit-e}
+## 房價的 qqmath：發現對數常態 {.tight}
 
 價格從 10 萬到 950 萬美元——直覺上就不會常態：
 
@@ -256,7 +263,11 @@ qqmath(~price, data=sanfrancisco.home.sales)
 qqmath(~log(price), data=sanfrancisco.home.sales)
 ```
 
-取對數後漂亮地拉直了。再按房間數分組——以平滑線取代散點（`type="smooth"`，這個引數會流進面板函式），用明確的子集讓圖例乾淨：
+取對數後漂亮地拉直了。
+
+## 房價的 qqmath：按房間數分組 {.tight}
+
+再按房間數分組——以平滑線取代散點（`type="smooth"`，這個引數會流進面板函式），用明確的子集讓圖例乾淨：
 
 ```{r,echo=TRUE}
 qqmath(~log(price), groups=bedrooms,

@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="first-analyses" class="title-slide slide level1 center">
@@ -436,8 +436,8 @@ Cumulative Proportion   0.98338107 0.990263099 0.995903002 1.000000000</code></p
 </div>
 <p>Two components already carry ~78% of the variance; four carry ~92%.</p>
 </section>
-<section id="loadings-scree-plot-biplot" class="slide level2 tight fit-e">
-<h2>loadings, Scree Plot, Biplot</h2>
+<section id="loadings" class="slide level2 tight">
+<h2>loadings</h2>
 <p><code>loadings</code> shows each variable’s contribution to each component:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href=""></a><span class="fu">loadings</span>(batting.pca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -461,6 +461,9 @@ Proportion Var  0.111  0.111  0.111  0.111  0.111  0.111  0.111  0.111  0.111
 Cumulative Var  0.111  0.222  0.333  0.444  0.556  0.667  0.778  0.889  1.000</code></pre>
 </div>
 </div>
+</section>
+<section id="scree-plot-and-biplot" class="slide level2 tight">
+<h2>Scree Plot and Biplot</h2>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href=""></a><span class="fu">plot</span>(batting.pca)                                      <span class="co"># "scree" plot</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
@@ -579,7 +582,7 @@ boot(data = home.sale.prices.june2008, statistic = function(d,
 
 Bootstrap Statistics :
     original  bias    std. error
-t1*   845000 -4604.5    23878.67</code></pre>
+t1*   845000 -3990.5     22636.2</code></pre>
 </div>
 </div>
 <p>Verdict: the median is a very slightly biased estimator here — and now we also know its standard error, free of any normality assumption.</p>

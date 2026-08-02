@@ -63,18 +63,25 @@ The vocabulary: rectangular drawing areas are **panels**; the data sent to a pan
 **Inside functions and scripts, lattice plots nothing unless you `print` the object** — the classic lattice gotcha (first met in Chapter 3).
 :::
 
-## A Simple Example: Formula, Conditioning, Groups {.tight .fit-d}
+## A Simple Example: Formula and Conditioning {.tight}
 
-Lattice arguments are consistent: a **formula** first (positional — its name has changed before!), then `data`. The same toy data three ways:
+Lattice arguments are consistent: a **formula** first (positional — its name has changed before!), then `data`. The same toy data, plain and then conditioned:
 
 ```{r,echo=TRUE}
 d <- data.frame(x=c(0:9), y=c(1:10), z=c(rep(c("a", "b"), times=5)))
 xyplot(y~x, data=d)
 xyplot(y~x|z, data=d)            # conditioning: panels split by z
-xyplot(y~x, groups=z, data=d)    # grouping: colors/symbols by z
 ```
 
 `y~x|z` reads "y against x, conditioned on z."
+
+## A Simple Example: Groups {.tight}
+
+**Grouping** keeps a single panel but distinguishes the groups by color/symbol — the third way to show the same data:
+
+```{r,echo=TRUE}
+xyplot(y~x, groups=z, data=d)    # grouping: colors/symbols by z
+```
 
 ## Graphics-to-Lattice Dictionary
 
@@ -113,7 +120,7 @@ xyplot(y~x|z, data=d,
 
 Running example: every US birth of 2006 (CDC natality file — 3.1 GB raw; the book preprocessed it with a Perl `unpack` script, recoded factors in R, and sampled 10% into `births2006.smpl`). Variables include `DOB_MM`/`DOB_WK` (month/weekday of birth), `MAGER` (mother's age), `WTGAIN`, `SEX`, `APGAR5`, `DMEDUC`, `UPREVIS`, `ESTGEST`, `DMETH_REC` (delivery method), `DPLURAL` (single/twin/...), `DBWT` (birth weight, grams):
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/births2006.smpl.rda",
               temp, mode = "wb")
@@ -168,7 +175,7 @@ Slight seasonal wiggles; the weekly pattern persists year-round.
 
 NHTSA's 2003 "Stepped-Up Speed to Failure" tests (post-Firestone recall, run in hot Phoenix): tires run at increasing speeds until failure. Six tire types (B–L, various sizes/brands). Variables: `Time_To_Failure`, `Speed_At_Failure_km_h` (a stepped value — treat as a factor!), `Tire_Type`:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/tires.sus.rda",
               temp, mode = "wb")
@@ -240,14 +247,14 @@ Birth weights: not quite normal.
 
 Second running example: 3,281 San Francisco home sales, 2008-02-13 to 2009-07-14, compiled by the author from newspaper listings, geocoded, and joined to Zillow neighborhood shapefiles (with `sp`/`maptools` and `point.in.polygon`). Variables (as packaged — the book's text names a few differently): `line`, `county`, `street`, `city`, `zip`, `date` (sale date), `price`, `bedrooms`, `squarefeet`, `lotsize`, `year` (built), `latitude`/`longitude`, `month`, `neighborhood`. Real data — imperfect, partially missing:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/sanfrancisco.home.sales.rda",
               temp, mode = "wb")
 load(temp)
 ```
 
-## qqmath on Prices: Finding the Log-Normal {.tight .fit-e}
+## qqmath on Prices: Finding the Log-Normal {.tight}
 
 Prices range $100,000–$9,500,000 — intuitively not normal:
 
@@ -256,7 +263,11 @@ qqmath(~price, data=sanfrancisco.home.sales)
 qqmath(~log(price), data=sanfrancisco.home.sales)
 ```
 
-The log transform straightens the line nicely. Now split by bedrooms — groups, smooth lines instead of points (`type="smooth"`, an argument that flows to the panel function), explicit subset to keep the key clean:
+The log transform straightens the line nicely.
+
+## qqmath on Prices: Split by Bedrooms {.tight}
+
+Now split by bedrooms — groups, smooth lines instead of points (`type="smooth"`, an argument that flows to the panel function), explicit subset to keep the key clean:
 
 ```{r,echo=TRUE}
 qqmath(~log(price), groups=bedrooms,

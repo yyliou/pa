@@ -59,7 +59,7 @@ This chapter: a tour of the common chart types, then graphics devices, then the 
 
 Our example data: 2008 cancer cases (American Cancer Society) and 2006 toxic releases by state (EPA), packaged as `toxins.and.cancer`:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/toxins.and.cancer.rda",
               temp, mode = "wb")
@@ -117,7 +117,7 @@ Three relatives for special situations:
 - **`smoothScatter`** shades regions by point *density* — the cure for overplotting with very many points (see Chapter 16).
 - **`pairs`** draws a scatter plot matrix for every pair of variables:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/batting.2008.rda",
               temp, mode = "wb")
@@ -131,7 +131,7 @@ pairs(batting.2008[batting.2008$AB>100, c("H", "R", "SO", "BB", "HR")])
 
 `plot` has a time-series method (`plot.type` = `"multiple"`/`"single"`, `panel`, `nc`, `yax.flip`, margin controls...). The turkey prices of Chapter 7:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/turkey.price.ts.rda",
               temp, mode = "wb")
@@ -252,7 +252,7 @@ mosaicplot(formula=bats~throws, data=batting.w.names.2008, color=TRUE)
 
 All 3-D functions plot a **matrix**: row index = x, column index = y, cell = z. The book's example: USGS elevation data for Yosemite Valley, downloaded as GridFloat (a 562×253 stream of 4-byte floats read with `readBin(..., size=4, endian="little")`, then given `dim`); packaged as `yosemite`:
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/yosemite.rda",
               temp, mode = "wb")

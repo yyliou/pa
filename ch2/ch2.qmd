@@ -235,10 +235,10 @@ Finally, batch execution is available *from inside R* too: the `source()` functi
 
 ## R Inside Microsoft Excel
 
-For heavy Excel users on Windows, the **RExcel** software (from the rcom project) let you run R directly inside Excel. The book's installation sequence:
+For heavy Excel users on Windows, the **RExcel** software (from the rcom project) let you run R directly inside Excel. The project is **no longer maintained** and does not work with current Excel/R — shown for historical interest. The book's sequence (its original code omitted the `c()` wrapper — a bug, corrected here):
 
 ```{r,eval=FALSE,echo=TRUE}
-install.packages("RExcelInstaller", "rcom", "rsproxy")
+install.packages(c("RExcelInstaller", "rcom", "rsproxy"))
 library(rcom)
 comRegisterRegistry()       # configure the RCOM server
 library(RExcelInstaller)

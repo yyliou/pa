@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-02">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-02</p>
 </section>
 <section>
 <section id="meeting-the-interface" class="title-slide slide level1 center">
@@ -463,9 +463,9 @@ Type 'q()' to quit R.</code></pre>
 </section>
 <section id="r-inside-microsoft-excel" class="slide level2">
 <h2>R Inside Microsoft Excel</h2>
-<p>For heavy Excel users on Windows, the <strong>RExcel</strong> software (from the rcom project) let you run R directly inside Excel. The book’s installation sequence:</p>
+<p>For heavy Excel users on Windows, the <strong>RExcel</strong> software (from the rcom project) let you run R directly inside Excel. The project is <strong>no longer maintained</strong> and does not work with current Excel/R — shown for historical interest. The book’s sequence (its original code omitted the <code>c()</code> wrapper — a bug, corrected here):</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">install.packages</span>(<span class="st">"RExcelInstaller"</span>, <span class="st">"rcom"</span>, <span class="st">"rsproxy"</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href=""></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"RExcelInstaller"</span>, <span class="st">"rcom"</span>, <span class="st">"rsproxy"</span>))</span>
 <span id="cb13-2"><a href=""></a><span class="fu">library</span>(rcom)</span>
 <span id="cb13-3"><a href=""></a><span class="fu">comRegisterRegistry</span>()       <span class="co"># configure the RCOM server</span></span>
 <span id="cb13-4"><a href=""></a><span class="fu">library</span>(RExcelInstaller)</span>

@@ -59,7 +59,7 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 4.2)
 
 哪些打擊指標能預測球隊的得分？2000–2008 球隊打擊（第十六章以 SQL 取出，打包為 `team.batting.00to08`）：
 
-```{r,echo=TRUE}
+```{r,echo=TRUE,cache=TRUE}
 temp <- tempfile(fileext = ".rda")
 download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/team.batting.00to08.rda",
               temp, mode = "wb")
