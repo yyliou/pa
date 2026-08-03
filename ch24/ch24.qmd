@@ -81,7 +81,7 @@ object.size("Hello world!")      # approximate size of one object
 
 - **`gc()`** forces garbage collection *and* reports memory in use.
 - **`object.size(x)`** estimates an object's footprint — invaluable when a "small" data frame is secretly huge.
-- **`memory.profile()`** breaks usage down by object type; on Windows, `memory.size()`/`memory.limit()` report and cap total usage.
+- **`memory.profile()`** breaks usage down by object type. (The old Windows-only `memory.size()`/`memory.limit()` were retired in R 4.2.)
 - **`Rprofmem(filename, threshold=)`** logs large allocations (R must be built with memory profiling).
 
 # Optimizing Your Code

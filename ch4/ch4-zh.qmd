@@ -278,8 +278,7 @@ install_github("tidyverse/ggplot2")   # 現代寫法：owner/repo
 
 ```{r,eval=FALSE,echo=TRUE}
 package.skeleton(name = "anRpackage", list, environment = .GlobalEnv,
-                 path = ".", force = FALSE, namespace = FALSE,
-                 code_files = character())
+                 path = ".", force = FALSE, code_files = character())
 ```
 
 | 引數 | 說明 | 預設值 |
@@ -289,7 +288,6 @@ package.skeleton(name = "anRpackage", list, environment = .GlobalEnv,
 | `environment` | 評估 `list` 的環境 | `.GlobalEnv` |
 | `path` | 檔案系統路徑 | `"."` |
 | `force` | 目錄已存在時是否覆寫 | `FALSE` |
-| `namespace` | 是否加入命名空間 | `FALSE` |
 | `code_files` | 含 R 程式碼的檔案路徑 | `character()` |
 
 ## 骨架裡有什麼
@@ -325,8 +323,8 @@ License: What license is it under?
 
 實用的可選欄位：
 
-- **`LazyLoad`**——設為 `yes`（預設）時，資料物件以輕量的 *promise* 形式載入而非佔用記憶體；照常取用，（幾乎）不佔空間。
-- **`LazyData`**——同樣的機制，專門針對資料檔。
+- **`LazyData`**——設為 `yes` 時，資料集以輕量的 *promise* 形式載入而非佔用記憶體（未設定則需先呼叫 `data()`）；照常取用，（幾乎）不佔空間。
+- **`LazyLoad`**——針對 R 程式碼的歷史欄位；R 2.14 起被忽略（程式碼一律懶載入）。
 - **`Depends`**——對 R 或其他套件的需求，例如 `Depends: R(>= 2.8), nnet`。
 
 ## 替套件寫文件

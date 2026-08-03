@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="主力工人" class="title-slide slide level1 center">
@@ -256,7 +256,7 @@
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">f</span>(<span class="dv">1</span>)        <span class="co"># 少了 y：等 `+` 需要它時才報錯</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `f()`:
-! argument "y" is missing, with no default</code></pre>
+! 缺少引數 "y"，也沒有預設值</code></pre>
 </div>
 </div>
 <div class="callout callout-note callout-titled callout-style-default">
@@ -308,7 +308,7 @@
 <pre><code>[1] 15</code></pre>
 </div>
 </div>
-<p>個別項目也能直接用 <code>..1</code>、<code>..2</code>……到 <code>..9</code> 取得。具名引數在主體內就是有效的符號（作用域：第八章）。</p>
+<p>個別項目也能直接用 <code>..1</code>、<code>..2</code>……取得（任何 <code>..n</code> 都行）。具名引數在主體內就是有效的符號（作用域：第八章）。</p>
 </section>
 <section id="回傳值" class="slide level2">
 <h2>回傳值</h2>
@@ -470,7 +470,7 @@ NULL</code></pre>
 </section>
 <section id="body" class="slide level2">
 <h2>body</h2>
-<p>主體同樣可讀可寫——它的型別是 <code>expression</code>，所以要指派 expression：</p>
+<p>主體同樣可讀可寫——它是<em>語言物件</em>（<code>typeof(body(f))</code> 回傳 <code>"language"</code>）；指派帶引號的程式碼即可（書中用 <code>expression()</code>，同樣可行）：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a><span class="fu">body</span>(f)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -515,7 +515,7 @@ NULL</code></pre>
 <pre><code>[1] 5</code></pre>
 </div>
 </div>
-<p>一個限制：呼叫泛型函式時，攜帶分派物件的那個引數不能指名——其他引數照樣可以。</p>
+<p>一個提醒：泛型函式的分派引數在不同方法裡<em>名稱不一</em>（<code>x</code>、<code>object</code>……），所以分派物件用位置傳最不容易踩雷。</p>
 </section>
 <section id="用完整名稱部分比對會咬人" class="slide level2">
 <h2>用完整名稱；部分比對會咬人</h2>
@@ -528,7 +528,7 @@ NULL</code></pre>
 <span id="cb59-5"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>)            <span class="co"># 歧義：報錯</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `f()`:
-! argument 1 matches multiple formal arguments</code></pre>
+! 引數 1 有多個與之相對應的形式引數</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>, <span class="at">arg2=</span><span class="dv">2</span>)    <span class="co"># 現在 "arg" 只能指 arg1……</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -551,7 +551,7 @@ NULL</code></pre>
 <section id="回傳值之外" class="slide level2">
 <h2>回傳值之外</h2>
 <p>每個函式都回傳值；有些<em>還</em>會改動其他環境的變數、繪圖、讀寫檔案、存取網路。這些額外行為叫<strong>副作用（side effects）</strong>。</p>
-<p>最關鍵的副作用運算子是 <code>&lt;&lt;-</code>。<code>var &lt;&lt;- value</code> 會先在目前環境找 <code>var</code>，再到父環境、一路遞迴向上；若到達全域環境仍沒找到，指派就發生<strong>在全域環境</strong>：</p>
+<p>最關鍵的副作用運算子是 <code>&lt;&lt;-</code>。<code>var &lt;&lt;- value</code> 會<em>跳過目前環境</em>，從外層環境開始一路向上找既有的 <code>var</code>；若到達全域環境仍沒找到，指派就發生<strong>在全域環境</strong>：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href=""></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())</span>
 <span id="cb65-2"><a href=""></a>doesnt.assign.x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) { x <span class="ot">&lt;-</span> i }</span>
@@ -559,7 +559,7 @@ NULL</code></pre>
 <span id="cb65-4"><a href=""></a>x                                   <span class="co"># &lt;- 留在局部：找不到</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error:
-! object 'x' not found</code></pre>
+! 找不到物件 'x'</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href=""></a>assigns.x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) { x <span class="ot">&lt;&lt;-</span> i }</span>
 <span id="cb67-2"><a href=""></a><span class="fu">assigns.x</span>(<span class="dv">4</span>)</span>

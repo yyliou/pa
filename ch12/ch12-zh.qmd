@@ -453,11 +453,11 @@ rowsum(batting.2008[, c("AB", "H", "BB", "2B", "3B", "HR")],
 
 ## 計數：tabulate 與 table
 
-`tabulate` 統計各整數值出現的次數（不附標籤——自己加）：
+`tabulate` 統計整數 1..max 各出現幾次——**不數 0**，標籤要從 1 起算（0 支全壘打的球員根本不會出現）：
 
 ```{r,echo=TRUE}
 HR.cnts <- tabulate(batting.2008$HR)
-names(HR.cnts) <- 0:(length(HR.cnts) - 1)
+names(HR.cnts) <- 1:length(HR.cnts)
 HR.cnts[1:12]
 ```
 

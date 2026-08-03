@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="the-grammar-of-graphics" class="title-slide slide level1 center">
@@ -477,7 +477,7 @@ position_identity </code></pre>
 </tr>
 <tr class="even">
 <td><code>stat</code> / <code>position</code></td>
-<td>statistics / position adjustments</td>
+<td>statistics / position adjustments (book era — removed in ggplot2 2.0)</td>
 <td><code>list(NULL)</code></td>
 </tr>
 <tr class="odd">
@@ -516,8 +516,8 @@ position_identity </code></pre>
 </div>
 <ul>
 <li><code>aes(x, y, ...)</code> declares the mappings (relatives: <code>aes_string</code>, <code>aes_auto</code> in the book’s era).</li>
-<li>A bare <code>ggplot(...)</code> object has no layers — printing it errors (“No layers in plot”).</li>
-<li>The generic <code>layer(...)</code> adds a layer by geom short-name (<code>layer("point")</code>); in practice the <code>geom_*</code> convenience functions do this.</li>
+<li>A bare <code>ggplot(...)</code> has no layers — printing it once errored (“No layers in plot”); modern ggplot2 draws an empty panel.</li>
+<li>Book-era <code>layer("point")</code> added a layer by short-name; modern <code>layer()</code> needs explicit <code>geom</code>/<code>stat</code>/<code>position</code> — in practice, use <code>geom_*</code>.</li>
 </ul>
 </section>
 <section id="the-geom-vocabulary" class="slide level2">

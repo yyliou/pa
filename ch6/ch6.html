@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="writing-valid-r" class="title-slide slide level1 center">
@@ -313,7 +313,7 @@ Yu-You Liou (NTU)
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href=""></a><span class="fu">sqrt</span>(<span class="sc">-</span><span class="dv">1</span>)        <span class="co"># NaN! sqrt returns the same type it was given</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning in sqrt(-1): NaNs produced</code></pre>
+<pre><code>Warning in sqrt(-1): 產生了 NaNs</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] NaN</code></pre>
@@ -478,16 +478,16 @@ Yu-You Liou (NTU)
 <td>Function calls, grouping</td>
 </tr>
 <tr class="even">
-<td><code>[ [[</code></td>
-<td>Indexing</td>
-</tr>
-<tr class="odd">
 <td><code>:: :::</code></td>
 <td>Namespace access</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>$ @</code></td>
 <td>Component / slot extraction</td>
+</tr>
+<tr class="even">
+<td><code>[ [[</code></td>
+<td>Indexing</td>
 </tr>
 <tr class="odd">
 <td><code>^</code></td>
@@ -538,11 +538,11 @@ Yu-You Liou (NTU)
 <td>Rightward assignment</td>
 </tr>
 <tr class="odd">
-<td><code>=</code></td>
+<td><code>&lt;- &lt;&lt;-</code></td>
 <td>Assignment (right to left)</td>
 </tr>
 <tr class="even">
-<td><code>&lt;- &lt;&lt;-</code></td>
+<td><code>=</code></td>
 <td>Assignment (right to left)</td>
 </tr>
 <tr class="odd">
@@ -637,7 +637,7 @@ Yu-You Liou (NTU)
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href=""></a>u                       <span class="co"># not defined out here!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error:
-! object 'u' not found</code></pre>
+! 找不到物件 'u'</code></pre>
 </div>
 </div>
 <div class="cell" data-layout-align="center">
@@ -690,7 +690,7 @@ Yu-You Liou (NTU)
 <span id="cb102-3"><a href=""></a><span class="cf">if</span> (x <span class="sc">&lt;</span> y) x <span class="cf">else</span> y</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `if (x &lt; y) ...`:
-! the condition has length &gt; 1</code></pre>
+! 條件的長度 &gt; 1</code></pre>
 </div>
 </div>
 <p>For an element-wise choice, use <code>ifelse</code>:</p>

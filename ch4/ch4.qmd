@@ -278,8 +278,7 @@ The easy path has three stops: create the directory skeleton, edit the metadata,
 
 ```{r,eval=FALSE,echo=TRUE}
 package.skeleton(name = "anRpackage", list, environment = .GlobalEnv,
-                 path = ".", force = FALSE, namespace = FALSE,
-                 code_files = character())
+                 path = ".", force = FALSE, code_files = character())
 ```
 
 | Argument | Description | Default |
@@ -289,7 +288,6 @@ package.skeleton(name = "anRpackage", list, environment = .GlobalEnv,
 | `environment` | Where to evaluate `list` | `.GlobalEnv` |
 | `path` | Filesystem location | `"."` |
 | `force` | Overwrite an existing directory? | `FALSE` |
-| `namespace` | Add a namespace? | `FALSE` |
 | `code_files` | Paths of files containing R code | `character()` |
 
 ## What the Skeleton Contains
@@ -325,8 +323,8 @@ License: What license is it under?
 
 Useful optional fields:
 
-- **`LazyLoad`** — if `yes` (default), data objects load as lightweight *promises* rather than into memory; full access, (almost) no space.
-- **`LazyData`** — the same idea, specifically for data files.
+- **`LazyData`** — if `yes`, datasets load as lightweight *promises* rather than into memory (without it, call `data()` first); full access, (almost) no space.
+- **`LazyLoad`** — the historical analogue for R code; ignored since R 2.14 (code is always lazy-loaded now).
 - **`Depends`** — requirements on R or other packages, e.g. `Depends: R(>= 2.8), nnet`.
 
 ## Documenting the Package

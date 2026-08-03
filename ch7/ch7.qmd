@@ -69,7 +69,7 @@ The built-in object types sort into a few categories:
 |---|---|---|
 | `integer` | Whole numbers; produced naturally by sequences | `5:5`, `integer(5)` |
 | `double` | Floating-point (8 bytes on modern platforms); the default for numeric values | `1`, `-1`, `2^50` |
-| `complex` | Complex numbers; both parts must be written, even a zero real part | `2+3i`, `exp(0+1i*pi)` |
+| `complex` | Complex numbers; the imaginary part carries an `i` suffix (a bare `3i` is valid) | `2+3i`, `exp(0+1i*pi)` |
 | `character` | Text strings (a "string" in other languages) | `"Hello world."` |
 | `logical` | Boolean values | `TRUE`, `FALSE` |
 | `raw` | Raw bytes; for encoding objects from outside R | `raw(8)`, `charToRaw("Hello")` |
@@ -300,7 +300,7 @@ This reads "y is a function of x1, x2, and x3." Chapter 3's lattice example, `Am
 | `0` | added to a formula: omit the intercept, e.g. `y~u+w+v+0` |
 | `|` | conditioning variables (lattice formulas, Chapter 14) |
 | `I()` | interpret the enclosed expression *arithmetically*: `a+b` means both variables; `I(a+b)` means their sum |
-| `*` | interactions: `y~(u+v)*w` ≡ `y~u+v+w+I(u*w)+I(v*w)` |
+| `*` | interactions: `y~(u+v)*w` ≡ `y~u+v+w+u:w+v:w` |
 | `^` | crossing to a degree: `y~(u+w)^2` ≡ `y~(u+w)*(u+w)` |
 | `f(x)` | a function of variables as a term, e.g. `y~log(u)+sin(v)+w` |
 

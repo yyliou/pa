@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="基本構件" class="title-slide slide level1 center">
@@ -267,7 +267,7 @@
 </tr>
 <tr class="odd">
 <td><code>complex</code></td>
-<td>複數；實部、虛部都要寫，實部為 0 也不例外</td>
+<td>複數；虛部帶 <code>i</code> 後綴（單獨的 <code>3i</code> 也是合法字面值）</td>
 <td><code>2+3i</code>、<code>exp(0+1i*pi)</code></td>
 </tr>
 <tr class="even">
@@ -669,7 +669,7 @@ Levels: blue brown green</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href=""></a><span class="fu">data.frame</span>(<span class="at">a=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>), <span class="at">b=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `data.frame()`:
-! arguments imply differing number of rows: 5, 4</code></pre>
+! 引數值意味着不同的列數: 5, 4</code></pre>
 </div>
 </div>
 <p>書中範例——哪些城市的使用者最常搜尋「bacon」（Google Insights，2004–2009）：</p>
@@ -765,7 +765,7 @@ Levels: blue brown green</code></pre>
 </tr>
 <tr class="odd">
 <td><code>*</code></td>
-<td>交互作用：<code>y~(u+v)*w</code> ≡ <code>y~u+v+w+I(u*w)+I(v*w)</code></td>
+<td>交互作用：<code>y~(u+v)*w</code> ≡ <code>y~u+v+w+u:w+v:w</code></td>
 </tr>
 <tr class="even">
 <td><code>^</code></td>
@@ -898,7 +898,7 @@ Levels: blue brown green</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href=""></a>today <span class="ot">&lt;-</span> <span class="fu">Sys.Date</span>()</span>
 <span id="cb74-2"><a href=""></a>today <span class="sc">-</span> date.I.started.writing</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time difference of 6379 days</code></pre>
+<pre><code>Time difference of 6380 days</code></pre>
 </div>
 </div>
 </section>
@@ -1030,7 +1030,7 @@ $dimnames[[2]]
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href=""></a>b[<span class="dv">2</span>, <span class="dv">2</span>]      <span class="co"># 錯誤：b 沒有維度</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `b[2, 2]`:
-! incorrect number of dimensions</code></pre>
+! 維度數目不正確</code></pre>
 </div>
 </div>
 <p>它們「一樣」嗎？<code>==</code> 逐格比較（並以 <code>a</code> 的形狀回答）：</p>

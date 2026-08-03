@@ -81,7 +81,7 @@ object.size("Hello world!")      # 單一物件的約略大小
 
 - **`gc()`** 強制垃圾回收*並*回報目前記憶體用量。
 - **`object.size(x)`** 估計物件佔用——當一個「小」資料框其實龐大時，價值連城。
-- **`memory.profile()`** 依物件型別拆解用量；Windows 上 `memory.size()`／`memory.limit()` 回報並設定總用量上限。
+- **`memory.profile()`** 依物件型別拆解用量。（Windows 專用的舊函式 `memory.size()`／`memory.limit()` 已於 R 4.2 退役。）
 - **`Rprofmem(filename, threshold=)`** 記錄大配置（R 須以記憶體剖析編譯）。
 
 # 優化你的程式碼

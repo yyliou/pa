@@ -108,7 +108,7 @@ A few platform-specific notes follow — Windows and macOS users normally downlo
   - Simplest fix: install R as a standard user **into your own file space** (e.g., under your user directory).
   - Alternatively, install — and later install packages — as an Administrator account.
 - The default location is under `%ProgramFiles%\R` (usually `C:\Program Files\R\`), with a Start-menu entry in the group *R*.
-- In the book's day, CRAN shipped only 32-bit Windows builds; today both the installer and R itself are 64-bit on any modern machine, so no choices need to be made.
+- Early in the book's era CRAN's Windows installer was 32-bit only (64-bit arrived with R 2.12, 2010); today both the installer and R itself are 64-bit on any modern machine, so no choices need to be made.
 
 ## macOS
 

@@ -103,14 +103,14 @@ animals[4] <- "duck"     # the normal way to fix element 4
 animals
 ```
 
-That bracket assignment is *parsed into* a call to the function `[<-`. This is the equivalent expression:
+That bracket assignment is *parsed into* a call to the function `[<-` (the full expansion also rebinds the result: ``animals <- `[<-`(animals, 4, "duck")``). Calling it directly:
 
 ```{r,echo=TRUE}
 animals <- c("cow", "chicken", "pig", "tuba")
 `[<-`(animals, 4, "duck")
 ```
 
-(One subtle difference: written this way the result isn't auto-printed — but the effect is the same.)
+(Two subtle differences: called directly the result *is* auto-printed — and without the rebinding step, `animals` itself is left unchanged.)
 
 ## Why Care That Everything Is a Function Call? {.tight}
 
@@ -274,7 +274,7 @@ The interpreter parses the line as an if-then-else structure, evaluates the **co
 
 Some functionality lives inside the R system itself:
 
-- Many functions call internal system code via **`.Internal`** — e.g., the graphics workhorse:
+- Many functions call internal system code via **`.Internal`** (or its sibling **`.External`**) — e.g., the graphics workhorse, which nowadays goes through `.External.graphics`:
 
 ```{r,echo=TRUE}
 plot.xy

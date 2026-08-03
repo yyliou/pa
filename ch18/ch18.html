@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="hypotheses-on-trial" class="title-slide slide level1 center">
@@ -411,7 +411,7 @@ Deg. of Freedom        9    243034
 
 Residual standard error: 17.22012
 Estimated effects may be unbalanced
-29 observations deleted due to missingness</code></pre>
+因為不存在，29 個觀察量被刪除了</code></pre>
 </div>
 </div>
 <p><code>model.tables(aov(...))</code> prints per-level effects (Accidents −21.4 years vs.&nbsp;overall, Homicide −40.1, Alzheimer’s +13.8…). A subtler example — weight gain by birth month:</p>
@@ -522,7 +522,7 @@ alternative hypothesis: two-sided</code></pre>
     Asymptotic two-sample Kolmogorov-Smirnov test
 
 data:  jitter(subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Baseline) and jitter(subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Result)
-D = 0.22321, p-value = 0.007542
+D = 0.20536, p-value = 0.01777
 alternative hypothesis: two-sided</code></pre>
 </div>
 </div>
@@ -572,7 +572,7 @@ sample estimates:
 </section>
 <section id="wilcox.test" class="slide level2">
 <h2>wilcox.test</h2>
-<p>When normality is doubtful, <strong>rank-based</strong> tests trade some power for robustness. The Wilcoxon test is the t-test’s counterpart: its statistic counts, over all pairs, how often y[j] &lt; x[i] (about half if the distributions match) — no one-sample-vs-mean version exists:</p>
+<p>When normality is doubtful, <strong>rank-based</strong> tests trade some power for robustness. The Wilcoxon test is the t-test’s counterpart: its statistic counts, over all pairs, how often y[j] &lt; x[i] (about half if the distributions match); for the one-sample-vs-location analogue, pass a single sample with <code>mu=</code> (the Wilcoxon signed-rank test):</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">wilcox.test</span>(times.to.failure.e, times.to.failure.d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -711,7 +711,7 @@ odds ratio
  0.9072866 </code></pre>
 </div>
 </div>
-<p>Tiny p-value: reject independence — C-section rates differ by sex (46.7% vs.&nbsp;49.2% of each sex’s births… or rather, the odds ratio ≈ 0.91).</p>
+<p>Tiny p-value: reject independence — the sex mix differs by delivery method (girls are 46.7% of C-section deliveries vs.&nbsp;49.2% of vaginal ones; odds ratio ≈ 0.91).</p>
 </section>
 <section id="fisher.test-on-twins-chisq.test" class="slide level2">
 <h2>fisher.test on Twins; chisq.test</h2>
@@ -791,7 +791,7 @@ data:  method.and.sex.twins
 Friedman chi-squared = 2, df = 1, p-value = 0.1573</code></pre>
 </div>
 </div>
-<p>Agreeing with the chi-squared verdict: the two distributions are very likely independent.</p>
+<p>Agreeing with the chi-squared verdict: no significant association is detected — though remember, a non-significant p-value <em>fails to reject</em> independence; it does not prove it.</p>
 </section>
 <section id="copyright-notice" class="slide level2">
 <h2>Copyright Notice</h2>

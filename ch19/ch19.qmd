@@ -147,7 +147,7 @@ power.anova.test(groups = NULL, n = NULL,
 | `between.var` / `within.var` | variance between / within groups |
 | `sig.level` / `power` | as before |
 
-Here **six** of the seven parameters must be specified; the remaining `NULL` argument is calculated.
+Here **five** of the six parameters are specified; the one left `NULL` is calculated.
 
 ```{r,echo=TRUE}
 power.anova.test(groups=4, between.var=1, within.var=3, power=.80)

@@ -127,7 +127,7 @@ objects()
 
 ## The Global Environment
 
-Each session gets a fresh environment for your objects: the **global environment**. Surprisingly, it is not the root of the tree — it is the *last* environment in the search path's chain. Walking the parents from `.GlobalEnv`:
+Each session gets a fresh environment for your objects: the **global environment**. Surprisingly, it is not the root of the tree — it is a *leaf*: `search()` lists it first, and walking the parents from `.GlobalEnv` climbs through the attached packages toward the root:
 
 ```{r,echo=TRUE}
 e <- .GlobalEnv

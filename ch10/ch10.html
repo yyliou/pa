@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="two-object-systems" class="title-slide slide level1 center">
@@ -327,7 +327,7 @@ Class: numeric POSIXct POSIXct</code></pre>
 <span id="cb8-12"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>))   <span class="co"># ends before it starts!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `validObject()`:
-! invalid class "TimeSeries" object: FALSE</code></pre>
+! 類別為 "TimeSeries" 的物件無效: FALSE</code></pre>
 </div>
 </div>
 </section>
@@ -417,7 +417,7 @@ object="TimeSeries"
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p>This works for only <em>some</em> built-ins — <code>print</code>, notably, cannot be redefined this way. <code>?S4groupGeneric</code> lists the redefinable generics; the S3 section below explains why.</p>
+<p>One trap: <em>auto-printing</em> of S4 objects goes through <code>show()</code>, not <code>print</code> — define a <code>show</code> method to change how objects display at the console. <code>?S4groupGeneric</code> documents the <em>group</em> generics (<code>Arith</code>, <code>Compare</code>, <code>Ops</code>, …); the S3 section below explains more.</p>
 </div>
 </div>
 </div>
@@ -780,7 +780,7 @@ attr(,"tsp")
 <div class="cell-output cell-output-stdout">
 <pre><code>function (x, y, ...) 
 UseMethod("plot")
-&lt;bytecode: 0xc76cfcd28&gt;
+&lt;bytecode: 0xa1c698cf0&gt;
 &lt;environment: namespace:base&gt;</code></pre>
 </div>
 </div>
@@ -822,7 +822,7 @@ see '?methods' for accessing help and source code</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href=""></a><span class="fu">histogram.factor</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `histogram.factor()`:
-! could not find function "histogram.factor"</code></pre>
+! 沒有這個函式 "histogram.factor"</code></pre>
 </div>
 </div>
 <p>To read the hidden code anyway:</p>

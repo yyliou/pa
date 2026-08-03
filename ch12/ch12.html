@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="where-80-of-the-time-goes" class="title-slide slide level1 center">
@@ -795,11 +795,11 @@ pants.sizes2 31.00 pants.sizes</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a>batting<span class="fl">.2008</span>[<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(batting<span class="fl">.2008</span>), <span class="dv">5</span>), <span class="dv">9</span><span class="sc">:</span><span class="dv">14</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>      playerID yearID stint teamID lgID   G
-1345 gamelma01   2008     1    MIL   NL   2
-1054 delaceu01   2008     1    FLO   NL   6
-389  uribeju01   2008     1    CHA   AL 110
-767  shoppke01   2008     1    CLE   AL 112
-1190  diazro01   2008     2    PIT   NL   2</code></pre>
+1115 clemeje01   2008     1    SEA   AL  66
+1145 dewitbl01   2008     1    LAN   NL 117
+1243  mockga01   2008     1    WAS   NL  26
+508  quinthu01   2008     1    HOU   NL  59
+112  elartsc01   2008     1    CLE   AL   8</code></pre>
 </div>
 </div>
 <p>Cleverer subsets follow the same trick — all statistics for three randomly chosen teams:</p>
@@ -810,7 +810,7 @@ pants.sizes2 31.00 pants.sizes</code></pre>
 <span id="cb59-4"><a href=""></a><span class="fu">summary</span>(batting.<span class="fl">2008.3</span>teams<span class="sc">$</span>teamID)[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>ARI ATL BAL BOS CHA CHN CIN CLE COL DET 
-  0   0  46   0   0   0   0   0   0   0 </code></pre>
+  0   0   0   0  39   0   0   0   0   0 </code></pre>
 </div>
 </div>
 <p>For stratified, cluster, or maximum-entropy sampling, see the <code>sampling</code> package.</p>
@@ -939,13 +939,13 @@ CLE 5543 1455 560 339 22 171</code></pre>
 </section>
 <section id="counting-tabulate-and-table" class="slide level2">
 <h2>Counting: tabulate and table</h2>
-<p><code>tabulate</code> counts elements at each integer value (labels not included — add them):</p>
+<p><code>tabulate</code> counts occurrences of the integers 1..max — zeros are <em>not</em> counted, so label from 1 (players with 0 HR simply don’t appear):</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href=""></a>HR.cnts <span class="ot">&lt;-</span> <span class="fu">tabulate</span>(batting<span class="fl">.2008</span><span class="sc">$</span>HR)</span>
-<span id="cb73-2"><a href=""></a><span class="fu">names</span>(HR.cnts) <span class="ot">&lt;-</span> <span class="dv">0</span><span class="sc">:</span>(<span class="fu">length</span>(HR.cnts) <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb73-2"><a href=""></a><span class="fu">names</span>(HR.cnts) <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(HR.cnts)</span>
 <span id="cb73-3"><a href=""></a>HR.cnts[<span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> 0  1  2  3  4  5  6  7  8  9 10 11 
+<pre><code> 1  2  3  4  5  6  7  8  9 10 11 12 
 92 63 45 20 15 26 23 21 22 15 15 18 </code></pre>
 </div>
 </div>

@@ -228,7 +228,7 @@ with(toxins.and.cancer, cor.test(air_on_site/Surface_Area,
 
 ## wilcox.test
 
-常態性可疑時，**等級式**檢定用一點檢定力換取穩健。Wilcoxon 檢定是 t 檢定的對應：統計量數遍所有配對中 y[j] < x[i] 的次數（分布相同時約一半）——沒有「單樣本對假設平均」的版本：
+常態性可疑時，**等級式**檢定用一點檢定力換取穩健。Wilcoxon 檢定是 t 檢定的對應：統計量數遍所有配對中 y[j] < x[i] 的次數（分布相同時約一半）；「單樣本對假設位置」的版本則是給單一樣本加 `mu=`（Wilcoxon 符號等級檢定）：
 
 ```{r,echo=TRUE,warning=TRUE}
 wilcox.test(times.to.failure.e, times.to.failure.d)
@@ -290,7 +290,7 @@ method.and.sex
 fisher.test(method.and.sex)
 ```
 
-p 值極小：拒絕獨立——剖腹產率因性別而異（各性別中佔 46.7% 對 49.2%……更精確地說，勝算比 ≈ 0.91）。
+p 值極小：拒絕獨立——不同生產方式的性別組成不同（剖腹產中女嬰佔 46.7%、自然產中佔 49.2%；勝算比 ≈ 0.91）。
 
 ## 雙胞胎的 fisher.test；chisq.test
 
@@ -338,7 +338,7 @@ chisq.test(table(births2006.smpl$DOB_WK, births2006.smpl$DOB_MM))
 friedman.test(method.and.sex.twins)
 ```
 
-與卡方的判決一致：兩個分布很可能獨立。
+與卡方的判決一致：偵測不到顯著關聯——但請記得，p 值不顯著只是*無法拒絕*獨立，並不是證明了獨立。
 
 ## 版權聲明
 

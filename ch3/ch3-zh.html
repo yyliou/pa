@@ -705,7 +705,7 @@ $size
 <p><strong>資料框（data frame）</strong>是一個由等長具名向量組成的串列——想成<em>試算表</em>或<em>資料庫表格</em>即可，特別適合存放實驗資料。書中範例：2008 年國家聯盟東區的勝敗紀錄：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb106"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href=""></a>teams <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"PHI"</span>,<span class="st">"NYM"</span>,<span class="st">"FLA"</span>,<span class="st">"ATL"</span>,<span class="st">"WSN"</span>)</span>
-<span id="cb106-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">92</span>, <span class="dv">89</span>, <span class="dv">94</span>, <span class="dv">72</span>, <span class="dv">59</span>)</span>
+<span id="cb106-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">92</span>, <span class="dv">89</span>, <span class="dv">84</span>, <span class="dv">72</span>, <span class="dv">59</span>)</span>
 <span id="cb106-3"><a href=""></a>l <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">70</span>, <span class="dv">73</span>, <span class="dv">77</span>, <span class="dv">90</span>, <span class="dv">102</span>)</span>
 <span id="cb106-4"><a href=""></a>nleast <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(teams, w, l)</span>
 <span id="cb106-5"><a href=""></a>nleast</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -713,7 +713,7 @@ $size
 <pre><code>  teams  w   l
 1   PHI 92  70
 2   NYM 89  73
-3   FLA 94  77
+3   FLA 84  77
 4   ATL 72  90
 5   WSN 59 102</code></pre>
 </div>
@@ -725,7 +725,7 @@ $size
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb108"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href=""></a>nleast<span class="sc">$</span>w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 92 89 94 72 59</code></pre>
+<pre><code>[1] 92 89 84 72 59</code></pre>
 </div>
 </div>
 <p>想找特定值——比如佛羅里達馬林魚（FLA）的敗場數——先建邏輯向量，再拿它當篩子：</p>
@@ -995,7 +995,7 @@ FG aborted FG blocked    FG good      FG no
 <span id="cb148-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
 <span id="cb148-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>兩欄是數值（<code>Amount</code>、<code>Year</code>）；另外兩欄是新型別：<strong>因子（factor）</strong>——R 對類別值的精簡表示法，以 <code>factor()</code> 建立，是建模函式的核心配角。</p>
+<p>兩欄是數值（<code>Amount</code>、<code>Year</code>）；<code>Food</code> 則是新型別：<strong>因子（factor）</strong>——R 對類別值的精簡表示法，以 <code>factor()</code> 建立，是建模函式的核心配角。</p>
 </section>
 <section id="分面點圖" class="slide level2">
 <h2>分面點圖</h2>

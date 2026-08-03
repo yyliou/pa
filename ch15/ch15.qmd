@@ -238,7 +238,7 @@ qplot(x, y, ..., data, facets, margins, geom, stat,
 | `x`, `y`, `data` | values and (optional) data frame | |
 | `facets` | facet formula: one-sided → `facet_wrap`, two-sided → `facet_grid` | `NULL` |
 | `geom` | geoms as character vector | `"auto"`: point (x,y) / histogram (x) |
-| `stat` / `position` | statistics / position adjustments | `list(NULL)` |
+| `stat` / `position` | statistics / position adjustments (book era — removed in ggplot2 2.0) | `list(NULL)` |
 | `xlim`, `ylim`, `log` | limits; `log` = `""`/`"x"`/`"y"`/`"xy"` | |
 | `main`, `xlab`, `ylab`, `asp` | titles, labels, aspect | deparsed expressions |
 | `...` | other aesthetics passed to layers | |
@@ -253,8 +253,8 @@ summary(plt)
 ```
 
 - `aes(x, y, ...)` declares the mappings (relatives: `aes_string`, `aes_auto` in the book's era).
-- A bare `ggplot(...)` object has no layers — printing it errors ("No layers in plot").
-- The generic `layer(...)` adds a layer by geom short-name (`layer("point")`); in practice the `geom_*` convenience functions do this.
+- A bare `ggplot(...)` has no layers — printing it once errored ("No layers in plot"); modern ggplot2 draws an empty panel.
+- Book-era `layer("point")` added a layer by short-name; modern `layer()` needs explicit `geom`/`stat`/`position` — in practice, use `geom_*`.
 
 ## The geom Vocabulary
 

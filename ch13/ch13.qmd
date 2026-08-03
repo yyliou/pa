@@ -281,7 +281,7 @@ persp(halfdome, col=grey(.25), border=NA, expand=.15,
 image(yosemite, asp=253/562, ylim=c(1,0), col=sapply((0:32)/32, gray))
 ```
 
-(Tweaks: aspect ratio matching the data, reversed y, 32 grays.) The biology-flavored relative **`heatmap`** adds optional **dendrograms** along the margins — `Rowv`/`Colv`, `distfun`/`hclustfun`, `scale`, `margins`, `cexRow`/`cexCol` and friends.
+(Tweaks: aspect ratio matching the data, reversed y, a 33-step gray ramp `(0:32)/32`.) The biology-flavored relative **`heatmap`** adds optional **dendrograms** along the margins — `Rowv`/`Colv`, `distfun`/`hclustfun`, `scale`, `margins`, `cexRow`/`cexCol` and friends.
 
 ## contour
 

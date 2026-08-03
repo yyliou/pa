@@ -453,11 +453,11 @@ rowsum(batting.2008[, c("AB", "H", "BB", "2B", "3B", "HR")],
 
 ## Counting: tabulate and table
 
-`tabulate` counts elements at each integer value (labels not included — add them):
+`tabulate` counts occurrences of the integers 1..max — zeros are *not* counted, so label from 1 (players with 0 HR simply don't appear):
 
 ```{r,echo=TRUE}
 HR.cnts <- tabulate(batting.2008$HR)
-names(HR.cnts) <- 0:(length(HR.cnts) - 1)
+names(HR.cnts) <- 1:length(HR.cnts)
 HR.cnts[1:12]
 ```
 

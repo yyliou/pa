@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="圖形文法" class="title-slide slide level1 center">
@@ -477,7 +477,7 @@ position_identity </code></pre>
 </tr>
 <tr class="even">
 <td><code>stat</code>／<code>position</code></td>
-<td>統計變換／位置調整</td>
+<td>統計變換／位置調整（書中年代——ggplot2 2.0 已移除）</td>
 <td><code>list(NULL)</code></td>
 </tr>
 <tr class="odd">
@@ -516,8 +516,8 @@ position_identity </code></pre>
 </div>
 <ul>
 <li><code>aes(x, y, ...)</code> 宣告映射（書中年代的親戚：<code>aes_string</code>、<code>aes_auto</code>）。</li>
-<li>光禿禿的 <code>ggplot(...)</code> 沒有圖層——直接列印會報錯（“No layers in plot”）。</li>
-<li>泛用的 <code>layer(...)</code> 以 geom 簡名加圖層（<code>layer("point")</code>）；實務上都用 <code>geom_*</code> 便利函式。</li>
+<li>光禿禿的 <code>ggplot(...)</code> 沒有圖層——書中年代直接列印會報錯（“No layers in plot”）；現代 ggplot2 只會畫出空面板。</li>
+<li>書中年代的 <code>layer("point")</code> 以 geom 簡名加圖層；現代 <code>layer()</code> 要求明確給 <code>geom</code>、<code>stat</code>、<code>position</code>——實務上都用 <code>geom_*</code> 便利函式。</li>
 </ul>
 </section>
 <section id="geom-詞彙表" class="slide level2">

@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="making-r-faster" class="title-slide slide level1 center">
@@ -233,8 +233,8 @@ Yu-You Liou (NTU)
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">system.time</span>(<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fl">1e6</span>) <span class="fu">sqrt</span>(i))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   user  system elapsed 
-  0.007   0.000   0.008 </code></pre>
+<pre><code>使用者   系統   流逝 
+ 0.008  0.000  0.009 </code></pre>
 </div>
 </div>
 <p>Three numbers: <strong>user time</strong> (work R itself did), <strong>system time</strong> (work the OS did on R’s behalf), <strong>elapsed time</strong> (wall clock). <code>gcFirst=TRUE</code> (the default) runs garbage collection first for a cleaner reading. (For careful microbenchmarks the modern <code>microbenchmark</code> and <code>bench</code> packages repeat and compare.)</p>
@@ -256,8 +256,8 @@ Yu-You Liou (NTU)
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">gc</span>()                             <span class="co"># garbage-collect AND report usage</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-Ncells  626473 33.5    1420564 75.9         NA  1420564 75.9
-Vcells 1158948  8.9    8388608 64.0      24576  2014255 15.4</code></pre>
+Ncells  622036 33.3    1408715 75.3         NA  1408715 75.3
+Vcells 1153062  8.8    8388608 64.0      24576  2012802 15.4</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">object.size</span>(<span class="st">"Hello world!"</span>)      <span class="co"># approximate size of one object</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -267,7 +267,7 @@ Vcells 1158948  8.9    8388608 64.0      24576  2014255 15.4</code></pre>
 <ul>
 <li><strong><code>gc()</code></strong> forces garbage collection <em>and</em> reports memory in use.</li>
 <li><strong><code>object.size(x)</code></strong> estimates an object’s footprint — invaluable when a “small” data frame is secretly huge.</li>
-<li><strong><code>memory.profile()</code></strong> breaks usage down by object type; on Windows, <code>memory.size()</code>/<code>memory.limit()</code> report and cap total usage.</li>
+<li><strong><code>memory.profile()</code></strong> breaks usage down by object type. (The old Windows-only <code>memory.size()</code>/<code>memory.limit()</code> were retired in R 4.2.)</li>
 <li><strong><code>Rprofmem(filename, threshold=)</code></strong> logs large allocations (R must be built with memory profiling).</li>
 </ul>
 </section></section>

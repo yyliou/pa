@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="learning-by-typing" class="title-slide slide level1 center">
@@ -311,8 +311,7 @@ Yu-You Liou (NTU)
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>) <span class="sc">+</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning in c(1, 2, 3, 4, 5) + c(10, 100): longer object length is not a
-multiple of shorter object length</code></pre>
+<pre><code>Warning in c(1, 2, 3, 4, 5) + c(10, 100): 較長的物件長度並非較短物件長度的倍數</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1]  11 102  13 104  15</code></pre>
@@ -706,7 +705,7 @@ $size
 <p>A <strong>data frame</strong> is a list of named vectors, all the same length — think <em>spreadsheet</em> or <em>database table</em>. It is the natural container for experimental data. The book’s example: 2008 win/loss records of the National League East:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb106"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href=""></a>teams <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"PHI"</span>,<span class="st">"NYM"</span>,<span class="st">"FLA"</span>,<span class="st">"ATL"</span>,<span class="st">"WSN"</span>)</span>
-<span id="cb106-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">92</span>, <span class="dv">89</span>, <span class="dv">94</span>, <span class="dv">72</span>, <span class="dv">59</span>)</span>
+<span id="cb106-2"><a href=""></a>w <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">92</span>, <span class="dv">89</span>, <span class="dv">84</span>, <span class="dv">72</span>, <span class="dv">59</span>)</span>
 <span id="cb106-3"><a href=""></a>l <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">70</span>, <span class="dv">73</span>, <span class="dv">77</span>, <span class="dv">90</span>, <span class="dv">102</span>)</span>
 <span id="cb106-4"><a href=""></a>nleast <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(teams, w, l)</span>
 <span id="cb106-5"><a href=""></a>nleast</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -714,7 +713,7 @@ $size
 <pre><code>  teams  w   l
 1   PHI 92  70
 2   NYM 89  73
-3   FLA 94  77
+3   FLA 84  77
 4   ATL 72  90
 5   WSN 59 102</code></pre>
 </div>
@@ -726,7 +725,7 @@ $size
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb108"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href=""></a>nleast<span class="sc">$</span>w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 92 89 94 72 59</code></pre>
+<pre><code>[1] 92 89 84 72 59</code></pre>
 </div>
 </div>
 <p>To find a specific value — say, losses by the Florida Marlins — build a logical vector and use it as a filter:</p>
@@ -996,7 +995,7 @@ FG aborted FG blocked    FG good      FG no
 <span id="cb148-3"><a href=""></a>              temp, <span class="at">mode =</span> <span class="st">"wb"</span>)</span>
 <span id="cb148-4"><a href=""></a><span class="fu">load</span>(temp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Two columns are numeric (<code>Amount</code>, <code>Year</code>); two are a new type: <strong>factors</strong> — R’s compact representation of categorical values, created with <code>factor()</code> and central to modeling functions.</p>
+<p>Two columns are numeric (<code>Amount</code>, <code>Year</code>); <code>Food</code> is a new type: a <strong>factor</strong> — R’s compact representation of categorical values, created with <code>factor()</code> and central to modeling functions.</p>
 </section>
 <section id="a-conditioned-dot-plot" class="slide level2">
 <h2>A Conditioned Dot Plot</h2>

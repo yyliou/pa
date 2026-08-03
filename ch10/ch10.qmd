@@ -195,7 +195,7 @@ my.TimeSeries[3]
 ```
 
 ::: {.callout-note}
-This works for only *some* built-ins — `print`, notably, cannot be redefined this way. `?S4groupGeneric` lists the redefinable generics; the S3 section below explains why.
+One trap: *auto-printing* of S4 objects goes through `show()`, not `print` — define a `show` method to change how objects display at the console. `?S4groupGeneric` documents the *group* generics (`Arith`, `Compare`, `Ops`, …); the S3 section below explains more.
 :::
 
 ## Inheritance: WeightHistory

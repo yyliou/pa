@@ -210,9 +210,9 @@ Just as in school math (`1 + 2 × 5` multiplies first), R resolves ambiguity wit
 | Operators (by priority) | Description |
 |---|---|
 | `( {` | Function calls, grouping |
-| `[ [[` | Indexing |
 | `:: :::` | Namespace access |
 | `$ @` | Component / slot extraction |
+| `[ [[` | Indexing |
 | `^` | Exponentiation (right to left) |
 | `- +` | Unary minus, plus |
 | `:` | Sequence |
@@ -225,8 +225,8 @@ Just as in school math (`1 + 2 × 5` multiplies first), R resolves ambiguity wit
 | `| ||` | Or |
 | `~` | Formulas |
 | `-> ->>` | Rightward assignment |
-| `=` | Assignment (right to left) |
 | `<- <<-` | Assignment (right to left) |
+| `=` | Assignment (right to left) |
 | `?` | Help |
 
 The authoritative, current list: `help(syntax)`.

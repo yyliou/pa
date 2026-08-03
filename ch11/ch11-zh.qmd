@@ -119,7 +119,7 @@ save(..., list =, file =, ascii =, version =, envir =,
 | `...`／`list` | 要存的物件：以符號列出／以字元向量指定 | |
 | `file` | 檔名或連線 | |
 | `ascii` | 存成可讀文字而非二進位？ | `FALSE` |
-| `version` | 檔案格式版本（R 1.4.0 起為 2） | 2 |
+| `version` | 檔案格式版本（R 3.6 起為 3；2 為 R 1.4–3.5 的格式） | 3 |
 | `envir` | 去哪個環境找物件 | 呼叫端環境 |
 | `compress` | gzip 壓縮？ | 二進位時 `TRUE` |
 | `eval.promises` | 存檔前強制求值 promise？ | `TRUE` |
@@ -236,7 +236,7 @@ sp500[1:5, ]
 ## 匯入實務訣竅
 
 - **先用小樣本測試。** 載入 15 分鐘才發現分隔符指定錯，很傷；實驗階段加上 `nrows=20`。
-- **從 Excel 來：** 匯出 CSV 或 tab 分隔的 TXT，行尾盡量用 Unix 式（`\n`）而非 MS-DOS 式（`\n\r`）。CSV 在 Windows 點兩下就開進 Excel，很方便——但文字含逗號就必須加引號、引號內的引號還得跳脫；tab 在文字中較罕見，TXT 檔較少出意外。
+- **從 Excel 來：** 匯出 CSV 或 tab 分隔的 TXT，行尾盡量用 Unix 式（`\n`）而非 MS-DOS 式（`\r\n`）。CSV 在 Windows 點兩下就開進 Excel，很方便——但文字含逗號就必須加引號、引號內的引號還得跳脫；tab 在文字中較罕見，TXT 檔較少出意外。
 - **從資料庫來：** 用 GUI 工具查詢再匯出，勝過脆弱的命令列腳本；書中點名 Toad for Data Analysts、MySQL Query Browser、Oracle SQL Developer（今日：DBeaver 與各家現行工具）。
 
 ## 定寬檔案：read.fwf

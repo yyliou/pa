@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="r-的思考方式" class="title-slide slide level1 center">
@@ -313,7 +313,7 @@
 <pre><code>[1] "cow"     "chicken" "pig"     "duck"   </code></pre>
 </div>
 </div>
-<p>那個中括號指派其實<em>被剖析成</em>對函式 <code>[&lt;-</code> 的呼叫。下面是等價的寫法：</p>
+<p>那個中括號指派其實<em>被剖析成</em>對函式 <code>[&lt;-</code> 的呼叫（完整的展開還會把結果綁回去：<code>animals &lt;- `[&lt;-`(animals, 4, "duck")</code>）。直接呼叫看看：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href=""></a>animals <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"cow"</span>, <span class="st">"chicken"</span>, <span class="st">"pig"</span>, <span class="st">"tuba"</span>)</span>
 <span id="cb20-2"><a href=""></a><span class="st">`</span><span class="at">[&lt;-</span><span class="st">`</span>(animals, <span class="dv">4</span>, <span class="st">"duck"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -321,7 +321,7 @@
 <pre><code>[1] "cow"     "chicken" "pig"     "duck"   </code></pre>
 </div>
 </div>
-<p>（一個細微差異：這樣寫結果不會自動印出——但效果完全相同。）</p>
+<p>（兩個細微差異：直接呼叫的結果<em>會</em>自動印出——而且少了綁回那一步，<code>animals</code> 本身並未被更新。）</p>
 </section>
 <section id="為什麼要知道一切都是函式呼叫" class="slide level2 tight">
 <h2>為什麼要知道「一切都是函式呼叫」？</h2>
@@ -417,7 +417,7 @@
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a><span class="fu">x</span>(<span class="dv">2</span>)                     <span class="co"># x（還）不是函式</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `x()`:
-! could not find function "x"</code></pre>
+! 沒有這個函式 "x"</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a>x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) i<span class="sc">^</span><span class="dv">2</span></span>
 <span id="cb44-2"><a href=""></a>x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -582,7 +582,7 @@ i^2</code></pre>
 <h2>.Internal 與 .Primitive</h2>
 <p>有些功能實作在 R 系統內部：</p>
 <ul>
-<li>許多函式透過 <strong><code>.Internal</code></strong> 呼叫內部系統程式碼——例如繪圖主力：</li>
+<li>許多函式透過 <strong><code>.Internal</code></strong>（或其近親 <strong><code>.External</code></strong>）呼叫內部系統程式碼——例如繪圖主力，現今走的是 <code>.External.graphics</code>：</li>
 </ul>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href=""></a>plot.xy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -605,7 +605,7 @@ i^2</code></pre>
     invisible(.External.graphics(C_plotXY, xy, t, pch, lty, col, 
         bg, cex, lwd, ...))
 }
-&lt;bytecode: 0x97ef9f428&gt;
+&lt;bytecode: 0x929150d98&gt;
 &lt;environment: namespace:graphics&gt;</code></pre>
 </div>
 </div>

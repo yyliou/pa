@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="兩套物件系統" class="title-slide slide level1 center">
@@ -327,7 +327,7 @@ Class: numeric POSIXct POSIXct</code></pre>
 <span id="cb8-12"><a href=""></a>                 <span class="at">format=</span><span class="st">"%m/%d/%Y %H:%M:%S"</span>))   <span class="co"># 還沒開始就結束了！</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `validObject()`:
-! invalid class "TimeSeries" object: FALSE</code></pre>
+! 類別為 "TimeSeries" 的物件無效: FALSE</code></pre>
 </div>
 </div>
 </section>
@@ -417,7 +417,7 @@ object="TimeSeries"
 <p><strong>Note</strong></p>
 </div>
 <div class="callout-content">
-<p>這招只對<em>部分</em>內建函式有效——<code>print</code> 就不能這樣重定義。可重定義的泛型清單見 <code>?S4groupGeneric</code>；原因在後面的 S3 一節說明。</p>
+<p>一個陷阱：S4 物件的<em>自動列印</em>走的是 <code>show()</code> 而非 <code>print</code>——想改主控台顯示，定義 <code>show</code> 方法。<code>?S4groupGeneric</code> 記載的是<em>群組</em>泛型（<code>Arith</code>、<code>Compare</code>、<code>Ops</code>……）；後面的 S3 一節有更多說明。</p>
 </div>
 </div>
 </div>
@@ -768,7 +768,7 @@ attr(,"tsp")
 <div class="cell-output cell-output-stdout">
 <pre><code>function (x, y, ...) 
 UseMethod("plot")
-&lt;bytecode: 0x774cf9310&gt;
+&lt;bytecode: 0x700209930&gt;
 &lt;environment: namespace:base&gt;</code></pre>
 </div>
 </div>
@@ -810,7 +810,7 @@ see '?methods' for accessing help and source code</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href=""></a><span class="fu">histogram.factor</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `histogram.factor()`:
-! could not find function "histogram.factor"</code></pre>
+! 沒有這個函式 "histogram.factor"</code></pre>
 </div>
 </div>
 <p>無論如何想讀隱藏的程式碼：</p>

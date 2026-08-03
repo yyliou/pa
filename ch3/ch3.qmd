@@ -350,7 +350,7 @@ A **data frame** is a list of named vectors, all the same length — think *spre
 
 ```{r,echo=TRUE}
 teams <- c("PHI","NYM","FLA","ATL","WSN")
-w <- c(92, 89, 94, 72, 59)
+w <- c(92, 89, 84, 72, 59)
 l <- c(70, 73, 77, 90, 102)
 nleast <- data.frame(teams, w, l)
 nleast
@@ -563,7 +563,7 @@ download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/consu
 load(temp)
 ```
 
-Two columns are numeric (`Amount`, `Year`); two are a new type: **factors** — R's compact representation of categorical values, created with `factor()` and central to modeling functions.
+Two columns are numeric (`Amount`, `Year`); `Food` is a new type: a **factor** — R's compact representation of categorical values, created with `factor()` and central to modeling functions.
 
 ## A Conditioned Dot Plot
 

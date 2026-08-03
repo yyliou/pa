@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="假設受審" class="title-slide slide level1 center">
@@ -411,7 +411,7 @@ Deg. of Freedom        9    243034
 
 Residual standard error: 17.22012
 Estimated effects may be unbalanced
-29 observations deleted due to missingness</code></pre>
+因為不存在，29 個觀察量被刪除了</code></pre>
 </div>
 </div>
 <p><code>model.tables(aov(...))</code> 印出各水準效果（意外事故比總平均少 21.4 歲、他殺少 40.1、阿茲海默多 13.8……）。更微妙的例子——孕期增重按出生月份：</p>
@@ -522,7 +522,7 @@ alternative hypothesis: two-sided</code></pre>
     Asymptotic two-sample Kolmogorov-Smirnov test
 
 data:  jitter(subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Baseline) and jitter(subset(SPECint2006, Num.Chips == 1 &amp; Num.Cores == 2)$Result)
-D = 0.21429, p-value = 0.01168
+D = 0.20536, p-value = 0.01777
 alternative hypothesis: two-sided</code></pre>
 </div>
 </div>
@@ -572,7 +572,7 @@ sample estimates:
 </section>
 <section id="wilcox.test" class="slide level2">
 <h2>wilcox.test</h2>
-<p>常態性可疑時，<strong>等級式</strong>檢定用一點檢定力換取穩健。Wilcoxon 檢定是 t 檢定的對應：統計量數遍所有配對中 y[j] &lt; x[i] 的次數（分布相同時約一半）——沒有「單樣本對假設平均」的版本：</p>
+<p>常態性可疑時，<strong>等級式</strong>檢定用一點檢定力換取穩健。Wilcoxon 檢定是 t 檢定的對應：統計量數遍所有配對中 y[j] &lt; x[i] 的次數（分布相同時約一半）；「單樣本對假設位置」的版本則是給單一樣本加 <code>mu=</code>（Wilcoxon 符號等級檢定）：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href=""></a><span class="fu">wilcox.test</span>(times.to.failure.e, times.to.failure.d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -711,7 +711,7 @@ odds ratio
  0.9072866 </code></pre>
 </div>
 </div>
-<p>p 值極小：拒絕獨立——剖腹產率因性別而異（各性別中佔 46.7% 對 49.2%……更精確地說，勝算比 ≈ 0.91）。</p>
+<p>p 值極小：拒絕獨立——不同生產方式的性別組成不同（剖腹產中女嬰佔 46.7%、自然產中佔 49.2%；勝算比 ≈ 0.91）。</p>
 </section>
 <section id="雙胞胎的-fisher.testchisq.test" class="slide level2">
 <h2>雙胞胎的 fisher.test；chisq.test</h2>
@@ -791,7 +791,7 @@ data:  method.and.sex.twins
 Friedman chi-squared = 2, df = 1, p-value = 0.1573</code></pre>
 </div>
 </div>
-<p>與卡方的判決一致：兩個分布很可能獨立。</p>
+<p>與卡方的判決一致：偵測不到顯著關聯——但請記得，p 值不顯著只是<em>無法拒絕</em>獨立，並不是證明了獨立。</p>
 </section>
 <section id="版權聲明" class="slide level2">
 <h2>版權聲明</h2>

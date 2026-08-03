@@ -147,7 +147,7 @@ power.anova.test(groups = NULL, n = NULL,
 | `between.var`／`within.var` | 組間／組內變異數 |
 | `sig.level`／`power` | 同前 |
 
-這裡七個參數要**給六個**；留 `NULL` 的那個被計算。
+這裡六個參數要**給五個**；留 `NULL` 的那個被計算。
 
 ```{r,echo=TRUE}
 power.anova.test(groups=4, between.var=1, within.var=3, power=.80)

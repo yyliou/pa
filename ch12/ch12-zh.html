@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="八成時間花在哪裡" class="title-slide slide level1 center">
@@ -784,12 +784,12 @@ pants.sizes2 31.00 pants.sizes</code></pre>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href=""></a>batting<span class="fl">.2008</span>[<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(batting<span class="fl">.2008</span>), <span class="dv">5</span>), <span class="dv">9</span><span class="sc">:</span><span class="dv">14</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>     playerID yearID stint teamID lgID   G
-153 griffke02   2008     2    CHA   AL  41
-894 napolmi01   2008     1    LAA   AL  78
-947 youngde03   2008     1    MIN   AL 152
-730 bottsja01   2008     1    TEX   AL  15
-814 peraljo01   2008     1    KCA   AL  40</code></pre>
+<pre><code>      playerID yearID stint teamID lgID  G
+862  bonsebo01   2008     1    MIN   AL 47
+881  billich01   2008     1    LAN   NL 35
+1154 bartobr01   2008     1    SLN   NL 82
+968  karstje01   2008     1    PIT   NL  9
+916  riversa01   2008     1    WAS   NL 76</code></pre>
 </div>
 </div>
 <p>更複雜的隨機子集也是同一招——隨機抽三支球隊的全部數據：</p>
@@ -800,7 +800,7 @@ pants.sizes2 31.00 pants.sizes</code></pre>
 <span id="cb59-4"><a href=""></a><span class="fu">summary</span>(batting.<span class="fl">2008.3</span>teams<span class="sc">$</span>teamID)[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>ARI ATL BAL BOS CHA CHN CIN CLE COL DET 
-  0   0   0  47   0   0   0  49   0   0 </code></pre>
+  0   0   0   0   0   0   0   0   0   0 </code></pre>
 </div>
 </div>
 <p>分層、群集、最大熵等進階抽樣方法，見 <code>sampling</code> 套件。</p>
@@ -929,13 +929,13 @@ CLE 5543 1455 560 339 22 171</code></pre>
 </section>
 <section id="計數tabulate-與-table" class="slide level2">
 <h2>計數：tabulate 與 table</h2>
-<p><code>tabulate</code> 統計各整數值出現的次數（不附標籤——自己加）：</p>
+<p><code>tabulate</code> 統計整數 1..max 各出現幾次——<strong>不數 0</strong>，標籤要從 1 起算（0 支全壘打的球員根本不會出現）：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href=""></a>HR.cnts <span class="ot">&lt;-</span> <span class="fu">tabulate</span>(batting<span class="fl">.2008</span><span class="sc">$</span>HR)</span>
-<span id="cb73-2"><a href=""></a><span class="fu">names</span>(HR.cnts) <span class="ot">&lt;-</span> <span class="dv">0</span><span class="sc">:</span>(<span class="fu">length</span>(HR.cnts) <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb73-2"><a href=""></a><span class="fu">names</span>(HR.cnts) <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(HR.cnts)</span>
 <span id="cb73-3"><a href=""></a>HR.cnts[<span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> 0  1  2  3  4  5  6  7  8  9 10 11 
+<pre><code> 1  2  3  4  5  6  7  8  9 10 11 12 
 92 63 45 20 15 26 23 21 22 15 15 18 </code></pre>
 </div>
 </div>

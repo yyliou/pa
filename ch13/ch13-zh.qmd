@@ -281,7 +281,7 @@ persp(halfdome, col=grey(.25), border=NA, expand=.15,
 image(yosemite, asp=253/562, ylim=c(1,0), col=sapply((0:32)/32, gray))
 ```
 
-（微調：長寬比配合資料、y 軸反向、32 階灰。）生物學風味的親戚 **`heatmap`** 在邊緣加上可選的**樹狀圖（dendrogram）**——`Rowv`／`Colv`、`distfun`／`hclustfun`、`scale`、`margins`、`cexRow`／`cexCol` 等。
+（微調：長寬比配合資料、y 軸反向、33 階灰 `(0:32)/32`。）生物學風味的親戚 **`heatmap`** 在邊緣加上可選的**樹狀圖（dendrogram）**——`Rowv`／`Colv`、`distfun`／`hclustfun`、`scale`、`margins`、`cexRow`／`cexCol` 等。
 
 ## contour
 

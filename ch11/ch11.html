@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="getting-data-in-and-out" class="title-slide slide level1 center">
@@ -347,8 +347,8 @@ Yu-You Liou (NTU)
 </tr>
 <tr class="even">
 <td><code>version</code></td>
-<td>file-format version (2 from R 1.4.0 on)</td>
-<td>2</td>
+<td>file-format version (3 since R 3.6; 2 was the R 1.4–3.5 format)</td>
+<td>3</td>
 </tr>
 <tr class="odd">
 <td><code>envir</code></td>
@@ -618,7 +618,7 @@ Yu-You Liou (NTU)
 <h2>Practical Importing Tips</h2>
 <ul>
 <li><strong>Test with a sample first.</strong> A 15-minute load that fails on a wrong separator hurts; add <code>nrows=20</code> while experimenting.</li>
-<li><strong>From Excel:</strong> export CSV or tab-delimited TXT, preferring Unix line endings (<code>\n</code>) over MS-DOS (<code>\n\r</code>). CSVs open conveniently in Excel — but commas inside text demand quoting and escaped quotation marks; tabs occur less often in text, so TXT files cause fewer surprises.</li>
+<li><strong>From Excel:</strong> export CSV or tab-delimited TXT, preferring Unix line endings (<code>\n</code>) over MS-DOS (<code>\r\n</code>). CSVs open conveniently in Excel — but commas inside text demand quoting and escaped quotation marks; tabs occur less often in text, so TXT files cause fewer surprises.</li>
 <li><strong>From databases:</strong> querying with a GUI tool and exporting beats fragile command-line scripts; the book names Toad for Data Analysts, MySQL Query Browser, and Oracle SQL Developer (today: DBeaver, and each vendor’s current tool).</li>
 </ul>
 </section>

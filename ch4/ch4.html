@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="the-package-system" class="title-slide slide level1 center">
@@ -438,7 +438,7 @@ Yu-You Liou (NTU)
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a>fit <span class="ot">&lt;-</span> <span class="fu">rpart</span>(Kyphosis <span class="sc">~</span> Age <span class="sc">+</span> Number <span class="sc">+</span> Start, <span class="at">data =</span> kyphosis)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `rpart()`:
-! could not find function "rpart"</code></pre>
+! 沒有這個函式 "rpart"</code></pre>
 </div>
 </div>
 <p>Load the package first, and all is well:</p>
@@ -641,8 +641,7 @@ Yu-You Liou (NTU)
 <p><code>package.skeleton</code> lays out the required directory structure and can copy a set of R objects into it:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href=""></a><span class="fu">package.skeleton</span>(<span class="at">name =</span> <span class="st">"anRpackage"</span>, list, <span class="at">environment =</span> .GlobalEnv,</span>
-<span id="cb14-2"><a href=""></a>                 <span class="at">path =</span> <span class="st">"."</span>, <span class="at">force =</span> <span class="cn">FALSE</span>, <span class="at">namespace =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb14-3"><a href=""></a>                 <span class="at">code_files =</span> <span class="fu">character</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-2"><a href=""></a>                 <span class="at">path =</span> <span class="st">"."</span>, <span class="at">force =</span> <span class="cn">FALSE</span>, <span class="at">code_files =</span> <span class="fu">character</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <table class="caption-top">
 <colgroup>
@@ -684,11 +683,6 @@ Yu-You Liou (NTU)
 <td><code>FALSE</code></td>
 </tr>
 <tr class="even">
-<td><code>namespace</code></td>
-<td>Add a namespace?</td>
-<td><code>FALSE</code></td>
-</tr>
-<tr class="odd">
 <td><code>code_files</code></td>
 <td>Paths of files containing R code</td>
 <td><code>character()</code></td>
@@ -724,8 +718,8 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?</code></pre>
 <p>Useful optional fields:</p>
 <ul>
-<li><strong><code>LazyLoad</code></strong> — if <code>yes</code> (default), data objects load as lightweight <em>promises</em> rather than into memory; full access, (almost) no space.</li>
-<li><strong><code>LazyData</code></strong> — the same idea, specifically for data files.</li>
+<li><strong><code>LazyData</code></strong> — if <code>yes</code>, datasets load as lightweight <em>promises</em> rather than into memory (without it, call <code>data()</code> first); full access, (almost) no space.</li>
+<li><strong><code>LazyLoad</code></strong> — the historical analogue for R code; ignored since R 2.14 (code is always lazy-loaded now).</li>
 <li><strong><code>Depends</code></strong> — requirements on R or other packages, e.g.&nbsp;<code>Depends: R(&gt;= 2.8), nnet</code>.</li>
 </ul>
 </section>

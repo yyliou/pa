@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="資料的進與出" class="title-slide slide level1 center">
@@ -342,8 +342,8 @@
 </tr>
 <tr class="even">
 <td><code>version</code></td>
-<td>檔案格式版本（R 1.4.0 起為 2）</td>
-<td>2</td>
+<td>檔案格式版本（R 3.6 起為 3；2 為 R 1.4–3.5 的格式）</td>
+<td>3</td>
 </tr>
 <tr class="odd">
 <td><code>envir</code></td>
@@ -608,7 +608,7 @@
 <h2>匯入實務訣竅</h2>
 <ul>
 <li><strong>先用小樣本測試。</strong> 載入 15 分鐘才發現分隔符指定錯，很傷；實驗階段加上 <code>nrows=20</code>。</li>
-<li><strong>從 Excel 來：</strong> 匯出 CSV 或 tab 分隔的 TXT，行尾盡量用 Unix 式（<code>\n</code>）而非 MS-DOS 式（<code>\n\r</code>）。CSV 在 Windows 點兩下就開進 Excel，很方便——但文字含逗號就必須加引號、引號內的引號還得跳脫；tab 在文字中較罕見，TXT 檔較少出意外。</li>
+<li><strong>從 Excel 來：</strong> 匯出 CSV 或 tab 分隔的 TXT，行尾盡量用 Unix 式（<code>\n</code>）而非 MS-DOS 式（<code>\r\n</code>）。CSV 在 Windows 點兩下就開進 Excel，很方便——但文字含逗號就必須加引號、引號內的引號還得跳脫；tab 在文字中較罕見，TXT 檔較少出意外。</li>
 <li><strong>從資料庫來：</strong> 用 GUI 工具查詢再匯出，勝過脆弱的命令列腳本；書中點名 Toad for Data Analysts、MySQL Query Browser、Oracle SQL Developer（今日：DBeaver 與各家現行工具）。</li>
 </ul>
 </section>

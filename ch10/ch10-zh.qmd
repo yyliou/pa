@@ -195,7 +195,7 @@ my.TimeSeries[3]
 ```
 
 ::: {.callout-note}
-這招只對*部分*內建函式有效——`print` 就不能這樣重定義。可重定義的泛型清單見 `?S4groupGeneric`；原因在後面的 S3 一節說明。
+一個陷阱：S4 物件的*自動列印*走的是 `show()` 而非 `print`——想改主控台顯示，定義 `show` 方法。`?S4groupGeneric` 記載的是*群組*泛型（`Arith`、`Compare`、`Ops`……）；後面的 S3 一節有更多說明。
 :::
 
 ## 繼承：WeightHistory

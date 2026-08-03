@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="the-workhorses" class="title-slide slide level1 center">
@@ -256,7 +256,7 @@ Yu-You Liou (NTU)
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href=""></a><span class="fu">f</span>(<span class="dv">1</span>)        <span class="co"># missing y: error when `+` needs it</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `f()`:
-! argument "y" is missing, with no default</code></pre>
+! 缺少引數 "y"，也沒有預設值</code></pre>
 </div>
 </div>
 <div class="callout callout-note callout-titled callout-style-default">
@@ -308,7 +308,7 @@ Yu-You Liou (NTU)
 <pre><code>[1] 15</code></pre>
 </div>
 </div>
-<p>Individual items are also reachable directly as <code>..1</code>, <code>..2</code>, … up to <code>..9</code>. And named arguments remain valid symbols inside the body (scoping: Chapter 8).</p>
+<p>Individual items are also reachable directly as <code>..1</code>, <code>..2</code>, … (any <code>..n</code> works). And named arguments remain valid symbols inside the body (scoping: Chapter 8).</p>
 </section>
 <section id="return-values" class="slide level2">
 <h2>Return Values</h2>
@@ -470,7 +470,7 @@ NULL</code></pre>
 </section>
 <section id="body" class="slide level2">
 <h2>body</h2>
-<p>The body, too, is readable and writable — its type is <code>expression</code>, so assign expressions:</p>
+<p>The body, too, is readable and writable — it is a <em>language object</em> (<code>typeof(body(f))</code> is <code>"language"</code>); assign quoted code (the book uses <code>expression()</code>, which also works):</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href=""></a><span class="fu">body</span>(f)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -515,11 +515,11 @@ NULL</code></pre>
 <pre><code>[1] 5</code></pre>
 </div>
 </div>
-<p>One restriction: with generic functions you cannot name the argument carrying the dispatching object — other arguments can still be named.</p>
+<p>One caution: with generic functions the <em>name</em> of the dispatching argument varies between methods (<code>x</code>, <code>object</code>, …), so passing the dispatching object positionally is the most portable habit.</p>
 </section>
 <section id="prefer-exact-names-partial-matching-bites" class="slide level2">
 <h2>Prefer Exact Names; Partial Matching Bites</h2>
-<p>Exact names cost keystrokes but buy readability and remove ambiguity. Partial matching is <strong>deprecated</strong> for good reason:</p>
+<p>Exact names cost keystrokes but buy readability and remove ambiguity. Partial matching is <strong>discouraged</strong> for good reason (R can warn about it via <code>options(warnPartialMatchArgs=TRUE)</code>):</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href=""></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">arg1=</span><span class="dv">10</span>, <span class="at">arg2=</span><span class="dv">20</span>) {</span>
 <span id="cb59-2"><a href=""></a>  <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"arg1:"</span>, arg1))</span>
@@ -528,7 +528,7 @@ NULL</code></pre>
 <span id="cb59-5"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>)            <span class="co"># ambiguous: error</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `f()`:
-! argument 1 matches multiple formal arguments</code></pre>
+! 引數 1 有多個與之相對應的形式引數</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href=""></a><span class="fu">f</span>(<span class="at">arg=</span><span class="dv">1</span>, <span class="at">arg2=</span><span class="dv">2</span>)    <span class="co"># now "arg" can only mean arg1...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -551,7 +551,7 @@ NULL</code></pre>
 <section id="beyond-the-return-value" class="slide level2">
 <h2>Beyond the Return Value</h2>
 <p>Every function returns a value; some <em>also</em> change variables in other environments, draw graphics, read or write files, or talk to the network. These extra actions are <strong>side effects</strong>.</p>
-<p>The key side-effecting operator is <code>&lt;&lt;-</code>. The statement <code>var &lt;&lt;- value</code> searches the current environment for <code>var</code>, then the parent, recursively upward; if the global environment is reached without a match, the assignment happens <strong>there</strong>:</p>
+<p>The key side-effecting operator is <code>&lt;&lt;-</code>. The statement <code>var &lt;&lt;- value</code> <em>skips the current environment</em> and searches the enclosing environments upward for an existing <code>var</code>; if the global environment is reached without a match, the assignment happens <strong>there</strong>:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href=""></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())</span>
 <span id="cb65-2"><a href=""></a>doesnt.assign.x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) { x <span class="ot">&lt;-</span> i }</span>
@@ -559,7 +559,7 @@ NULL</code></pre>
 <span id="cb65-4"><a href=""></a>x                                   <span class="co"># &lt;- stayed local: not found</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error:
-! object 'x' not found</code></pre>
+! 找不到物件 'x'</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href=""></a>assigns.x <span class="ot">&lt;-</span> <span class="cf">function</span>(i) { x <span class="ot">&lt;&lt;-</span> i }</span>
 <span id="cb67-2"><a href=""></a><span class="fu">assigns.x</span>(<span class="dv">4</span>)</span>

@@ -350,7 +350,7 @@ g
 
 ```{r,echo=TRUE}
 teams <- c("PHI","NYM","FLA","ATL","WSN")
-w <- c(92, 89, 94, 72, 59)
+w <- c(92, 89, 84, 72, 59)
 l <- c(70, 73, 77, 90, 102)
 nleast <- data.frame(teams, w, l)
 nleast
@@ -563,7 +563,7 @@ download.file("https://raw.githubusercontent.com/cran/nutshell/master/data/consu
 load(temp)
 ```
 
-兩欄是數值（`Amount`、`Year`）；另外兩欄是新型別：**因子（factor）**——R 對類別值的精簡表示法，以 `factor()` 建立，是建模函式的核心配角。
+兩欄是數值（`Amount`、`Year`）；`Food` 則是新型別：**因子（factor）**——R 對類別值的精簡表示法，以 `factor()` 建立，是建模函式的核心配角。
 
 ## 分面點圖
 

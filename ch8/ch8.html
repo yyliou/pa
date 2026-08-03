@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="Yu-You Liou (NTU)">
-  <meta name="dcterms.date" content="2026-07-20">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>Programming for Applications</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@ Yu-You Liou (NTU)
     </div>
 </div>
 
-  <p class="date">2026-07-20</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="where-names-live" class="title-slide slide level1 center">
@@ -371,7 +371,7 @@ Yu-You Liou (NTU)
 </section>
 <section id="the-global-environment" class="slide level2">
 <h2>The Global Environment</h2>
-<p>Each session gets a fresh environment for your objects: the <strong>global environment</strong>. Surprisingly, it is not the root of the tree — it is the <em>last</em> environment in the search path’s chain. Walking the parents from <code>.GlobalEnv</code>:</p>
+<p>Each session gets a fresh environment for your objects: the <strong>global environment</strong>. Surprisingly, it is not the root of the tree — it is a <em>leaf</em>: <code>search()</code> lists it first, and walking the parents from <code>.GlobalEnv</code> climbs through the attached packages toward the root:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href=""></a>e <span class="ot">&lt;-</span> .GlobalEnv</span>
 <span id="cb15-2"><a href=""></a><span class="cf">while</span> (<span class="fu">environmentName</span>(e) <span class="sc">!=</span> <span class="fu">environmentName</span>(<span class="fu">emptyenv</span>())) {</span>
@@ -525,7 +525,7 @@ Yu-You Liou (NTU)
 <span id="cb23-2"><a href=""></a>a <span class="sc">+</span> b <span class="sc">+</span> c                          <span class="co"># not in the workspace...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error:
-! object 'a' not found</code></pre>
+! 找不到物件 'a'</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href=""></a><span class="fu">with</span>(example.list, a <span class="sc">+</span> b <span class="sc">+</span> c)      <span class="co"># ...but with() finds them</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -583,12 +583,12 @@ $d
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href=""></a><span class="dv">12</span> <span class="sc">/</span> <span class="st">"hat"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `12 / "hat"`:
-! non-numeric argument to binary operator</code></pre>
+! 二元運算子中有非數值引數</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href=""></a><span class="cf">if</span> (<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>)) <span class="cn">TRUE</span> <span class="cf">else</span> <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-error">
 <pre><code>Error in `if (c(TRUE, FALSE)) ...`:
-! the condition has length &gt; 1</code></pre>
+! 條件的長度 &gt; 1</code></pre>
 </div>
 </div>
 <p>(The second was merely a warning in the book’s era; modern R promotes it to an error.) Why discuss exceptions in the environments chapter? Because when an exception occurs, the interpreter may abandon the current function and <strong>signal the exception in the calling environment</strong> — exception handling and environments are intertwined.</p>
@@ -641,11 +641,11 @@ another file that doesn't exist</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href=""></a>res <span class="ot">&lt;-</span> <span class="fu">try</span>({<span class="fu">open</span>(<span class="st">"file that doesn't exist"</span>)}, <span class="at">silent=</span><span class="cn">TRUE</span>)</span>
 <span id="cb42-2"><a href=""></a>res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "Error in UseMethod(\"open\") : \n  no applicable method for 'open' applied to an object of class \"character\"\n"
+<pre><code>[1] "Error in UseMethod(\"open\") : \n  沒有適用的方法可將 'open' 套用到 \"character\" 類別的物件\n"
 attr(,"class")
 [1] "try-error"
 attr(,"condition")
-&lt;simpleError in UseMethod("open"): no applicable method for 'open' applied to an object of class "character"&gt;</code></pre>
+&lt;simpleError in UseMethod("open"): 沒有適用的方法可將 'open' 套用到 "character" 類別的物件&gt;</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href=""></a><span class="fu">class</span>(res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">

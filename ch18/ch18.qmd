@@ -228,7 +228,7 @@ Significant positive correlation (p = 0.0015) — but resist the causal leap: in
 
 ## wilcox.test
 
-When normality is doubtful, **rank-based** tests trade some power for robustness. The Wilcoxon test is the t-test's counterpart: its statistic counts, over all pairs, how often y[j] < x[i] (about half if the distributions match) — no one-sample-vs-mean version exists:
+When normality is doubtful, **rank-based** tests trade some power for robustness. The Wilcoxon test is the t-test's counterpart: its statistic counts, over all pairs, how often y[j] < x[i] (about half if the distributions match); for the one-sample-vs-location analogue, pass a single sample with `mu=` (the Wilcoxon signed-rank test):
 
 ```{r,echo=TRUE,warning=TRUE}
 wilcox.test(times.to.failure.e, times.to.failure.d)
@@ -290,7 +290,7 @@ method.and.sex
 fisher.test(method.and.sex)
 ```
 
-Tiny p-value: reject independence — C-section rates differ by sex (46.7% vs. 49.2% of each sex's births... or rather, the odds ratio ≈ 0.91).
+Tiny p-value: reject independence — the sex mix differs by delivery method (girls are 46.7% of C-section deliveries vs. 49.2% of vaginal ones; odds ratio ≈ 0.91).
 
 ## fisher.test on Twins; chisq.test
 
@@ -338,7 +338,7 @@ The **Friedman rank-sum test** is the nonparametric counterpart of two-way ANOVA
 friedman.test(method.and.sex.twins)
 ```
 
-Agreeing with the chi-squared verdict: the two distributions are very likely independent.
+Agreeing with the chi-squared verdict: no significant association is detected — though remember, a non-significant p-value *fails to reject* independence; it does not prove it.
 
 ## Copyright Notice
 

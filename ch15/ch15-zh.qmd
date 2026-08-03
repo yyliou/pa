@@ -238,7 +238,7 @@ qplot(x, y, ..., data, facets, margins, geom, stat,
 | `x`、`y`、`data` | 值與（可選的）資料框 | |
 | `facets` | 分面公式：單邊 → `facet_wrap`、雙邊 → `facet_grid` | `NULL` |
 | `geom` | geom 名稱的字元向量 | `"auto"`：有 x,y 用 point／只有 x 用 histogram |
-| `stat`／`position` | 統計變換／位置調整 | `list(NULL)` |
+| `stat`／`position` | 統計變換／位置調整（書中年代——ggplot2 2.0 已移除） | `list(NULL)` |
 | `xlim`、`ylim`、`log` | 範圍；`log` ＝ `""`／`"x"`／`"y"`／`"xy"` | |
 | `main`、`xlab`、`ylab`、`asp` | 標題、標籤、長寬比 | 由運算式自動生成 |
 | `...` | 其他美學屬性，傳給各圖層 | |
@@ -253,8 +253,8 @@ summary(plt)
 ```
 
 - `aes(x, y, ...)` 宣告映射（書中年代的親戚：`aes_string`、`aes_auto`）。
-- 光禿禿的 `ggplot(...)` 沒有圖層——直接列印會報錯（"No layers in plot"）。
-- 泛用的 `layer(...)` 以 geom 簡名加圖層（`layer("point")`）；實務上都用 `geom_*` 便利函式。
+- 光禿禿的 `ggplot(...)` 沒有圖層——書中年代直接列印會報錯（"No layers in plot"）；現代 ggplot2 只會畫出空面板。
+- 書中年代的 `layer("point")` 以 geom 簡名加圖層；現代 `layer()` 要求明確給 `geom`、`stat`、`position`——實務上都用 `geom_*` 便利函式。
 
 ## geom 詞彙表
 
