@@ -236,6 +236,8 @@ one <- 1; two <- 2
 one == two   # 這才是比較
 ```
 
+---
+
 - **`->` 向右指派**——打完一長串運算式才想起忘了存的時候，偶爾很方便：
 
 ```{r,echo=TRUE}
@@ -533,6 +535,8 @@ names(cars)
 summary(cars)
 ```
 
+---
+
 畫出兩者的關係，並加上座標軸標籤：
 
 ```{r,echo=TRUE}
@@ -575,6 +579,8 @@ dotplot(Amount ~ Year | Food, consumption)   # 預設設定
 dotplot(Amount ~ Year | Food, data = consumption,
         aspect = "xy", scales = list(relation = "sliced", cex = .4))
 ```
+
+---
 
 - `aspect` 調整面板長寬比，使變化盡量呈 45° 角（最易察覺）；
 - `scales` 控制座標軸——`"sliced"` 讓每個面板使用自己的一段刻度。

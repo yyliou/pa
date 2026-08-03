@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.9.38">
 
   <meta name="author" content="劉昱佑">
-  <meta name="dcterms.date" content="2026-08-02">
+  <meta name="dcterms.date" content="2026-08-03">
   <title>程式設計與應用</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -211,7 +211,7 @@
     </div>
 </div>
 
-  <p class="date">2026-08-02</p>
+  <p class="date">2026-08-03</p>
 </section>
 <section>
 <section id="邊打邊學" class="title-slide slide level1 center">
@@ -311,8 +311,7 @@
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href=""></a><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>) <span class="sc">+</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning in c(1, 2, 3, 4, 5) + c(10, 100): longer object length is not a
-multiple of shorter object length</code></pre>
+<pre><code>Warning in c(1, 2, 3, 4, 5) + c(10, 100): 較長的物件長度並非較短物件長度的倍數</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1]  11 102  13 104  15</code></pre>
@@ -511,6 +510,9 @@ multiple of shorter object length</code></pre>
 <pre><code>[1] FALSE</code></pre>
 </div>
 </div>
+</section>
+<section class="slide level2">
+
 <ul>
 <li><strong><code>-&gt;</code> 向右指派</strong>——打完一長串運算式才想起忘了存的時候，偶爾很方便：</li>
 </ul>
@@ -969,6 +971,9 @@ FG aborted FG blocked    FG good      FG no
  Max.   :25.0   Max.   :120.00  </code></pre>
 </div>
 </div>
+</section>
+<section class="slide level2">
+
 <p>畫出兩者的關係，並加上座標軸標籤：</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb146"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb146-1"><a href=""></a><span class="fu">plot</span>(cars, <span class="at">xlab =</span> <span class="st">"Speed (mph)"</span>, <span class="at">ylab =</span> <span class="st">"Stopping distance (ft)"</span>,</span>
@@ -1004,7 +1009,10 @@ FG aborted FG blocked    FG good      FG no
 <span id="cb150-2"><a href=""></a>        <span class="at">aspect =</span> <span class="st">"xy"</span>, <span class="at">scales =</span> <span class="fu">list</span>(<span class="at">relation =</span> <span class="st">"sliced"</span>, <span class="at">cex =</span> .<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="ch3-zh_files/figure-revealjs/unnamed-chunk-46-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"><ul>
+<img data-src="ch3-zh_files/figure-revealjs/unnamed-chunk-46-1.png" class="quarto-figure quarto-figure-center r-stretch" width="960"></section>
+<section class="slide level2">
+
+<ul>
 <li><code>aspect</code> 調整面板長寬比，使變化盡量呈 45° 角（最易察覺）；</li>
 <li><code>scales</code> 控制座標軸——<code>"sliced"</code> 讓每個面板使用自己的一段刻度。</li>
 </ul>
